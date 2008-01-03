@@ -5,7 +5,7 @@
  *
  */
 
-package rahmann.util;
+package verjinxer.util;
 
 /**
  *
@@ -36,13 +36,13 @@ public final class TicToc
    /** Returns milliseconds since last tic() */
    public long tocMilliSeconds()
    {
-      return (long)java.lang.Math.round((System.nanoTime()-t)/1000000.0);      
+      return java.lang.Math.round((System.nanoTime()-t)/1000000.0);      
    }
    
    /** Returns integer seconds since last tic() */
    public long tocSeconds()
    {
-      return (long)java.lang.Math.round((System.nanoTime()-t)/1000000000.0);
+      return java.lang.Math.round((System.nanoTime()-t)/1000000000.0);
    }
 
    /** returns seconds since last tic() as double */

@@ -5,13 +5,13 @@
  *
  */
 
-package rahmann.util;
+package verjinxer.util;
 
 /**
  *
  * @author rahmann
  */
-public class Arrays {
+public class ArrayUtils {
   
   public static final int largestAllocatable() {
     return largestAllocatable(0);

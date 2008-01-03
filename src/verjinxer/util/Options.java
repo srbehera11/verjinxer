@@ -5,7 +5,7 @@
  *
  */
 
-package rahmann.util;
+package verjinxer.util;
 
 import java.util.HashMap;
 

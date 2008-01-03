@@ -5,10 +5,10 @@
  *
  */
 
-package rahmann.util;
+package verjinxer.util;
 
 import java.io.IOException;
-import rahmann.sequenceanalysis.FastaFile;
+import verjinxer.sequenceanalysis.FastaFile;
 
 /**
  *

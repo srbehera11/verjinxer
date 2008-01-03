@@ -5,14 +5,13 @@
  *
  */
 
-package rahmann.util;
+package verjinxer.util;
 
 import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 import static java.nio.channels.FileChannel.*;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.QGramCoder;
+import verjinxer.sequenceanalysis.*;
 
 /**
  *
@@ -374,7 +373,7 @@ public class ArrayFile
         if(array==null || array.length!=len) array = new byte[len];
       } catch(OutOfMemoryError ex) {
         throw new IOException(String.format("cannot slurp '%s': allocatable byte[] is %.0fM, requested %.0fM%n", 
-            this.name, Arrays.largestAllocatable()/1E6, len/1E6), ex);
+            this.name, ArrayUtils.largestAllocatable()/1E6, len/1E6), ex);
       }
       DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(name), BUFSIZE));
       MappedByteBuffer bb = this.mapR();

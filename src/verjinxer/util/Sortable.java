@@ -7,7 +7,7 @@
  * and open the template in the editor.
  */
 
-package rahmann.util;
+package verjinxer.util;
 
 /**
  *

@@ -22,8 +22,8 @@ import static java.nio.channels.FileChannel.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Properties;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 
@@ -109,6 +109,7 @@ public class QgramMatcher {
   /**
    * @param args the command line arguments
    */
+  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "qmatch";

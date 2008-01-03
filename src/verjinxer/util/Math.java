@@ -5,7 +5,7 @@
  *
  */
 
-package rahmann.util;
+package verjinxer.util;
 import static java.lang.Math.*;
 
 /**

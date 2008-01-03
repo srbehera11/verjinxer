@@ -5,10 +5,9 @@
  *
  */
 
-package rahmann.sequenceanalysis;
+package verjinxer.sequenceanalysis;
 
 import java.io.*;
-import java.util.ArrayList;
 
 /**
  *

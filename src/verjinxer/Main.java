@@ -10,8 +10,8 @@
 package verjinxer;
 import java.io.*;
 import java.util.Arrays;
-import rahmann.util.IllegalOptionException;
-import rahmann.util.Options;
+import verjinxer.util.IllegalOptionException;
+import verjinxer.util.Options;
 import static verjinxer.Globals.*;
 
 /**
