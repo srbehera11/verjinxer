@@ -15,8 +15,8 @@ import static java.lang.Math.*;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Properties;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**
@@ -268,7 +268,7 @@ public final class QgramIndexer {
     
     // Determine slice size
     timer.tic();
-    long free = rahmann.util.Arrays.largestAllocatable(4*(sum+4096)+4);
+    long free = ArrayUtils.largestAllocatable(4*(sum+4096)+4);
     long memreq  = 4*sum;  // since sizeof(int)==4
     if (free < memreq) {
       g.logmsg("  free memory: %d, need: %d, processing in slices!%n", free, memreq);

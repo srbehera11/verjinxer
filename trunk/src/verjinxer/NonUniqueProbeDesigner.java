@@ -12,10 +12,8 @@ import java.nio.*;
 import java.nio.channels.*;
 import static java.nio.channels.FileChannel.*;
 import java.util.Properties;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
-import rahmann.util.ArrayFile;
-import rahmann.util.QGramCoder;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**

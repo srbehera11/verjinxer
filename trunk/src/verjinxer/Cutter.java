@@ -11,8 +11,8 @@ import java.io.*;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**

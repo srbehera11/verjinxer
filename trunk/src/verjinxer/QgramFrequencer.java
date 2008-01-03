@@ -13,8 +13,8 @@ import static java.lang.Math.*;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Properties;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**

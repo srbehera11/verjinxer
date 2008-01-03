@@ -12,9 +12,9 @@ import java.nio.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.*;
-import rahmann.sequenceanalysis.AlphabetMap;
-import rahmann.util.ArrayFile;
-import rahmann.util.Strings;
+import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.util.ArrayFile;
+import verjinxer.util.Strings;
 
 /**
  *

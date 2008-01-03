@@ -5,11 +5,11 @@
  *
  */
 
-package rahmann.util;
+package verjinxer.util;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import rahmann.sequenceanalysis.*;
+import verjinxer.sequenceanalysis.*;
 
 /**
  * This class contains routines for coding strings of length q over the alphabet

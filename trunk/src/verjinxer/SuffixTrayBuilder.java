@@ -13,9 +13,8 @@ import java.nio.BufferUnderflowException;
 import java.nio.IntBuffer;
 import java.util.Properties;
 import java.util.Arrays;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
-import rahmann.util.ArrayFile;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**

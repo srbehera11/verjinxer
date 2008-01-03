@@ -13,9 +13,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Locale;
 import java.util.Properties;
-import java.lang.Math;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 
@@ -366,7 +365,7 @@ public class Mapper {
         final int jlength = jstop - jstart;  // length including separator
         processQGramBlocks(idx, coder, tall, jstart, jlength, j, 1, clip, bcounter, blocksize, blow);
         if (revcomp && !trepeat.get(j)) {
-          rahmann.util.Arrays.revcompArray(tall,jstart,jstop-1,(byte)4, rcj);
+          ArrayUtils.revcompArray(tall,jstart,jstop-1,(byte)4, rcj);
           rcj[jlength-1]=-1;
           //g.logmsg("+: %s%n",Strings.join("",tall,jstart,jlength));
           //g.logmsg("-: %s%n",Strings.join("",rcj,0,jlength));
@@ -518,7 +517,7 @@ public class Mapper {
         g.logmsg("  aligning seq %d against idx %d %s%n",j,idx,iname[idx]);
         doTheAlignment(idx,  itext[idx], tall, jstart, jlength-1, j, 1, clip);
         if (revcomp && !trepeat.get(j)) {
-          rahmann.util.Arrays.revcompArray(tall,jstart,jstop-1,(byte)4, rcj);
+          ArrayUtils.revcompArray(tall,jstart,jstop-1,(byte)4, rcj);
           rcj[jlength-1]=-1;
           doTheAlignment(idx,  itext[idx], rcj, 0, jlength-1, j, -1, clip);
         }

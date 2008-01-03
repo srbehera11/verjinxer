@@ -9,12 +9,9 @@ package verjinxer;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Properties;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
-import rahmann.util.AnnotatedArrayFile;
-import rahmann.util.ArrayFile;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**
