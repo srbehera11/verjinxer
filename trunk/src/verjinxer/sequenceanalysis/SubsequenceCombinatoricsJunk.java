@@ -181,7 +181,7 @@ class SubsequenceCombinatoricsJunk {
     }
     
    /*
-    * Initialisierung des Arrays für die Teilmengen
+    * Initialisierung des Arrays fuer die Teilmengen
     * Anzahl der Teilmengen (ohne leere Menge) = 2^(n)-2^(n-d-1), wenn (n-d-1)>=1
     * sonst 2^(n)-1;
     */
@@ -205,7 +205,7 @@ class SubsequenceCombinatoricsJunk {
   
   
   /**
-   * Teilmengen der Menge {1..n} berechnen, abhängig von d
+   * Teilmengen der Menge {1..n} berechnen, abhaengig von d
    * @param n
    * @param d
    */
@@ -240,7 +240,7 @@ class SubsequenceCombinatoricsJunk {
   }
   
   /**
-   * Teilmengen in Subsequenzen von t überführen (ohne doppelte Subsequenzen)
+   * Teilmengen in Subsequenzen von t ueberfuehren (ohne doppelte Subsequenzen)
    * @param t String
    * @return HashMap mit Subsequenzen als Key und die letzte Einbettung in t als Value
    */
@@ -252,14 +252,14 @@ class SubsequenceCombinatoricsJunk {
       for(int y=0;y<subset[x].length;y++){
         if(subset[x][y]!=0){
           j = subset[x][y];
-          if(sequence=="")
+          if(sequence.length()==0)
             sequence = Character.toString(t.charAt(j-1));
           else sequence = sequence + t.charAt(j-1);
         }
       }
       Integer embed = new Integer(j);
       if(j!= 0){
-        //überprüfen, ob Subsequenz schon vorhanden ist und vergleiche Einbettung
+        //ueberpruefen, ob Subsequenz schon vorhanden ist und vergleiche Einbettung
         if(sequencen.get(sequence)== null || embed.compareTo((Integer) sequencen.get(sequence))>0){
           sequencen.put(sequence, embed);
         }
