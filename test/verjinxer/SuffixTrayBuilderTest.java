@@ -9,13 +9,8 @@ package verjinxer;
 
 import java.util.Locale;
 import junit.framework.*;
-import java.io.IOException;
-import java.nio.BufferUnderflowException;
-import java.nio.IntBuffer;
-import java.util.Properties;
-import java.util.Arrays;
-import rahmann.sequenceanalysis.*;
-import rahmann.util.*;
+import verjinxer.sequenceanalysis.*;
+import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**
@@ -28,9 +23,11 @@ public class SuffixTrayBuilderTest extends TestCase {
     super(testName);
   }
 
+  @Override
   protected void setUp() throws Exception {
   }
 
+  @Override
   protected void tearDown() throws Exception {
   }
 
