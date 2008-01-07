@@ -35,7 +35,9 @@ public class QgramMatcher {
       
   private Globals g;
   
-  /** Creates a new instance of QgramMatcher */
+  /** Creates a new instance of QgramMatcher 
+   * @param gl the Globals structure
+   */
   public QgramMatcher(Globals gl) {
     g = gl;
   }
@@ -59,7 +61,9 @@ public class QgramMatcher {
     g.logmsg("  -x, --external       save memory at the cost of lower speed%n");
   }
   
-  /** if run independently, call main */
+  /** if run independently, call main
+   *@param args (ignored)
+   */
   public static void main(String[] args) {
     new QgramMatcher(new Globals()).run(args);
   }
@@ -108,6 +112,7 @@ public class QgramMatcher {
  
   /**
    * @param args the command line arguments
+   * @return zero on successful completion, nonzero value otherwise.
    */
   @SuppressWarnings("empty-statement")
   public int run(String[] args) {
@@ -485,3 +490,4 @@ public class QgramMatcher {
 
  /** exception thrown if too many hits occur */
 class TooManyHitsException extends Exception { };
+
