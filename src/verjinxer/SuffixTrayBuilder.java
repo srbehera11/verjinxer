@@ -439,6 +439,7 @@ public class SuffixTrayBuilder {
    *@param chi  integer representation of character to insert
    *@param i  what to insert
    */
+  @SuppressWarnings("empty-statement")
   private final void insertnew(final int chi, final int i) {
     int cp, cs, ip, is;
     assert(lexfirst[chi]==-1);
@@ -494,6 +495,7 @@ public class SuffixTrayBuilder {
      *@param chi  integer representation of character to insert
      *@param i  what to insert
      */
+    @SuppressWarnings("empty-statement")
     private final void insertnewx(final int chi, final int i) {
       int cp, cs, ip, is;
       assert(lexfirst[chi]==-1);
@@ -507,6 +509,7 @@ public class SuffixTrayBuilder {
       insertbetweenx(ip, is, i);
     }
     
+    @SuppressWarnings("empty-statement")
     private final void insertasfirstx(int chi, int i) {
       int cp, ip;
       assert(lexfirst[chi]!=-1);
@@ -517,6 +520,7 @@ public class SuffixTrayBuilder {
       lexfirst[chi]=i;      
     }
 
+    @SuppressWarnings("empty-statement")
     private final void insertaslastx(int chi, int i) {
       int cs, is;
       assert(lexfirst[chi]!=-1);
@@ -603,9 +607,9 @@ public class SuffixTrayBuilder {
    * "special" characters (wildcards, separators) are compared by position
    *@param i  first position
    *@param j  second position
-   *@return any value < 0 iff s[i]<s[j], as specified by alphabet map,
+   *@return any value &lt; 0 iff s[i]&lt;s[j], as specified by alphabet map,
    * zero(0) iff s[i]==s[j],
-   * any value > 0 iff s[i]>s[j], as specified by alphabet map.
+   * any value &gt; 0 iff s[i]&gt;s[j], as specified by alphabet map.
    */
   public final int scmp(final int i, final int j) {
     final int d = s[i]-s[j];
@@ -618,10 +622,11 @@ public class SuffixTrayBuilder {
    * "special" characters (wildcards, separators) are compared by position
    *@param i  first position
    *@param j  second position
-   *@return any value < 0 iff suffix(i)<suffix(j) lexicographically,
+   *@return any value &lt; 0 iff suffix(i)&lt;suffix(j) lexicographically,
    * zero (0) iff i==j
-   * any value > 0 iff suffix(i)>suffix(j) lexicographically.
+   * any value &gt; 0 iff suffix(i)&gt;suffix(j) lexicographically.
    */
+  @SuppressWarnings("empty-statement")
   public final int suffixcmp(final int i, final int j) {
     if (i==j) return 0;
     int off, c;
@@ -631,12 +636,13 @@ public class SuffixTrayBuilder {
   }
   
   /** find length of longest common prefix (lcp) of suffixes of text s,
-   * given prior knowledge that lcp >= h.
+   * given prior knowledge that lcp &gt;= h.
    *@param i  first position
    *@param j  second position
    *@param h  minimum known lcp length
    *@return  lcp length
    */
+  @SuppressWarnings("empty-statement")
   public final int suffixlcp(final int i, final int j, final int h) {
     if (i==j) return n-i+1;
     int off;
@@ -650,6 +656,7 @@ public class SuffixTrayBuilder {
    * output warning messages if errors are found.
    *@return  0 on success, 1 on sorting error, 2 on count error, 3 on both errors.
    */
+  @SuppressWarnings("empty-statement")
   public int checkpos_rah1() {
     int chi, p, nextp, nn, comp;
     int returnvalue = 0;
@@ -684,6 +691,7 @@ public class SuffixTrayBuilder {
    * output warning messages if errors are found.
    *@return  0 on success, 1 on sorting error, 2 on count error, 3 on both errors.
    */  
+  @SuppressWarnings("empty-statement")
     public int checkpos_rah2x() {
     int chi, p, oldp, nextp, nn, comp;
     int returnvalue = 0;
@@ -765,6 +773,7 @@ public class SuffixTrayBuilder {
   /** write pos array to file after Rahmann's construction
    *@param fname  the full path and file name
    */
+  @SuppressWarnings("empty-statement")
   private void writepos_rah1(String fname) {
     int chi, p;
     for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
@@ -782,6 +791,7 @@ public class SuffixTrayBuilder {
   /** write pos array to file after Rahmann's construction
    *@param fname  the full path and file name
    */
+  @SuppressWarnings("empty-statement")
   private void writepos_rah2x(String fname) {
     int chi, p, oldp, tmp;
     final int[] lexps = dll.lexps;
@@ -804,6 +814,7 @@ public class SuffixTrayBuilder {
   /** write partial pos array to logfile during Rahmann's construction
    *@param header  a header string to print
    */
+  @SuppressWarnings("empty-statement")
   private void showpos_rah1(String header) {
     int chi, p;
     System.out.printf(header);
@@ -824,6 +835,7 @@ public class SuffixTrayBuilder {
    *@param fname filename for lcp array
    *@param dolcp which lcp arrays to compute (1+2+4)
    */
+  @SuppressWarnings("empty-statement")
   private void lcp_rah1(String fname, int dolcp) {
     TicToc timer = new TicToc();
     int p, prev, h;
