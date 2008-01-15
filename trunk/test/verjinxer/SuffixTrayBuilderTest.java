@@ -79,9 +79,9 @@ public class SuffixTrayBuilderTest extends TestCase {
       stb.s = t;
       stb.n = L+1;
       stb.steps = 0;
-      stb.buildpos_rah2min();
+      stb.buildpos_minLR();
       stp = (int) stb.steps -1; // -1 for $
-      //result = stb.checkpos_rah1();
+      //result = stb.checkpos_R();
       //assertEquals(0, result);
 
       System.out.printf(Locale.US, "Ones: %d. Length: %d. Steps: %d. Steps/char: %.2f.%n", 
@@ -119,8 +119,8 @@ public class SuffixTrayBuilderTest extends TestCase {
         // 1. process t
         stb.steps = 0;
         cntr++;
-        stb.buildpos_rah1up();
-        //result = stb.checkpos_rah1();
+        stb.buildpos_L();
+        //result = stb.checkpos_R();
         //assertEquals(0, result);
         totalsteps[L]+=stb.steps;
         if (stb.steps>maxsteps[L]) {
@@ -163,8 +163,8 @@ public void doAAA() {
       stb.s = t;
       stb.n = L+1;      
       stb.steps = 0;
-      stb.buildpos_rah1up();
-      result = stb.checkpos_rah1();
+      stb.buildpos_L();
+      result = stb.checkpos_R();
       assertEquals(0, result);
       System.out.printf("  steps=%d; text=%s%n", stb.steps, Strings.join("",t,0,L));
     }
