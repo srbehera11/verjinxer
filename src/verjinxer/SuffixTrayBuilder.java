@@ -227,7 +227,7 @@ public class SuffixTrayBuilder {
           }
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG: showpos_rah1(String.format("List after step %d: [%d]%n", i, s[i]));
+      showpos_rah1(String.format("List after step %d: [%d]%n", i, s[i])); // DEBUG
     } // end for i
   }
   
