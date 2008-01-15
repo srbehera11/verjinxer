@@ -15,9 +15,17 @@ import verjinxer.sequenceanalysis.FastaFile;
  * @author Sven Rahmann
  */
 public class WriteFibonacciString {
+
+  public static final long defaultlength = 14000000L;
   
+  /** call this class with arguments (n, fname),
+   * where n is the length of the Fibonacci string,
+   * and fname is an optional filename,
+   * to write a FASTA file with this string as its contents.
+   * @param args  the arguments n and fname
+   */
   public static void main(String[] args) {
-    long fmax = (args.length<1? 30000000L : Long.parseLong(args[0]));
+    long fmax = (args.length<1? defaultlength : Long.parseLong(args[0]));
     String fname = (args.length<2? null : args[1]);
     int n = Math.fibFind(fmax);
     if (fname==null) fname = String.format("fib-%d.fa",n);

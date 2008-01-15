@@ -25,7 +25,9 @@ public class SuffixTrayBuilder {
   
   private Globals g;
   
-  /** Creates a new instance of SuffixTrayBuilder */
+  /** Creates a new instance of SuffixTrayBuilder
+   * @param gl global configuration structure
+   */
   public SuffixTrayBuilder(Globals gl) {
     g = gl;
   }
@@ -39,10 +41,11 @@ public class SuffixTrayBuilder {
     g.logmsg("writes %s, %s (incl. variants 1,1x,2,2x).%n", extpos, extlcp);
     g.logmsg("Options:%n");
     g.logmsg("  -m, --method  <id>    select construction method, where <id> is one of:%n");
-    g.logmsg("      rah1up%n" +
-        "      rah1down%n" +
-        "      rah2min%n" +
-        "      rah2both%n"
+    g.logmsg("      L%n" +
+        "      R%n" +
+        "      minLR%n" +
+        "      bothLR%n" +
+        "      bothLR2%n"
         );
     g.logmsg("  -l, --lcp[2|1]        build lcp array using int|short|byte%n");
     g.logmsg("  -c, --check           additionally check index integrity%n");
@@ -50,7 +53,9 @@ public class SuffixTrayBuilder {
     g.logmsg("  -X, --notexternal     DON'T save memory at the cost of lower speed%n");
   }
   
-  /** if run independently, call main */
+  /** if run independently, call main
+   * @param args command line arguments
+   */
   public static void main(String[] args) {
     new SuffixTrayBuilder(new Globals()).run(args);
   }
@@ -78,6 +83,7 @@ public class SuffixTrayBuilder {
   
   /**
    * @param args the command line arguments
+   * @return zero on success, non-zero on failure
    */
   public int run(String[] args) {
     g.cmdname = "suffixtray";
@@ -116,16 +122,16 @@ public class SuffixTrayBuilder {
     prj.setProperty("LastAction","suffixtray");
     prj.setProperty("AlphabetSize",Integer.toString(asize));    
     
-    method = (opt.isGiven("m")? opt.get("m") : "rah1up"); // default method
+    method = (opt.isGiven("m")? opt.get("m") : "L"); // default method
     g.logmsg("suffixtray: constructing pos using method '%s'...%n", method);
     assert(amap.isSeparator(s[n-1])) : "last character in text needs to be a separator";
     TicToc timer = new TicToc();
     steps = 0;
-    if (method.equals("rah1up")) buildpos_rah1up();
-    else if (method.equals("rah1down")) buildpos_rah1down();
-    else if (method.equals("rah2min")) buildpos_rah2min();
-    else if (method.equals("rah2both")) buildpos_rah2both();
-    else if (method.equals("rah2")) buildpos_rah2x();
+    if (method.equals("L"))            buildpos_L();
+    else if (method.equals("R"))       buildpos_R();
+    else if (method.equals("minLR"))   buildpos_minLR();
+    else if (method.equals("bothLR"))  buildpos_bothLR();
+    else if (method.equals("bothLR2")) buildpos_bothLR2();
     else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
     g.logmsg("suffixtray: pos completed after %.1f secs using %d steps (%.2f/char)%n",
         timer.tocs(), steps, (double)steps/n);
@@ -136,11 +142,11 @@ public class SuffixTrayBuilder {
     if (check) {
       timer.tic();
       g.logmsg("suffixcheck: checking pos...%n");
-      if (method.equals("rah1up")) returnvalue=checkpos_rah1();
-      else if (method.equals("rah1down")) returnvalue=checkpos_rah1();
-      else if (method.equals("rah2min")) returnvalue=checkpos_rah1();
-      else if (method.equals("rah2both")) returnvalue=checkpos_rah1();
-      else if (method.equals("rah2")) returnvalue=checkpos_rah2x();
+      if (method.equals("L"))            returnvalue=checkpos_R();
+      else if (method.equals("R"))       returnvalue=checkpos_R();
+      else if (method.equals("minLR"))   returnvalue=checkpos_R();
+      else if (method.equals("bothLR"))  returnvalue=checkpos_bothLR();
+      else if (method.equals("bothLR2")) returnvalue=checkpos_R();
       else g.terminate("suffixcheck: Unsupported construction method '"+method+"'!");
       if(returnvalue==0) g.logmsg("suffixcheck: pos looks OK!%n");
       g.logmsg("suffixcheck: done after %.1f secs%n", timer.tocs());
@@ -150,11 +156,11 @@ public class SuffixTrayBuilder {
       timer.tic();
       String fpos = di+extpos;
       g.logmsg("suffixtray: writing '%s'...%n",fpos);
-      if (method.equals("rah1up")) writepos_rah1(fpos);
-      else if (method.equals("rah1down")) writepos_rah1(fpos);
-      else if (method.equals("rah2min")) writepos_rah1(fpos);
-      else if (method.equals("rah2both")) writepos_rah1(fpos);
-      else if (method.equals("rah2")) writepos_rah2x(fpos);
+      if (method.equals("L"))            writepos_R(fpos);
+      else if (method.equals("R"))       writepos_R(fpos);
+      else if (method.equals("minLR"))   writepos_R(fpos);
+      else if (method.equals("bothLR"))  writepos_bothLR(fpos);
+      else if (method.equals("bothLR2")) writepos_R(fpos);
       else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
       g.logmsg("suffixtray: writing took %.1f secs; done.%n", timer.tocs());
     }
@@ -164,11 +170,11 @@ public class SuffixTrayBuilder {
       timer.tic();
       String flcp = di+extlcp;
       g.logmsg("suffixtray: computing lcp array...%n");
-      if (method.equals("rah1up")) lcp_rah1(flcp, dolcp);
-      else if (method.equals("rah1down")) lcp_rah1(flcp, dolcp);
-      else if (method.equals("rah2min")) lcp_rah1(flcp, dolcp);
-      else if (method.equals("rah2both")) lcp_rah1(flcp, dolcp);
-      else if (method.equals("rah2")) lcp_rah2x(flcp, dolcp);
+      if (method.equals("L"))            lcp_L(flcp, dolcp);
+      else if (method.equals("R"))       lcp_L(flcp, dolcp);
+      else if (method.equals("minLR"))   lcp_L(flcp, dolcp);
+      else if (method.equals("bothLR"))  lcp_bothLR(flcp, dolcp);
+      else if (method.equals("bothLR2")) lcp_L(flcp, dolcp);
       else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
       g.logmsg("suffixtray: lcp computation and writing took %.1f secs; done.%n", timer.tocs());
       prj.setProperty("lcp1Exceptions",Integer.toString(lcp1x));
@@ -190,11 +196,11 @@ public class SuffixTrayBuilder {
   } // end run()
   
   
-  /** builds suffix array 'pos' according to Rahmann's method
-   * by walking up a partially constructed doubly linked suffix list.
+  /** builds suffix array 'pos' 
+   * by walking LEFT along a partially constructed doubly linked suffix list.
    * Needs text 's' and its length 'n' correctly set.
    */
-  public void buildpos_rah1up() {
+  public void buildpos_L() {
     lexfirst = new int[256];
     lexlast  = new int[256];
     lexpred  = new int[n];
@@ -227,16 +233,16 @@ public class SuffixTrayBuilder {
           }
         } // end symbol character
       } // end seeing character ch again
-      showpos_rah1(String.format("List after step %d: [%d]%n", i, s[i])); // DEBUG
+      //showpos_R(String.format("List after step %d: [%d]%n", i, s[i])); // DEBUG
     } // end for i
   }
   
   
-  /** builds suffix array 'pos' according to Rahmann's method
-   * by walking DOWN a partially constructed doubly linked suffix list.
+  /** builds suffix array 'pos' 
+   * by walking RIGHT in a partially constructed doubly linked suffix list.
    * Needs text 's' and its length 'n' correctly set.
    */
-  public void buildpos_rah1down() {
+  public void buildpos_R() {
     lexfirst = new int[256];
     lexlast  = new int[256];
     lexpred  = new int[n];
@@ -269,16 +275,17 @@ public class SuffixTrayBuilder {
           }
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_rah1(String.format("List after step %d: [%d]%n", i, s[i]));
+      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
     } // end for i
   }
   
   
-  /** builds suffix array 'pos' according to Rahmann's method
-   * by walking BIDIRECTIONALLY along a partially constructed doubly linked suffix list.
+  /** builds suffix array 'pos' 
+   * by walking BIDIRECTIONALLY along a partially constructed doubly linked suffix list
+   * until the first matching character is found in EITHER direction.
    * Needs text 's' and its length 'n' correctly set.
    */
-  public void buildpos_rah2min() {
+  public void buildpos_minLR() {
     lexfirst = new int[256];
     lexlast  = new int[256];
     lexpred  = new int[n];
@@ -323,15 +330,18 @@ public class SuffixTrayBuilder {
           } // end switch
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_rah1(String.format("List after step %d: [%d]%n", i, s[i]));
+      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
     } // end for i
   }
   
-  /** builds suffix array 'pos' according to Rahmann's method
-   * by walking BOTH WAYS along a partially constructed doubly linked suffix list.
+  
+  /** builds suffix array 'pos' 
+   * by walking BOTH WAYS along a partially constructed doubly linked suffix list,
+   * until the target character is found BOTH WAYS.
+   * This implementation uses 2 integer arrays.
    * Needs text 's' and its length 'n' correctly set.
    */
-  public void buildpos_rah2both() {
+  public void buildpos_bothLR2() {
     lexfirst = new int[256];
     lexlast  = new int[256];
     lexpred  = new int[n];
@@ -385,7 +395,7 @@ public class SuffixTrayBuilder {
           insertbetween(pup,pdown,i);
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_rah1(String.format("List after step %d: [%d]%n", i, s[i]));
+      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
     } // end for i
   }
   
@@ -561,13 +571,15 @@ public class SuffixTrayBuilder {
   } // end inner class
   
   LightDLL dll = null;
+ 
   
-  /** builds suffix array 'pos' according to Rahmann's method
+  /** builds suffix array 'pos'
    * by walking BOTH WAYS along a partially constructed doubly linked suffix list,
-   * using a SPACE SAVING trick.
+   * until the target character is found BOTH WAYS.
+   * This implementation uses the SPACE SAVING xor trick. 
    * Needs text 's' and its length 'n' correctly set.
    */
-  public void buildpos_rah2x() {
+  public void buildpos_bothLR() {
     lexpred  = null;
     lexsucc  = null;
     lexfirst = new int[256];
@@ -594,7 +606,7 @@ public class SuffixTrayBuilder {
           dll.walkandinsert(chi,i);
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_rah1(String.format("List after step %d: [%d]%n", i, s[i]));
+      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
     } // end for i
   }
 
@@ -652,12 +664,12 @@ public class SuffixTrayBuilder {
   
  
   
-  /** check correctnes of a suffix array constructed with Rahmann's method;
+  /** check correctnes of a suffix array when lexnextpos is available;
    * output warning messages if errors are found.
    *@return  0 on success, 1 on sorting error, 2 on count error, 3 on both errors.
    */
   @SuppressWarnings("empty-statement")
-  public int checkpos_rah1() {
+  public int checkpos_R() {
     int chi, p, nextp, nn, comp;
     int returnvalue = 0;
     for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
@@ -686,13 +698,13 @@ public class SuffixTrayBuilder {
     return returnvalue;
   }
   
-  /** check correctnes of a suffix array constructed with Rahmann's method
-   * using the SPACE SAVING technique.
+  /** check correctnes of a suffix array constructed with Walk-bothLR
+   * using the SPACE SAVING xor technique;
    * output warning messages if errors are found.
    *@return  0 on success, 1 on sorting error, 2 on count error, 3 on both errors.
    */  
   @SuppressWarnings("empty-statement")
-    public int checkpos_rah2x() {
+    public int checkpos_bothLR() {
     int chi, p, oldp, nextp, nn, comp;
     int returnvalue = 0;
     final int[] lexps = dll.lexps;
@@ -727,7 +739,7 @@ public class SuffixTrayBuilder {
  
   /** check correctnes of a suffix array on disk
    * outputs warning messages if errors are found
-   *@param index  path and name of the index to check
+   *@param di  path and name of the index to check
    *@return  0 on success, 1 on sorting error, 2 on count error
    */
   public int checkpos(String di) {
@@ -770,11 +782,11 @@ public class SuffixTrayBuilder {
 // ==================== writing routines ==================================
   
   
-  /** write pos array to file after Rahmann's construction
+  /** write pos array to file when lexnextpos is available
    *@param fname  the full path and file name
    */
   @SuppressWarnings("empty-statement")
-  private void writepos_rah1(String fname) {
+  private void writepos_R(String fname) {
     int chi, p;
     for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
     try {
@@ -788,11 +800,11 @@ public class SuffixTrayBuilder {
     }
   }
  
-  /** write pos array to file after Rahmann's construction
+  /** write pos array to file after walk-bothLR using the xor trick.
    *@param fname  the full path and file name
    */
   @SuppressWarnings("empty-statement")
-  private void writepos_rah2x(String fname) {
+  private void writepos_bothLR(String fname) {
     int chi, p, oldp, tmp;
     final int[] lexps = dll.lexps;
     for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
@@ -811,11 +823,12 @@ public class SuffixTrayBuilder {
     }
   }
   
-  /** write partial pos array to logfile during Rahmann's construction
+  /** write partial pos array to logfile during a construction
+   * where lexnextpos[] is available.
    *@param header  a header string to print
    */
   @SuppressWarnings("empty-statement")
-  private void showpos_rah1(String header) {
+  private void showpos_R(String header) {
     int chi, p;
     System.out.printf(header);
     for (chi=0; chi<256; chi++) {
@@ -831,12 +844,12 @@ public class SuffixTrayBuilder {
 // ==================== lcp routines ==================================
 
   /** lcp computation according to Kasai et al.'s algorithm
-   * after Rahmann's suffix array construction.
+   * when lexprevpos[] is available.
    *@param fname filename for lcp array
    *@param dolcp which lcp arrays to compute (1+2+4)
    */
   @SuppressWarnings("empty-statement")
-  private void lcp_rah1(String fname, int dolcp) {
+  private void lcp_L(String fname, int dolcp) {
     TicToc timer = new TicToc();
     int p, prev, h;
     h=0;
@@ -884,12 +897,12 @@ public class SuffixTrayBuilder {
   }
 
   /** lcp computation according to Kasai et al.'s algorithm
-   * after Rahmann's suffix array construction 
-   * using the SPACE SAVING technique.
+   * after walk-bothLR suffix array construction 
+   * using the SPACE SAVING xor technique.
    *@param fname filename for lcp array
    *@param dolcp which lcp arrays to compute (1+2+4)
    */
-  private void lcp_rah2x(String fname, int dolcp) {
+  private void lcp_bothLR(String fname, int dolcp) {
     throw new UnsupportedOperationException("Not yet implemented");
   }
     
