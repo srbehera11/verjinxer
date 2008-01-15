@@ -37,7 +37,8 @@ public class SuffixTrayBuilderTest extends TestCase {
    */
   public void testAll() {
     //doAllBinaryStrings();
-    doKlausStrings();
+    //doKlausStrings();
+    doAAA();
   }
  
   
@@ -53,7 +54,6 @@ public class SuffixTrayBuilderTest extends TestCase {
     boolean appendleft = false;
     StringBuilder s = new StringBuilder("1");
     StringBuilder ss;
-    int result;
     
     for(int i=1; i<MAXONES; i++) {
       int zeros = (1<<(i-1));
@@ -143,5 +143,34 @@ public class SuffixTrayBuilderTest extends TestCase {
     
   }
 
+  
+public void doAAA() {
+    //final int asize =  2;
+    final int minL  = 10;
+    final int maxL  = 10;
+    int result;
+    
+    Globals g = new Globals();
+    g.quiet = true;
+    SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
+    stb.amap = AlphabetMap.NUMERIC();
+    
+    for (int L=minL; L<=maxL; L++) {
+      System.out.printf("Length %d:%n", L);
+      byte[] t = new byte[L+2]; // initializes to zero
+      t[L+1]=-1;
+      t[L]=1; // a...ab$
+      stb.s = t;
+      stb.n = L+1;      
+      stb.steps = 0;
+      stb.buildpos_rah1up();
+      result = stb.checkpos_rah1();
+      assertEquals(0, result);
+      System.out.printf("  steps=%d; text=%s%n", stb.steps, Strings.join("",t,0,L));
+    }
+        
+  }
+  
+  
 
 }
