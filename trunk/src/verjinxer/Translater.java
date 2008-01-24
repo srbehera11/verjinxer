@@ -69,6 +69,7 @@ public class Translater {
   
   
   
+  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "translate";
@@ -141,7 +142,7 @@ public class Translater {
       int ch = ' ';
       try {
         FileReader reader = new FileReader(fname);
-        for(ch=reader.read(); ch!=-1 && Character.isWhitespace(ch); ch=reader.read());
+        for(ch=reader.read(); ch!=-1 && Character.isWhitespace(ch); ch=reader.read()) {};
         reader.close();
       } catch (Exception e) {
         g.terminate("translate: could not open sequence file '"+fname+"'; "+e.toString()); }
@@ -318,6 +319,7 @@ public class Translater {
    * -- description is simply the filename;
    * -- separator is appended (never the wildcard).
    */
+  @SuppressWarnings("empty-statement")
   private void processText(String fname) {
     ByteBuffer tr = null;
     long lastbyte = 0;
@@ -354,7 +356,11 @@ public class Translater {
   /******************************* runs ***********************************/
   
   /** reads translated sequence and writes run-related files,
-   * primarily using memory-mapped files */
+   * primarily using memory-mapped files
+   * @param fname TODO
+   * @return TODO
+   * @throws java.io.IOException 
+   */
   public long computeRuns(String fname) throws IOException {
     int run = -1;
     ByteBuffer seq = new ArrayFile(fname+extseq).mapR();

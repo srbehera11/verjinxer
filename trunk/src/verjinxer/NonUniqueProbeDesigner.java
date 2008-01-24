@@ -23,7 +23,9 @@ public class NonUniqueProbeDesigner {
   
   private Globals g;
   
-  /** Creates a new instance of NonUniqueProbeDesigner */
+  /** Creates a new instance of NonUniqueProbeDesigner
+   * @param gl the globals object containing information about logging streams, etc.
+   */
   public NonUniqueProbeDesigner(Globals gl) {
     g = gl;
   }
@@ -47,7 +49,9 @@ public class NonUniqueProbeDesigner {
     g.logmsg("  -x, --external             save memory at the cost of lower speed%n");
   }
   
-  /** if run independently, call main */
+  /** if run independently, call main
+   * @param args  the command line arguments
+   */
   public static void main(String[] args) {
     new NonUniqueProbeDesigner(new Globals()).run(args);
   }
@@ -77,7 +81,9 @@ public class NonUniqueProbeDesigner {
   
   /**
    * @param args the command line arguments
+   * @return zero on success, nonzero if there is a problem
    */
+  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "nonunique";

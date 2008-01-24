@@ -23,7 +23,9 @@ public class FastaFile
    private PrintWriter out;
    private String nextHeader;
    
-   /** Creates a new instance of FastaFile */
+   /** Creates a new instance of FastaFile
+    * @param fname the file name of the FASTA file
+    */
    public FastaFile(final String fname)
    {
       this.fname = fname;
@@ -32,6 +34,7 @@ public class FastaFile
    /** open this FastaFile either for reading or writing 
     * @param mode  either FastaMode.READ or FastaMode.WRITE
     * @return this FastaFile
+    * @throws java.io.IOException 
     */
    public FastaFile open(final FastaMode mode) throws IOException
    {
@@ -52,6 +55,7 @@ public class FastaFile
    
    /** open this FastaFile for reading
     *@return  this FastaFile
+    * @throws java.io.IOException 
     */
    public FastaFile open() throws IOException
    { 

@@ -4,6 +4,7 @@
  * Created on May 14, 2007, 9:08 AM
  * TODO: qgramatonce, suffix, suffixatonce
  * TODO: pvalues and Evalues
+ * TODO / BROKEN: Especially the alignment code needs review!
  */
 
 package verjinxer;
@@ -26,7 +27,9 @@ public class Mapper {
   
   private Globals g;
   
-  /** Creates a new instance of QgramMatcher */
+  /** Creates a new instance of QgramMatcher
+   * @param gl  the globals object to be used (contains information about logging streams, etc)
+   */
   public Mapper(Globals gl) {
     g = gl;
   }
@@ -56,7 +59,9 @@ public class Mapper {
   }
   
   
-  /** if run independently, call main */
+  /** if run independently, call main
+   * @param args  the command line arguments
+   */
   public static void main(String[] args) {
     new Mapper(new Globals()).run(args);
   }
@@ -99,6 +104,7 @@ public class Mapper {
   
   /**
    * @param args the command line arguments
+   * @return zero on success, nonzero if there is a problem
    */
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
