@@ -23,7 +23,9 @@ public class Cutter {
   
   private Globals g;
   
-  /** Creates a new instance of QgramMatcher */
+  /** Creates a new instance of Cutter
+   * @param gl  globals object to use (contains e.g. streams for logging, etc)
+   */
   public Cutter(Globals gl) {
     g = gl;
   }
@@ -44,7 +46,9 @@ public class Cutter {
   }
   
   
-  /** if run independently, call main */
+  /** if run independently, call main
+   * @param args  the command line arguments
+   */
   public static void main(String[] args) {
     new Cutter(new Globals()).run(args);
   }

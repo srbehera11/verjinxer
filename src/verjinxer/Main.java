@@ -123,7 +123,7 @@ public class Main {
   }
   
   private void title() {
-    g.logmsg("%n%s, a versatile Indexer, v%s%n", programname, version);
+    g.logmsg("%n%s, a versatile Java-based Indexer, v%s%n", programname, version);
   }
   
   private void help(String[] args) {

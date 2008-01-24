@@ -23,12 +23,16 @@ public class QgramFrequencer {
   
   private Globals g;
   
-  /** creates a new instance of QgramFrequencer */
+  /** creates a new instance of QgramFrequencer
+   * @param gl  the globals object to use
+   */
   public QgramFrequencer(Globals gl) {
     g = gl;
   }
   
-  /** if run independently, call main */
+  /** if run independently, call main
+   * @param args  the command line arguments
+   */
   public static void main(String[] args) {
     new QgramFrequencer(new Globals()).run(args);
   }
@@ -57,7 +61,6 @@ public class QgramFrequencer {
   boolean rev      = false;
   int asize;
   int q;
-  QGramCoder  coder = null;  // the q-gram coder
   AlphabetMap amap  = null;  // the alphabet map
   byte[]      s     = null;  // the text (coded)
   int         n     = 0;     // length of s
@@ -78,7 +81,9 @@ public class QgramFrequencer {
   
   /**
    * @param args the command line arguments
+   * @return zero on success, nonzero if there is a problem
    */
+  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "qfreq";
@@ -114,7 +119,6 @@ public class QgramFrequencer {
       g.warnmsg("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", di);
       g.terminate(1);
     }
-    coder = new QGramCoder(q,asize);
     amap = g.readAlphabetMap(di+extalph);
     final QGramCoder coder = new QGramCoder(q,asize);
     final int aq = coder.numberOfQGrams();

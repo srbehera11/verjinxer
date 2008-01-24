@@ -20,7 +20,9 @@ public class FastaSequence {
   private String header;
   private StringBuilder sequence;
   
-  /** Creates a new instance of FastaSequence */
+  /** Creates a new instance of FastaSequence
+   * @param header the header (title) of this sequence
+   */
   public FastaSequence(String header) {
     if (header==null) this.header = "";
     else if (header.startsWith(">")) this.header = header.substring(1).trim();
@@ -44,7 +46,10 @@ public class FastaSequence {
     return sequence.length();
   }
   
-  /** converts sequence to a byte array, appending additional -1's */
+  /** converts sequence to a byte array, appending additional -1's
+   * @param additional append this many -1 bytes at the end
+   * @return a byte array representation of this FASTA sequence
+   */
   public byte[] toByteArray(int additional) {
     int ll = sequence.length();
     byte[] ba = new byte[ll+additional];
@@ -53,7 +58,10 @@ public class FastaSequence {
     return ba;
   }
   
-  /** converts reverse sequence to a byte array, appending additional -1's */
+  /** converts reverse sequence to a byte array, appending additional -1's
+   * @param additional append this many -1 bytes at the end
+   * @return a byte array representation of this FASTA sequence, reversed
+   */
   public byte[] toReverseByteArray(int additional) {
     int ll = sequence.length();
     byte[] ba = new byte[ll+additional];
@@ -67,11 +75,15 @@ public class FastaSequence {
   
   /** translates a Fasta sequence into given ByteBuffer
    * @param buf the buffer to write to; can be null, creates a new buffer
+   * @param trim  set to true if you want to trim DNA non-symbol characters at either end.
+   *   TODO: trimming only applies to DNA at the moment -- this should be more general
    * @param amap the alphabet map by which to translate
    * @param reverse if true, translate the reverse sequence
    * @param append a flag (0: append nothing, 1: append wildcard, 2: append separator)
    * @return the ByteBuffer for convenience
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
    */
+  @SuppressWarnings("empty-statement")
   public ByteBuffer translateTo(ByteBuffer buf, final boolean trim, final AlphabetMap amap, final boolean reverse, final int append) 
   throws InvalidSymbolException {
     final int ll = sequence.length();
@@ -100,11 +112,15 @@ public class FastaSequence {
   /** translates a DNA Fasta sequence under bisulfite treatment into given ByteBuffer;
    * this modifies C->T (G->A under complementary rules), except if methylated.
    * @param buf the buffer to write to; can be null, then creates a new buffer
+   * @param trim  set to true if you want to trim DNA non-symbol characters at either end.
+   *   TODO: trimming only applies to DNA at the moment -- this should be more general
    * @param meth if true, assume all Cs before Gs are methylated (not modified)
    * @param compl  if true, translate under complementray rules
    * @param append a flag (0: append nothing, 1: append wildcard, 2: append separator)
    * @return the ByteBuffer for convenience
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
    */
+  @SuppressWarnings("empty-statement")
   public ByteBuffer translateDNABiTo(ByteBuffer buf, final boolean trim, final boolean meth, final boolean compl, final int append)
   throws InvalidSymbolException {
     final int ll = sequence.length();

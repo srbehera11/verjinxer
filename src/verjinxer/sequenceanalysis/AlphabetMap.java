@@ -30,7 +30,7 @@ public class AlphabetMap {
    * It is best to see the example alphabet maps for how to do this,
    * e.g., which strings create the DNA() map, etc.
    *@param lines  the text lines from which to create the alphabet map
-   *@returns  the created alphabet map
+   *@return  the created alphabet map
    */
   public AlphabetMap init(final String[] lines) {
     initstrings = lines;
@@ -93,7 +93,8 @@ public class AlphabetMap {
    * all lines from a given text file into a String[] and creates the
    * alphabet map from these.
    * @param fname  name of the text file
-   * @returns the created alphabet map
+   * @return  the created alphabet map
+   * @throws java.io.IOException 
    */
   public AlphabetMap init(final String fname) throws IOException {
     ArrayList<String> lines = new ArrayList<String>();
@@ -107,7 +108,10 @@ public class AlphabetMap {
   
   /*********************** mode check methods ********************/
   
-  /** checks whether a given character can be translated by this alphabet map */
+  /** checks whether a given character can be translated by this alphabet map
+   * @param p the character
+   * @return  true if p can be translated
+   */
   public final boolean isPreValid(final int p) {
     return (modepreimage[(p<0)?(p+256):p]!=0);
   }
@@ -150,7 +154,9 @@ public class AlphabetMap {
   
   /******************** "show" methods ***********************************/
   
-  /** print the image of the alphabet map to a PrintWriter */
+  /** print the image of the alphabet map to a PrintWriter
+   * @param out  the PrintWriter
+   */
   public void showImage(PrintWriter out) {
     for(int i=0; i<256; i++) {
       if (modeimage[i]==0) continue;
@@ -199,8 +205,12 @@ public class AlphabetMap {
   }
   
   
-  /************************** translation codes ****************************/
-  
+  /************************** translation codes **************************/
+   
+  /** @param b  the character to translate
+   * @return the code corresponding to character b
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
+   */
   public final byte code(byte b) throws InvalidSymbolException {
     int bb = (b<0)?b+256:b;
     if (modepreimage[bb]==0)
@@ -225,8 +235,8 @@ public class AlphabetMap {
   
   /** Computes the pre-image of a given code.
    * @param c  the code 
-   * @returns  the charecter that corresponds to the pre-image of the given code under this alphabet map.
-   * This method throws an InvalidSymbolException if the code is not valid.
+   * @return the charecter that corresponds to the pre-image of the given code under this alphabet map.
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException if the code is not valid.
    */
   public final char preimage(byte c) throws InvalidSymbolException {
     int cc = (c<0)?c+256:c;
@@ -239,8 +249,8 @@ public class AlphabetMap {
    * @param a  the array of code values
    * @param offset  where to start computing pre-images in a
    * @param len  how many pre-images to compute
-   * @returns the string of concatenated pre-images of a[offset .. offset+len-1]
-   * This method throws an InvalidSymbolException on failure.
+   * @return the string of concatenated pre-images of a[offset .. offset+len-1]
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException if there is a problem
    */
   public final String preimage(byte[] a, int offset, int len) throws InvalidSymbolException {
     StringBuilder s = new StringBuilder(len);
@@ -250,7 +260,13 @@ public class AlphabetMap {
   
   /**************************** applyTo functions ***********************/
   
-  
+  /**
+   * translate a string, and possibly append a separator at the end
+   * @param s  the string
+   * @param appendSeparator  set to true if you want to append a separator at the end
+   * @return the translated byte array
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException
+   */
   public byte[] applyTo(final String s, final boolean appendSeparator)
   throws InvalidSymbolException {
     return applyTo(s,appendSeparator,false);
@@ -266,14 +282,24 @@ public class AlphabetMap {
     return ba;
   }
   
-  /** translate byte array in place */
-  public void applyTo(byte[] s, final boolean setSeparator)
+  /** translate byte array in place
+   * @param s  the original byte array (modified during the process!)
+   * @param setSeparator  set to true if you want to set the last byte in s to the separator
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
+   */
+  public void applyTo(final byte[] s, final boolean setSeparator)
   throws InvalidSymbolException {
     applyTo(s,setSeparator,false);
   }
   
-  /** translate byte array in place */
-  public void applyTo(byte[] s, final boolean setSeparator, final boolean separateByWildcard)
+  /** translate byte array in place
+   * @param s  the original byte array (modified during the process!)
+   * @param setSeparator  set to true if you want to set the last byte in s to the separator
+   * @param separateByWildcard  set to true if you want to use the wildcard code instead of the separator code
+   *   at the end (only has and effect if setSeparator is true)
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException
+   */
+  public void applyTo(final byte[] s, final boolean setSeparator, final boolean separateByWildcard)
   throws InvalidSymbolException {
     int l = s.length;
     int ll = l-(setSeparator?1:0);
@@ -281,7 +307,16 @@ public class AlphabetMap {
     if (setSeparator) s[ll] = (separateByWildcard? codeWildcard() : codeSeparator());
   }
   
-  /** translate string into ByteBuffer (may be null -> reallocate) */
+  /** translate string into ByteBuffer (may be null -> reallocate)
+   * @param sequence  the string to translate
+   * @param buf the ByteBuffer to translate s into. This can be null, in which case
+   *   a new byte buffer is allocated. A new buffer is also allocated if the given 
+   *   buffer is too small to fit the translated string.
+   * @param append  set to true to append a character (eg, a separator) at the end
+   * @param appendwhat  specify the character to append
+   * @return  either the target ByteBuffer buf, or a newly allocated buffer
+   * @throws verjinxer.sequenceanalysis.InvalidSymbolException
+   */
   public ByteBuffer applyTo(final String sequence, ByteBuffer buf, final boolean append, final byte appendwhat) 
   throws InvalidSymbolException {
     int ll = sequence.length();
@@ -299,7 +334,9 @@ public class AlphabetMap {
   
   /*******************  special alphabet maps ******************/
   
-  /** static DNA alphabet */
+  /** 
+   * @return the standard DNA alphabet
+   */
   public static final AlphabetMap DNA() {
     AlphabetMap a = new AlphabetMap();
     a.init(new String[] {
@@ -310,7 +347,9 @@ public class AlphabetMap {
     return a;
   }
   
-  /** static complementary DNA alphabet */
+  /**
+   * @return  the standard complementary DNA alphabet
+   */
   public static final AlphabetMap cDNA() {
     AlphabetMap a = new AlphabetMap();
     a.init(new String[] {
@@ -321,7 +360,9 @@ public class AlphabetMap {
     return a;
   }
   
-  /** static bisulfite-treated nonmethylated DNA alphabet */
+  /**
+   * @return a representation of the bisulfite-treated nonmethylated DNA alphabet
+   */
   public static final AlphabetMap biDNA() {
     AlphabetMap a = new AlphabetMap();
     a.init(new String[] {
@@ -332,7 +373,9 @@ public class AlphabetMap {
     return a;
   }
   
-  /** static complementary bisulfite-treated nonmethylated DNA alphabet */
+  /** 
+   * @return a representation of the complementary bisulfite-treated nonmethylated DNA alphabet
+   */
   public static final AlphabetMap cbiDNA() {
     AlphabetMap a = new AlphabetMap();
     a.init(new String[] {
@@ -343,6 +386,9 @@ public class AlphabetMap {
     return a;
   }
 
+  /**
+   * @return the numeric alphabet 0..9
+   */
   public static final AlphabetMap NUMERIC() {
     AlphabetMap a = new AlphabetMap();
     a.init(new String[] {
@@ -351,6 +397,9 @@ public class AlphabetMap {
     return a;
   }
   
+  /**
+   * @return  the standard protein alphebet
+   */
   public static final AlphabetMap Protein() {
     AlphabetMap a = new AlphabetMap();
     a.init(new String[] {

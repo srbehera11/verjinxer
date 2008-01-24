@@ -27,7 +27,9 @@ public final class QgramIndexer {
   
   private Globals g;
   
-  /** Creates a new instance of QgramIndexer */
+  /** Creates a new instance of QgramIndexer
+   * @param gl  the Globals object to use
+   */
   public QgramIndexer(Globals gl) {
     g = gl;
   }
@@ -48,7 +50,9 @@ public final class QgramIndexer {
     g.logmsg("  -X, --notexternal            DON'T save memory at the cost of lower speed%n");
   }
   
-  /** if run independently, call main */
+  /** if run independently, call main
+   * @param args  the command line arguments
+   */
   public static void main(String[] args) {
     new QgramIndexer(new Globals()).run(args);
   }
@@ -56,6 +60,7 @@ public final class QgramIndexer {
   
   /**
    * @param args the command line arguments
+   * @return zero on success, nonzero if there is a problem
    */
   public int run(String[] args) {
     g.cmdname = "qgram";
@@ -253,7 +258,9 @@ public final class QgramIndexer {
    *   long[] times contains the times taken to compute the q-gram index in ms
    *   int    maxfreq  largest frequency
    *   int    maxqbck  largest q-bucket size
+   * @throws java.io.IOException 
    */
+  @SuppressWarnings("empty-statement")
   public Object[] generateQGramIndex(
 		final String seqfile,
 		final int q,
@@ -404,9 +411,11 @@ public final class QgramIndexer {
    * @param bucketfile filename of the q-bucket file
    * @param qposfile  filename of the q-gram index
    * @param qfreqfile  filename of the q-gram frequencies file
-   * @param external  conserve memory, runs possibly slower
+   * @param external  conserve memory, runs possibly slower (currently NOT USED)
+   * @param thefilter a BitSet indicating which q-grams should be ignored
    * @return an index &gt;=0 where the first error in qpos is found, or
    *  -N-1&lt;0, where N is the number of q-grams in the index.
+   * @throws java.io.IOException 
    */
   public int checkQGramIndex(final String seqfile, final int q, final int asize,
       final String bucketfile, final String qposfile, final String qfreqfile, 

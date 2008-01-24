@@ -105,7 +105,10 @@ public class Globals {
   
   /**************************************************************************/
   
-  /** read prjfile or terminate */
+  /** read prjfile or terminate
+   * @param filename  the complete filename of the .prj file
+   * @return the project information in a Properties object
+   */
   public final Properties readProject(String filename) {
     Properties prj = new Properties();
     BufferedReader prjfile = null;
@@ -231,6 +234,7 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the ByteBuffer with the mapped file's contents
    */
+  @SuppressWarnings("empty-statement")
   MappedByteBuffer mapRByteArray(String file) {
     MappedByteBuffer b = null;
     logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
@@ -252,6 +256,7 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the IntBuffer with the mapped file's contents
    */
+  @SuppressWarnings("empty-statement")
   IntBuffer mapRIntArray(String file) {
     IntBuffer b = null;
     logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
@@ -270,6 +275,7 @@ public class Globals {
   
   //======================= text file readers =================================
   
+  @SuppressWarnings("empty-statement")
   ArrayList<String> slurpTextFile(String file, int ll) {
     if (ll<=0) ll=32;
     logmsg("%s: reading '%s'; expecting %d lines...%n", cmdname, file, ll);
