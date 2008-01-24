@@ -8,8 +8,6 @@
 package verjinxer;
 
 import java.nio.*;
-import static java.nio.channels.FileChannel.*;
-import static java.lang.Math.*;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Properties;

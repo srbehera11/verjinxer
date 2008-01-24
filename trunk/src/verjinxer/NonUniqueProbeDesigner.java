@@ -9,8 +9,6 @@ package verjinxer;
 
 import java.io.*;
 import java.nio.*;
-import java.nio.channels.*;
-import static java.nio.channels.FileChannel.*;
 import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;

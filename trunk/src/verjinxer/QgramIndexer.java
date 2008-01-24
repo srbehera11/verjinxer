@@ -15,7 +15,6 @@ import static java.lang.Math.*;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Properties;
-import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
@@ -140,8 +139,99 @@ public final class QgramIndexer {
     return returnvalue;
   } // end run
   
-  
-  
+  /**
+   * Reads a sequence file from disk into a ByteBuffer.
+   *
+   * @param seqfile Name of the sequence file.
+   * @param external Whether to do more on disk.
+   * @return The sequence.
+   */
+  private ByteBuffer readSequenceFile(final String seqfile, boolean external) throws IOException
+  {
+    // Read the sequence file into memory, either by memory mapping or reading byte-by-byte
+    
+    final FileChannel fcin = new FileInputStream(seqfile).getChannel();
+    final long ll = fcin.size();
+    g.logmsg("  reading %d bytes...%n",ll);
+    ByteBuffer in;
+    if(external) {
+      g.logmsg("  mapping input file to memory%n");
+      in = fcin.map(MapMode.READ_ONLY, 0, ll);
+    } else {
+      in = ByteBuffer.allocate((int)ll);
+      int read=0;
+      while (read<ll) { read+=fcin.read(in); g.logmsg("  read %d bytes%n",read); }
+    }
+    fcin.close();
+    assert(in.limit() == ll);
+    return in;
+  }
+
+  /**
+   * Reads the given ByteBuffer and computes q-gram frequencies.
+   * @param in The input ByteBuffer.
+   * @param coder The q-gram coder.
+   * @param qseqfreqfile If this is not null, an array sfrq will be written to this file.
+   *           sfrq[i] == n means: q-gram i appears in n different sequences.
+   * @param separator a sequence separator, only used when qseqfreqfile != null.
+   * @return An array frq of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times. 
+   */
+  private int[] computeFrequencies(ByteBuffer in, QGramCoder coder, String qseqfreqfile, int separator) {
+    int aq = coder.numberOfQGrams();
+    int q = coder.getq();
+    int asize = coder.getAsize();
+    byte[] qgram = new byte[q];
+	  int[] lastseq = null;
+	  // sqfr[i] == n means: 
+    int[] sfrq = null;
+    // frq[i] == n means: q-gram i appears n times
+    int[] frq = new int[aq+1];   // sentinel at the end
+
+    boolean seqfreq = qseqfreqfile != null;
+    if (seqfreq) {
+		  lastseq = new int[aq];
+		  Arrays.fill(lastseq, -1);
+		  sfrq = new int[aq];
+	  }
+
+	  int seqnum = 0;
+	  int qcode = -1;
+	  byte next;
+	  int  success;
+	  in.position(0);
+    long ll = in.limit();
+	  for(int i=0; i<ll; i++) {
+		  if (qcode>=0) // attempt simple update
+		  {
+			  next = in.get();
+			  qcode = coder.codeUpdate(qcode,next); // read pos i, have q-gram at i-q+1
+			  if (qcode>=0) {
+				  frq[qcode]++;
+				  if (seqfreq && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
+			  } else { // just read a non-symbol char for the first time
+				  if (next==separator) seqnum++;
+			  }
+			  continue;
+		  }
+		  // No previous qcode available, scan ahead for at least q new bytes
+		  for(success=0; success<q && i<ll; i++) {
+			  next = in.get();
+			  if (next<0 || next>=asize) { success=0; if (next==separator) seqnum++; } else qgram[success++]=next;
+		  }
+		  i--; // already incremented i beyond read position, so i--
+		  if (success==q) {
+			  qcode = coder.code(qgram);
+			  frq[qcode]++;
+			  if (seqfreq && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
+		  }
+	  }
+    if (seqfreq) {
+      g.dumpIntArray(qseqfreqfile, sfrq);
+    }
+    sfrq = null; lastseq=null;  // hand over to garbage collector TODO necessary?
+    return frq; 
+  }
+
   /** generates a q-gram index of the ArrayFile
    * @param seqfile  name of the sequence file (i.e., of the translated text)
    * @param q  q-gram length
@@ -164,28 +254,21 @@ public final class QgramIndexer {
    *   int    maxfreq  largest frequency
    *   int    maxqbck  largest q-bucket size
    */
-  public Object[] generateQGramIndex(final String seqfile,
-      final int q, final int asize, final int separator,
-      final String bucketfile, final String qposfile, final String qfreqfile,
-      final String qseqfreqfile, final boolean external, final BitSet thefilter)
-      throws IOException {
-    
+  public Object[] generateQGramIndex(
+		final String seqfile,
+		final int q,
+		final int asize,
+		final int separator,
+		final String bucketfile,
+		final String qposfile,
+		final String qfreqfile,
+		final String qseqfreqfile,
+		final boolean external,
+		final BitSet thefilter) throws IOException 
+{
     TicToc gtimer = new TicToc();
-    long[] times = new long[4];   // 0: total, 1: freq counting, 2: bck generation, 3:  qpos
-    
-    final FileChannel fcin = new FileInputStream(seqfile).getChannel();
-    final long ll = fcin.size();
-    g.logmsg("  reading %d bytes...%n",ll);
-    ByteBuffer in;
-    if(external) {
-      g.logmsg("  mapping input file to memory%n");
-      in = fcin.map(MapMode.READ_ONLY, 0, ll);
-    } else {
-      in = ByteBuffer.allocate((int)ll);
-      int read=0;
-      while (read<ll) { read+=fcin.read(in); g.logmsg("  read %d bytes%n",read); }
-    }
-    fcin.close();
+    ByteBuffer in = readSequenceFile(seqfile, external);
+    long ll = in.limit();
     g.logmsg("  ...this took %.1f sec%n",gtimer.tocs());
     
     final QGramCoder coder = new QGramCoder(q,asize);
@@ -193,63 +276,26 @@ public final class QgramIndexer {
     final int aq = coder.numberOfQGrams();
     g.logmsg("  counting %d different %d-grams...%n",aq,q);
     
-    
-    /* *** A. ***  Scan file once and count qgrams */
+    // Scan file once and count qgrams.
+    // One file may contain multiple sequences, separated by the separator.
     TicToc timer = new TicToc();
-    int[] frq = new int[aq+1];   // 0 sentinel at the end
-    int[] bck = null;
-    int[] lastseq = null;
-    int[] sfrq = null;
-    if (qseqfreqfile!=null) {
-      lastseq = new int[aq];
-      Arrays.fill(lastseq, -1);
-      sfrq = new int[aq];
-    }
+    int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
     
-    int seqnum = 0;
-    int  qcode = -1;
-    byte next;
-    int  success;
-    in.position(0);
-    for(int i=0; i<ll; i++) {
-      if (qcode>=0) // attempt simple update
-      {
-        next = in.get();
-        qcode = coder.codeUpdate(qcode,next); // read pos i, have q-gram at i-q+1
-        if (qcode>=0) {
-          frq[qcode]++;
-          if (qseqfreqfile!=null && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
-        } else { // just read a non-symbol char for the first time
-          if (next==separator) seqnum++;
-        }
-        continue;
-      }
-      // No previous qcode available, scan ahead for at least q new bytes
-      for(success=0; success<q && i<ll; i++) {
-        next = in.get();
-        if (next<0 || next>=asize) { success=0; if (next==separator) seqnum++; } else qgram[success++]=next;
-      }
-      i--; // already incremented i beyond read position, so i--
-      if (success==q) {
-        qcode = coder.code(qgram);
-        frq[qcode]++;
-        if (qseqfreqfile!=null && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
-      }
-    }
     //g.logmsg("  !! seqnum is %d, separator is %d%n",seqnum, separator);
     g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
     
     int maxfreq = 0;
     for (int c=0; c<aq; c++)  if (frq[c]>maxfreq) maxfreq=frq[c];
     if (qfreqfile!=null)    { g.dumpIntArray(qfreqfile, frq, 0, aq); }
-    if (qseqfreqfile!=null) { g.dumpIntArray(qseqfreqfile, sfrq); }
-    sfrq = null; lastseq=null;  // hand over to garbage collector
-    times[1] = timer.tocMilliSeconds();
-    g.logmsg("  time for word counting and writing: %.2f sec%n",times[1]/1000.0);
+    long time_freq_counting = timer.tocMilliSeconds();
+    g.logmsg("  time for word counting and writing: %.2f sec%n", time_freq_counting/1000.0);
     
     
     /* Compute and write bucket array */
     timer.tic();
+    // bck[i] == n means: positions of q-grams with code i start at index n within qpos
+    int[] bck = null;
+
     if (external) { bck = frq;  frq=null; } else  {
       // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
       bck = Arrays.copyOf(frq, frq.length);
@@ -262,9 +308,10 @@ public final class QgramIndexer {
     for(int c=0; c<aq; c++) { add=bck[c]; bck[c]=sum; sum+=add; if (add>maxqbck) maxqbck=add; }
     bck[aq]=sum;
     if (bucketfile!=null) { g.dumpIntArray(bucketfile, bck); }
-    times[2] = timer.tocMilliSeconds();
+    long time_bck_generation = timer.tocMilliSeconds();
     g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n",ll,sum);
     //if (sum==0) { Object[] ret = {bck, null, frq, times, maxfreq, maxqbck}; return ret; }
+    
     
     // Determine slice size
     timer.tic();
@@ -298,6 +345,7 @@ public final class QgramIndexer {
       
       // read through input and collect all qgrams with  bckstart<=qcode<bckend
       in.position(0);
+      int qcode = -1; // TODO MM this is semantically different from the previous version
       for(int i=0; i<ll; i++) {
         if (qcode>=0) // attempt simple update
         {
@@ -309,8 +357,9 @@ public final class QgramIndexer {
           continue;
         }
         // No previous qcode available, scan ahead for at least q new bytes
+        int success;
         for(success=0; success<q && i<ll; i++) {
-          next = in.get();
+          byte next = in.get();
           if (next<0 || next>=asize) success=0;
           else qgram[success++]=next;
         }
@@ -336,13 +385,13 @@ public final class QgramIndexer {
     }
     
     outfile.close();
-    times[3] = timer.tocMilliSeconds();
-    times[0] = gtimer.tocMilliSeconds();
-    
+    long time_qpos = timer.tocMilliSeconds();
+    long time_total = gtimer.tocMilliSeconds();
     in = null;
     int[] qpos = null;
     if (slicesize==sum && !external) qpos = qposslice;
     if(external) { bck=null; frq=null; }
+    long times[] = { time_total, time_freq_counting, time_bck_generation, time_qpos };
     Object[] ret = {bck, qpos, frq, times, maxfreq, maxqbck};
     return ret;
   }
@@ -367,7 +416,6 @@ public final class QgramIndexer {
     // Initialize q-gram storage
     final QGramCoder coder = new QGramCoder(q,asize);
     byte[] qgram = new byte[q];
-    final int aq = coder.numberOfQGrams();
     
     // Read s and bck into arrays
     TicToc timer = new TicToc();
