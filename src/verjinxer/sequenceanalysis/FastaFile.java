@@ -19,7 +19,6 @@ public class FastaFile
    { READ, WRITE };
    
    private String fname;
-   private FastaMode mode;
    private BufferedReader in;
    private PrintWriter out;
    private String nextHeader;
@@ -47,7 +46,6 @@ public class FastaFile
         out = new PrintWriter(new FileWriter(fname));
         in = null;
      }
-     this.mode = mode;
      this.nextHeader = null;
      return this;
    }
@@ -67,7 +65,6 @@ public class FastaFile
       if (out!=null) out.close();
       in = null;
       out = null;
-      mode = null;
       nextHeader = null;
    }
    
