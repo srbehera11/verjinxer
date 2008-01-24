@@ -49,6 +49,9 @@ public final class QGramCoder
    /** @return the q-value of this coder */
    public int getq() { return q; }
    
+   /** @return the alphabet size of this coder */
+   public int getAsize() { return asize; }
+  
    /** returns the qgram code >0 or -1 if illegal characters appear
     * @param qgram a byte array with the numbers to be interpreted as base-asize number
     */
