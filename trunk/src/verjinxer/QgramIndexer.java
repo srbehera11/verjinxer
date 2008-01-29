@@ -153,8 +153,9 @@ public final class QgramIndexer {
    */
   private ByteBuffer readSequenceFile(final String seqfile, boolean external) throws IOException
   {
-    // Read the sequence file into memory, either by memory mapping or reading byte-by-byte
-    
+    TicToc timer = new TicToc();
+
+    // Read the sequence file into memory, either by memory mapping or reading it byte-by-byte
     final FileChannel fcin = new FileInputStream(seqfile).getChannel();
     final long ll = fcin.size();
     g.logmsg("  reading %d bytes...%n",ll);
@@ -169,6 +170,7 @@ public final class QgramIndexer {
     }
     fcin.close();
     assert(in.limit() == ll);
+    g.logmsg("  ...this took %.1f sec%n",timer.tocs());
     return in;
   }
 
@@ -179,7 +181,7 @@ public final class QgramIndexer {
    * @param qseqfreqfile If this is not null, an array sfrq will be written to this file.
    *           sfrq[i] == n means: q-gram i appears in n different sequences.
    * @param separator a sequence separator, only used when qseqfreqfile != null.
-   * @return An array frq of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times. 
+   * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
    */
   private int[] computeFrequencies(ByteBuffer in, QGramCoder coder, String qseqfreqfile, int separator) {
     int aq = coder.numberOfQGrams();
@@ -192,7 +194,7 @@ public final class QgramIndexer {
     // frq[i] == n means: q-gram i appears n times
     int[] frq = new int[aq+1];   // sentinel at the end
 
-    boolean seqfreq = qseqfreqfile != null;
+    boolean seqfreq = (qseqfreqfile != null);
     if (seqfreq) {
 		  lastseq = new int[aq];
 		  Arrays.fill(lastseq, -1);
@@ -237,6 +239,50 @@ public final class QgramIndexer {
     return frq; 
   }
 
+  /**
+   * Given q-gram frequencies, computes the necessary sizes of the buckets,
+   * while taking a filter into account.
+   * @param frq
+   * @param external
+   * @param thefilter
+   * @param bucketfile
+   * @return An array of size 2 containing {bck, maxbck}
+   * where bck is the array of bucket positions and maxbck is the largest occurring bucket size.
+   * The actual buckets are in bck[0] .. bck[bck.length-2]. The element bck[bck.length-1] is the sum
+   * over all buckets.
+   */
+  private Object[] computeQGramBuckets(int[] frq, boolean external, final BitSet thefilter, final String bucketfile) {
+    int[] bck;
+    if (external) {
+      bck = frq;
+      frq = null; 
+    } else {
+      // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
+      bck = Arrays.copyOf(frq, frq.length);
+    }
+    int aq = bck.length-1;
+    
+    // apply filter
+    for(int c=0; c<aq; c++)
+      if (thefilter.get(c))
+        bck[c]=0; // reduce frequency to zero
+    
+    // compute bck from frq
+    int sum=0;
+    int add=0;
+    int maxbck=0; // maximum bucket size
+    for(int c=0; c<aq; c++) { 
+      add=bck[c]; 
+      bck[c]=sum; 
+      sum+=add; 
+      if (add>maxbck) maxbck=add; 
+    }
+    bck[aq]=sum;
+    if (bucketfile!=null) { g.dumpIntArray(bucketfile, bck); }
+    Object[] result = { bck, maxbck };
+    return result;
+  }
+
   /** generates a q-gram index of the ArrayFile
    * @param seqfile  name of the sequence file (i.e., of the translated text)
    * @param q  q-gram length
@@ -273,10 +319,9 @@ public final class QgramIndexer {
 		final boolean external,
 		final BitSet thefilter) throws IOException 
 {
-    TicToc gtimer = new TicToc();
+    TicToc totalTimer = new TicToc();
     ByteBuffer in = readSequenceFile(seqfile, external);
     long ll = in.limit();
-    g.logmsg("  ...this took %.1f sec%n",gtimer.tocs());
     
     final QGramCoder coder = new QGramCoder(q,asize);
     byte[] qgram = new byte[q];
@@ -287,38 +332,26 @@ public final class QgramIndexer {
     // One file may contain multiple sequences, separated by the separator.
     TicToc timer = new TicToc();
     int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
-    
     //g.logmsg("  !! seqnum is %d, separator is %d%n",seqnum, separator);
     g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
     
-    int maxfreq = 0;
-    for (int c=0; c<aq; c++)  if (frq[c]>maxfreq) maxfreq=frq[c];
-    if (qfreqfile!=null)    { g.dumpIntArray(qfreqfile, frq, 0, aq); }
-    long time_freq_counting = timer.tocMilliSeconds();
-    g.logmsg("  time for word counting and writing: %.2f sec%n", time_freq_counting/1000.0);
+    int maxfreq = ArrayUtils.maximumElement(frq);
+    if (qfreqfile!=null) g.dumpIntArray(qfreqfile, frq, 0, aq);
+    long timeFreqCounting = timer.tocMilliSeconds();
+    g.logmsg("  time for word counting and writing: %.2f sec%n", timeFreqCounting/1000.0);
     
-    
-    /* Compute and write bucket array */
+    // Compute and write bucket array
     timer.tic();
     // bck[i] == n means: positions of q-grams with code i start at index n within qpos
-    int[] bck = null;
+    int[] bck;
+    Object[] r = computeQGramBuckets(frq, external, thefilter, bucketfile);
+    bck = (int[])r[0];
+    int maxbck = (Integer)r[1];
+    int sum = bck[aq];
+    long timeBckGeneration = timer.tocMilliSeconds();
 
-    if (external) { bck = frq;  frq=null; } else  {
-      // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
-      bck = Arrays.copyOf(frq, frq.length);
-    }
-    
-    for(int c=0; c<aq; c++)  if (thefilter.get(c))  bck[c]=0; // reduce fequency to zero
-    
-    // compute qbck from qfreq
-    int sum=0; int add=0; int maxqbck=0;
-    for(int c=0; c<aq; c++) { add=bck[c]; bck[c]=sum; sum+=add; if (add>maxqbck) maxqbck=add; }
-    bck[aq]=sum;
-    if (bucketfile!=null) { g.dumpIntArray(bucketfile, bck); }
-    long time_bck_generation = timer.tocMilliSeconds();
     g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n",ll,sum);
     //if (sum==0) { Object[] ret = {bck, null, frq, times, maxfreq, maxqbck}; return ret; }
-    
     
     // Determine slice size
     timer.tic();
@@ -392,14 +425,15 @@ public final class QgramIndexer {
     }
     
     outfile.close();
-    long time_qpos = timer.tocMilliSeconds();
-    long time_total = gtimer.tocMilliSeconds();
+    long timeQpos = timer.tocMilliSeconds();
+    long timeTotal = totalTimer.tocMilliSeconds();
     in = null;
     int[] qpos = null;
     if (slicesize==sum && !external) qpos = qposslice;
-    if(external) { bck=null; frq=null; }
-    long times[] = { time_total, time_freq_counting, time_bck_generation, time_qpos };
-    Object[] ret = {bck, qpos, frq, times, maxfreq, maxqbck};
+    if (external) { bck=null; frq=null; }
+
+    long times[] = { timeTotal, timeFreqCounting, timeBckGeneration, timeQpos };
+    Object[] ret = {bck, qpos, frq, times, maxfreq, maxbck};
     return ret;
   }
   
