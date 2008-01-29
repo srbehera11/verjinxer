@@ -49,6 +49,7 @@ public class Main {
     g.logmsg("  -O, --outdir <directory>  output directory (not recommended)%n");
     g.logmsg("  -L, --log    <logfile>    add'l file to print diagnostic messages to%n");
     g.logmsg("  -P, --noplog              DON'T write messages to project .log file%n");
+    g.logmsg("  -h, --help                show this help%n");
   }
   
   public static void main(String[] args) {
@@ -58,14 +59,18 @@ public class Main {
   
   public void run(String[] args) {
     g.action = args;
-    Options opt = new Options("Q=quiet,D=dir:,O=outdir=outputdir:,L=log=logfile:,P=noplog=noprojectlog");
+    Options opt = new Options("Q=quiet,D=dir:,O=outdir=outputdir:,L=log=logfile:,P=noplog=noprojectlog,h=help");
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException e) {
       g.warnmsg("%s%n", e.toString());
       System.exit(1);
     }
-    
+
+    if (opt.isGiven("h")) {
+      usage(); g.terminate(0);
+    }
+ 
     // Determine quietmode?
     if (opt.isGiven("Q")) g.quiet=true;
     
