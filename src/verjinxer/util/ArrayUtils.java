@@ -38,6 +38,7 @@ public class ArrayUtils {
   }
   
   
+  @SuppressWarnings("unused")
   public static final boolean allocates(int size) {
     byte[] test = null;
     System.gc();
@@ -118,6 +119,15 @@ public class ArrayUtils {
       }
       return a;
     }
+  }
+  
+  /** @return the maximum element of the given array */
+  public static int maximumElement(int[] array) {
+    int maximum = 0;
+    for (int i=0; i<array.length; i++)
+      if (array[i] > maximum)
+        maximum = array[i];
+    return maximum;
   }
   
 }
