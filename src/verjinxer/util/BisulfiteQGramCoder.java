@@ -25,6 +25,8 @@ public final class BisulfiteQGramCoder
 		qcode = 0;
 		qcodes_bisulfite = new HashSet<Integer>(); 
 		qcodes_bisulfite_rc = new HashSet<Integer>(); 
+    qcodes_bisulfite.add(0);
+    qcodes_bisulfite_rc.add(0);
 	}
 	
 	// (hardcoded) encoding for nucleotides
@@ -102,9 +104,24 @@ public final class BisulfiteQGramCoder
 				
 			default:
 				// TODO something
-				System.exit(-1);
+				throw new IllegalArgumentException("expecting a valid alphabet character");
 		}
+    assert(qcodes_bisulfite.contains(qcode));
+    assert(qcodes_bisulfite_rc.contains(qcode));
 	}
+  
+  public QGramCoder getCoder() {
+    return coder;
+  }
+  
+  
+  public void reset() {
+    qcode = 0; 
+    qcodes_bisulfite.clear();
+    qcodes_bisulfite_rc.clear();
+    qcodes_bisulfite.add(0);
+    qcodes_bisulfite_rc.add(0);
+  }
 
 /*
 	public void update(byte next) {

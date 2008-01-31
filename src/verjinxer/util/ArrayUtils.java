@@ -37,7 +37,7 @@ public class ArrayUtils {
     return (min/8)*8;
   }
   
-  
+  /** @return true if size bytes can be allocated */
   @SuppressWarnings("unused")
   public static final boolean allocates(int size) {
     byte[] test = null;
