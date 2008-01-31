@@ -14,6 +14,7 @@ import static java.nio.channels.FileChannel.*;
 import static java.lang.Math.*;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.Properties;
 import verjinxer.util.*;
 import static verjinxer.Globals.*;
@@ -46,6 +47,7 @@ public final class QgramIndexer {
     g.logmsg("  -f, --filter     <cplx:occ>  PERMANENTLY apply low-complexity filter%n");
     g.logmsg("  -c, --check                  additionally check index integrity%n");
     g.logmsg("  -C, --onlycheck              ONLY check index integrity%n");
+    g.logmsg("  -b, --bisulfite              simulate bisulfite treatment%n");
     g.logmsg("  --nofreq                     don't write q-gram frequencies%n");
     g.logmsg("  -X, --notexternal            DON'T save memory at the cost of lower speed%n");
   }
@@ -66,7 +68,7 @@ public final class QgramIndexer {
     g.cmdname = "qgram";
     int returnvalue = 0;
     String action = "qgram \"" + Strings.join("\" \"",args)+ "\"";
-    Options opt = new Options("q:,f=filter:,c=check,C=onlycheck,nofreq,X=notexternal=nox=noexternal");
+    Options opt = new Options("q:,f=filter:,c=check,C=onlycheck,nofreq,X=notexternal=nox=noexternal,b=bisulfite");
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) { g.terminate("qgram: "+ex.toString()); }
@@ -77,6 +79,7 @@ public final class QgramIndexer {
     boolean nofreq = (opt.isGiven("nofreq"));
     boolean check = (opt.isGiven("c"));
     boolean checkonly = (opt.isGiven("C"));
+    boolean bisulfite = opt.isGiven("b");
     
     // Determine parameter q
     int q = 0;
@@ -126,11 +129,15 @@ public final class QgramIndexer {
         String freqfile  = ((!nofreq)? dout+extqfreq : null);
         String sfreqfile = ((!nofreq)? dout+extqseqfreq : null);
         result = generateQGramIndex(di+extseq, qq, asize, separator,
-            dout+extqbck, dout+extqpos, freqfile, sfreqfile, external, thefilter);
+            dout+extqbck, dout+extqpos, freqfile, sfreqfile, external, thefilter, bisulfite);
        } catch (IOException e) {
-        g.warnmsg("qgram: failed on %s: %s; continuing...%n",indexname,e.toString());
-        g.stopplog();
-        continue;
+         g.warnmsg("qgram: failed on %s: %s; continuing...%n",indexname,e.toString());
+         g.stopplog();
+         continue;
+       } catch (IllegalArgumentException e) {
+         g.warnmsg("qgram: failed on %s: %s; continuing...%n", indexname, e.toString());
+         g.stopplog();
+         continue;
        }
        prj.setProperty("qfreqMax",result[4].toString());
        prj.setProperty("qbckMax",result[5].toString());
@@ -183,11 +190,10 @@ public final class QgramIndexer {
    * @param separator a sequence separator, only used when qseqfreqfile != null.
    * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
    */
-  private int[] computeFrequencies(ByteBuffer in, QGramCoder coder, String qseqfreqfile, int separator) {
+  private int[] computeFrequencies(ByteBuffer in, MultiQGramCoder coder, String qseqfreqfile, int separator) {
     int aq = coder.numberOfQGrams();
     int q = coder.getq();
     int asize = coder.getAsize();
-    byte[] qgram = new byte[q];
 	  int[] lastseq = null;
 	  // sqfr[i] == n means: 
     int[] sfrq = null;
@@ -202,34 +208,52 @@ public final class QgramIndexer {
 	  }
 
 	  int seqnum = 0;
-	  int qcode = -1;
 	  byte next;
-	  int  success;
+    boolean atSequenceStart = true;
 	  in.position(0);
     long ll = in.limit();
-	  for(int i=0; i<ll; i++) {
-		  if (qcode>=0) // attempt simple update
-		  {
+	  for (int i = 0; i < ll; i++) {
+		  if (atSequenceStart) {
+        int success;
+        // No previous qcode available, scan ahead for at least q new bytes
+        for(success=0; success<q && i<ll; i++) {
+          next = in.get();
+          if (next<0 || next>=asize) {
+            coder.reset();
+            success=0;
+            if (next==separator)
+              seqnum++; 
+          } else {
+            coder.update(next);
+            success++;
+          }
+        }
+        i--; // already incremented i beyond read position, so i--
+        if (success==q) {
+          for (int qcode : coder.getCodes()) {
+            frq[qcode]++;
+            if (seqfreq && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; } // TODO is this still correct?
+          }
+        }
+        atSequenceStart = false;
+      } else { // attempt simple update
 			  next = in.get();
-			  qcode = coder.codeUpdate(qcode,next); // read pos i, have q-gram at i-q+1
-			  if (qcode>=0) {
-				  frq[qcode]++;
-				  if (seqfreq && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
-			  } else { // just read a non-symbol char for the first time
-				  if (next==separator) seqnum++;
-			  }
-			  continue;
-		  }
-		  // No previous qcode available, scan ahead for at least q new bytes
-		  for(success=0; success<q && i<ll; i++) {
-			  next = in.get();
-			  if (next<0 || next>=asize) { success=0; if (next==separator) seqnum++; } else qgram[success++]=next;
-		  }
-		  i--; // already incremented i beyond read position, so i--
-		  if (success==q) {
-			  qcode = coder.code(qgram);
-			  frq[qcode]++;
-			  if (seqfreq && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
+        if (next == separator) {
+          seqnum++;
+          atSequenceStart = true;
+          coder.reset();
+        } else {
+          if (0 <= next && next < asize) {
+            coder.update(next); // read pos i, have q-gram at i-q+1
+            for (int qcode : coder.getCodes()) {
+              frq[qcode]++;
+              if (seqfreq && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
+            }
+          } else {
+            atSequenceStart = true;
+            coder.reset();
+          }
+        }
 		  }
 	  }
     if (seqfreq) {
@@ -255,7 +279,7 @@ public final class QgramIndexer {
     int[] bck;
     if (external) {
       bck = frq;
-      frq = null; 
+      frq = null; // TODO MM What did this code do, when it was within generateQGramIndex()?  
     } else {
       // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
       bck = Arrays.copyOf(frq, frq.length);
@@ -297,6 +321,7 @@ public final class QgramIndexer {
    * @param external if true, try to save memory and do more on disk
    * @param thefilter  q-gram filter in form of a BitSet; q-grams corresponding to
    *   1-bits are not considered for indexing
+   * @param bisulfite whether to create an index that additionally includes bisulfite treated q-grams
    * @return array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where
    *   int[]  bck   is the array of q-bucket starts in qpos,
    *   int[]  qpos  is the array of starting positions of q-grams in the text
@@ -305,6 +330,7 @@ public final class QgramIndexer {
    *   int    maxfreq  largest frequency
    *   int    maxqbck  largest q-bucket size
    * @throws java.io.IOException 
+   * @throws java.lang.IllegalArgumentException if bisulfite is set, but asize is not 4
    */
   @SuppressWarnings("empty-statement")
   public Object[] generateQGramIndex(
@@ -317,14 +343,14 @@ public final class QgramIndexer {
 		final String qfreqfile,
 		final String qseqfreqfile,
 		final boolean external,
-		final BitSet thefilter) throws IOException 
+		final BitSet thefilter,
+    boolean bisulfite) throws IOException, IllegalArgumentException
 {
     TicToc totalTimer = new TicToc();
     ByteBuffer in = readSequenceFile(seqfile, external);
     long ll = in.limit();
     
-    final QGramCoder coder = new QGramCoder(q,asize);
-    byte[] qgram = new byte[q];
+    final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
     final int aq = coder.numberOfQGrams();
     g.logmsg("  counting %d different %d-grams...%n",aq,q);
     
@@ -347,6 +373,7 @@ public final class QgramIndexer {
     Object[] r = computeQGramBuckets(frq, external, thefilter, bucketfile);
     bck = (int[])r[0];
     int maxbck = (Integer)r[1];
+    if (external) frq = null;
     int sum = bck[aq];
     long timeBckGeneration = timer.tocMilliSeconds();
 
@@ -374,8 +401,8 @@ public final class QgramIndexer {
     while(bckstart<aq) {
       TicToc wtimer = new TicToc(); wtimer.tic();
       int qposstart = bck[bckstart];
-      int bckend = bckstart;
-      for (; bckend<aq && (bck[bckend+1] - qposstart) <= slicesize; bckend++) {};
+      int bckend;
+      for (bckend = bckstart; bckend<aq && (bck[bckend+1] - qposstart) <= slicesize; bckend++) {}
       int qposend   = bck[bckend];
       int qpossize  = qposend - qposstart;
       double percentdone = (sum==0)? 100.0 : 100.0*(double)qposend/((double)sum+0);
@@ -384,33 +411,48 @@ public final class QgramIndexer {
       assert((qpossize<=slicesize && qpossize>0) || sum==0) : "qgram: internal consistency error";
       
       // read through input and collect all qgrams with  bckstart<=qcode<bckend
+      boolean atSequenceStart = true;
       in.position(0);
-      int qcode = -1; // TODO MM this is semantically different from the previous version
       for(int i=0; i<ll; i++) {
-        if (qcode>=0) // attempt simple update
-        {
-          qcode = coder.codeUpdate(qcode,in.get());
-          if (qcode>=0 && bckstart<=qcode && qcode<bckend && !thefilter.get(qcode))
-            //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
-            // the starting position of this q-gram is i-q+1
-            qposslice[(bck[qcode]++)-qposstart] = i-q+1; 
-          continue;
-        }
-        // No previous qcode available, scan ahead for at least q new bytes
-        int success;
-        for(success=0; success<q && i<ll; i++) {
+        if (atSequenceStart) {
+          // No previous qcode available, scan ahead for at least q new bytes
+          int success;
+          for(success=0; success<q && i<ll; i++) {
+            byte next = in.get();
+            if (next<0 || next>=asize) {
+              coder.reset();
+              success=0;
+            }
+            else {
+              coder.update(next);
+              success++;
+            }
+          }
+          i--; // already incremented i beyond read position
+          if (success==q) {
+            for (int qcode : coder.getCodes()) {
+              assert(qcode>=0);
+              if (bckstart<=qcode && qcode<bckend && !thefilter.get(qcode))
+                //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
+                // the starting position of this q-gram is i-q+1
+                qposslice[(bck[qcode]++)-qposstart] = i-q+1;
+            }
+          }
+          atSequenceStart = false;
+        } else {
           byte next = in.get();
-          if (next<0 || next>=asize) success=0;
-          else qgram[success++]=next;
-        }
-        i--; // already incremented i beyond read position
-        if (success==q) {
-          qcode = coder.code(qgram); 
-          assert(qcode>=0);
-          if (bckstart<=qcode && qcode<bckend && !thefilter.get(qcode))
-            //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
-            // the starting position of this q-gram is i-q+1
-            qposslice[(bck[qcode]++)-qposstart] = i-q+1;
+          if (0 <= next && next < asize) { // TODO hm, seems not correct
+            coder.update(next);
+            for (int qcode : coder.getCodes()) {
+              if (qcode>=0 && bckstart<=qcode && qcode<bckend && !thefilter.get(qcode))
+                //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
+                // the starting position of this q-gram is i-q+1
+                qposslice[(bck[qcode]++)-qposstart] = i-q+1; 
+            } 
+          } else {
+            atSequenceStart = true;
+            coder.reset();
+          }
         }
       }
       g.logmsg("    collecting slice took %.2f sec%n",wtimer.tocs());
