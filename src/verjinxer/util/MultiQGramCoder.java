@@ -35,10 +35,10 @@ public class MultiQGramCoder {
     return coder.getAsize();
   }
   
-  public void update(byte next) {
+  public void update(byte next, byte after) {
     if (bisulfite) {
       assert(0 <= next && next < asize);
-      bicoder.update(next);
+      bicoder.update(next, after);
     }
     else {
       qcode = coder.codeUpdate(qcode, next);

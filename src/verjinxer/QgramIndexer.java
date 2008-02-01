@@ -208,23 +208,27 @@ public final class QgramIndexer {
 	  }
 
 	  int seqnum = 0;
-	  byte next;
     boolean atSequenceStart = true;
 	  in.position(0);
     long ll = in.limit();
+    byte after;
+    if (ll > 0) after = in.get();
+    else after = -1;
 	  for (int i = 0; i < ll; i++) {
 		  if (atSequenceStart) {
         int success;
         // No previous qcode available, scan ahead for at least q new bytes
         for(success=0; success<q && i<ll; i++) {
-          next = in.get();
+          byte next = after; 
+          if (i < ll - 1) after = in.get();
+          else after = -1;
           if (next<0 || next>=asize) {
             coder.reset();
             success=0;
             if (next==separator)
               seqnum++; 
           } else {
-            coder.update(next);
+            coder.update(next, after);
             success++;
           }
         }
@@ -237,14 +241,16 @@ public final class QgramIndexer {
         }
         atSequenceStart = false;
       } else { // attempt simple update
-			  next = in.get();
+        byte next = after;
+        if (i < ll - 1) after = in.get();
+        else after = -1;
         if (next == separator) {
           seqnum++;
           atSequenceStart = true;
           coder.reset();
         } else {
           if (0 <= next && next < asize) {
-            coder.update(next); // read pos i, have q-gram at i-q+1
+            coder.update(next, after); // read pos i, have q-gram at i-q+1
             for (int qcode : coder.getCodes()) {
               frq[qcode]++;
               if (seqfreq && lastseq[qcode]<seqnum) { lastseq[qcode]=seqnum; sfrq[qcode]++; }
@@ -279,7 +285,7 @@ public final class QgramIndexer {
     int[] bck;
     if (external) {
       bck = frq;
-      frq = null; // TODO MM What did this code do, when it was within generateQGramIndex()?  
+      frq = null; // TODO MM What did this code do when it was within generateQGramIndex()?  
     } else {
       // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
       bck = Arrays.copyOf(frq, frq.length);
@@ -377,7 +383,10 @@ public final class QgramIndexer {
     int sum = bck[aq];
     long timeBckGeneration = timer.tocMilliSeconds();
 
-    g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n",ll,sum);
+    g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n",ll, sum);
+    if (bisulfite)
+      g.logmsg("  average number of q-grams per sequence position is %.2f%n", ((double)sum)/ll);
+    
     //if (sum==0) { Object[] ret = {bck, null, frq, times, maxfreq, maxqbck}; return ret; }
     
     // Determine slice size
@@ -413,18 +422,23 @@ public final class QgramIndexer {
       // read through input and collect all qgrams with  bckstart<=qcode<bckend
       boolean atSequenceStart = true;
       in.position(0);
+      byte after;
+      if (ll > 0) after = in.get();
+      else after = -1;
       for(int i=0; i<ll; i++) {
         if (atSequenceStart) {
           // No previous qcode available, scan ahead for at least q new bytes
           int success;
           for(success=0; success<q && i<ll; i++) {
-            byte next = in.get();
+            byte next = after;
+            if (i < ll-1) after = in.get();
+            else after = -1;
             if (next<0 || next>=asize) {
               coder.reset();
               success=0;
             }
             else {
-              coder.update(next);
+              coder.update(next, after);
               success++;
             }
           }
@@ -440,9 +454,11 @@ public final class QgramIndexer {
           }
           atSequenceStart = false;
         } else {
-          byte next = in.get();
-          if (0 <= next && next < asize) { // TODO hm, seems not correct
-            coder.update(next);
+          byte next = after;
+          if (i < ll-1) after = in.get();
+          else after = -1;
+          if (0 <= next && next < asize) {
+            coder.update(next, after);
             for (int qcode : coder.getCodes()) {
               if (qcode>=0 && bckstart<=qcode && qcode<bckend && !thefilter.get(qcode))
                 //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
