@@ -22,11 +22,9 @@ public final class BisulfiteQGramCoder
 	public BisulfiteQGramCoder(int q) throws IllegalArgumentException
 	{
 		coder = new QGramCoder(q, ASIZE);
-		qcode = 0;
-		qcodes_bisulfite = new HashSet<Integer>(); 
-		qcodes_bisulfite_rc = new HashSet<Integer>(); 
-    qcodes_bisulfite.add(0);
-    qcodes_bisulfite_rc.add(0);
+    qcodes_bisulfite = new HashSet<Integer>(); 
+    qcodes_bisulfite_rc = new HashSet<Integer>();
+    reset();
 	}
 	
 	// (hardcoded) encoding for nucleotides
@@ -40,7 +38,7 @@ public final class BisulfiteQGramCoder
 	private static final int ASIZE = 4;
 	private QGramCoder coder;
 	private int qcode; // qcode for regular strand
-//	private byte previous_nucleotide = NUCLEOTIDE_A;
+	private byte previous_nucleotide = -1;//NUCLEOTIDE_A;
 
 	private HashSet<Integer> qcodes_bisulfite;	// qcodes for bisulfite treated strand
 	private HashSet<Integer> qcodes_bisulfite_rc; // qcodes for rc of bisulfite treated rc (rc: reverse complement)
@@ -80,7 +78,14 @@ public final class BisulfiteQGramCoder
 		return a;
 	}
 */
-	public void update(byte next) {
+//  private long sizesum = 0;
+//  private int count = 0;
+  /** Updates q-gram codes.
+   * @param next the next byte in the input.
+   * @param after the byte following next in the input.
+   * May be an invalid alphabet character if there is no regular character following.  
+   */
+	public void update(byte next, byte after) {
 		// update qcode of unmodified sequence
 		qcode = coder.codeUpdate(qcode, next);
 		
@@ -93,21 +98,45 @@ public final class BisulfiteQGramCoder
 				break;
 				
 			case NUCLEOTIDE_C:
-				qcodes_bisulfite = updateCodes2(qcodes_bisulfite, NUCLEOTIDE_C, NUCLEOTIDE_T);
-				qcodes_bisulfite_rc = updateCodes(qcodes_bisulfite_rc, NUCLEOTIDE_C);
+        // if C is found, then what happens depends on the following nucleotide
+        if (after == NUCLEOTIDE_G)
+          qcodes_bisulfite = updateCodes2(qcodes_bisulfite, NUCLEOTIDE_C, NUCLEOTIDE_T);
+        else
+          qcodes_bisulfite = updateCodes(qcodes_bisulfite, NUCLEOTIDE_T);
+        qcodes_bisulfite_rc = updateCodes(qcodes_bisulfite_rc, NUCLEOTIDE_C);
 				break;
 
 			case NUCLEOTIDE_G:
 				qcodes_bisulfite = updateCodes(qcodes_bisulfite, NUCLEOTIDE_G);
-				qcodes_bisulfite_rc = updateCodes2(qcodes_bisulfite_rc, NUCLEOTIDE_G, NUCLEOTIDE_A);
+        
+        // if C is found, look at the previous nucleotide
+        if (previous_nucleotide == NUCLEOTIDE_C)
+          qcodes_bisulfite_rc = updateCodes2(qcodes_bisulfite_rc, NUCLEOTIDE_G, NUCLEOTIDE_A);
+        else
+          qcodes_bisulfite_rc = updateCodes(qcodes_bisulfite_rc, NUCLEOTIDE_A);
 				break;
 				
 			default:
 				// TODO something
 				throw new IllegalArgumentException("expecting a valid alphabet character");
 		}
-    assert(qcodes_bisulfite.contains(qcode));
+    previous_nucleotide = next;
+    /*assert(qcodes_bisulfite.contains(qcode));
     assert(qcodes_bisulfite_rc.contains(qcode));
+    int size = getCodes().size();
+    sizesum += size;
+    count++;
+    char c;
+    AlphabetMap amap = AlphabetMap.DNA();
+    try {
+      c = amap.preimage(next);
+    } catch (InvalidSymbolException e) {
+      c = 'x';
+    }
+    System.out.format("next is %c. number of qcodes now %d. sum %d. count %d. avg %f%n", c, size, sizesum, count, ((double)sizesum)/count);
+    for (int code : getCodes()) {
+      System.out.println(coder.qGramString(code, amap));
+    }*/
 	}
   
   public QGramCoder getCoder() {
@@ -121,6 +150,7 @@ public final class BisulfiteQGramCoder
     qcodes_bisulfite_rc.clear();
     qcodes_bisulfite.add(0);
     qcodes_bisulfite_rc.add(0);
+    previous_nucleotide = -1;
   }
 
 /*
