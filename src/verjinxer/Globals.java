@@ -234,7 +234,6 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the ByteBuffer with the mapped file's contents
    */
-  @SuppressWarnings("empty-statement")
   MappedByteBuffer mapRByteArray(String file) {
     MappedByteBuffer b = null;
     logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
@@ -244,7 +243,7 @@ public class Globals {
       b = fc.map(MapMode.READ_ONLY, 0, fc.size());
       fc.close();
     } catch (IOException ex) {
-      try {fc.close();} catch(IOException exx) {};
+      try {fc.close();} catch(IOException exx) {}
       warnmsg("%s: could not map '%s'; %s. Stop.%n", cmdname, file, ex.toString());
       terminate(1);
     }
@@ -256,7 +255,6 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the IntBuffer with the mapped file's contents
    */
-  @SuppressWarnings("empty-statement")
   IntBuffer mapRIntArray(String file) {
     IntBuffer b = null;
     logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
@@ -266,7 +264,7 @@ public class Globals {
       b = fc.map(MapMode.READ_ONLY, 0, fc.size()).asIntBuffer();
       fc.close();
     } catch (IOException ex) {
-      try {if (fc!=null) fc.close();} catch(IOException exx) {};
+      try {if (fc!=null) fc.close();} catch(IOException exx) {}
       warnmsg("%s: could not map '%s'; %s. Stop.%n", cmdname, file, ex.toString());
       terminate(1);
     }
@@ -275,7 +273,6 @@ public class Globals {
   
   //======================= text file readers =================================
   
-  @SuppressWarnings("empty-statement")
   ArrayList<String> slurpTextFile(String file, int ll) {
     if (ll<=0) ll=32;
     logmsg("%s: reading '%s'; expecting %d lines...%n", cmdname, file, ll);
@@ -287,7 +284,7 @@ public class Globals {
       while((s = br.readLine())!=null) lines.add(s);
       br.close();
     } catch (IOException ex) {
-      try { if(br!=null) br.close();} catch(IOException exx) {};
+      try { if(br!=null) br.close();} catch(IOException exx) {}
       warnmsg("%s: could not read '%s'; %s. Stop.", cmdname, file, ex.toString());
       terminate(1);
     }

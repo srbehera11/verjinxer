@@ -449,16 +449,15 @@ public class SuffixTrayBuilder {
    *@param chi  integer representation of character to insert
    *@param i  what to insert
    */
-  @SuppressWarnings("empty-statement")
   private final void insertnew(final int chi, final int i) {
     int cp, cs, ip, is;
     assert(lexfirst[chi]==-1);
     assert(lexlast[chi]==-1);
     lexfirst[chi]=i;
     lexlast[chi]=i;
-    for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {};
+    for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {}
     ip = (cp>=0? lexlast[cp] : -1);
-    for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {};
+    for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {}
     is = (cs<256? lexfirst[cs] : -1);
     // before: ... ip, is ...
     // after:  ... ip, i, is ...
@@ -505,37 +504,34 @@ public class SuffixTrayBuilder {
      *@param chi  integer representation of character to insert
      *@param i  what to insert
      */
-    @SuppressWarnings("empty-statement")
     private final void insertnewx(final int chi, final int i) {
       int cp, cs, ip, is;
       assert(lexfirst[chi]==-1);
       assert(lexlast[chi]==-1);
       lexfirst[chi]=i;
       lexlast[chi]=i;
-      for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {};
+      for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {}
       ip = (cp>=0? lexlast[cp] : -1);
-      for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {};
+      for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {}
       is = (cs<256? lexfirst[cs] : -1);
       insertbetweenx(ip, is, i);
     }
     
-    @SuppressWarnings("empty-statement")
     private final void insertasfirstx(int chi, int i) {
       int cp, ip;
       assert(lexfirst[chi]!=-1);
       assert(lexlast[chi]!=-1);
-      for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {};
+      for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {}
       ip = (cp>=0? lexlast[cp] : -1);
       insertbetweenx(ip,lexfirst[chi],i);
       lexfirst[chi]=i;      
     }
 
-    @SuppressWarnings("empty-statement")
     private final void insertaslastx(int chi, int i) {
       int cs, is;
       assert(lexfirst[chi]!=-1);
       assert(lexlast[chi]!=-1);
-      for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {};
+      for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {}
       is = (cs<256? lexfirst[cs] : -1);
       insertbetweenx(lexlast[chi],is,i);
       lexlast[chi]=i;      
@@ -638,11 +634,10 @@ public class SuffixTrayBuilder {
    * zero (0) iff i==j
    * any value &gt; 0 iff suffix(i)&gt;suffix(j) lexicographically.
    */
-  @SuppressWarnings("empty-statement")
   public final int suffixcmp(final int i, final int j) {
     if (i==j) return 0;
     int off, c;
-    for(off=0; (c=scmp(i+off,j+off))==0; off++) {};
+    for(off=0; (c=scmp(i+off,j+off))==0; off++) {}
     // suffixes i and j disagree at offset off, thus have off characters in common
    return c;
   }
@@ -654,11 +649,10 @@ public class SuffixTrayBuilder {
    *@param h  minimum known lcp length
    *@return  lcp length
    */
-  @SuppressWarnings("empty-statement")
   public final int suffixlcp(final int i, final int j, final int h) {
     if (i==j) return n-i+1;
     int off;
-    for(off=h; scmp(i+off,j+off)==0; off++) {};
+    for(off=h; scmp(i+off,j+off)==0; off++) {}
     return off;
   }
   
@@ -668,11 +662,10 @@ public class SuffixTrayBuilder {
    * output warning messages if errors are found.
    *@return  0 on success, 1 on sorting error, 2 on count error, 3 on both errors.
    */
-  @SuppressWarnings("empty-statement")
   public int checkpos_R() {
     int chi, p, nextp, nn, comp;
     int returnvalue = 0;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
+    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     if (chi>=256) {
       if(n==0) return 0;
       g.warnmsg("suffixcheck: no first character found, but |s|!=0.%n");
@@ -703,12 +696,11 @@ public class SuffixTrayBuilder {
    * output warning messages if errors are found.
    *@return  0 on success, 1 on sorting error, 2 on count error, 3 on both errors.
    */  
-  @SuppressWarnings("empty-statement")
     public int checkpos_bothLR() {
     int chi, p, oldp, nextp, nn, comp;
     int returnvalue = 0;
     final int[] lexps = dll.lexps;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
+    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     if (chi>=256) {
       if(n==0) return 0;
       g.warnmsg("suffixcheck: no first character found, but |s|!=0.%n");
@@ -785,10 +777,9 @@ public class SuffixTrayBuilder {
   /** write pos array to file when lexnextpos is available
    *@param fname  the full path and file name
    */
-  @SuppressWarnings("empty-statement")
   private void writepos_R(String fname) {
     int chi, p;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
+    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     try {
       ArrayFile f = new ArrayFile(fname).openW();
       for (p=lexfirst[chi]; p!=-1; p=lexsucc[p])
@@ -803,11 +794,10 @@ public class SuffixTrayBuilder {
   /** write pos array to file after walk-bothLR using the xor trick.
    *@param fname  the full path and file name
    */
-  @SuppressWarnings("empty-statement")
   private void writepos_bothLR(String fname) {
     int chi, p, oldp, tmp;
     final int[] lexps = dll.lexps;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
+    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     try {
       ArrayFile f = new ArrayFile(fname).openW();
       for (oldp=-1, p=lexfirst[chi];  p!=-1;  ) {
@@ -827,7 +817,6 @@ public class SuffixTrayBuilder {
    * where lexnextpos[] is available.
    *@param header  a header string to print
    */
-  @SuppressWarnings("empty-statement")
   private void showpos_R(String header) {
     int chi, p;
     System.out.printf(header);
@@ -836,7 +825,7 @@ public class SuffixTrayBuilder {
       if (lexfirst[chi]!=-1)
         System.out.printf("  char %d: lexfirst=%2d, lexlast=%2d%n", chi-128, lexfirst[chi], lexlast[chi]);
     }
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
+    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     for (p=lexfirst[chi]; p!=-1; p=lexsucc[p])
       System.out.printf("  %2d: %d...%n", p, s[p]);
   }
@@ -848,7 +837,6 @@ public class SuffixTrayBuilder {
    *@param fname filename for lcp array
    *@param dolcp which lcp arrays to compute (1+2+4)
    */
-  @SuppressWarnings("empty-statement")
   private void lcp_L(String fname, int dolcp) {
     TicToc timer = new TicToc();
     int p, prev, h;
@@ -867,7 +855,7 @@ public class SuffixTrayBuilder {
     g.logmsg("suffixtray: lcp computation took %.2f secs; writing...%n",timer.tocs());
 
     int chi, r;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {};
+    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     ArrayFile f4=null, f2=null, f1=null, f2x=null, f1x=null;
     try {
       if ((dolcp&4)!=0) f4 = new ArrayFile(fname).openW();

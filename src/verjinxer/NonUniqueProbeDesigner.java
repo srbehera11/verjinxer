@@ -83,7 +83,6 @@ public class NonUniqueProbeDesigner {
    * @param args the command line arguments
    * @return zero on success, nonzero if there is a problem
    */
-  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "nonunique";

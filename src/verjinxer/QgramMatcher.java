@@ -18,7 +18,6 @@ package verjinxer;
 
 import java.io.*;
 import java.nio.*;
-import static java.nio.channels.FileChannel.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Properties;
@@ -114,7 +113,6 @@ public class QgramMatcher {
    * @param args the command line arguments
    * @return zero on successful completion, nonzero value otherwise.
    */
-  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "qmatch";
@@ -286,7 +284,7 @@ public class QgramMatcher {
           symremaining=0; tp=tssp[seqnum]; continue;
         }
         int i; // next valid symbol is now at p, count number of valid symbols
-        for (i=tp; i<tn && amap.isSymbol(t[i]); i++) {};
+        for (i=tp; i<tn && amap.isSymbol(t[i]); i++) {}
         symremaining = i-tp;
         if (symremaining < minlen) continue;
       }
@@ -489,5 +487,5 @@ public class QgramMatcher {
 }
 
  /** exception thrown if too many hits occur */
-class TooManyHitsException extends Exception { };
+class TooManyHitsException extends Exception { }
 
