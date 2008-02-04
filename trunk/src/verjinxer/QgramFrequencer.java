@@ -83,7 +83,6 @@ public class QgramFrequencer {
    * @param args the command line arguments
    * @return zero on success, nonzero if there is a problem
    */
-  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "qfreq";
@@ -185,8 +184,8 @@ public class QgramFrequencer {
     if(num>len) num = len;
     if(NUM>len) NUM = len;
     int limitf = f[num+Lcode-1];
-    if (!rev)  {for (num=0; f[num+Lcode]>=limitf && num<NUM; num++) {};}
-    else       {for (num=0; f[num+Lcode]<=limitf && num<NUM; num++) {};}
+    if (!rev)  {for (num=0; f[num+Lcode]>=limitf && num<NUM; num++) {}}
+    else       {for (num=0; f[num+Lcode]<=limitf && num<NUM; num++) {}}
     g.logmsg("qfreq: showing top %d %d-grams:::%n", num,q);
     for (int i=0; i<num; i++) {
       System.out.printf("%s %9d%n", coder.qGramString(p[i],amap), f[i+Lcode]);

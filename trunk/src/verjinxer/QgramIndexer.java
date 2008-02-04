@@ -14,7 +14,6 @@ import static java.nio.channels.FileChannel.*;
 import static java.lang.Math.*;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Properties;
 import verjinxer.util.*;
 import static verjinxer.Globals.*;
@@ -338,7 +337,6 @@ public final class QgramIndexer {
    * @throws java.io.IOException 
    * @throws java.lang.IllegalArgumentException if bisulfite is set, but asize is not 4
    */
-  @SuppressWarnings("empty-statement")
   public Object[] generateQGramIndex(
 		final String seqfile,
 		final int q,

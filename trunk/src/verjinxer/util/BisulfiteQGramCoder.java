@@ -38,7 +38,7 @@ public final class BisulfiteQGramCoder
 	private static final int ASIZE = 4;
 	private QGramCoder coder;
 	private int qcode; // qcode for regular strand
-	private byte previous_nucleotide = -1;//NUCLEOTIDE_A;
+	private byte previous_nucleotide = -1;
 
 	private HashSet<Integer> qcodes_bisulfite;	// qcodes for bisulfite treated strand
 	private HashSet<Integer> qcodes_bisulfite_rc; // qcodes for rc of bisulfite treated rc (rc: reverse complement)
