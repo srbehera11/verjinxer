@@ -114,9 +114,10 @@ public class QgramMatcher {
    * @return zero on successful completion, nonzero value otherwise.
    */
   public int run(String[] args) {
-    TicToc gtimer = new TicToc();
+    TicToc totalTimer = new TicToc();
     g.cmdname = "qmatch";
-    int returnvalue = 0;
+    // t: text to find
+    // s: sequence in which to search
     String tname, sname, dt, ds;
     
     Options opt = new Options
@@ -124,7 +125,8 @@ public class QgramMatcher {
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
-      g.terminate("qmatch: "+ex.toString()); }
+      g.terminate("qmatch: "+ex.toString());
+    }
     
     selfcmp = opt.isGiven("self");
     if (args.length<1 || (args.length==1 && !selfcmp)) {
@@ -189,67 +191,45 @@ public class QgramMatcher {
       minmatch=1;
     }  
     
-    String  outname = String.format("%s-%s-%dx%d",tname, sname, minmatch, minlen);
+    String outname = String.format("%s-%s-%dx%d",tname, sname, minmatch, minlen);
     if (opt.isGiven("o")) {
       if (outname.length()==0 || outname.startsWith("#"))  outname = null;
       else outname=opt.get("o");
     }
     if (outname!=null)  outname = g.outdir + outname + (sorted? ".sorted-matches" : ".matches");
     
-    // Read text, text-ssp, seq, qbck, ssp into arrays;  
-    // read sequence descripitions;
-    // memory-map or read qpos.
-    TicToc timer = new TicToc();
-    final String tfile    = dt+extseq;
-    final String tsspfile = dt+extssp;
-    final String seqfile  = ds+extseq;
-    final String qbckfile = ds+extqbck;
-    final String sspfile  = ds+extssp;
-    final String qposfile = ds+extqpos;
-    System.gc();
-    t    = g.slurpByteArray(tfile);
-    tn   = t.length;
-    tssp = g.slurpIntArray(tsspfile);
-    tm   = tssp.length;
-    tdesc= g.slurpTextFile(dt+extdesc, tm);
-    assert(tdesc.size()==tm);
-    if (dt.equals(ds)) {
-      s=t; ssp=tssp; sm=tm; sdesc=tdesc;
-    } else {
-      s    = g.slurpByteArray(seqfile);
-      ssp  = g.slurpIntArray(sspfile);
-      sm   = ssp.length;
-      sdesc= g.slurpTextFile(ds+extdesc, sm);
-      assert(sdesc.size()==sm);
-    }
-    qbck = g.slurpIntArray(qbckfile);
-    if (external) qpos  = g.mapRIntArray(qposfile);
-    else          qposa = g.slurpIntArray(qposfile);
-    g.logmsg("qmatch: mapping and reading files took %.1f sec%n", timer.tocs());
+    // end of option parsing
 
+    openFiles(dt, ds, outname);
+    int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
+    match(maxactive, thefilter, toomanyhits);
+    out.close();
+    g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
+        toomanyhits.cardinality(),tm, 100.0*(double)toomanyhits.cardinality()/tm);
+    g.writeFilter(dt+".toomanyhits-filter", toomanyhits);
+    g.logmsg("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());
+    g.stopplog();
 
-    // start output
-    out = new PrintWriter(System.out);
-    if (outname!=null) {
-      try {
-        out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outname),32*1024), false);
-      } catch (FileNotFoundException ex) {
-        g.terminate("qmatch: could not create output file. Stop.");
-      }
-    }
-    g.logmsg("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
-    
-    
+    return 0;
+  } // end run()
+
+  /**
+   * 
+   * @param maxactive
+   * @param thefilter
+   * @param toomanyhits gets modified
+   */
+  private void match(int maxactive, final BitSet thefilter, BitSet toomanyhits) {
     // Walk through t:
     // (A) Initialization
-    timer.tic();
+    TicToc timer = new TicToc();
     final int slicefreq = 5;
     final int slicesize = 1+(slicefreq*tn/100);
     int nextslice = 0;
     int percentdone = 0;
     int symremaining = 0;
     int qcode;
-    int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
+    
     activepos = new int[maxactive];  active=0;
     newpos    = new int[maxactive];
     lenforact = new int[maxactive];
@@ -281,7 +261,9 @@ public class QgramMatcher {
         }
         if (tp>=tn) break;
         if (toomanyhits.get(seqnum)) {
-          symremaining=0; tp=tssp[seqnum]; continue;
+          symremaining=0;
+          tp=tssp[seqnum];
+          continue;
         }
         int i; // next valid symbol is now at p, count number of valid symbols
         for (i=tp; i<tn && amap.isSymbol(t[i]); i++) {}
@@ -323,18 +305,70 @@ public class QgramMatcher {
       } // end (3) while loop
       
       // (4) done with this block of positions. Go to next.
-      ;
     }
-    assert(seqnum==tm && tp==tn);
-    
-    out.close();
-    g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
-        toomanyhits.cardinality(),tm, 100.0*(double)toomanyhits.cardinality()/tm);
-    g.writeFilter(dt+".toomanyhits-filter", toomanyhits);
-    g.logmsg("qmatch: done; total time was %.1f sec%n", gtimer.tocs());
-    g.stopplog();
-    return returnvalue;
-  } // end run()
+    assert(seqnum==tm && tp==tn);    
+  }
+
+  /**
+   * global variables written to in this method:
+   * t
+   * tn
+   * tssp
+   * tm
+   * tdesc
+   * s
+   * ssp
+   * sm
+   * sdesc
+   * qbck
+   * qpos bzw. qposa
+   * 
+   * out
+   */
+  private void openFiles(String dt, String ds, String outname) {
+    // Read text, text-ssp, seq, qbck, ssp into arrays;  
+    // read sequence descripitions;
+    // memory-map or read qpos.
+    TicToc ttimer = new TicToc();
+    final String tfile    = dt+extseq;
+    final String tsspfile = dt+extssp;
+    final String seqfile  = ds+extseq;
+    final String qbckfile = ds+extqbck;
+    final String sspfile  = ds+extssp;
+    final String qposfile = ds+extqpos;
+    System.gc();
+    t    = g.slurpByteArray(tfile);
+    tn   = t.length;
+    tssp = g.slurpIntArray(tsspfile);
+    tm   = tssp.length;
+    tdesc= g.slurpTextFile(dt+extdesc, tm);
+    assert(tdesc.size()==tm);
+    if (dt.equals(ds)) {
+      s=t; ssp=tssp; sm=tm; sdesc=tdesc;
+    } else {
+      s    = g.slurpByteArray(seqfile);
+      ssp  = g.slurpIntArray(sspfile);
+      sm   = ssp.length;
+      sdesc= g.slurpTextFile(ds+extdesc, sm);
+      assert(sdesc.size()==sm);
+    }
+    qbck = g.slurpIntArray(qbckfile);
+    if (external) qpos  = g.mapRIntArray(qposfile);
+    else          qposa = g.slurpIntArray(qposfile);
+    g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
+
+
+    // start output
+    out = new PrintWriter(System.out);
+    if (outname!=null) {
+      try {
+        out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outname),32*1024), false);
+      } catch (FileNotFoundException ex) {
+        g.terminate("qmatch: could not create output file. Stop.");
+      }
+    }
+    g.logmsg("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
+  }
   
   
   
