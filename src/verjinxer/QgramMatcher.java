@@ -205,7 +205,7 @@ public class QgramMatcher {
     match(maxactive, thefilter, toomanyhits);
     out.close();
     g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
-        toomanyhits.cardinality(),tm, 100.0*(double)toomanyhits.cardinality()/tm);
+        toomanyhits.cardinality(), tm, toomanyhits.cardinality()*100.0/tm);
     g.writeFilter(dt+".toomanyhits-filter", toomanyhits);
     g.logmsg("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());
     g.stopplog();
@@ -223,12 +223,6 @@ public class QgramMatcher {
     // Walk through t:
     // (A) Initialization
     TicToc timer = new TicToc();
-    final int slicefreq = 5;
-    final int slicesize = 1+(slicefreq*tn/100);
-    int nextslice = 0;
-    int percentdone = 0;
-    int symremaining = 0;
-    int qcode;
     
     activepos = new int[maxactive];  active=0;
     newpos    = new int[maxactive];
@@ -241,8 +235,14 @@ public class QgramMatcher {
       globmatches = new ArrayList<GlobMatch>(maxseqmatches<127? maxseqmatches+1: 128);
     }
     
-    
     // (B) Walking ...
+    final int slicefreq = 5;
+    final int slicesize = 1+(slicefreq*tn/100);
+    int nextslice = 0;
+    int percentdone = 0;
+    int symremaining = 0;
+    int qcode;
+
     seqstart = 0;
     seqnum = 0;
     tp = 0;
@@ -251,12 +251,16 @@ public class QgramMatcher {
       
       // (1) Determine next valid position p in t with potential match
       if (symremaining<minlen) {   // next invalid is possibly at tp+symremaining
-        tp += symremaining; symremaining=0;
-        for (; tp<tn && (!amap.isSymbol(t[tp]));  tp++) {
+        tp += symremaining;
+        symremaining = 0;
+        for ( ; tp<tn && (!amap.isSymbol(t[tp])); tp++) {
           if (amap.isSeparator(t[tp])) {
             assert(tp==tssp[seqnum]);
-            if (sorted) writeMatches(); else writeGlobMatches();
-            seqnum++;  seqstart = tp+1;  seqmatches = 0;
+            if (sorted) writeMatches();
+            else writeGlobMatches();
+            seqnum++;
+            seqstart = tp+1; 
+            seqmatches = 0;
           }
         }
         if (tp>=tn) break;
@@ -276,12 +280,14 @@ public class QgramMatcher {
       
       // (2) initialize qcode and active q-grams
       active = 0;  // number of active q-grams
-      qcode = coder.code(t,tp);
+      qcode = coder.code(t, tp);
       assert(qcode>=0);
       try {
         findactive(qcode, thefilter.get(qcode)); // updates active, activepos, lenforact
       } catch (TooManyHitsException ex) {
-          symremaining=0; tp = tssp[seqnum]; toomanyhits.set(seqnum);
+          symremaining=0; 
+          tp = tssp[seqnum]; 
+          toomanyhits.set(seqnum);
       }
       
       // (3) repeatedly process current position p
@@ -289,7 +295,8 @@ public class QgramMatcher {
         // (3a) Status
         while(tp>=nextslice) {
           g.logmsg("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d%n",  percentdone, timer.tocs(), tp, tn-1, seqnum, tm-1);
-          percentdone += slicefreq;  nextslice += slicesize;
+          percentdone += slicefreq;
+          nextslice += slicesize;
         }
         // (3b) update q-gram
         tp++; symremaining--;
@@ -299,7 +306,9 @@ public class QgramMatcher {
           try {
             findactive(qcode, thefilter.get(qcode));
           } catch (TooManyHitsException ex) {
-            symremaining=0; tp = tssp[seqnum]; toomanyhits.set(seqnum);
+            symremaining=0;
+            tp = tssp[seqnum];
+            toomanyhits.set(seqnum);
           }
         }
       } // end (3) while loop
@@ -371,7 +380,16 @@ public class QgramMatcher {
   }
   
   
-  
+  /*
+   * does not modify tp
+   * 
+   * writes to:
+   * activepos
+   * lenforact
+   * active
+   * lenfornew
+   * 
+   */
   private final void findactive(final int qcode, final boolean filtered) 
   throws TooManyHitsException {
     final int r = qbck[qcode];
@@ -515,11 +533,10 @@ public class QgramMatcher {
        this.tpos=tpos; this.sseqnum=sseqnum; this.spos=spos; this.len=len;
      }
    }
-  
-   
-// end class
 }
 
  /** exception thrown if too many hits occur */
-class TooManyHitsException extends Exception { }
+class TooManyHitsException extends Exception {
+  private static final long serialVersionUID = -1841832699464945659L;
+}
 
