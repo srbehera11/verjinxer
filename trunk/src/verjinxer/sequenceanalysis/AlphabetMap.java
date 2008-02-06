@@ -16,15 +16,21 @@ import java.util.ArrayList;
  * @author Sven Rahmann
  */
 public class AlphabetMap {
+  
+  final int INVALID = 0;
+  final int NORMAL = 1;
+  final int WHITESPACE = 2;
+  final int WILDCARD = 4;
+  final int SEPARATOR = 8;
+  
   private String[] initstrings;
   private byte[] myimage;
   private byte[] mypreimage;
   private byte[] modepreimage;
   private byte[] modeimage;
-  private int mywhitespace = 128+2;
-  private int mywildcard   = 128+4;
-  private int myseparator =  128+8;
-
+  private int mywhitespace = 128+WHITESPACE;
+  private int mywildcard   = 128+WILDCARD;
+  private int myseparator =  128+SEPARATOR;
   
   /** creates an alphabet map from the given text lines.
    * It is best to see the example alphabet maps for how to do this,
@@ -34,16 +40,16 @@ public class AlphabetMap {
    */
   public AlphabetMap init(final String[] lines) {
     initstrings = lines;
-    mywhitespace = 128+2;
-    mywildcard   = 128+4;
-    myseparator  = 128+8;
+    mywhitespace = 128+WHITESPACE;
+    mywildcard   = 128+WILDCARD;
+    myseparator  = 128+SEPARATOR;
     myimage = new byte[256];
     mypreimage = new byte[256];
     modepreimage = new byte[256];
     modeimage = new byte[256];
     
     int i=0;
-    byte mode=1; // 0: invalid, 1: normal characters, 2: whitespace, 4: wildcards, 8: separators,
+    byte mode=1;
     for (String l : lines) {
       if(l.startsWith("##")) {
         String ll=l.substring(2);
@@ -59,11 +65,11 @@ public class AlphabetMap {
         if(ll.startsWith("symbol")) 
           mode=1;
         else if(ll.startsWith("wildcard")) {
-          mode=4; modeimage[ii]=mode; mywildcard=i;
+          mode=WILDCARD; modeimage[ii]=mode; mywildcard=i;
         } else if(ll.startsWith("separator")) {
-          mode=8; modeimage[ii]=mode; myseparator=i; 
+          mode=SEPARATOR; modeimage[ii]=mode; myseparator=i; 
         } else if(ll.startsWith("whitespace")) {
-          mode=2; modeimage[ii]=mode; mywhitespace=i;
+          mode=WHITESPACE; modeimage[ii]=mode; mywhitespace=i;
           mypreimage[ii]=' ';
           for(char cc=0; cc<=32; cc++) if (Character.isWhitespace(cc)) {
             modepreimage[cc]=mode;
@@ -122,21 +128,22 @@ public class AlphabetMap {
   
   public final boolean isSymbol(final int i) {
     byte m = modeimage[(i<0)?(i+256):i];
-    return (m==1 || m==2);
+    return m==NORMAL || m==WHITESPACE;
   }
   
   public final boolean isWildcard(final int i) {
     byte m = modeimage[(i<0)?(i+256):i];
-    return (m==4);
+    return m==WILDCARD;
   }
   
   public final boolean isSeparator(final int i) {
     byte m = modeimage[(i<0)?(i+256):i];
-    return (m==8);
+    return m==SEPARATOR;
   }
   
   public final boolean isSpecial(final int i) {
-    return (modeimage[(i<0)?(i+256):i]>2); // wildcard or separator
+    byte m = modeimage[(i<0)?(i+256):i]; 
+    return m == WILDCARD || m == SEPARATOR;
   }
   
   public final int smallestSymbol() {
