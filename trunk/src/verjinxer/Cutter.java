@@ -58,7 +58,6 @@ public class Cutter {
    * @return 0 on success, nonzero on problems
    */
   public int run(String[] args) {
-    TicToc gtimer = new TicToc();
     g.cmdname = "cut";
     int returnvalue = 0;
     

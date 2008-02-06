@@ -83,14 +83,13 @@ public class FastaSequence {
    * @return the ByteBuffer for convenience
    * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
    */
-  @SuppressWarnings("empty-statement")
   public ByteBuffer translateTo(ByteBuffer buf, final boolean trim, final AlphabetMap amap, final boolean reverse, final int append) 
   throws InvalidSymbolException {
     final int ll = sequence.length();
     int first=0, last=ll-1;
     if (trim) {
-      for(first=0; first<ll && DNA.isWildcard(sequence.charAt(first)); first++) {};
-      for(last=ll-1; last>=0 && DNA.isWildcard(sequence.charAt(last)); last--) {};
+      for(first=0; first<ll && DNA.isWildcard(sequence.charAt(first)); first++) {}
+      for(last=ll-1; last>=0 && DNA.isWildcard(sequence.charAt(last)); last--) {}
     }
     final int req = last-first+1 + (append!=0? 1:0);
     if (buf==null || buf.capacity()<req)  buf = ByteBuffer.allocateDirect(req+1024);
@@ -120,14 +119,13 @@ public class FastaSequence {
    * @return the ByteBuffer for convenience
    * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
    */
-  @SuppressWarnings("empty-statement")
   public ByteBuffer translateDNABiTo(ByteBuffer buf, final boolean trim, final boolean meth, final boolean compl, final int append)
   throws InvalidSymbolException {
     final int ll = sequence.length();
     int first=0, last=ll-1;
     if (trim) {
-      for(first=0; first<ll && DNA.isWildcard(sequence.charAt(first)); first++) {};
-      for(last=ll-1; last>=0 && DNA.isWildcard(sequence.charAt(last)); last--) {};
+      for(first=0; first<ll && DNA.isWildcard(sequence.charAt(first)); first++) {}
+      for(last=ll-1; last>=0 && DNA.isWildcard(sequence.charAt(last)); last--) {}
     }
     final int req = last-first+1 + (append!=0? 1:0);
     if (buf==null || buf.capacity()<req)  buf = ByteBuffer.allocateDirect(req+1024);
@@ -149,8 +147,4 @@ public class FastaSequence {
     buf.flip(); // prepare for writing
     return buf;
   }
-
-  
-  // ======================== END ============================
-  
 }

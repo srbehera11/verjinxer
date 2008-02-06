@@ -11,10 +11,10 @@ package verjinxer.sequenceanalysis;
  *
  * @author Sven Rahmann
  */
-public class InvalidSymbolException extends java.lang.Exception
-{
-   
-   /**
+public class InvalidSymbolException extends java.lang.Exception {
+  private static final long serialVersionUID = 3502727305855185638L;
+
+  /**
     * Creates a new instance of <code>InvalidSymbolException</code> without detail message.
     */
    public InvalidSymbolException()
