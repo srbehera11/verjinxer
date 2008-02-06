@@ -17,11 +17,11 @@ import java.util.ArrayList;
  */
 public class AlphabetMap {
   
-  final int INVALID = 0;
-  final int NORMAL = 1;
-  final int WHITESPACE = 2;
-  final int WILDCARD = 4;
-  final int SEPARATOR = 8;
+  static final int INVALID = 0;
+  static final int NORMAL = 1;
+  static final int WHITESPACE = 2;
+  static final int WILDCARD = 4;
+  static final int SEPARATOR = 8;
   
   private String[] initstrings;
   private byte[] myimage;
