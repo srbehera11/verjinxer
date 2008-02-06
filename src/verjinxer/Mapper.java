@@ -107,9 +107,7 @@ public class Mapper {
    * @return zero on success, nonzero if there is a problem
    */
   public int run(String[] args) {
-    TicToc gtimer = new TicToc();
     g.cmdname = "map";
-    int returnvalue = 0;
     String dt;
     
     Options opt = new Options("m=method:,e=error=errorlevel:,b=blocksize:,r=rc=revcomp,s=select:,R=repeat=repeatthreshold:,Q=qcomplexity:,c=clip:,o=out:");
@@ -321,7 +319,6 @@ public class Mapper {
    * Count the number of common q-grams of each sequence and each index block.
    */
   void mapByQGram(final int blocksize) {
-    String td = g.dir + tname;
     int oldq=-1;
     g.logmsg("map: allocating memory%n");
     rcj  = new byte[(int)longestsequence+1]; // +1 for separator
@@ -363,7 +360,6 @@ public class Mapper {
       ilength = Integer.parseInt(iprj.getProperty("Length"));
       ifilter = coder.createFilter(filterstring);
       
-      int hits;
       for (int j=0; j<tm; j++) {
         if (!tselect.get(j) || trepeat.get(j)) continue;  // skip if not selected, or if repeat
         int jstart = (j==0? 0: tssp[j-1]+1); // first character
@@ -485,7 +481,6 @@ public class Mapper {
  
   final void mapByAlignmentAtOnce() {
     this.iname = null;
-    String td = g.dir + tname;
     g.logmsg("map: allocating memory for full alignment%n");
     rcj  = new byte[(int)longestsequence+1]; // +1 for separator
     Dcol = new int[(int)longestsequence+1];  // +1 for separator
@@ -631,7 +626,7 @@ public class Mapper {
   final int fullalign(final byte[] txt, final int start, final int len, 
       final int bstart, final int bend, 
       final int giventol, final int[] storage) {
-    final int tol = giventol<len? giventol : len;
+    //final int tol = giventol<len? giventol : len;
     int bestpos = -1;
     int bestd   = 2*(len+1);  // as good as infinity
     final byte[] index = itext;
@@ -761,6 +756,4 @@ public class Mapper {
     }
     return ev;
   }
-  
-  /** end class */
 }

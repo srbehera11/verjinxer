@@ -375,7 +375,7 @@ public class ArrayFile
         throw new IOException(String.format("cannot slurp '%s': allocatable byte[] is %.0fM, requested %.0fM%n", 
             this.name, ArrayUtils.largestAllocatable()/1E6, len/1E6), ex);
       }
-      DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(name), BUFSIZE));
+//      DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(name), BUFSIZE));
       MappedByteBuffer bb = this.mapR();
       for (int i=0; i<len; i++) array[i] = bb.get();
       return array;

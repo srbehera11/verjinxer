@@ -15,7 +15,8 @@ package verjinxer.util;
  */
 public class IllegalOptionException extends Exception
 {
-   public IllegalOptionException() {super();}
-   public IllegalOptionException(String s) {super(s);}
+  private static final long serialVersionUID = -6838310975858371172L;
+  public IllegalOptionException() {super();}
+  public IllegalOptionException(String s) {super(s);}
 
 }

@@ -11,10 +11,10 @@ package verjinxer.sequenceanalysis;
  *
  * @author Sven Rahmann
  */
-public class FastaFormatException extends java.lang.Exception
-{
-   
-   /**
+public class FastaFormatException extends java.lang.Exception {
+  private static final long serialVersionUID = -7927288270360792495L;
+
+  /**
     * Creates a new instance of <code>FastaFormatException</code> without detail message.
     */
    public FastaFormatException()

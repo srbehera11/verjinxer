@@ -69,7 +69,6 @@ public class Translater {
   
   
   
-  @SuppressWarnings("empty-statement")
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "translate";
@@ -142,7 +141,7 @@ public class Translater {
       int ch = ' ';
       try {
         FileReader reader = new FileReader(fname);
-        for(ch=reader.read(); ch!=-1 && Character.isWhitespace(ch); ch=reader.read()) {};
+        for(ch=reader.read(); ch!=-1 && Character.isWhitespace(ch); ch=reader.read()) {}
         reader.close();
       } catch (Exception e) {
         g.terminate("translate: could not open sequence file '"+fname+"'; "+e.toString()); }
@@ -319,7 +318,6 @@ public class Translater {
    * -- description is simply the filename;
    * -- separator is appended (never the wildcard).
    */
-  @SuppressWarnings("empty-statement")
   private void processText(String fname) {
     ByteBuffer tr = null;
     long lastbyte = 0;
@@ -348,7 +346,7 @@ public class Translater {
       g.warnmsg("translate: error translating '%s': %s%n",fname,ex.toString());
       g.terminate(1);
     } finally {
-      try { if (br!=null) {br.close();} } catch(IOException e) {};
+      try { if (br!=null) {br.close();} } catch(IOException e) {}
     }
   }
   
