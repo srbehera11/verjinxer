@@ -416,7 +416,6 @@ public class QgramMatcher {
   throws TooManyHitsException {
     final int r = qbck[qcode];
     final int newactive = qbck[qcode+1] - r; // number of new active q-grams
-
     //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
     
     // decrease the length of the active matches, as long as they stay >= q
@@ -461,18 +460,47 @@ public class QgramMatcher {
       if (ai>=active || newpos[ni]!=activepos[ai]) { 
         // this is a new match:
         // determine newlen[ni] by comparing s[sp...] with t[tp...]
-        int sp = newpos[ni] + q;
-        int offset = q;
-        if (!bisulfite) // regular comparison
+        int sp;
+        int offset;
+        if (!bisulfite) {
+          sp = newpos[ni] + q;
+          offset = q;
           while (s[sp]==t[tp+offset] && amap.isSymbol(s[sp])) {
             sp++;
             offset++;
           }
-        else
-          while (bisulfiteEquals(s[sp], t[tp+offset]) && amap.isSymbol(s[sp])) {
+        } else {
+          // bisulfite comparison
+          // start comparison from the beginning of the q-gram to find out
+          // whether we should allow C -> T or G -> A replacements
+          offset = 0;
+          sp = newpos[ni];
+          while (s[sp]==t[tp+offset]) {
+            assert(amap.isSymbol(s[sp]));
             sp++;
             offset++;
           }
+          // first mismatch tells us what to do
+          if (amap.isSymbol(s[sp]) && s[sp] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T) {
+            // C -> T replacement
+            sp++;
+            offset++;
+            while ((s[sp]==t[tp+offset] || s[sp] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T)
+                    && amap.isSymbol(s[sp])) {
+              sp++;
+              offset++;
+            }
+          } else {
+            // assume G -> A replacements
+            // if we are at a real mismatch, nothing happens
+            while ((s[sp]==t[tp+offset] || s[sp] == NUCLEOTIDE_G && t[tp+offset] == NUCLEOTIDE_A)
+                    && amap.isSymbol(s[sp])) {
+              sp++;
+              offset++;
+            }
+          }
+          assert(offset >= q);
+        }
         newlen[ni] = offset;
         sp -= offset;             // go back to start of match
         // maximal match (tp, sp, offset), i.e. ((seqnum,tp-seqstart), (i,sss), offset)
