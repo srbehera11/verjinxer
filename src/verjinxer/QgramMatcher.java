@@ -76,16 +76,14 @@ public class QgramMatcher {
   int         minlen      = 0;      // min. match length
   int         q           = 0;      // q-gram length
   int         asize       = 0;      // alphabet size
-  QGramCoder  coder       = null;   // the q-gram coder
   AlphabetMap amap        = null;   // the alphabet map
   
   byte[]      t           = null;   // the target sequence text (coded)
-  int         tn          = 0;      // length of t
   int[]       tssp        = null;   // sequence separator positions in text t
-  int         tm          = 0;      // number of sequences in t
+  // int tm; number of sequences in t
   ArrayList<String> tdesc = null;   // sequence descriptions of t
   
-  int         tp          = 0;      // current position in t
+//  int         tp          = 0;      // current position in t
   int         seqstart    = 0;      // starting pos of current sequence in t
   int         seqnum      = 0;      // number of current sequence in t
   PrintWriter out         = null;        
@@ -101,8 +99,8 @@ public class QgramMatcher {
   int     active    = 0;            // number of active matches
   int[]   activepos = null;         // starting positions of active matches in s
   int[]   newpos    = null;         // starting positions of new matches in s
-  int[]   lenforact = null;         // match lengths for active matches
-  int[]   lenfornew = null;         // match lengths for new matches
+  int[]   activelen = null;         // match lengths for active matches
+  int[]   newlen = null;         // match lengths for new matches
   int     seqmatches= 0;            // number of matches in current target sequence
   int     maxseqmatches = -1;       // maximum number of allowed matches
   
@@ -156,7 +154,7 @@ public class QgramMatcher {
       g.warnmsg("qmatch: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", ds);
       g.terminate(1);
     }
-    coder = new QGramCoder(q,asize);
+    QGramCoder coder = new QGramCoder(q,asize);
     amap  = g.readAlphabetMap(ds+extalph);
     
     // Prepare the q-gram filter from -f option
@@ -169,12 +167,15 @@ public class QgramMatcher {
     BitSet toomanyhits = null;
     if (opt.isGiven("t")) {
       if (opt.get("t").startsWith("#")) {
-        toomanyhits = g.readFilter(dt+".toomanyhits-filter", tm);
+        toomanyhits = g.readFilter(dt+".toomanyhits-filter", tssp.length);
       } else {
-        toomanyhits = g.readFilter(g.dir + opt.get("t"), tm);
+        toomanyhits = g.readFilter(g.dir + opt.get("t"), tssp.length);
       }
     } else { // -t not given ==> de-select all (clean start)
-      toomanyhits = new BitSet(tm);
+      toomanyhits = new BitSet(0);
+      // TODO was
+      // toomanyhits = new BitSet(tm); // where tm = tssp.length
+      // problem: tm is set only after openFiles
     }
     
     // Determine option values
@@ -202,16 +203,76 @@ public class QgramMatcher {
 
     openFiles(dt, ds, outname);
     int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
-    match(maxactive, thefilter, toomanyhits);
+    match(coder, maxactive, thefilter, toomanyhits);
     out.close();
     g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
-        toomanyhits.cardinality(), tm, toomanyhits.cardinality()*100.0/tm);
+        toomanyhits.cardinality(), tssp.length, toomanyhits.cardinality()*100.0/tssp.length);
     g.writeFilter(dt+".toomanyhits-filter", toomanyhits);
     g.logmsg("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());
     g.stopplog();
 
     return 0;
-  } // end run()
+  }
+  
+  /**
+   * global variables written to in this method:
+   * t
+   * tn
+   * tssp
+   * tm
+   * tdesc
+   * s
+   * ssp
+   * sm
+   * sdesc
+   * qbck
+   * qpos bzw. qposa
+   * 
+   * out
+   */
+  private void openFiles(String dt, String ds, String outname) {
+    // Read text, text-ssp, seq, qbck, ssp into arrays;  
+    // read sequence descripitions;
+    // memory-map or read qpos.
+    TicToc ttimer = new TicToc();
+    final String tfile    = dt+extseq;
+    final String tsspfile = dt+extssp;
+    final String seqfile  = ds+extseq;
+    final String qbckfile = ds+extqbck;
+    final String sspfile  = ds+extssp;
+    final String qposfile = ds+extqpos;
+    System.gc();
+    t    = g.slurpByteArray(tfile);
+    tssp = g.slurpIntArray(tsspfile);
+    tdesc= g.slurpTextFile(dt+extdesc, tssp.length);
+    assert(tdesc.size()==tssp.length);
+
+    if (dt.equals(ds)) {
+      s=t; ssp=tssp; sm=tssp.length; sdesc=tdesc;
+    } else {
+      s    = g.slurpByteArray(seqfile);
+      ssp  = g.slurpIntArray(sspfile);
+      sm   = ssp.length;
+      sdesc= g.slurpTextFile(ds+extdesc, sm);
+      assert(sdesc.size()==sm);
+    }
+    qbck = g.slurpIntArray(qbckfile);
+    if (external) qpos  = g.mapRIntArray(qposfile);
+    else          qposa = g.slurpIntArray(qposfile);
+    g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
+  
+  
+    // start output
+    out = new PrintWriter(System.out);
+    if (outname!=null) {
+      try {
+        out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outname),32*1024), false);
+      } catch (FileNotFoundException ex) {
+        g.terminate("qmatch: could not create output file. Stop.");
+      }
+    }
+    g.logmsg("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
+  }
 
   /**
    * 
@@ -219,15 +280,15 @@ public class QgramMatcher {
    * @param thefilter
    * @param toomanyhits gets modified
    */
-  private void match(int maxactive, final BitSet thefilter, BitSet toomanyhits) {
+  private void match(QGramCoder coder, int maxactive, final BitSet thefilter, BitSet toomanyhits) {
     // Walk through t:
     // (A) Initialization
     TicToc timer = new TicToc();
     
     activepos = new int[maxactive];  active=0;
     newpos    = new int[maxactive];
-    lenforact = new int[maxactive];
-    lenfornew = new int[maxactive];
+    activelen = new int[maxactive];
+    newlen = new int[maxactive];
     if (sorted) {
       matches = new ArrayList<ArrayList<Match>>(sm);
       for (int i=0; i<sm; i++) matches.add(i, new ArrayList<Match>(32));
@@ -236,6 +297,7 @@ public class QgramMatcher {
     }
     
     // (B) Walking ...
+    int tn = t.length;
     final int slicefreq = 5;
     final int slicesize = 1+(slicefreq*tn/100);
     int nextslice = 0;
@@ -245,7 +307,7 @@ public class QgramMatcher {
 
     seqstart = 0;
     seqnum = 0;
-    tp = 0;
+    int tp = 0; // current position in t
     seqmatches = 0;
     while (tp < tn) {
       
@@ -283,7 +345,7 @@ public class QgramMatcher {
       qcode = coder.code(t, tp);
       assert(qcode>=0);
       try {
-        findactive(qcode, thefilter.get(qcode)); // updates active, activepos, lenforact
+        findactive(tp, qcode, thefilter.get(qcode)); // updates active, activepos, lenforact
       } catch (TooManyHitsException ex) {
           symremaining=0; 
           tp = tssp[seqnum]; 
@@ -294,7 +356,7 @@ public class QgramMatcher {
       while (symremaining >=minlen) {
         // (3a) Status
         while(tp>=nextslice) {
-          g.logmsg("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d%n",  percentdone, timer.tocs(), tp, tn-1, seqnum, tm-1);
+          g.logmsg("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d%n",  percentdone, timer.tocs(), tp, tn-1, seqnum, tssp.length-1);
           percentdone += slicefreq;
           nextslice += slicesize;
         }
@@ -304,7 +366,7 @@ public class QgramMatcher {
           qcode = coder.codeUpdate(qcode, t[tp+q-1]);
           assert(qcode>=0);
           try {
-            findactive(qcode, thefilter.get(qcode));
+            findactive(tp, qcode, thefilter.get(qcode));
           } catch (TooManyHitsException ex) {
             symremaining=0;
             tp = tssp[seqnum];
@@ -315,128 +377,77 @@ public class QgramMatcher {
       
       // (4) done with this block of positions. Go to next.
     }
-    assert(seqnum==tm && tp==tn);    
+    assert(seqnum==tssp.length && tp==tn);    
   }
 
-  /**
-   * global variables written to in this method:
-   * t
-   * tn
-   * tssp
-   * tm
-   * tdesc
-   * s
-   * ssp
-   * sm
-   * sdesc
-   * qbck
-   * qpos bzw. qposa
-   * 
-   * out
-   */
-  private void openFiles(String dt, String ds, String outname) {
-    // Read text, text-ssp, seq, qbck, ssp into arrays;  
-    // read sequence descripitions;
-    // memory-map or read qpos.
-    TicToc ttimer = new TicToc();
-    final String tfile    = dt+extseq;
-    final String tsspfile = dt+extssp;
-    final String seqfile  = ds+extseq;
-    final String qbckfile = ds+extqbck;
-    final String sspfile  = ds+extssp;
-    final String qposfile = ds+extqpos;
-    System.gc();
-    t    = g.slurpByteArray(tfile);
-    tn   = t.length;
-    tssp = g.slurpIntArray(tsspfile);
-    tm   = tssp.length;
-    tdesc= g.slurpTextFile(dt+extdesc, tm);
-    assert(tdesc.size()==tm);
-    if (dt.equals(ds)) {
-      s=t; ssp=tssp; sm=tm; sdesc=tdesc;
-    } else {
-      s    = g.slurpByteArray(seqfile);
-      ssp  = g.slurpIntArray(sspfile);
-      sm   = ssp.length;
-      sdesc= g.slurpTextFile(ds+extdesc, sm);
-      assert(sdesc.size()==sm);
-    }
-    qbck = g.slurpIntArray(qbckfile);
-    if (external) qpos  = g.mapRIntArray(qposfile);
-    else          qposa = g.slurpIntArray(qposfile);
-    g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
-
-
-    // start output
-    out = new PrintWriter(System.out);
-    if (outname!=null) {
-      try {
-        out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outname),32*1024), false);
-      } catch (FileNotFoundException ex) {
-        g.terminate("qmatch: could not create output file. Stop.");
-      }
-    }
-    g.logmsg("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
-  }
-  
-  
   /*
-   * does not modify tp
-   * 
    * writes to:
-   * activepos
-   * lenforact
    * active
+   * lenforact
+   * activepos
+   * 
    * lenfornew
    * 
+   * does not write to
+   * qbck
+   * 
+   * 
    */
-  private final void findactive(final int qcode, final boolean filtered) 
+  private final void findactive(final int tp, final int qcode, final boolean filtered) 
   throws TooManyHitsException {
     final int r = qbck[qcode];
-    final int newactive = qbck[qcode+1] - r;
-    int ai, ni, offset;
-    
+    final int newactive = qbck[qcode+1] - r; // number of new active q-grams
+
     //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
     
     // decrease the length of the active matches, as long as they stay >= q
+    int ai;
     for(ai=0; ai<active; ai++) { 
       activepos[ai]++;  
-      if (lenforact[ai]>q) lenforact[ai]--; else lenforact[ai]=0; 
+      if (activelen[ai]>q) activelen[ai]--;
+      else activelen[ai]=0; 
     }
     
-    if (filtered)
-    {
-      for(ni=0, ai=0; ai<active; ai++) {
-        if (lenforact[ai]<q) continue;
+    // If this q-gram is filtered, discard matches that are too short from
+    // activepos and activelen, and return.
+    if (filtered) {
+      int ni = 0;
+      for(ai = 0; ai<active; ai++) {
+        if (activelen[ai]<q) continue;
         assert(ni<=ai);
         activepos[ni] = activepos[ai];
-        lenforact[ni] = lenforact[ai];
+        activelen[ni] = activelen[ai];
         ni++;
       }
       active=ni;
       return;
     }
-    
+
+    // TODO implement a method getQGramPositions() or better: a class QGramIndex
+
     // this q-gram is not filtered!
     // copy starting positions of current matches positions into 'newpos'
     if (external) { qpos.position(r);  qpos.get(newpos, 0, newactive); } 
     else          { System.arraycopy(qposa, r, newpos, 0, newactive);  }
     //g.logmsg("    qpos = [%s]%n", Strings.join(" ",newpos, 0, newactive));
  
+    // iterate over all new matches 
     ai=0;
-    for(ni=0;  ni<newactive;  ni++) {
-      while(ai<active && lenforact[ai]<q) ai++; 
+    for (int ni=0; ni<newactive; ni++) {
+      while (ai<active && activelen[ai]<q) ai++; 
       assert(ai==active || newpos[ni]<=activepos[ai])
-      : String.format("spos=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, lenforact=%d",
-          tp,ai,active,ni,newpos[ni],activepos[ai], lenforact[ai]);
+        : String.format("spos=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d",
+          tp,ai,active,ni,newpos[ni],activepos[ai], activelen[ai]);
       if (ai>=active || newpos[ni]!=activepos[ai]) { 
         // this is a new match:
-        // determine lenfornew[ni] by comparing s[sp...] with t[tp...]
+        // determine newlen[ni] by comparing s[sp...] with t[tp...]
         int sp = newpos[ni] + q;
-        for (offset = q;  ; sp++, offset++) {
-          if ( !(s[sp]==t[tp+offset] && amap.isSymbol(s[sp])) ) break;
+        int offset = q;
+        while (s[sp]==t[tp+offset] && amap.isSymbol(s[sp])) {
+          sp++;
+          offset++;
         }
-        lenfornew[ni] = offset;
+        newlen[ni] = offset;
         sp -= offset;             // go back to start of match
         // maximal match (tp, sp, offset), i.e. ((seqnum,tp-seqstart), (i,sss), offset)
         if (offset>=minlen) { // report match
@@ -451,16 +462,29 @@ public class QgramMatcher {
           seqmatches++;
         }
       } else { // this is an old (continuing) match
-        lenfornew[ni] = lenforact[ai];
+        newlen[ni] = activelen[ai];
         ai++;
       }
       if (seqmatches > maxseqmatches) break;
     }
+
+    // TODO put this note somewhere else
+
+    // There are always two buffers for match positions:
+    // - activepos contains the currently active matches.
+    // - newpos contains the matches of the next round.
+    //
+    // One buffer is not enough since the computation needs to be able to look at both.
+    // When newpos has been updated after a round and contains the now active
+    // positions, references are simply swapped: activepos becomes newpos and vice-versa.
+    // In this way, newpos and activepos never have to be re-allocated.
+    //
+    // The same holds for the match length arrays activelen and newlen. 
     
     // swap activepos <-> newpos  and  lenforact <-> lenfornew
     int[] tmp;
     tmp = activepos;  activepos = newpos;    newpos    = tmp;
-    tmp = lenforact;  lenforact = lenfornew; lenfornew = tmp;
+    tmp = activelen;  activelen = newlen; newlen = tmp;
     active = newactive;
     if (seqmatches > maxseqmatches) throw new TooManyHitsException();
   }
