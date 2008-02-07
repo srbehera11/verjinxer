@@ -97,8 +97,9 @@ public final class QgramIndexer {
       if (checkonly) { if (docheck(di, prj)>=0) returnvalue=1; continue; }
       asize = Integer.parseInt(prj.getProperty("LargestSymbol")) + 1;
       prj.setProperty("QGramAction", action);
-      prj.setProperty("LastAction","qgram");
-      prj.setProperty("qAlphabetSize",Integer.toString(asize));
+      prj.setProperty("LastAction", "qgram");
+      prj.setProperty("Bisulfite", Boolean.toString(bisulfite));
+      prj.setProperty("qAlphabetSize", Integer.toString(asize));
       int separator = Integer.parseInt(prj.getProperty("Separator"));
       
       // determine q-gram size qq, either from given -q option, or default by length
