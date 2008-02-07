@@ -28,10 +28,10 @@ public final class BisulfiteQGramCoder
 	}
 	
 	// (hardcoded) encoding for nucleotides
-	private static final byte NUCLEOTIDE_A = 0; // private enum Nucleotide { A, C, G, T; }
-	private static final byte NUCLEOTIDE_C = 1;
-	private static final byte NUCLEOTIDE_G = 2;
-	private static final byte NUCLEOTIDE_T = 3;
+	public static final byte NUCLEOTIDE_A = 0; // private enum Nucleotide { A, C, G, T; }
+	public static final byte NUCLEOTIDE_C = 1;
+	public static final byte NUCLEOTIDE_G = 2;
+	public static final byte NUCLEOTIDE_T = 3;
 	
 	
 	// alphabet size

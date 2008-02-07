@@ -24,7 +24,10 @@ import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
 import static verjinxer.Globals.*;
-
+import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_A;
+import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_C;
+import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_G;
+import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_T;
 
 /**
  *
@@ -106,6 +109,8 @@ public class QgramMatcher {
   
   ArrayList<ArrayList<Match>> matches = null; // list for sorted matches
   ArrayList<GlobMatch>   globmatches  = null; // list for unsorted matches
+  
+  boolean bisulfite = false; // whether the index is for bisulfite sequences
  
   /**
    * @param args the command line arguments
@@ -147,7 +152,7 @@ public class QgramMatcher {
     
     // Read project data and determine asize, q; read alphabet map
     Properties prj = g.readProject(ds+extprj);
-    try {
+    try { 
       asize = Integer.parseInt(prj.getProperty("qAlphabetSize"));
       q = Integer.parseInt(prj.getProperty("q"));
     } catch (NumberFormatException ex) {
@@ -203,6 +208,8 @@ public class QgramMatcher {
 
     openFiles(dt, ds, outname);
     int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
+    bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
+    if (bisulfite) g.logmsg("qmatch: index is for bisulfite sequences, using bisulfite matching%n");
     match(coder, maxactive, thefilter, toomanyhits);
     out.close();
     g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
@@ -380,6 +387,18 @@ public class QgramMatcher {
     assert(seqnum==tssp.length && tp==tn);    
   }
 
+  /**
+   * Compares two symbols, taking bisulfite treatment into account.
+   * @param cs original symbol (from reference sequence)
+   * @param ct potentially bisulfite-treated symbol
+   * @return true if cs could have led to ct during bisulfite treatment or if cs==ct.
+   */
+  private boolean bisulfiteEquals(byte cs, byte ct) {
+    return (cs == ct) ||
+      (cs == NUCLEOTIDE_C && ct == NUCLEOTIDE_T) ||
+      (cs == NUCLEOTIDE_G && ct == NUCLEOTIDE_A);
+  }
+  
   /*
    * writes to:
    * active
@@ -422,6 +441,7 @@ public class QgramMatcher {
       active=ni;
       return;
     }
+    //if (tp % 1000 == 0) g.logmsg("  findactive. tp=%d, newactive=%d%n", tp, newactive /*coder.qGramString(qcode,amap), lrmmrow, r*/);
 
     // TODO implement a method getQGramPositions() or better: a class QGramIndex
 
@@ -443,10 +463,16 @@ public class QgramMatcher {
         // determine newlen[ni] by comparing s[sp...] with t[tp...]
         int sp = newpos[ni] + q;
         int offset = q;
-        while (s[sp]==t[tp+offset] && amap.isSymbol(s[sp])) {
-          sp++;
-          offset++;
-        }
+        if (!bisulfite) // regular comparison
+          while (s[sp]==t[tp+offset] && amap.isSymbol(s[sp])) {
+            sp++;
+            offset++;
+          }
+        else
+          while (bisulfiteEquals(s[sp], t[tp+offset]) && amap.isSymbol(s[sp])) {
+            sp++;
+            offset++;
+          }
         newlen[ni] = offset;
         sp -= offset;             // go back to start of match
         // maximal match (tp, sp, offset), i.e. ((seqnum,tp-seqstart), (i,sss), offset)
