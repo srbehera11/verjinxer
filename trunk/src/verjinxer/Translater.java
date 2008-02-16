@@ -168,7 +168,7 @@ public class Translater {
       else g.terminate("translate: unsupported file type for file "+args[i]);
     }
     // DONE processing all files.
-    try { out.close(); } catch (IOException ex) {};
+    try { out.close(); } catch (IOException ex) {}
     long totallength=out.length();
     if (totallength>=(2L*1024*1024*1024))
       g.warnmsg("translate: output length %d exceeds 2 GB limit!!%n", totallength);
@@ -266,11 +266,11 @@ public class Translater {
         fseq = f.read(); // reads one fasta sequence from file f
         if (fseq==null) break;
         tr = fseq.translateTo(tr, trim, amap, reverse, appendforward);
-        lastbyte = out.dumpToChannel(tr);
+        lastbyte = out.write(tr);
         if (addrc) {
           if (!separateRCByWildcard)  out.addInfo(fseq.getHeader(), fseq.length(), (int)(lastbyte-1));
           tr = fseq.translateTo(tr, trim, amap2, true, appendreverse);
-          lastbyte = out.dumpToChannel(tr);
+          lastbyte = out.write(tr);
           if (separateRCByWildcard) out.addInfo(fseq.getHeader(), 2*fseq.length()+1, (int)(lastbyte-1));
           else out.addInfo(fseq.getHeader()+" "+dnarcstring, fseq.length(), (int)(lastbyte-1));
         } else { // no reverse complement
@@ -295,14 +295,14 @@ public class Translater {
         fseq = f.read(); // reads one fasta sequence from file f
         if (fseq==null) break;
         tr = fseq.translateDNABiTo(tr, trim, false, false, 1);  // nonmeth-bis-#
-        lastbyte = out.dumpToChannel(tr);
+        lastbyte = out.write(tr);
         tr = fseq.translateDNABiTo(tr, trim, false, true,  2);  // nonmeth-cbis-$
-        lastbyte = out.dumpToChannel(tr);
+        lastbyte = out.write(tr);
         out.addInfo(fseq.getHeader()+" /nonmeth-bis+cbis", 2*fseq.length()+1, (int)(lastbyte-1));
         tr = fseq.translateDNABiTo(tr, trim, true,  false, 1);  // meth-bis-#
-        lastbyte = out.dumpToChannel(tr);
+        lastbyte = out.write(tr);
         tr = fseq.translateDNABiTo(tr, trim, true,  true,  2);  // meth-cbis-$
-        lastbyte = out.dumpToChannel(tr);
+        lastbyte = out.write(tr);
         out.addInfo(fseq.getHeader()+" /meth-bis+cbis", 2*fseq.length()+1, (int)(lastbyte-1));
       } catch (Exception e) {
         g.warnmsg("translate: %s%n",e.toString()); break; }
@@ -340,7 +340,7 @@ public class Translater {
           throw new IOException(ex);
         }
       }
-      lastbyte = out.dumpToChannel(tr);
+      lastbyte = out.write(tr);
       out.addInfo(fname, len, (int)(lastbyte-1));
     } catch(IOException ex) {
       g.warnmsg("translate: error translating '%s': %s%n",fname,ex.toString());

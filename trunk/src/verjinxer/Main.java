@@ -138,6 +138,7 @@ public class Main {
     
     String   command = args[0];
     String[] rest    = Arrays.asList(args).subList(1, args.length).toArray(new String[0]);
+      // waere schoen, wenn man rest=args[1..end] einfacher erhalten koennte
     
     // Process help on each command
     if (command.startsWith("he")) {

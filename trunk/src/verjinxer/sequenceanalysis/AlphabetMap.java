@@ -9,7 +9,11 @@ package verjinxer.sequenceanalysis;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
+import verjinxer.util.ArrayFile;
 
 /**
  *
@@ -420,6 +424,96 @@ public class AlphabetMap {
   
   /**************************************************************/
 
+
+   /** indicates whether a given file can be translated by this AlphabetMap
+    * @param fname  the file name
+    * @return true if the ArrayFile can be translated, false otherwise
+    * @throws java.io.IOException   if an IO error occurs
+    */
+   public boolean isApplicableToFile(final String fname) throws IOException {
+      final ArrayFile arf = new ArrayFile(fname, 0);
+      final long[] counts = arf.byteCounts();
+      for (int i = 0; i < counts.length; i++)
+         if (counts[i] > 0 && !this.isPreValid(i)) return false;
+      return true;
+   }
+
+   /** translate one byte file to another, applying this alphabet map 
+    * @param inname   name of input file
+    * @param outname  name of output file
+    * @param appendSeparator  set true if you want to append a separator at the end
+    * @throws java.io.IOException  if an IO exception occurs
+    * @throws verjinxer.sequenceanalysis.InvalidSymbolException if a symbol in the input file cannot be translated
+    */
+   public void translateFileToFile(final String inname, final String outname, final boolean appendSeparator)
+           throws IOException, InvalidSymbolException {
+      final ArrayFile afin = new ArrayFile(inname, 0);
+      final ByteBuffer in = afin.mapR();
+      final long length = afin.length();
+      final long ll = appendSeparator ? length + 1 : length;
+      final ArrayFile afout = new ArrayFile(outname, 0);
+      final ByteBuffer out = afout.mapRW();
+      for (long i = 0; i < length; i++)  out.put(this.code(in.get()));
+      if (appendSeparator) out.put(this.codeSeparator());
+   }
+
+   /**
+    * translate a byte file to a byte array, applying this alphabet map 
+    * @param inname   name of input file
+    * @param translation  the array where to store the translated string (must have large enough size).
+    *    If null or too small, a new array with sufficient size is allocated.
+    * @param appendSeparator  set true if you want to append a separator at the end
+    * @return  the newly allocated translated byte array, or 'translation'
+    * @throws java.io.IOException
+    * @throws verjinxer.sequenceanalysis.InvalidSymbolException
+    */
+   public byte[] translateFileToByteArray(final String inname, byte[] translation, final boolean appendSeparator)
+           throws IOException, InvalidSymbolException {
+      final ArrayFile afin = new ArrayFile(inname, 0);
+      final ByteBuffer buf = afin.mapR();
+      final long length = afin.length();
+      final int ll = (int) length + (appendSeparator ? 1 : 0);
+      if (translation==null || translation.length<ll) translation = new byte[ll];
+      for (int i = 0; i < length; i++) translation[i] = this.code(buf.get());
+      if (appendSeparator) translation[ll - 1] = this.codeSeparator();
+      return translation;
+   }
+
+   /** translate a string to a given file, possibly appending to the end of the file.
+    *@param s the string to be translated
+    *@param fname  the file name of the translated file
+    *@param append whether to append to an existing file
+    *@param writeSeparator whether to append the separator to the end of the translated string.
+    *  If both append and writeSeparator are true, and the existing file does not end with a separator,
+    *  a separator is appended prior to appending the translated string and the final separator.
+    * @throws java.io.IOException
+    * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
+    */
+   public void translateStringToFile(final String s, final String fname, final boolean append, final boolean writeSeparator)
+           throws IOException, InvalidSymbolException {
+      final int slen = s.length();
+      RandomAccessFile f = new RandomAccessFile(fname, "rw");
+      FileChannel fcout = f.getChannel();
+      long flen = fcout.size();
+      long start = append ? flen : 0;
+      if (flen > 0 && append && writeSeparator) {
+         f.seek(flen - 1);
+         if (f.readByte() != this.codeSeparator()) {
+            f.writeByte(this.codeSeparator());
+            flen++;
+         }
+      }
+      long newlen = append ? (flen + slen) : slen;
+      if (writeSeparator) newlen++;
+      f.seek(newlen - 1);
+      f.writeByte(0);
+      f.seek(start);
+      MappedByteBuffer buf = fcout.map(MapMode.READ_WRITE, start, newlen - start);
+      for (int i = 0; i < slen; i++) buf.put(this.code((byte) s.charAt(i)));
+      if (writeSeparator) buf.put(this.codeSeparator());
+      fcout.close();
+      f.close();
+   }
+
 // end class  
 }
-

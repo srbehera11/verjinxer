@@ -7,9 +7,10 @@
 
 package verjinxer;
 
-import java.io.*;
+//import java.io.*;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
@@ -117,7 +118,7 @@ public class Cutter {
 
     // init cutpoints with start and end of file, and ssps
     int totalMatches = 0;
-    ArrayList<Integer> matchPositions = new ArrayList<Integer>(10*1024*1024);
+    ArrayList<Integer> matchPositions = new ArrayList<Integer>(10*1024*1024); // 10M positions initially
     matchPositions.add(0); totalMatches++;
 
     int[] ssp = null;
@@ -132,9 +133,9 @@ public class Cutter {
 
     
     // Read sequence
-    MappedByteBuffer in = null;
+    ByteBuffer in = null;
     try {
-      in = new ArrayFile(ds+extseq).mapR();
+      in = new ArrayFile(ds+extseq,0).mapR();
     } catch (IOException ex) {
       g.terminate("map: "+ex.toString());
     }
@@ -179,23 +180,28 @@ public class Cutter {
     Integer[] mp = matchPositions.toArray(new Integer[0]);
     java.util.Arrays.sort(mp);
     
-    // write output
-    int written = 0;
-    final String outfile = ds + ".cut";
-    try {
-      int recent = -1;
-      DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outfile), 1024*1024));
-      for (int i=0; i < mp.length; i++) {
-        assert(mp[i]>=recent);
-        if (mp[i]==recent) continue;
-        recent = mp[i];
-        out.writeInt(recent);
-        written++;
-      }
-      out.close();
-    } catch (IOException ex) {
-      g.terminate("cut: could not write output file "+outfile);
+    // determine output size (number of cutpoints to write) by removing duplicates
+    int towrite = 0;    
+    int recent = -1;
+    for (int i=0; i < mp.length; i++) {
+      assert(mp[i]>=recent);
+      if (mp[i]==recent) continue;
+      recent = mp[i];
+      towrite++;
     }
+    
+    // write output
+    int[] mpout = new int[towrite];
+    int written=0;
+    for (int i=0; i < mp.length; i++) {
+      assert(mp[i]>=recent);
+      if (mp[i]==recent) continue;
+      recent = mp[i];
+      mpout[written++]=recent;
+    }
+    assert(written==towrite);
+    final String outfile = ds + ".cut";
+    g.dumpIntArray(outfile, mpout);
     g.logmsg("cut: wrote %d cutpoints, %d less than expected.%n", written, totalMatches-written);
   
     
@@ -223,7 +229,7 @@ public class Cutter {
     FastaFile ffile = null;
     IntBuffer cutpoints = null;
     try {   
-      cutpoints = new ArrayFile(outfile).mapR().asIntBuffer();
+      cutpoints = new ArrayFile(outfile,0).mapR().asIntBuffer();
       ffile = new FastaFile(fname).open(FastaFile.FastaMode.WRITE);
     } catch (IOException ex) {
       g.terminate(String.format("cut: %s", ex.toString()));

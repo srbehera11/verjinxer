@@ -1,18 +1,10 @@
-/*
- * DNAFile.java
- *
- * Created on 19. Dezember 2006, 23:24
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
+
 
 package verjinxer.util;
-
 import java.util.ArrayList;
 
 /**
- *
+ * This class provides an annotated ArrayFile.
  * @author Sven Rahmann
  */
 public class AnnotatedArrayFile extends ArrayFile
@@ -21,12 +13,14 @@ public class AnnotatedArrayFile extends ArrayFile
    
    /**
     * Creates a new instance of AnnotatedArrayFile
+    * @param fname  the file name on disk of this AnnotatedArrayFile.
     */
    public AnnotatedArrayFile(String fname)
    {
       super(fname);
       info = new ArrayList<Info>(1024);
    }
+   
    
    /** a record to store information about each sequence */
    public class Info

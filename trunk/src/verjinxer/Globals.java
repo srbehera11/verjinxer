@@ -7,14 +7,13 @@
 
 package verjinxer;
 
+import java.util.*;
 import java.io.*;
 import java.nio.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.*;
+import verjinxer.util.*;
 import verjinxer.sequenceanalysis.AlphabetMap;
-import verjinxer.util.ArrayFile;
-import verjinxer.util.Strings;
 
 /**
  *
@@ -44,6 +43,7 @@ public class Globals {
    
   private PrintStream  logger  = null;
   private PrintStream  loggerP = null;
+  private ArrayFile    arf     = null;
   
   String       cmdname = programname; // prefix to diagnostic messages
   String[]     action  = null;        // all arguments to Main for logfile
@@ -51,6 +51,10 @@ public class Globals {
   String       dir     = "";          // project (working) dir
   String       outdir  = "";          // output dir -- do not use lightly!
   boolean      quiet   = false;       // suppress diagnostics to stdout?
+  
+  public Globals() {
+     arf = new ArrayFile();           // array file to be used
+  }
   
   
   public final void warnmsg(String format, Object ... args) {
@@ -160,7 +164,7 @@ public class Globals {
     byte[] a = null;
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
-      a = new ArrayFile(file).slurp(a);
+      a = arf.setFilename(file).read(a);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -182,7 +186,7 @@ public class Globals {
   byte[] slurpByteArray(String file, long startindex, long stopindex, byte[] a) {
     //logmsg("%s: reading '%s' [%d..%d] into memory...%n", cmdname, file, startindex, stopindex);
     try {
-      a = new ArrayFile(file).slurp(a, startindex, stopindex);
+      a = arf.setFilename(file).read(a, 0, (int)(stopindex-startindex),  startindex);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -201,7 +205,7 @@ public class Globals {
     int[] a = null;
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
-      a = new ArrayFile(file).slurp(a);
+      a = arf.setFilename(file).read(a);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -214,12 +218,12 @@ public class Globals {
    * Terminate the program when an error occurs.
    * @param file  the name of the file to be read
    * @param a  an existing array to be used if large enough.
-   * @return the newly created int[] with the file's contents
+   * @return the int[] with the file's contents
    */
   int[] slurpIntArray(String file, int[] a) {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
-      a = new ArrayFile(file).slurpIntoPrefix(a);
+      a = arf.setFilename(file).read(a);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -234,13 +238,13 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the ByteBuffer with the mapped file's contents
    */
-  MappedByteBuffer mapRByteArray(String file) {
-    MappedByteBuffer b = null;
+  ByteBuffer mapRByteArray(String file) {
+    ByteBuffer b = null;
     logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
     FileChannel fc = null;
     try {
       fc = new FileInputStream(file).getChannel();
-      b = fc.map(MapMode.READ_ONLY, 0, fc.size());
+      b = fc.map(MapMode.READ_ONLY, 0, fc.size()).order(ByteOrder.nativeOrder());
       fc.close();
     } catch (IOException ex) {
       try {fc.close();} catch(IOException exx) {}
@@ -261,7 +265,7 @@ public class Globals {
     FileChannel fc = null;
     try {
       fc = new FileInputStream(file).getChannel();
-      b = fc.map(MapMode.READ_ONLY, 0, fc.size()).asIntBuffer();
+      b = fc.map(MapMode.READ_ONLY, 0, fc.size()).order(ByteOrder.nativeOrder()).asIntBuffer();
       fc.close();
     } catch (IOException ex) {
       try {if (fc!=null) fc.close();} catch(IOException exx) {}
@@ -303,7 +307,7 @@ public class Globals {
   void dumpIntArray(final String file, final int[] a, final int start, final int len) {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
-      new ArrayFile(file).dump(a,start,len);
+      arf.setFilename(file).write(a,start,len);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not write '%s'. Stop.%n",cmdname, file);
@@ -330,7 +334,7 @@ public class Globals {
   void dumpByteArray(final String file, final byte[] a, final int start, final int len) {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
-      new ArrayFile(file).dump(a,start,len);
+      arf.setFilename(file).write(a,start,len);
     } catch (Exception ex) {
       warnmsg("%s: could not write '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -346,6 +350,10 @@ public class Globals {
     dumpByteArray(file, a, 0, a.length);
   }
   
+  
+  //TODO: Filters are written and read as streams.
+  // Thus, they have possibly a different byte order than native!
+  
   /** Write the given filter BitSet to a file, 
    * starting with the size, followed by the indices of 1-bits.
    * Terminate the program when an error occurs.
@@ -355,10 +363,9 @@ public class Globals {
   void writeFilter(final String file, BitSet f) {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
-      final ArrayFile of = new ArrayFile(file).openW();
+      final ArrayFile of = arf.setFilename(file).openWStream();
       of.out().writeInt(f.length());
-      for (int i = f.nextSetBit(0); i >= 0; i = f.nextSetBit(i+1))
-        of.out().writeInt(i);
+      for (int i = f.nextSetBit(0); i >= 0; i = f.nextSetBit(i+1)) of.out().writeInt(i);
       of.close();
     } catch (IOException ex) {
       warnmsg("%s: could not write '%s'. Stop.%n",cmdname, file);
@@ -375,7 +382,7 @@ public class Globals {
   */
   BitSet readFilter(final String file, final int size) {
     try {
-      final ArrayFile inf = new ArrayFile(file).openR();
+      final ArrayFile inf = arf.setFilename(file).openRStream();
       inf.close();
     } catch (IOException ex) {
       if (size>0) return new BitSet(size);
@@ -384,7 +391,7 @@ public class Globals {
    logmsg("%s: reading '%s'...%n", cmdname, file);
    BitSet f = null;
    try {
-      final ArrayFile inf = new ArrayFile(file).openR();
+      final ArrayFile inf = arf.setFilename(file).openRStream();
       final int numone = (int)(inf.length()/4 - 1);
       final int fsize = inf.in().readInt();
       if (size>0) assert (fsize==size);
