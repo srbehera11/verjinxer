@@ -125,7 +125,7 @@ public class SuffixTrayBuilderTest extends TestCase {
         totalsteps[L]+=stb.steps;
         if (stb.steps>maxsteps[L]) {
           maxsteps[L]=stb.steps;
-          maxt[L] = Strings.join("",t,0,L);
+          maxt[L] = StringUtils.join("",t,0,L);
         }     
         // 2. advance t and quit if all done.
         int i;
@@ -166,7 +166,7 @@ public void doAAA() {
       stb.buildpos_L();
       result = stb.checkpos_R();
       assertEquals(0, result);
-      System.out.printf("  steps=%d; text=%s%n", stb.steps, Strings.join("",t,0,L));
+      System.out.printf("  steps=%d; text=%s%n", stb.steps, StringUtils.join("",t,0,L));
     }
         
   }

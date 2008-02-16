@@ -52,17 +52,19 @@ public final class QGramCoder
    /** @return the alphabet size of this coder */
    public int getAsize() { return asize; }
   
-   /** returns the qgram code >0 or -1 if illegal characters appear
+   /** 
     * @param qgram a byte array with the numbers to be interpreted as base-asize number
+    * @return the qgram code >0; or -1 if illegal characters appear
     */
    public final int code(final byte[] qgram)
    {
       return code(qgram, 0);
    }
    
-   /** returns the qgram code >0 or -1 if illegal characters appear
+   /**
     * @param qgram a byte array with the numbers to be interpreted as base-asize number
     * @param offset position to start looking in the qgram array
+    * @return the qgram code >0; or -1 if illegal characters appear
     */
    public final int code(final byte[] qgram, final int offset)
    {
@@ -76,10 +78,12 @@ public final class QGramCoder
       return c;
    }
    
-   /** update the current code by shifting out the leftmost *most significant) 
-    * character and introducing the next one at the right (least significant)
-    * @param old  the old q-gram code
+   /** update the current code by shifting out the leftmost (most significant) 
+    * character and introducing the next one at the right (least significant).
+    * @param old  the old q-gram code.
+    *   If 'old' is not a valid q-gram code (eg, -1), the behavior is unspecified!
     * @param next the next byte to shift in
+    * @return     the new q-gram code; or -1 if 'next' is not in the alphabet
     */
    public final int codeUpdate(final int old, final byte next)
    {

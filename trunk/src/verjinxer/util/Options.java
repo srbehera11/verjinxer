@@ -10,7 +10,7 @@ package verjinxer.util;
 import java.util.HashMap;
 
 /**
- *
+ * this class provides convenient command line option parsing.
  * @author Sven Rahmann
  */
 public class Options
@@ -25,7 +25,7 @@ public class Options
    private HashMap<String,String> options;
 
    /** create new options instance by specifying valid options.
-    * Valid options are specified by a format string.
+    * @param format Valid options are specified by a format string.
     * Example: 
     * <tt>Options o = new Options("show=s=display,D=debuglevel:");</tt>
     * This allows options -s and --show and --display without argument,
@@ -60,10 +60,11 @@ public class Options
    /** parses command line arguments into options and true arguments.
     * After parsing, options and their argument values can be accessed
     * via <tt>.get(key)</tt> or <tt>.isGiven(key)</tt>.
+    * @param args  the command line arguments, from which to parse the options
+    * @return  the arguments after all options have been removed
+    * @throws verjinxer.util.IllegalOptionException 
     */
-   public String[]
-      parse(String[] args)
-      throws IllegalOptionException
+   public String[] parse(String[] args) throws IllegalOptionException
    {
       int i;
       String arg, olong, oshort, eq, key;
@@ -77,10 +78,9 @@ public class Options
          eq = null;
          partial = false;
          
-         if (arg.charAt(0)!='-') break;
-         if (arg.equals("-")) break;
-         if (arg.equals("--"))
-         { i++; break; };
+         if (arg.charAt(0)!='-')  break;
+         if (arg.equals("-"))     break;
+         if (arg.equals("--"))    { i++; break; }
          
          int eqpos = arg.indexOf('=');
          if (eqpos>=0)
@@ -135,7 +135,10 @@ public class Options
       return newargs;
    }
    
-   /** returns the option argument for option 'key' */
+   /** returns the option argument for option 'key'
+    * @param key  the name of the option
+    * @return option argument for option indexed by 'key'
+    */
    public final String get(String key)
    {
       String s = alias.get(key);
@@ -143,7 +146,10 @@ public class Options
       return options.get(s);
    }
    
-   /** returns whether option 'key' has been given on the command line */
+   /** returns whether option 'key' has been given on the command line
+    * @param key  the name of the option
+    * @return   true iff this option has been specified; false otherwise
+    */
    public final boolean isGiven(String key)
    {
       String s = alias.get(key);
@@ -151,19 +157,27 @@ public class Options
       return options.containsKey(s);
    }
    
-   /** returns true if 'key' is a valid option */
+   /** returns true if 'key' is a valid option
+    * @param key  the name of the option
+    * @return   true iff this key names a valid option (specified in the format string in the constructor)
+    */
    public final boolean isValid(String key)
    {
       return alias.containsKey(key);
    }
    
-   /** returns a HashMap of all given options */
+   /**  
+    * @return a HashMap (key, argument) of all given options
+    */
    public final HashMap<String,String> getAll()
    {
       return options;
    }
    
-   /** sets an option as if given on the command line */
+   /** sets an option as if given on the command line
+    * @param key  the name of the option
+    * @param val  the option argument
+    */
    public void set(String key, String val)
    {
       alias.put(key,key);

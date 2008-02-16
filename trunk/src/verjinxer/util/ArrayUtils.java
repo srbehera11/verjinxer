@@ -1,17 +1,19 @@
 /*
- * Arrays.java
- *
  * Created on 13. April 2007, 17:19
  *
  */
 
+
 package verjinxer.util;
 
 /**
- *
- * @author rahmann
+ * This utility class contains static utility functions for arrays.
+ * @author Sven Rahmann
  */
 public class ArrayUtils {
+
+   private ArrayUtils() {
+   }
   
   public static final int largestAllocatable() {
     return largestAllocatable(0);
@@ -22,10 +24,10 @@ public class ArrayUtils {
     int min = 0;           // lower bound
     int max = 0x7fffffff;  // upper bound
     if (lmax>0) max = (int)lmax;
-    if (allocates(max)) return (max/8)*8;
+    if (canWeAllocate(max)) return (max/8)*8;
     while (max-min > 1024*16) {
       int half = (max-min)/2+min;
-      if (allocates(half)) {
+      if (canWeAllocate(half)) {
         // yes, go up with the lower bound
         min = half+1;
       } else {
@@ -37,25 +39,30 @@ public class ArrayUtils {
     return (min/8)*8;
   }
   
-  /** @return true if size bytes can be allocated */
+  /**
+   * try to allocate a certain number of bytes.
+   * If this is possible, return true; otherwise false.
+   * The memory is immediately freed again.
+   * @param size  number of bytes to attempt to allocate
+   * @return true if 'size' bytes can be allocated, false otherwise.
+   */
   @SuppressWarnings("unused")
-  public static final boolean allocates(int size) {
-    byte[] test = null;
+  public static final boolean canWeAllocate(int size) {
     System.gc();
     try {
-      test = new byte[size];
+      byte[] test = new byte[size];
       test = null;
-      return true;
-    } catch (OutOfMemoryError e) {
-    }
+      return true; 
+    } catch (OutOfMemoryError e) {}
     return false;
   }
   
   
-  /** reverses an array or a prefix of an array
+  /** reverses an array or a prefix of an array in place
    *@param a  the array
    *@param len the number of elements to reverse (a[0..len-1] is reversed);
-   * if len<0 or len>a.length, then the whole array is reversed.
+   * if len&lt;0 or len&gt;a.length, then the whole array is reversed.
+   * @return the same array a, (partially) reversed in-place.
    */
   public static int[] reverseArray(final int[] a, int len) {
     if(len<0) len=a.length;
@@ -69,10 +76,11 @@ public class ArrayUtils {
     return a;
   }
   
-  /** reverses an array or a prefix of an array
+  /** reverses an array or a prefix of an array in place
    *@param a  the array
    *@param len the number of elements to reverse (a[0..len-1] is reversed);
-   * if len<0 or len>a.length, then the whole array is reversed.
+   * if len&lt;0 or len&gt;a.length, then the whole array is reversed.
+   * @return the same array a, (partially) reversed in-place.
    */
   public static byte[] reverseArray(final byte[] a, int len) {
     if(len<0) len=a.length;
@@ -121,7 +129,9 @@ public class ArrayUtils {
     }
   }
   
-  /** @return the maximum element of the given array */
+  /**
+   * @param array  the array
+   * @return the maximum element of the given array */
   public static int maximumElement(int[] array) {
     int maximum = 0;
     for (int i=0; i<array.length; i++)
@@ -129,6 +139,7 @@ public class ArrayUtils {
         maximum = array[i];
     return maximum;
   }
+
   
 }
 

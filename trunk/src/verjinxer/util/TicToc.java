@@ -27,28 +27,35 @@ public final class TicToc
       t = System.nanoTime();
    }
    
-   /** Returns nanoseconds since last tic() */
+   /** 
+    * @return  seconds since last tic() as double
+    */
+   public double tocs() {
+    return ((System.nanoTime()-t)/1000000000.0);      
+  }
+
+   /** 
+    * @return nanoseconds since last tic()
+    */
    public long toc()
    {
       return System.nanoTime()-t;
    }
    
-   /** Returns milliseconds since last tic() */
+   /**
+    * @return  milliseconds since last tic()
+    */
    public long tocMilliSeconds()
    {
       return java.lang.Math.round((System.nanoTime()-t)/1000000.0);      
    }
    
-   /** Returns integer seconds since last tic() */
+   /**
+    * @return  integer seconds since last tic()
+    */
    public long tocSeconds()
    {
       return java.lang.Math.round((System.nanoTime()-t)/1000000000.0);
    }
 
-   /** returns seconds since last tic() as double */
-   public double tocs() {
-    return ((System.nanoTime()-t)/1000000000.0);      
-  }
-  
 }
-

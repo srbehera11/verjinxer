@@ -9,10 +9,13 @@ package verjinxer.util;
 import static java.lang.Math.*;
 
 /**
- *
+ * utility class with static mathematical routines
  * @author Sven Rahmann
  */
 public final class Math {
+
+   private Math() {
+   }
   
   private final static double[] lngammacoeff =
   { 76.18009172947146,
@@ -24,7 +27,10 @@ public final class Math {
   };
   
   /** Returns the logarithm of the Gamma function of argument xx.
-   *  Throws an ArithmeticException of xx<=0 */
+   *  Throws an ArithmeticException of xx&lt;=0
+   * @param xx the argument at which to compute the lngamma function
+   * @return ln(gamma(xx))
+   */
   public static final
       double lngamma(final double xx) {
     double x,y,tmp,ser;
@@ -37,32 +43,50 @@ public final class Math {
     return(-tmp+log(2.5066282746310005*ser/x));
   }
   
-  /** returns the logarithm of x! (x factorial) */
+  /** returns the logarithm of x! (x factorial)
+   * @param x  the argument
+   * @return log(x!)
+   */
   public static final
       double lnfactorial(final double x) {
     return(lngamma(x+1));
   }
   
-  /** returns (n choose k), the biomial coefficient */
+  /** returns (n choose k), the biomial coefficient
+   * @param n  number of things from which we can choose
+   * @param k  number of things we can choose
+   * @return number of combinations (n choose k), as a double
+   */
   public static final
       double nchoosek(final double n, final double k) {
     return exp((lngamma(n+1) - lngamma(k+1) - lngamma(n-k+1)));
   }
   
-  /** returns (n choose k), the binomial coefficient */
+  /** returns (n choose k), the biomial coefficient
+   * @param n  number of things from which we can choose
+   * @param k  number of things we can choose
+   * @return number of combinations (n choose k), as a long integer
+   */
   public static final
       long nchoosek(final long n, final long k) {
     return (long)xround(exp((lngamma(n+1) - lngamma(k+1) - lngamma(n-k+1))));
   }
   
-  /** rounds argument x to granularity eps */
+  /** rounds argument x to granularity eps
+   * @param x   the argument
+   * @param eps the rounding granularity
+   * @return  x rounded to granularity eps
+   */
   public static final
       double xround(final double x, final double eps) {
     double y=eps*floor(x/eps+0.5);
     return (eps*floor(y/eps+0.5));
   }
   
-  /** rounds argument x to the nearest integer */
+  /** rounds argument x to the nearest integer
+   * @param x  the argument
+   * @return   the argument rounded to the nearest integer
+   */
   public static final
       double xround(final double x) {
     return xround(x,1);
@@ -120,6 +144,7 @@ public final class Math {
     }
     return s;
   }
+
   
 // end class
 }
