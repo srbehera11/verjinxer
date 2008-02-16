@@ -289,7 +289,7 @@ public class Globals {
       br.close();
     } catch (IOException ex) {
       try { if(br!=null) br.close();} catch(IOException exx) {}
-      warnmsg("%s: could not read '%s'; %s. Stop.", cmdname, file, ex.toString());
+      warnmsg("%s: could not read '%s'; %s%n", cmdname, file, ex.toString());
       terminate(1);
     }
     return lines;
@@ -309,8 +309,7 @@ public class Globals {
     try {
       arf.setFilename(file).write(a,start,len);
     } catch (Exception ex) {
-      ex.printStackTrace();
-      warnmsg("%s: could not write '%s'. Stop.%n",cmdname, file);
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
       terminate(1);
     }
   }
@@ -336,7 +335,7 @@ public class Globals {
     try {
       arf.setFilename(file).write(a,start,len);
     } catch (Exception ex) {
-      warnmsg("%s: could not write '%s'. Stop.%n",cmdname, file);
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
       terminate(1);
     }
   }
@@ -349,70 +348,37 @@ public class Globals {
   void dumpByteArray(final String file, final byte[] a) {
     dumpByteArray(file, a, 0, a.length);
   }
-  
-  
-  //TODO: Filters are written and read as streams.
-  // Thus, they have possibly a different byte order than native!
-  
-  /** Write the given filter BitSet to a file, 
-   * starting with the size, followed by the indices of 1-bits.
-   * Terminate the program when an error occurs.
-   * @param file  the name of the file
-   * @param f  the filter
+    
+  /** Write the given BitArray to a file, while printing diagnostics.
+   *  Terminate the program when an error occurs.
+   * @param filename  the name of the file
+   * @param ba        the bit array
    */
-  void writeFilter(final String file, BitSet f) {
-    logmsg("%s: writing '%s'...%n", cmdname, file);
+  void dumpBitArray(final String filename, BitArray ba) {
+    logmsg("%s: writing '%s'...%n", cmdname, filename);
     try {
-      final ArrayFile of = arf.setFilename(file).openWStream();
-      of.out().writeInt(f.length());
-      for (int i = f.nextSetBit(0); i >= 0; i = f.nextSetBit(i+1)) of.out().writeInt(i);
-      of.close();
+      ba.writeTo(arf.setFilename(filename));
     } catch (IOException ex) {
-      warnmsg("%s: could not write '%s'. Stop.%n",cmdname, file);
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, filename, ex.toString());
       terminate(1);
     }
   }
 
- /** Read a filter BitSet from a file, 
-  * starting with the size, followed by the indices of 1-bits.
+ /** Read a BitArray from a file, while printing diagnostics.
   * Terminate the program when an error occurs.
-  * @param file  the name of the file
-  * @param size  the initizal size of the filter (use -1 for default)
-  * @return the filter BitSet
+  * @param filename  the name of the file
+  * @return the bit array
   */
-  BitSet readFilter(final String file, final int size) {
-    try {
-      final ArrayFile inf = arf.setFilename(file).openRStream();
-      inf.close();
-    } catch (IOException ex) {
-      if (size>0) return new BitSet(size);
-      return new BitSet();
-    }
-   logmsg("%s: reading '%s'...%n", cmdname, file);
-   BitSet f = null;
-   try {
-      final ArrayFile inf = arf.setFilename(file).openRStream();
-      final int numone = (int)(inf.length()/4 - 1);
-      final int fsize = inf.in().readInt();
-      if (size>0) assert (fsize==size);
-      f = new BitSet(fsize);
-      for (int i = 0; i<numone; i++) f.set(inf.in().readInt());
-      inf.close();
-    }  catch (IOException ex) {
-      warnmsg("%s: could not read '%s'. Stop. %s%n",cmdname, file, ex.toString());
-      terminate(1);
-    }
-    return f;
-  }
- 
- /** Read a filter BitSet from a file, 
-  * starting with the size, followed by the indices of 1-bits.
-  * Terminate the program when an error occurs.
-  * @param file  the name of the file
-  * @return the filter BitSet
-  */
-  BitSet readFilter(final String file) {
-    return readFilter(file,-1);
+  BitArray slurpBitArray(final String filename) {
+     logmsg("%s: reading '%s'...%n", cmdname, filename);
+     BitArray ba = null;
+     try {
+        ba = BitArray.readFrom(arf.setFilename(filename));
+     } catch (IOException ex) {
+        warnmsg("%s: could not read '%s'; %s%n",cmdname, filename, ex.toString());
+        terminate(1);
+     }
+     return ba;
   }
   
 }

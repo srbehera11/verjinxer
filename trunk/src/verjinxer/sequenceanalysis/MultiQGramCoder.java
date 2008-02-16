@@ -8,32 +8,26 @@ public class MultiQGramCoder {
   private BisulfiteQGramCoder bicoder;
   private boolean bisulfite;
   private int qcode = 0;
-  private int asize;
   
-  public MultiQGramCoder(int q, int asize, boolean bisulfite) {
+  public final int asize;
+  public final int q;
+  public final int numberOfQGrams;
+  
+  public MultiQGramCoder(final int q, final int asize, final boolean bisulfite) {
     if (bisulfite) {
       if (asize != 4)
         throw new IllegalArgumentException("If bisulfite is true, asize must be 4.");
       bicoder = new BisulfiteQGramCoder(q);
       coder = bicoder.getCoder();
-      this.bisulfite = bisulfite;
-      this.asize = asize;
     } else {
       coder = new QGramCoder(q, asize);
     }
+    this.bisulfite = bisulfite;
+    this.asize = asize;
+    this.q     = q;
+    this.numberOfQGrams = coder.numberOfQGrams;
   }
-  
-  public int numberOfQGrams() {
-    return coder.numberOfQGrams();
-  }
-  
-  public int getq() {
-    return coder.getq();
-  }
-  
-  public int getAsize() {
-    return coder.getAsize();
-  }
+    
   
   public void update(byte next, byte after) {
     if (bisulfite) {

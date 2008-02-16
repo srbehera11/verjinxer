@@ -9,7 +9,6 @@ package verjinxer;
 
 import java.nio.*;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
@@ -49,12 +48,11 @@ public class QgramFrequencer {
     g.logmsg("  -N  <N>             output at most N q-grams [all]%n");
     g.logmsg("  -r, --reverse       output the LEAST instead of most frequent q-grams%n");
     g.logmsg("  -p, --prefix  <p>   report only words starting with p, where |p|<=q%n");
-    g.logmsg("  -f, --filter  <c:d> filter q-grams by complexity <c> and delta <d>%n");
+    g.logmsg("  -F, --filter  <c:d> filter q-grams by complexity <c> and delta <d>%n");
     g.logmsg("  -x, --external      save memory at the cost of lower speed%n");
   }
   
   /* Variables */
-  //boolean filtered = false;
   boolean countseq = false;
   byte[]  word     = null;
   boolean external = false;
@@ -87,7 +85,7 @@ public class QgramFrequencer {
     TicToc gtimer = new TicToc();
     g.cmdname = "qfreq";
     int returnvalue = 0;
-    Options opt = new Options("f=filter:,s=sequences,p=prefix:,x=external,n=number:,N=Number:,r=rev=reverse");
+    Options opt = new Options("F=filter:,s=sequences,p=prefix:,x=external,n=number:,N=Number:,r=rev=reverse");
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
@@ -120,7 +118,7 @@ public class QgramFrequencer {
     }
     amap = g.readAlphabetMap(di+extalph);
     final QGramCoder coder = new QGramCoder(q,asize);
-    final int aq = coder.numberOfQGrams();
+    final int aq = coder.numberOfQGrams;
     
     // Determine num and NUM
     if (opt.isGiven("n")) {
@@ -164,9 +162,11 @@ public class QgramFrequencer {
     len = Hcode - Lcode;
     g.logmsg("qfreq: all files read after %.1f sec; now sorting %d q-grams...%n", gtimer.tocs(),len);
 
-    BitSet filter = coder.createFilter(opt.get("f"));
+    final int[] filterparam = QGramFilter.parseFilterParameters(opt.get("F"));
+    final QGramFilter filter = new QGramFilter(q, asize, filterparam[0], filterparam[1]);
     g.logmsg("qfreq: filtering out %d / %d q-grams%n", filter.cardinality(), aq);
-    for (int i = filter.nextSetBit(0); i >= 0; i = filter.nextSetBit(i+1)) f[i]=0;
+    for (int i=0; i<aq; i++) if (filter.getBoolean(i)) f[i]=0;
+    //for (int i = filter.nextSetBit(0); i >= 0; i = filter.nextSetBit(i+1)) f[i]=0;
     
     // sort frequencies, generate soring permutation
     g.logmsg("qfreq: considering q-grams %d..%d%n", Lcode, Hcode);

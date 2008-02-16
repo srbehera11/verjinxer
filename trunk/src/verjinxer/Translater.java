@@ -1,8 +1,6 @@
 /*
  * Translater.java
- *
  * Created on 30. Januar 2007, 14:57
- *
  */
 
 package verjinxer;
@@ -15,7 +13,7 @@ import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**
- * Application class to translate a set of text or FASTA files
+ * VerJInxer Module to translate a set of text or FASTA files into a byte file.
  * @author Sven Rahmann
  */
 public class Translater {
@@ -353,6 +351,8 @@ public class Translater {
   
   /******************************* runs ***********************************/
   
+  // TODO, BROKEN, FIXME: the run output uses streams, they have the wrong Byte order!
+  
   /** reads translated sequence and writes run-related files,
    * primarily using memory-mapped files
    * @param fname TODO
@@ -362,10 +362,10 @@ public class Translater {
   public long computeRuns(String fname) throws IOException {
     int run = -1;
     ByteBuffer seq = new ArrayFile(fname+extseq).mapR();
-    ArrayFile rseq = new ArrayFile(fname+extrunseq).openW();
-    ArrayFile rlen = new ArrayFile(fname+extrunlen).openW();
-    ArrayFile  p2r = new ArrayFile(fname+extpos2run).openW();
-    ArrayFile  r2p = new ArrayFile(fname+extrun2pos).openW();
+    ArrayFile rseq = new ArrayFile(fname+extrunseq).openWStream();
+    ArrayFile rlen = new ArrayFile(fname+extrunlen).openWStream();
+    ArrayFile  p2r = new ArrayFile(fname+extpos2run).openWStream();
+    ArrayFile  r2p = new ArrayFile(fname+extrun2pos).openWStream();
     final int n = seq.limit();
     byte next;
     byte prev=-1;

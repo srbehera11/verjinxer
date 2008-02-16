@@ -1,20 +1,25 @@
 /*
  * QGramCoder.java
- *
  * Created on December 17, 2006, 3:43 PM
- *
  */
 
 package verjinxer.sequenceanalysis;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Iterator;
 
 /**
- * This class contains routines for coding strings of length q over the alphabet
- * {0,1,...,asize-1} as base-asize integers.
+ * This class contains routines for coding byte sequences 
+ * of a given length q (so-called q-grams) 
+ * over a given alphabet {0,1,...,asize-1} of size 'asize' 
+ * as integers (base-asize numbers).
+ * The byte source can be either an array (byte[]) or a buffer (ByteBuffer).
+ * 
+ * This class also provides iterables that generate all q-grams of a given byte source.
+ * 
+ * This class provides no filter functionality.
+ * Filtering is achieved by using a QGramFilter.
+ * 
  * @author Sven Rahmann
  */
 public final class QGramCoder
@@ -25,7 +30,7 @@ public final class QGramCoder
     * @param q length of the q-grams coded by this instance
     * @param asize alphabet size of the q-grams coded by this instance
     */
-   public QGramCoder(int q, int asize)
+   public QGramCoder(final int q, final int asize)
    {
       if (q<0 || asize<=0)
          throw new IllegalArgumentException("Need q>0; is "+q+". Need asize>=0; is "+asize+".");
@@ -41,17 +46,23 @@ public final class QGramCoder
       if (power*asize<0 || power*asize>Integer.MAX_VALUE)
          throw new IllegalArgumentException("Value asize^q exceeds maximum integer.");
       mod = (int)power; // asize^(q-1)
+      numberOfQGrams = mod*asize;
    }
    
-   private final int q;       // q-gram length
-   private final int asize;   // alphabet size; the alphabet is {0,1, ..., asize-1}
-   private final int mod;     // equals asize^(q-1):  q-1 q-2 ... 1 0
+   /** the q-gram length */
+   public final int q;              // intentionally public, cannot be changed!
+   /** alphabet size; the alphabet is {0,1, ..., asize-1} */
+   public final int asize;          // intentionally public, cannot be changed!
+   /** the number of different q-grams, equals asize^q */
+   public final int numberOfQGrams; // intentionally public, cannot be changed!
+
+   private final int mod;       // equals asize^(q-1):  q-1 q-2 ... 1 0
    
-   /** @return the q-value of this coder */
-   public int getq() { return q; }
+   ///** @return the q-value of this coder */
+   //public int getq() { return q; }
    
-   /** @return the alphabet size of this coder */
-   public int getAsize() { return asize; }
+   ///** @return the alphabet size of this coder */
+   //public int getAsize() { return asize; }
   
    /** 
     * @param qgram a byte array with the numbers to be interpreted as base-asize number
@@ -109,13 +120,13 @@ public final class QGramCoder
       return (old%mod)*asize + next;
    }
    
-   /** the number of q-grams encoded by this instance 
-    * @return number of encoded q-grams 
-    */
-   public final int numberOfQGrams()
-   {
-      return mod*asize;
-   }
+   ///** the number of q-grams encoded by this instance 
+   // * @return number of encoded q-grams 
+   // */
+   //public final int numberOfQGrams()
+   //{
+   //   return numqgrams;
+   //}
    
    /** return the given q-gram code as q-gram in byte[]-form
     * @param qcode  the q-gram code
@@ -160,15 +171,19 @@ public final class QGramCoder
   
   
   /**
-   * @param t the text in form of a byte array
-   * @return an iterable object that returns the q-grams in t in consecutive order.
+   * produce a lightweigt iterable object with all q-grams in 't'.
+   * @param t the text in form of a byte array or a ByteBuffer
+   *  (other types of objects will raise a runtime exception)
+   * @return an iterable object that returns the q-grams in t in consecutive order,
+   *  one for each position p in 0 &lt;= p &lt; length(t)-q+1.
    *  For each invalid q-gram (non-symbol containing q-gram), a negative value is
    *  produced. Otherwise the q-gram codes range in 0 .. asize^q - 1.
    */
-  public Iterable<Integer> SimpleQGramList(final byte[] t) {
+  public Iterable<Integer> SimpleQGramListOf(final Object t) {
     return new Iterable<Integer>() {
       public Iterator<Integer> iterator() {
-         return new SimpleQGramIterator(t);
+         return (t instanceof byte[])?
+            new SimpleQGramIterator((byte[])t) : new SimpleQGramIterator((ByteBuffer)t);
       }
     };
   }
@@ -212,15 +227,24 @@ public final class QGramCoder
 
    
   /**
-   * @param t the text in form of a byte array
-   * @return an iterable object that returns the q-grams in t in consecutive order.
-   *  For each invalid q-gram (non-symbol containing q-gram), a negative value is
-   *  produced. Otherwise the q-gram codes range in 0 .. asize^q - 1.
+   * produce a lightweigt iterable object with all q-grams in 't'.
+   * @param t the text in form of a byte array or a ByteBuffer
+   *  (other types of objects will raise a runtime exception)
+   * @return an iterable object that returns the q-grams in t, 
+   *  ordered by increasing position.
+   *  In contrast to <code>SimpleQGramListOf(t)</code>, 
+   *  only the valid q-grams are returned as a pair pc=(pos,code),
+   *  where pos is the starting position of the q-gram in t,
+   *  and code is the q-gram code. 
+   *  The pair is encoded in a <code>long</code> with pos in the high integer
+   *  and code in the low integer, such that
+   *  pos =  pc &gt;&gt; 32, and code = pc & 0xffff.
    */
-  public Iterable<Long> SparseQGramList(final byte[] t) {
+  public Iterable<Long> SparseQGramListOf(final Object t) {
     return new Iterable<Long>() {
       public Iterator<Long> iterator() {
-         return new SparseQGramIterator(t);
+         return (t instanceof byte[])?
+            new SparseQGramIterator((byte[])t) : new SparseQGramIterator((ByteBuffer)t);
       }
     };
   }
@@ -232,12 +256,14 @@ public final class QGramCoder
       private final int end;          // length of t or b
       private int nextc = -1;         // next valid code
      
+      /** construct iterator from byte array */
       public SparseQGramIterator(final byte[] t) {
          this.t = t;
          this.b = null;
          pos = 0;
          end = t.length-q+1;
       }
+      /** construct iterator from byte buffer */
       public SparseQGramIterator(final ByteBuffer b) {
         if (b.hasArray() && !b.isReadOnly()) {
            // if possible, use the backing array, it's more efficient
@@ -262,86 +288,18 @@ public final class QGramCoder
          if (b==null) {
             while (c<0 && pos<end)  c=code(t,pos++);
          } else {
-            while (c<0 && pos<end)  c=code(t,pos++);
+            while (c<0 && pos<end)  c=code(b,pos++);
          }
          if(c>=0) { nextc=c; return true; }
          return false;
       }
       
       public final long next0() {
-         assert(nextc>=0 && nextc<numberOfQGrams());
-         return ((pos-1)<<16) + nextc; // pos-1, since pos has already been incremented beyond
+         assert(nextc>=0 && nextc<numberOfQGrams);
+         assert(pos-1>=0 && pos-1<end);
+         return ((pos-1)<<32) + nextc; // pos-1, since pos has already been incremented beyond
       }
   }
 
    
-  // =========================== Filters =======================================
-
-  /** create a low-complexity filter for the given instance;
-   * this is a BitSet with the property that the c-th bit is 1 iff
-   * the q-gram Q corresponding to code c is low-complexity.
-   * Low-complexity means that at most numchar distinct characters occur in Q
-   * after removing one occurrence of the least frequent character for
-   * delta times (see source code for details).
-   * @param numchar  complexity threshold; 
-   *   the q-gram is low-complexity if it consists of at most this many characters.
-   * @param delta  before computing the number of characters, remove 
-   *   the least frequent one for delta times.
-   * @return the filter BitSet, low-complexity q-grams have their corresponding 
-   *   bit set.
-   */
-  public BitSet createFilter(final int numchar, final int delta) {
-    final int aq = mod*asize;
-    final BitSet f = new BitSet(aq);
-    if(numchar==0) return f;
-    final int[]  freq  = new int[asize];
-    final byte[] qgram = new byte[q];
-    int nc, d, minfreq, mina;
-    for (int c=0; c<aq; c++) {
-      Arrays.fill(freq, 0); d=delta; nc=0;
-      qGram(c, qgram);
-      for(int i=0; i<q; i++) freq[qgram[i]]++;
-      for(int a=0; a<asize; a++) if (freq[a]>0) nc++;
-      if (nc<=numchar) { f.set(c); continue; }
-      while(d>0) {
-        minfreq = q+1;
-        mina    = asize;
-        for(int a=0; a<asize; a++) if (freq[a]>0 && freq[a]<minfreq) {minfreq=freq[a]; mina=a; }
-        if (minfreq<=d) { freq[mina]=0; d-=minfreq; nc--; }
-        else { freq[mina]-=d; d=0; }
-      }
-      if (nc<=numchar) f.set(c);
-    }
-    return f;
-  }
-  
-  
-  /** create a low-complexity filter for the given instance;
-   * this is a BitSet with the property that the c-th bit is 1 iff
-   * the q-gram Q corresponding to code c is low-complexity.
-   * Low-complexity means that at most numchar characters occur in Q
-   * after removing one occurrence of the least frequent character for
-   * delta times (see source code for details).
-   * @param filterparams  a string of the form "numchar:delta".
-   *   numchar is the complexity threshold; 
-   *   the q-gram is low-complexity if it consists of at most this many characters.
-   *   delta is another parameter: before computing the number of characters, remove 
-   *   the least frequent one for delta times.
-   * @return the filter BitSet; low-complexity q-grams have their corresponding 
-   *   bit set.
-   */
-  public BitSet createFilter(final String filterparams) {
-    if(filterparams==null) return createFilter(0,0);
-    String[] fstring = filterparams.split(":");
-    ffc=Integer.parseInt(fstring[0]);
-    if (fstring.length>=2) ffd=Integer.parseInt(fstring[1]);
-    return createFilter(ffc,ffd);  
-  }
-  
-  private int ffc=0;  // filter complexity
-  private int ffd=0;  // filter delta
-  
-  final public int getFilterComplexity() { return ffc; }
-  final public int getFilterDelta()      { return ffd; }
-
 }
