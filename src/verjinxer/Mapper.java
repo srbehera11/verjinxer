@@ -11,7 +11,6 @@ package verjinxer;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Locale;
 import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
@@ -21,13 +20,14 @@ import static verjinxer.Globals.*;
 
 /**
  * This class contains routines for mapping sequences to an index.
+ * FIXME This class is not usable at the moment.
  * @author Sven Rahmann
  */
 public class Mapper {
   
   private Globals g;
   
-  /** Creates a new instance of QgramMatcher
+  /** Creates a new instance of Mapper
    * @param gl  the globals object to be used (contains information about logging streams, etc)
    */
   public Mapper(Globals gl) {
@@ -77,9 +77,9 @@ public class Mapper {
   
   String      tname       = null;
   Properties  tprj        = null;
-  BitSet      tselect     = null;
-  BitSet      trepeat     = null;
-  BitSet      tmapped     = null;
+  BitArray    tselect     = null;
+  BitArray    trepeat     = null;
+  BitArray    tmapped     = null;
   int         tm          = 0;      // number of sequences
   byte[]      tall        = null;   // the whole text
   //byte[]      t           = null;   // the text (coded)
@@ -171,17 +171,17 @@ public class Mapper {
     // Select sequences
     if (opt.isGiven("s")) {
       if (opt.get("s").startsWith("#")) {
-        tselect = g.readFilter(dt+extselect);
+        tselect = g.slurpBitArray(dt+extselect);
       } else {
-        tselect = g.readFilter(g.dir + opt.get("s"));
+        tselect = g.slurpBitArray(g.dir + opt.get("s"));
       }
     } else { // select all
-      tselect = new BitSet(tm);
-      tselect.set(0,tm,true);
+      tselect = new BitArray(tm);
+      for (int bbb=0; bbb<tm; bbb++) tselect.set(bbb,1);
     }
-    // initialize the other bit sets
-    trepeat = new BitSet(tm);
-    tmapped = new BitSet(tm);
+    // initialize the other bit arrays
+    trepeat = new BitArray(tm);
+    tmapped = new BitArray(tm);
     
     // Get index names and check indices
     int inum = args.length - 1;
@@ -283,8 +283,8 @@ public class Mapper {
     allout.flush();
     g.logmsg("map: successfully mapped %d / %d selected (%d total) sequences;%n     found %d repeats, %d sequences remain.%n",
         tmapped.cardinality(), selected, tm, trepeat.cardinality(), tselect.cardinality());
-    g.writeFilter(dt+extselect, tselect);
-    g.writeFilter(dt+".repeat-filter", trepeat);
+    g.dumpBitArray(dt+extselect, tselect);
+    g.dumpBitArray(dt+".repeat-filter", trepeat);
     g.stopplog();
     if (closeout) allout.close();
     return 0;
@@ -310,7 +310,7 @@ public class Mapper {
 
   int[]       iqbck       = null;   // current qbck array
   int[]       iqpos       = null;   // current qpos array
-  BitSet      ifilter     = null;   // current qgram filter  
+  QGramFilter ifilter     = null;   // current qgram filter  
   byte[]      qgram       = null;
   double[]    etable      = null;   // E-value table
   
@@ -358,15 +358,16 @@ public class Mapper {
       iqpos = g.slurpIntArray(iname + extqpos, iqpos);  // overwrite
       itext = g.slurpByteArray(iname + extseq, 0, -1, itext);  // overwrite
       ilength = Integer.parseInt(iprj.getProperty("Length"));
-      ifilter = coder.createFilter(filterstring);
+      final int[] filterparam = QGramFilter.parseFilterParameters(filterstring);
+      ifilter = new QGramFilter(coder.q, coder.asize, filterparam[0], filterparam[1]);
       
       for (int j=0; j<tm; j++) {
-        if (!tselect.get(j) || trepeat.get(j)) continue;  // skip if not selected, or if repeat
+        if (tselect.get(j)==0 || trepeat.get(j)==1) continue;  // skip if not selected, or if repeat
         int jstart = (j==0? 0: tssp[j-1]+1); // first character
         int jstop  = tssp[j] +1;             // one behind last character = [separatorpos. +1]
         final int jlength = jstop - jstart;  // length including separator
         processQGramBlocks(idx, coder, tall, jstart, jlength, j, 1, clip, bcounter, blocksize, blow);
-        if (revcomp && !trepeat.get(j)) {
+        if (revcomp && trepeat.get(j)==0) {
           ArrayUtils.revcompArray(tall,jstart,jstop-1,(byte)4, rcj);
           rcj[jlength-1]=-1;
           //g.logmsg("+: %s%n",Strings.join("",tall,jstart,jlength));
@@ -381,7 +382,7 @@ public class Mapper {
       g.dumpIntArray(String.format("%s%s.%d.mapallhits",g.outdir,tname,idx), seqallhits);
     } // end for i
     // at the very end, de-select all mapped sequences and all repeats!
-    for (int j=0; j<tm; j++) if (tmapped.get(j) || trepeat.get(j)) tselect.set(j,false);
+    for (int j=0; j<tm; j++) if (tmapped.get(j)==1 || trepeat.get(j)==1) tselect.set(j,false);
   } // end mapByQGram
   
   
@@ -392,7 +393,7 @@ public class Mapper {
       final byte[] txt, final int jstart, final int jlength, 
       final int currentj, final int currentdir, final int trim,
       final int[] bcounter, final int blocksize, final int blow) {
-    final int q = coder.getq();
+    final int q = coder.q;
     int qcode = -1;
     int success;
     final int maxqgrams = jlength-1-q+1-2*trim;
@@ -408,7 +409,7 @@ public class Mapper {
       if (qcode>=0) // attempt simple update
       {
         qcode = coder.codeUpdate(qcode,txt[i]);
-        if (qcode>=0 && !ifilter.get(qcode)) 
+        if (qcode>=0 && !ifilter.getBoolean(qcode)) 
           incrementBCounters(i+idelta,qcode,overlap, bcounter, blocksize, blow);
         continue;
       }
@@ -422,7 +423,7 @@ public class Mapper {
       if (success==q) {
         qcode = coder.code(qgram);
         assert(qcode>=0);
-        if (!ifilter.get(qcode)) 
+        if (!ifilter.getBoolean(qcode)) 
           incrementBCounters(i+idelta,qcode,overlap, bcounter, blocksize, blow);
       }
     } // end for i
@@ -433,7 +434,7 @@ public class Mapper {
     for (int b=0; b<bcounter.length; b++) if (bcounter[b]>=bthresh) blockhits++;
     if (blockhits>=repeatthreshold) { // many block hits, this IS a repeat, probably
       g.logmsg("map: sequence %d hits %d blocks, probably a repeat%n", currentj, blockhits);
-      trepeat.set(currentj);
+      trepeat.set(currentj, true);
     } else {                            // this IS NOT a repeat, probably
       for (int b=0; b<bcounter.length; b++) {
         if (bcounter[b]>=bthresh) {
@@ -510,21 +511,21 @@ public class Mapper {
     }
       
     for (int j=0; j<tm; j++) {
-      if (!tselect.get(j) || trepeat.get(j)) continue;  // skip if not selected, or if repeat
+      if (tselect.get(j)==0 || trepeat.get(j)==1) continue;  // skip if not selected, or if repeat
       final int jstart = (j==0? 0: tssp[j-1]+1); // first character
       final int jstop  = tssp[j] +1;             // one behind last character = [separatorpos. +1]
       final int jlength = jstop - jstart;  // length including separator
       for(int idx=0; idx<inum; idx++) {
         g.logmsg("  aligning seq %d against idx %d %s%n",j,idx,iname[idx]);
         doTheAlignment(idx,  itext[idx], tall, jstart, jlength-1, j, 1, clip);
-        if (revcomp && !trepeat.get(j)) {
+        if (revcomp && trepeat.get(j)==0) {
           ArrayUtils.revcompArray(tall,jstart,jstop-1,(byte)4, rcj);
           rcj[jlength-1]=-1;
           doTheAlignment(idx,  itext[idx], rcj, 0, jlength-1, j, -1, clip);
         }
       }
       if (seqallhits[j]>0) tmapped.set(j,true);
-      if (tmapped.get(j) || trepeat.get(j)) tselect.set(j,false);
+      if (tmapped.get(j)==1 || trepeat.get(j)==1) tselect.set(j,false);
     } // end for j
     g.dumpIntArray(String.format("%s%s.mapbesterror",g.outdir,tname), seqbesterror);
     g.dumpIntArray(String.format("%s%s.mapbesthits",g.outdir,tname), seqbesthits);
@@ -673,7 +674,7 @@ public class Mapper {
     int qcode;
     int jstart, jstop, jlength, success;
     byte next;
-    BitSet seen = new BitSet(coder.numberOfQGrams());
+    BitArray seen = new BitArray(coder.numberOfQGrams);
     int maxqgrams, goodqgrams, seenqgrams;
     double goodfrac, seenfrac;
     
@@ -702,7 +703,7 @@ public class Mapper {
           qcode = coder.codeUpdate(qcode,tall[i]);
           if (qcode>=0) {
             goodqgrams++;
-            if (!seen.get(qcode)) { seenqgrams++; seen.set(qcode); }
+            if (seen.get(qcode)==0) { seenqgrams++; seen.set(qcode, true); }
           }
           continue;
         }
@@ -717,15 +718,15 @@ public class Mapper {
           qcode = coder.code(qgram);
           assert(qcode>=0);
           goodqgrams++;
-          if (!seen.get(qcode)) { seenqgrams++; seen.set(qcode); }
+          if (seen.get(qcode)==0) { seenqgrams++; seen.set(qcode, true); }
         }
       } // end for i
       assert(seenqgrams<=goodqgrams && goodqgrams<=maxqgrams) : String.format("j=%d, seen=%d, good=%d, max=%d", j,seenqgrams,goodqgrams, maxqgrams);
       goodfrac = (double) goodqgrams / maxqgrams;
       seenfrac = (double) seenqgrams / goodqgrams;
-      if (goodfrac < qgramthreshold || seenfrac < qgramthreshold) trepeat.set(j);
+      if (goodfrac < qgramthreshold || seenfrac < qgramthreshold) trepeat.set(j, true);
       if (qgramtabulate) out.printf(Locale.US, "%d  %d %d %d  %.2f %.2f%n", j, seenqgrams, goodqgrams, maxqgrams, seenfrac, goodfrac);
-      if (jlength<50) trepeat.set(j); //TODO: find better length filter
+      if (jlength<50) trepeat.set(j, true); //TODO: find better length filter
     } // end for j
     if (qgramtabulate) { 
       out.close();

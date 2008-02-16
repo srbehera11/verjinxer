@@ -6,7 +6,7 @@
 package verjinxer;
 
 import java.util.Arrays;
-import java.util.BitSet;
+//import java.util.BitSet;
 import java.util.Properties;
 import static java.lang.Math.*;
 import java.io.IOException;
@@ -124,17 +124,15 @@ public final class QgramIndexer {
 
          // create the q-gram filter
          g.logmsg("qgram: processing: indexname=%s, asize=%d, q=%d%n", indexname, asize, qq);
-         final QGramCoder coder = new QGramCoder(qq, asize); // only needed to produce the filter
-         final BitSet thefilter = coder.createFilter(opt.get("F")); // returns empty filter if null
-         prj.setProperty("qFilterComplexity", String.valueOf(coder.getFilterComplexity()));
-         prj.setProperty("qFilterDelta", String.valueOf(coder.getFilterDelta()));
-
+         final int[] filterparam = QGramFilter.parseFilterParameters(opt.get("F"));
+         prj.setProperty("qFilterComplexity", String.valueOf(filterparam[0]));
+         prj.setProperty("qFilterDelta", String.valueOf(filterparam[1]));
+         final QGramFilter thefilter = new QGramFilter(qq, asize, filterparam[0], filterparam[1]);
          final int qfiltered = thefilter.cardinality();
          g.logmsg("qgram: filtering %d q-grams%n", qfiltered);
          prj.setProperty("qFiltered", String.valueOf(qfiltered));
          //for (int i = thefilter.nextSetBit(0); i >= 0; i = thefilter.nextSetBit(i+1))
          //   g.logmsg("  %s%n", coder.qGramString(i,AlphabetMap.DNA()));
-         //g.writeFilter(dout+extqfilter, thefilter);
 
          Object[] result = null;
          try {
@@ -193,9 +191,9 @@ public final class QgramIndexer {
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
     */
    private int[] computeFrequencies(ByteBuffer in, MultiQGramCoder coder, String qseqfreqfile, int separator) {
-      final int aq = coder.numberOfQGrams();
-      final int q = coder.getq();
-      final int asize = coder.getAsize();
+      final int aq = coder.numberOfQGrams;
+      final int q = coder.q;
+      final int asize = coder.asize;
       int[] lastseq = null;              // lastseq[i] == k := q-gram i was last seen in sequence k
       int[] sfrq = null;                 // sfrq[i] == n    := q-gram i appears in n distinct sequences. 
       final int[] frq = new int[aq + 1]; // frq[i]  == n    := q-gram i appears n times; space for sentinel at the end
@@ -289,7 +287,7 @@ public final class QgramIndexer {
     * The actual buckets are in bck[0] .. bck[bck.length-2]. The element bck[bck.length-1] is the sum
     * over all buckets.
     */
-   private Object[] computeQGramBuckets(int[] frq, final boolean external, final BitSet thefilter, final String bucketfile) {
+   private Object[] computeQGramBuckets(int[] frq, final boolean external, final QGramFilter thefilter, final String bucketfile) {
       int[] bck;
       if (external) {
          bck = frq;
@@ -301,7 +299,7 @@ public final class QgramIndexer {
 
       // apply filter
       for (int c = 0; c < aq; c++)
-         if (thefilter.get(c))
+         if (thefilter.getBoolean(c))
             bck[c] = 0; // reduce frequency to zero
 
       // compute bck from frq
@@ -334,8 +332,7 @@ public final class QgramIndexer {
     * @param qseqfreqfile  filename for q-gram sequence frequencies,
     *    i.e., in how many different sequences does the q-gram appear?
     * @param external if true, try to save memory and do more on disk
-    * @param thefilter  q-gram filter in form of a BitSet; q-grams corresponding to
-    *   1-bits are not considered for indexing
+    * @param thefilter  a QGramFilter, filtered q-grams are not considered for indexing
     * @param bisulfite whether to create an index that additionally includes bisulfite treated q-grams
     * @return array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where
     *   int[]    bck:   array of q-bucket starts in qpos (null if external);
@@ -357,7 +354,7 @@ public final class QgramIndexer {
          final String qfreqfile,
          final String qseqfreqfile,
          final boolean external,
-         final BitSet thefilter,
+         final QGramFilter thefilter,
          boolean bisulfite) throws IOException {
       
       final TicToc totalTimer = new TicToc();
@@ -365,7 +362,7 @@ public final class QgramIndexer {
       final long ll = in.limit();
 
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
-      final int aq = coder.numberOfQGrams();
+      final int aq = coder.numberOfQGrams;
       g.logmsg("  counting %d different %d-grams...%n", aq, q);
 
       // Scan file once and count qgrams.
@@ -455,7 +452,7 @@ public final class QgramIndexer {
                if (success == q)
                   for (int qcode : coder.getCodes()) {
                      assert (qcode >= 0);
-                     if (bckstart <= qcode && qcode < bckend && !thefilter.get(qcode))
+                     if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode)==0)
                         //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
                         // the starting position of this q-gram is i-q+1
                         qposslice[(bck[qcode]++) - qposstart] = i - q + 1;
@@ -470,7 +467,7 @@ public final class QgramIndexer {
                if (0 <= next && next < asize) {
                   coder.update(next, after);
                   for (int qcode : coder.getCodes())
-                     if (qcode >= 0 && bckstart <= qcode && qcode < bckend && !thefilter.get(qcode))
+                     if (qcode >= 0 && bckstart <= qcode && qcode < bckend && thefilter.get(qcode)==0)
                         //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
                         // the starting position of this q-gram is i-q+1
                         qposslice[(bck[qcode]++) - qposstart] = i - q + 1;
@@ -508,14 +505,14 @@ public final class QgramIndexer {
     * @param asize alphabet size
     * @param bucketfile filename of the q-bucket file
     * @param qposfile  filename of the q-gram index
-    * @param thefilter a BitSet indicating which q-grams should be ignored
+    * @param thefilter a QGramFilter, filtered q-grams should not appear in the index
     * @return an index &gt;=0 where the first error in qpos is found, or
     *  -N-1&lt;0, where N is the number of q-grams in the index.
     * @throws java.io.IOException 
     */
    // TODO: Needs to be adapted to bisulfite!
    public int checkQGramIndex(final String seqfile, final int q, final int asize,
-                               final String bucketfile, final String qposfile, final BitSet thefilter)
+                               final String bucketfile, final String qposfile, final QGramFilter thefilter)
          throws IOException {
 
       // Initialize q-gram storage
@@ -523,8 +520,8 @@ public final class QgramIndexer {
       byte[] qgram = new byte[q];
 
       // Read s and bck into arrays
-      TicToc timer = new TicToc();
       System.gc();
+      TicToc timer = new TicToc();
       g.logmsg("  reading %s and %s%n", seqfile, bucketfile);
       final ArrayFile arf = new ArrayFile(null);
       byte[] s = arf.setFilename(seqfile).read((byte[]) null);
@@ -532,7 +529,7 @@ public final class QgramIndexer {
       g.logmsg("  reading finished after %.2f sec%n", timer.tocs());
 
       final int n = s.length;
-      final BitSet sok = new BitSet(n - q + 1);
+      final BitArray sok = new BitArray(n - q + 1);
 
       // Read the q-position array.
       IntBuffer qpos = g.mapRIntArray(qposfile);
@@ -558,15 +555,15 @@ public final class QgramIndexer {
                return (r);
             }
          assert (i >= 0 && i <= n - q);
-         sok.set(i);
+         sok.set(i, true);
       }
 
       // now check that all untouched text positions in fact contain filtered or invalid q-grams
       g.logmsg("  checking %d remaining positions in the text...%n", n - sok.cardinality());
-      for (int ii = sok.nextClearBit(0); ii < n; ii = sok.nextClearBit(ii + 1)) {
+      for (int ii=0; ii<n; ii++) {
+         if (sok.get(ii)==1) continue;
          int cd = coder.code(s, ii);
-         if (cd == -1 || thefilter.get(cd))
-            continue;
+         if (cd < 0 || thefilter.get(cd)==1) continue;
          g.logmsg("  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and filtered!%n",
                ii, cd, StringUtils.join("", coder.qGram(cd, qgram), 0, q));
          return n; // error: return length of the text ( > number of q-positions)
@@ -576,10 +573,9 @@ public final class QgramIndexer {
       return (-r - 1);
    }
 
+   
    public int docheck(String in, Properties prj) {
       g.cmdname = "qgramcheck";
-      BitSet fff;
-
       // Parse prj -> q, asize
       int asize = 0;
       int q = 0;
@@ -593,7 +589,7 @@ public final class QgramIndexer {
       g.logmsg("qgramcheck: checking %s... q=%d, asize=%d%n", in, q, asize);
       int ffc = Integer.parseInt(prj.getProperty("qFilterComplexity"));
       int ffm = Integer.parseInt(prj.getProperty("qFilterDelta"));
-      fff = new QGramCoder(q, asize).createFilter(ffc, ffm);
+      final QGramFilter fff = new QGramFilter(q, asize, ffc, ffm);
       g.logmsg("qgramcheck: filter %d:%d filters %d q-grams%n", ffc, ffm, fff.cardinality());
 
       // call checking routine

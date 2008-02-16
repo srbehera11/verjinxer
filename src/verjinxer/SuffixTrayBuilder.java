@@ -6,7 +6,6 @@
  * TODO: include manber myers method!
  * TODO: the suffix array is written using streams, not channels! This causes a byte-order problem!
  * TODO: space-efficient lcp not yet implemented
- * TODO: renaming arrays to be consistent with paper
  */
 
 package verjinxer;
