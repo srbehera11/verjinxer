@@ -36,9 +36,9 @@ public class SuffixTrayBuilderTest extends TestCase {
    * Test of main method, of class verjinxer.SuffixTrayBuilder.
    */
   public void testAll() {
-    //doAllBinaryStrings();
+    doAllBinaryStrings();
     //doKlausStrings();
-    doAAA();
+    //doAAA();
   }
  
   
@@ -92,8 +92,8 @@ public class SuffixTrayBuilderTest extends TestCase {
   
   public void doAllBinaryStrings() {
     final int asize =  2;
-    final int minL  = 20;
-    final int maxL  = 20;
+    final int minL  = 28;
+    final int maxL  = 30;
     
     Globals g = new Globals();
     g.quiet = true;
@@ -119,7 +119,7 @@ public class SuffixTrayBuilderTest extends TestCase {
         // 1. process t
         stb.steps = 0;
         cntr++;
-        stb.buildpos_L();
+        stb.buildpos_minLR();
         //result = stb.checkpos_R();
         //assertEquals(0, result);
         totalsteps[L]+=stb.steps;
