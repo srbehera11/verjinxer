@@ -12,12 +12,12 @@
 package verjinxer;
 
 import java.io.IOException;
-import java.nio.BufferUnderflowException;
 import java.nio.IntBuffer;
+import java.nio.BufferUnderflowException;
 import java.util.Properties;
 import java.util.Arrays;
-import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
+import verjinxer.sequenceanalysis.*;
 import static verjinxer.Globals.*;
 
 /**
@@ -74,10 +74,10 @@ public class SuffixTrayBuilder {
   AlphabetMap amap = null;
   byte[] s         = null;   // text
   int n            = -1;     // length of text
-  int[] lexfirst   = null;
-  int[] lexlast    = null;
-  int[] lexpred    = null;
-  int[] lexsucc    = null;
+  int[] lexfirstpos   = null;
+  int[] lexlastpos    = null;
+  int[] lexprevpos    = null;
+  int[] lexnextpos    = null;
   long steps       = 0;
   
   int lcp1x        = 0;      // lcp1 exceptions
@@ -191,7 +191,7 @@ public class SuffixTrayBuilder {
     // write project data
     try { g.writeProject(prj, di+extprj); } 
     catch (IOException ex) { 
-      g.warnmsg("suffix: could not write %s!%n", di+extprj); 
+      g.warnmsg("suffix: could not write %s (%s)!%n", di+extprj, ex.toString()); 
       g.terminate(1);
     }
     g.stopplog();
@@ -204,40 +204,41 @@ public class SuffixTrayBuilder {
    * Needs text 's' and its length 'n' correctly set.
    */
   public void buildpos_L() {
-    lexfirst = new int[256];
-    lexlast  = new int[256];
-    lexpred  = new int[n];
-    lexsucc  = new int[n];
-    Arrays.fill(lexfirst,-1);
-    Arrays.fill(lexlast,-1);
+    lexfirstpos = new int[256];
+    lexlastpos  = new int[256];
+    lexprevpos  = new int[n];
+    lexnextpos  = new int[n];
+    Arrays.fill(lexfirstpos,-1);
+    Arrays.fill(lexlastpos,-1);
     byte ch; int chi;
     
-    for (int i=n-1; i>=0; i--) {
-      // insert suffix starting at position i
-      ch = s[i]; chi=ch+128;
-      if (lexfirst[chi]==-1) {  // seeing character ch for the first time
-        insertnew(chi,i);
+    for (int p=n-1; p>=0; p--) {
+      // insert suffix starting at position p
+      ch = s[p]; chi=ch+128;
+      if (lexfirstpos[chi]==-1) {    // seeing character ch for the first time
+        insertnew(chi,p);
         steps++;
-      } else {                  // seeing character ch again
-        assert(lexfirst[chi]>i);  assert(lexlast[chi]>i);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
-          insertasfirst(chi,i);
+      } else {                    // seeing character ch again
+        assert(lexfirstpos[chi]>p);  
+        assert(lexlastpos[chi]>p);
+        if (amap.isSpecial(ch)) {   // special character: always inserted first
+          insertasfirst(chi,p);
           steps++;
-        } else {                     // symbol character: proceed normally
-          int p = i+1;
+        } else {                    // symbol character: proceed normally
+          int i = p+1;
           steps++;
-          while(lexpred[p]!=-1 && s[(p=lexpred[p])-1]!=ch) {steps++; }
-          p--;
-          if (s[p]==ch && p!=i) {        // insert i after p, might be new last
-            insertbetween(p,lexsucc[p],i);
-            if (lexlast[chi]==p) lexlast[chi]=i;
-          } else {                       // i is new first
-            insertasfirst(chi,i);
+          while(lexprevpos[i]!=-1 && s[(i=lexprevpos[i])-1]!=ch) {steps++; }
+          i--;
+          if (s[i]==ch && i!=p) { // insert p after i, might be new last
+            insertbetween(i,lexnextpos[i],p);
+            if (lexlastpos[chi]==i) lexlastpos[chi]=p;
+          } else {                  // p is new first
+            insertasfirst(chi,p);
           }
         } // end symbol character
       } // end seeing character ch again
-      //showpos_R(String.format("List after step %d: [%d]%n", i, s[i])); // DEBUG
-    } // end for i
+      // showpos_R(String.format("List after step %d: [%d]%n", p, s[p])); // DEBUG
+    } // end for p
   }
   
   
@@ -246,40 +247,40 @@ public class SuffixTrayBuilder {
    * Needs text 's' and its length 'n' correctly set.
    */
   public void buildpos_R() {
-    lexfirst = new int[256];
-    lexlast  = new int[256];
-    lexpred  = new int[n];
-    lexsucc  = new int[n];
-    Arrays.fill(lexfirst,-1);
-    Arrays.fill(lexlast,-1);
+    lexfirstpos = new int[256];
+    lexlastpos  = new int[256];
+    lexprevpos  = new int[n];
+    lexnextpos  = new int[n];
+    Arrays.fill(lexfirstpos,-1);
+    Arrays.fill(lexlastpos,-1);
     byte ch; int chi;
     
-    for (int i=n-1; i>=0; i--) {
-      // insert suffix starting at position i
-      ch = s[i]; chi=ch+128;
-      if (lexfirst[chi]==-1) {  // seeing character ch for the first time
-        insertnew(chi,i);
+    for (int p=n-1; p>=0; p--) {
+      // insert suffix starting at position p
+      ch = s[p]; chi=ch+128;
+      if (lexfirstpos[chi]==-1) {  // seeing character ch for the first time
+        insertnew(chi,p);
         steps++;
       } else {                  // seeing character ch again
-        assert(lexfirst[chi]>i);  assert(lexlast[chi]>i);
+        assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
         if (amap.isSpecial(ch)) {    // special character: always inserted first
-          insertasfirst(chi,i);
+          insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
-          int p = i+1;
+          int i = p+1;
           steps++;
-          while(lexsucc[p]!=-1 && s[(p=lexsucc[p])-1]!=ch) {steps++; }
-          p--;
-          if (s[p]==ch && p!=i) {        // insert i BEFORE p, might be new first
-            insertbetween(lexpred[p],p,i);
-            if (lexfirst[chi]==p) lexfirst[chi]=i;
-          } else {                       // i is new LAST
-            insertaslast(chi,i);
+          while(lexnextpos[i]!=-1 && s[(i=lexnextpos[i])-1]!=ch) {steps++; }
+          i--;
+          if (s[i]==ch && i!=p) {        // insert p BEFORE i, might be new first
+            insertbetween(lexprevpos[i],i,p);
+            if (lexfirstpos[chi]==i) lexfirstpos[chi]=p;
+          } else {                       // p is new LAST
+            insertaslast(chi,p);
           }
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
-    } // end for i
+      // showpos_R(String.format("List after step %d: [%d]%n", p, s[p])); // DEBUG
+    } // end for p
   }
   
   
@@ -289,52 +290,52 @@ public class SuffixTrayBuilder {
    * Needs text 's' and its length 'n' correctly set.
    */
   public void buildpos_minLR() {
-    lexfirst = new int[256];
-    lexlast  = new int[256];
-    lexpred  = new int[n];
-    lexsucc  = new int[n];
-    Arrays.fill(lexfirst,-1);
-    Arrays.fill(lexlast,-1);
+    lexfirstpos = new int[256];
+    lexlastpos  = new int[256];
+    lexprevpos  = new int[n];
+    lexnextpos  = new int[n];
+    Arrays.fill(lexfirstpos,-1);
+    Arrays.fill(lexlastpos,-1);
     byte ch; int chi;
     int pup, pdown;
     int lsp, lpp;
     int found=0;
     
-    for (int i=n-1; i>=0; i--) {
-      // insert suffix starting at position i
-      ch = s[i]; chi=ch+128;
-      if (lexfirst[chi]==-1) {  // seeing character ch for the first time
-        insertnew(chi,i);
+    for (int p=n-1; p>=0; p--) {
+      // insert suffix starting at position p
+      ch = s[p]; chi=ch+128;
+      if (lexfirstpos[chi]==-1) {  // seeing character ch for the first time
+        insertnew(chi,p);
         steps++;
       } else {                  // seeing character ch again
-        assert(lexfirst[chi]>i);  assert(lexlast[chi]>i);
+        assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
         if (amap.isSpecial(ch)) {    // special character: always inserted first
-          insertasfirst(chi,i);
+          insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
-          pup = pdown = i+1;
+          pup = pdown = p+1;
           for (found=0; found==0; ) {
             steps++;
-            lpp = lexpred[pup];
+            lpp = lexprevpos[pup];
             if (lpp==-1)              { found=1; break; } // new first
             if (s[(pup=lpp)-1]==ch)   { found=2; break; } // insert after pup
             steps++;
-            lsp = lexsucc[pdown];
+            lsp = lexnextpos[pdown];
             if (lsp==-1)              { found=3; break; } // new last
             if (s[(pdown=lsp)-1]==ch) { found=4; break; } // insert before pdown
           }
           pup--; pdown--;
           switch (found) {
-            case 1: insertasfirst(chi,i);  break;
-            case 2: insertbetween(pup,lexsucc[pup],i); if (lexlast[chi]==pup) lexlast[chi]=i;  break;
-            case 3: insertaslast(chi,i);   break;
-            case 4: insertbetween(lexpred[pdown],pdown,i); if (lexfirst[chi]==pdown) lexfirst[chi]=i; break;
+            case 1: insertasfirst(chi,p);  break;
+            case 2: insertbetween(pup,lexnextpos[pup],p); if (lexlastpos[chi]==pup) lexlastpos[chi]=p;  break;
+            case 3: insertaslast(chi,p);   break;
+            case 4: insertbetween(lexprevpos[pdown],pdown,p); if (lexfirstpos[chi]==pdown) lexfirstpos[chi]=p; break;
             default: g.terminate("suffixtray: internal error");
           } // end switch
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
-    } // end for i
+      //showpos_R(String.format("List after step %d: [%d]%n", p, s[p])); // DEBUG
+    } // end for p
   }
   
   
@@ -342,64 +343,66 @@ public class SuffixTrayBuilder {
    * by walking BOTH WAYS along a partially constructed doubly linked suffix list,
    * until the target character is found BOTH WAYS.
    * This implementation uses 2 integer arrays.
+   * The SPACE SAVING technique (xor encoding) is not used here.
+   * Use <code>buildpos_bothLR</code> for the space saving technique.
    * Needs text 's' and its length 'n' correctly set.
    */
   public void buildpos_bothLR2() {
-    lexfirst = new int[256];
-    lexlast  = new int[256];
-    lexpred  = new int[n];
-    lexsucc  = new int[n];
-    Arrays.fill(lexfirst,-1);
-    Arrays.fill(lexlast,-1);
+    lexfirstpos = new int[256];
+    lexlastpos  = new int[256];
+    lexprevpos  = new int[n];
+    lexnextpos  = new int[n];
+    Arrays.fill(lexfirstpos,-1);
+    Arrays.fill(lexlastpos,-1);
     byte ch; int chi;
     int pup, pdown;
     int lsp, lpp;
     int foundup=0;
     int founddown=0;
     
-    for (int i=n-1; i>=0; i--) {
-      // insert suffix starting at position i
-      ch = s[i]; chi=ch+128;
-      if (lexfirst[chi]==-1) {  // seeing character ch for the first time
-        insertnew(chi,i);
+    for (int p=n-1; p>=0; p--) {
+      // insert suffix starting at position p
+      ch = s[p]; chi=ch+128;
+      if (lexfirstpos[chi]==-1) {  // seeing character ch for the first time
+        insertnew(chi,p);
         steps++;
       } else {                  // seeing character ch again
-        assert(lexfirst[chi]>i);  assert(lexlast[chi]>i);
+        assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
         if (amap.isSpecial(ch)) {    // special character: always inserted first
-          insertasfirst(chi,i);
+          insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
-          pup = pdown = i+1;
+          pup = pdown = p+1;
           for (founddown=0, foundup=0;  founddown==0 || foundup==0; ) {
             if (founddown==0) {
               steps++;
-              lsp = lexsucc[pdown];
+              lsp = lexnextpos[pdown];
               if (lsp==-1)              { founddown=1; foundup=2; break; } // new last
               if (s[(pdown=lsp)-1]==ch) { founddown=2; } // insert before pdown
             }
             if (foundup==0) {
               steps++;
-              lpp = lexpred[pup];
+              lpp = lexprevpos[pup];
               if (lpp==-1)              { foundup=1; founddown=2; break; } // new first
               if (s[(pup=lpp)-1]==ch)   { foundup=2; }   // insert after pup
             }
           }
           if (founddown==1) {       // new last
-            pup=lexlast[chi];
-            pdown=lexsucc[pup];
-            lexlast[chi]=i;
+            pup=lexlastpos[chi];
+            pdown=lexnextpos[pup];
+            lexlastpos[chi]=p;
           } else if (foundup==1) {  // new first
-            pdown=lexfirst[chi];
-            pup=lexpred[pdown];
-            lexfirst[chi]=i;
+            pdown=lexfirstpos[chi];
+            pup=lexprevpos[pdown];
+            lexfirstpos[chi]=p;
           } else {
             pup--; pdown--;         // normal insert at found position
           }
-          insertbetween(pup,pdown,i);
+          insertbetween(pup,pdown,p);
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
-    } // end for i
+      // showpos_R(String.format("List after step %d: [%d]%n", p, s[p])); // DEBUG
+    } // end for p
   }
   
   //===================== insertion methods =================================
@@ -413,16 +416,16 @@ public class SuffixTrayBuilder {
   private final void insertbetween(final int p1, final int p2, final int i) {
     // before: ... p1, p2 ...
     // after:  ... p1, i, p2 ...
-    assert(p1==-1 || lexsucc[p1]==p2)
+    assert(p1==-1 || lexnextpos[p1]==p2)
     : String.format("i=%d (of %d); p1=%d, p2=%d; s[i..i+1]=(%d,%d); lexsucc[p1]=%d %n",
-        i,n,p1,p2,s[i],(i<n-1?s[i+1]:999),lexsucc[p1]);
-    assert(p2==-1 || lexpred[p2]==p1)
+        i,n,p1,p2,s[i],(i<n-1?s[i+1]:999),lexnextpos[p1]);
+    assert(p2==-1 || lexprevpos[p2]==p1)
     : String.format("i=%d (of %d); p1=%d, p2=%d; s[i..i+1]=(%d,%d); lexpred[p2]=%d %n",
-        i,n,p1,p2,s[i],(i<n-1?s[i+1]:999),lexpred[p2]);
-    lexpred[i] = p1;
-    lexsucc[i] = p2;
-    if (p2!=-1) lexpred[p2] = i;
-    if (p1!=-1) lexsucc[p1] = i;
+        i,n,p1,p2,s[i],(i<n-1?s[i+1]:999),lexprevpos[p2]);
+    lexprevpos[i] = p1;
+    lexnextpos[i] = p2;
+    if (p2!=-1) lexprevpos[p2] = i;
+    if (p1!=-1) lexnextpos[p1] = i;
   }
   
   
@@ -431,10 +434,10 @@ public class SuffixTrayBuilder {
    *@param i  what to insert
    */
   private final void insertasfirst(final int chi, final int i) {
-    final int p = lexfirst[chi];
+    final int p = lexfirstpos[chi];
     assert(p!=-1);
-    insertbetween(lexpred[p],p,i);
-    lexfirst[chi]=i;
+    insertbetween(lexprevpos[p],p,i);
+    lexfirstpos[chi]=i;
   }
   
   /** insert the new last occurrence of chi before p=lexfirst[chi].
@@ -442,10 +445,10 @@ public class SuffixTrayBuilder {
    *@param i  what to insert
    */
   private final void insertaslast(final int chi, final int i) {
-    final int p = lexlast[chi];
+    final int p = lexlastpos[chi];
     assert(p!=-1);
-    insertbetween(p,lexsucc[p],i);
-    lexlast[chi]=i;
+    insertbetween(p,lexnextpos[p],i);
+    lexlastpos[chi]=i;
   }
   
   /** insert the first overall occurrence of a new character chi.
@@ -454,14 +457,14 @@ public class SuffixTrayBuilder {
    */
   private final void insertnew(final int chi, final int i) {
     int cp, cs, ip, is;
-    assert(lexfirst[chi]==-1);
-    assert(lexlast[chi]==-1);
-    lexfirst[chi]=i;
-    lexlast[chi]=i;
-    for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {}
-    ip = (cp>=0? lexlast[cp] : -1);
-    for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {}
-    is = (cs<256? lexfirst[cs] : -1);
+    assert(lexfirstpos[chi]==-1);
+    assert(lexlastpos[chi]==-1);
+    lexfirstpos[chi]=i;
+    lexlastpos[chi]=i;
+    for(cp=chi-1; cp>=0 && lexlastpos[cp]==-1; cp--) {}
+    ip = (cp>=0? lexlastpos[cp] : -1);
+    for(cs=chi+1; cs<256 && lexfirstpos[cs]==-1; cs++) {}
+    is = (cs<256? lexfirstpos[cs] : -1);
     // before: ... ip, is ...
     // after:  ... ip, i, is ...
     insertbetween(ip, is, i);
@@ -473,7 +476,9 @@ public class SuffixTrayBuilder {
 // ========= SPACE SAVING construction ======================================
   
   /** lightweight doubly linked list with xor coding.
-   * WARNING: uses lexfirst[] and lexlast[] from enclosing class!
+   * NOTE: 
+   * uses lexfirstpos[] and lexlastpos[] from enclosing class!
+   * does not use lexprevpos[] or lexnextpos[]!
    */
   final class LightDLL {
     private int pup, pdn, ppred, psucc;
@@ -509,35 +514,35 @@ public class SuffixTrayBuilder {
      */
     private final void insertnewx(final int chi, final int i) {
       int cp, cs, ip, is;
-      assert(lexfirst[chi]==-1);
-      assert(lexlast[chi]==-1);
-      lexfirst[chi]=i;
-      lexlast[chi]=i;
-      for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {}
-      ip = (cp>=0? lexlast[cp] : -1);
-      for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {}
-      is = (cs<256? lexfirst[cs] : -1);
+      assert(lexfirstpos[chi]==-1);
+      assert(lexlastpos[chi]==-1);
+      lexfirstpos[chi]=i;
+      lexlastpos[chi]=i;
+      for(cp=chi-1; cp>=0 && lexlastpos[cp]==-1; cp--) {}
+      ip = (cp>=0? lexlastpos[cp] : -1);
+      for(cs=chi+1; cs<256 && lexfirstpos[cs]==-1; cs++) {}
+      is = (cs<256? lexfirstpos[cs] : -1);
       insertbetweenx(ip, is, i);
     }
     
     private final void insertasfirstx(int chi, int i) {
       int cp, ip;
-      assert(lexfirst[chi]!=-1);
-      assert(lexlast[chi]!=-1);
-      for(cp=chi-1; cp>=0 && lexlast[cp]==-1; cp--) {}
-      ip = (cp>=0? lexlast[cp] : -1);
-      insertbetweenx(ip,lexfirst[chi],i);
-      lexfirst[chi]=i;      
+      assert(lexfirstpos[chi]!=-1);
+      assert(lexlastpos[chi]!=-1);
+      for(cp=chi-1; cp>=0 && lexlastpos[cp]==-1; cp--) {}
+      ip = (cp>=0? lexlastpos[cp] : -1);
+      insertbetweenx(ip,lexfirstpos[chi],i);
+      lexfirstpos[chi]=i;      
     }
 
     private final void insertaslastx(int chi, int i) {
       int cs, is;
-      assert(lexfirst[chi]!=-1);
-      assert(lexlast[chi]!=-1);
-      for(cs=chi+1; cs<256 && lexfirst[cs]==-1; cs++) {}
-      is = (cs<256? lexfirst[cs] : -1);
-      insertbetweenx(lexlast[chi],is,i);
-      lexlast[chi]=i;      
+      assert(lexfirstpos[chi]!=-1);
+      assert(lexlastpos[chi]!=-1);
+      for(cs=chi+1; cs<256 && lexfirstpos[cs]==-1; cs++) {}
+      is = (cs<256? lexfirstpos[cs] : -1);
+      insertbetweenx(lexlastpos[chi],is,i);
+      lexlastpos[chi]=i;      
     }
     
     private final void walkandinsert(int chi, int i) {
@@ -579,34 +584,34 @@ public class SuffixTrayBuilder {
    * Needs text 's' and its length 'n' correctly set.
    */
   public void buildpos_bothLR() {
-    lexpred  = null;
-    lexsucc  = null;
-    lexfirst = new int[256];
-    lexlast  = new int[256];
-    Arrays.fill(lexfirst,-1);
-    Arrays.fill(lexlast,-1);
+    lexprevpos  = null;
+    lexnextpos  = null;
+    lexfirstpos = new int[256];
+    lexlastpos  = new int[256];
+    Arrays.fill(lexfirstpos,-1);
+    Arrays.fill(lexlastpos,-1);
     dll = new LightDLL(n);
     byte ch; 
     int chi;
     
-    for (int i=n-1; i>=0; i--) {
-      // insert suffix starting at position i
-      ch = s[i]; chi=ch+128;
-      if (lexfirst[chi]==-1) {  // seeing character ch for the first time
-        dll.insertnewx(chi,i);
+    for (int p=n-1; p>=0; p--) {
+      // insert suffix starting at position p
+      ch = s[p]; chi=ch+128;
+      if (lexfirstpos[chi]==-1) {  // seeing character ch for the first time
+        dll.insertnewx(chi,p);
         steps++;
       } else {                  // seeing character ch again
-        assert(lexfirst[chi]>i);  
-        assert(lexlast[chi]>i);
+        assert(lexfirstpos[chi]>p);  
+        assert(lexlastpos[chi]>p);
         if (amap.isSpecial(ch)) {    // special character: always inserted first
-          dll.insertasfirstx(chi,i);
+          dll.insertasfirstx(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
-          dll.walkandinsert(chi,i);
+          dll.walkandinsert(chi,p);
         } // end symbol character
       } // end seeing character ch again
-      //DEBUG:showpos_R(String.format("List after step %d: [%d]%n", i, s[i]));
-    } // end for i
+      //showpos_R(String.format("List after step %d: [%d]%n", p, s[p])); // DEBUG
+    } // end for p
   }
 
     
@@ -668,14 +673,14 @@ public class SuffixTrayBuilder {
   public int checkpos_R() {
     int chi, p, nextp, nn, comp;
     int returnvalue = 0;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
+    for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     if (chi>=256) {
       if(n==0) return 0;
       g.warnmsg("suffixcheck: no first character found, but |s|!=0.%n");
       return 2;
     }
-    p = lexfirst[chi]; assert(p!=-1);
-    nextp = lexsucc[p]; nn=1;
+    p = lexfirstpos[chi]; assert(p!=-1);
+    nextp = lexnextpos[p]; nn=1;
     while (nextp!=-1) {
       //g.logmsg("  pos %d vs %d; text %d vs %d%n", p, nextp, s[p], s[nextp]);
       if (!((comp=suffixcmp(p,nextp))<0)) {
@@ -684,7 +689,7 @@ public class SuffixTrayBuilder {
         returnvalue=1;
       }
       p=nextp;
-      nextp = lexsucc[p];
+      nextp = lexnextpos[p];
       nn++;
     }
     if (nn!=n) {
@@ -703,14 +708,14 @@ public class SuffixTrayBuilder {
     int chi, p, oldp, nextp, nn, comp;
     int returnvalue = 0;
     final int[] lexps = dll.lexps;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
+    for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     if (chi>=256) {
       if(n==0) return 0;
       g.warnmsg("suffixcheck: no first character found, but |s|!=0.%n");
       return 2;
     }
     nn=1;
-    p = lexfirst[chi]; 
+    p = lexfirstpos[chi]; 
     assert(p!=-1);
     nextp = lexps[p] ^ -1; 
     while (nextp!=-1) {
@@ -746,7 +751,7 @@ public class SuffixTrayBuilder {
     try {
       pos = fpos.mapR().asIntBuffer();
     } catch (IOException ex) {
-      g.terminate("suffixcheck: could not read .pos file");
+      g.terminate("suffixcheck: could not read .pos file; " + ex.toString());
     }
     int p = pos.get();
     int nextp, comp;
@@ -782,14 +787,14 @@ public class SuffixTrayBuilder {
    */
   private void writepos_R(String fname) {
     int chi, p;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
+    for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
       ArrayFile f = new ArrayFile(fname).openWStream();
-      for (p=lexfirst[chi]; p!=-1; p=lexsucc[p])
+      for (p=lexfirstpos[chi]; p!=-1; p=lexnextpos[p])
         f.out().writeInt(p);
       f.close();
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing '%s'!%n",fname);
+      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex.toString());
       g.terminate(1);
     }
   }
@@ -800,10 +805,10 @@ public class SuffixTrayBuilder {
   private void writepos_bothLR(String fname) {
     int chi, p, oldp, tmp;
     final int[] lexps = dll.lexps;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
+    for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
       ArrayFile f = new ArrayFile(fname).openWStream();
-      for (oldp=-1, p=lexfirst[chi];  p!=-1;  ) {
+      for (oldp=-1, p=lexfirstpos[chi];  p!=-1;  ) {
         f.out().writeInt(p);
         tmp = p;
         p = lexps[p] ^ oldp;
@@ -811,7 +816,7 @@ public class SuffixTrayBuilder {
       }
       f.close();
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing '%s'!%n",fname);
+      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex.toString());
       g.terminate(1);
     }
   }
@@ -824,12 +829,12 @@ public class SuffixTrayBuilder {
     int chi, p;
     System.out.printf(header);
     for (chi=0; chi<256; chi++) {
-      assert(lexfirst[chi]==-1 || lexlast[chi]!=-1);
-      if (lexfirst[chi]!=-1)
-        System.out.printf("  char %d: lexfirst=%2d, lexlast=%2d%n", chi-128, lexfirst[chi], lexlast[chi]);
+      assert(lexfirstpos[chi]==-1 || lexlastpos[chi]!=-1);
+      if (lexfirstpos[chi]!=-1)
+        System.out.printf("  char %d: lexfirst=%2d, lexlast=%2d%n", chi-128, lexfirstpos[chi], lexlastpos[chi]);
     }
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
-    for (p=lexfirst[chi]; p!=-1; p=lexsucc[p])
+    for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
+    for (p=lexfirstpos[chi]; p!=-1; p=lexnextpos[p])
       System.out.printf("  %2d: %d...%n", p, s[p]);
   }
   
@@ -845,12 +850,12 @@ public class SuffixTrayBuilder {
     int p, prev, h;
     h=0;
     for (p=0; p<n; p++) {
-      prev = lexpred[p];
+      prev = lexprevpos[p];
       if (prev!=-1)  h = suffixlcp(prev,p,h); 
       else {assert(h==0);}
       assert(h>=0);
       if(h>maxlcp) maxlcp=h;
-      lexpred[p]=h;
+      lexprevpos[p]=h;
       if (h>=255)   lcp1x++;
       if (h>=65535) lcp2x++;    
       if (h>0) h--;
@@ -858,14 +863,14 @@ public class SuffixTrayBuilder {
     g.logmsg("suffixtray: lcp computation took %.2f secs; writing...%n",timer.tocs());
 
     int chi, r;
-    for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
+    for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     ArrayFile f4=null, f2=null, f1=null, f2x=null, f1x=null;
     try {
       if ((dolcp&4)!=0) f4 = new ArrayFile(fname).openWStream();
       if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2").openWStream(); f2x = new ArrayFile(fname+"2x").openWStream(); }
       if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1").openWStream(); f1x = new ArrayFile(fname+"1x").openWStream(); }
-      for (r=0, p=lexfirst[chi];   p!=-1;   p=lexsucc[p], r++) {
-        h = lexpred[p];
+      for (r=0, p=lexfirstpos[chi];   p!=-1;   p=lexnextpos[p], r++) {
+        h = lexprevpos[p];
         assert(h>=0);
         if ((dolcp&4)!=0) { f4.out().writeInt(h); }
         if ((dolcp&2)!=0) {
@@ -882,7 +887,7 @@ public class SuffixTrayBuilder {
       if ((dolcp&2)!=0) { f2.close(); f2x.close(); }
       if ((dolcp&1)!=0) { f1.close(); f1x.close(); }
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing lcp file(s): %s!%n",ex.toString());
+      g.warnmsg("suffixtray: error writing lcp file(s): %s%n", ex.toString());
       g.terminate(1);
     }
   }
