@@ -248,7 +248,7 @@ public class Mapper {
     
     int selected = tselect.cardinality();
     g.logmsg("map: comparing %d/%d sequences against %d indices (%s) using method %s%s...%n",
-        selected, tm, inum, Strings.join(", ", indices.toArray(new String[0])),
+        selected, tm, inum, StringUtils.join(", ", indices.toArray(new String[0])),
         method.toString(), (atonce?" (at-once)":""));
     //g.logmsg("map: shortest=%d, longest=%d%n", shortestsequence, longestsequence);
     

@@ -17,7 +17,8 @@ public final class BisulfiteQGramCoder
 {
 	/**
 	 * Creates a new BisulfiteQGramCoder. The alphabet size is fixed to 4 (A, C, G, T).
-	 * @param q length of the q-grams coded by this instance
+         * @param q length of the q-grams coded by this instance
+         * @throws java.lang.IllegalArgumentException 
 	 */
 	public BisulfiteQGramCoder(int q) throws IllegalArgumentException
 	{

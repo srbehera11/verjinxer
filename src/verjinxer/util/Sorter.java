@@ -9,7 +9,7 @@ package verjinxer.util;
 
 /**
  *
- * @author rahmann
+ * @author Sven Rahmann
  */
 
 public final class Sorter {

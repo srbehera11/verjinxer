@@ -83,7 +83,7 @@ public class Globals {
     try {
       setloggerP(new PrintStream(new FileOutputStream(fname,!startnew), true));
       loggerP.printf("%n# %s%n", new Date().toString());
-      loggerP.printf("# \"%s\"%n", Strings.join("\" \"",action));
+      loggerP.printf("# \"%s\"%n", StringUtils.join("\" \"",action));
     } catch (FileNotFoundException ex) {
       warnmsg("%s: could not open project log '%s'; continuing...", programname, fname);
     }

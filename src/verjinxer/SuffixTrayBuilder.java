@@ -91,7 +91,7 @@ public class SuffixTrayBuilder {
   public int run(String[] args) {
     g.cmdname = "suffixtray";
     int returnvalue = 0;
-    String action = "suffixtray \"" + Strings.join("\" \"",args)+ "\"";
+    String action = "suffixtray \"" + StringUtils.join("\" \"",args)+ "\"";
     
     Options opt = new Options("c=check,C=onlycheck,X=notexternal=nox=noexternal,m=method:,l=lcp=lcp4,lcp1,lcp2");
     try {

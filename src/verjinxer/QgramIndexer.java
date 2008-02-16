@@ -65,7 +65,7 @@ public final class QgramIndexer {
   public int run(String[] args) {
     g.cmdname = "qgram";
     int returnvalue = 0;
-    String action = "qgram \"" + Strings.join("\" \"",args)+ "\"";
+    String action = "qgram \"" + StringUtils.join("\" \"",args)+ "\"";
     Options opt = new Options("q:,f=filter:,c=check,C=onlycheck,nofreq,X=notexternal=nox=noexternal,b=bisulfite");
     try {
       args = opt.parse(args);
@@ -522,7 +522,7 @@ public final class QgramIndexer {
       bold=b; while (r==bck[b+1]) b++;
       if (bold!=b) qgram = coder.qGram(b,qgram);
       for(int p=0; p<q; p++) if(qgram[p]!=s[i+p]) { 
-        g.logmsg("r=%d, i=%d, expected: %s, observed: %s.%n", r,i, Strings.join("",qgram,0,q), Strings.join("",s,i,q));
+        g.logmsg("r=%d, i=%d, expected: %s, observed: %s.%n", r,i, StringUtils.join("",qgram,0,q), StringUtils.join("",s,i,q));
         return(r); 
       }
       assert(i>=0 && i<=n-q);
@@ -535,7 +535,7 @@ public final class QgramIndexer {
       int cd = coder.code(s,ii);
       if (cd==-1 || thefilter.get(cd)) continue;
       g.logmsg("  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and filtered!%n",
-          ii, cd, Strings.join("",coder.qGram(cd, qgram),0,q) );
+          ii, cd, StringUtils.join("",coder.qGram(cd, qgram),0,q) );
       return n; // error: return length of the text ( > number of q-positions)
     }
     

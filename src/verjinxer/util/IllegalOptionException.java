@@ -3,15 +3,13 @@
  *
  * Created on December 11, 2006, 5:12 AM
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package verjinxer.util;
 
 /**
  *
- * @author Sven
+ * @author Sven Rahmann
  */
 public class IllegalOptionException extends Exception
 {

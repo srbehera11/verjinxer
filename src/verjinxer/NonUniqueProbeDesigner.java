@@ -398,7 +398,7 @@ public class NonUniqueProbeDesigner {
       ex.printStackTrace();
       g.terminate("Error printing oligo");
     }
-    out.printf("%s%n%n", Strings.join(" ",incidence,0,m));
+    out.printf("%s%n%n", StringUtils.join(" ",incidence,0,m));
     out.flush();
     for(int i=0; i<m; i++) {
       if(incidence[i]==0) continue; // nothing to add for seq i
@@ -415,6 +415,6 @@ public class NonUniqueProbeDesigner {
   private final void outputDetails(int pp, int si) {
     int ss = (si==0? 0 : ssp[si-1]+1);
     out.printf("# seq=%d[%d];  pos=%d: ", si, pp-ss, pp);
-    out.printf("%s%n", Strings.join(" ", thislcf, 0, m));
+    out.printf("%s%n", StringUtils.join(" ", thislcf, 0, m));
   }
 }

@@ -73,7 +73,7 @@ public class Translater {
     TicToc gtimer = new TicToc();
     g.cmdname = "translate";
     Properties prj = new Properties();
-    prj.setProperty("TranslateAction", "translate \"" + Strings.join("\" \"",args)+ "\"");
+    prj.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"",args)+ "\"");
     
     Options opt = new Options("i=index=indexname:,t=trim,a=amap:,dna,rc=rconly,dnarc:,dnabi,protein,r=run=runs");
     try {
