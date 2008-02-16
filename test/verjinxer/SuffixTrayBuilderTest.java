@@ -9,13 +9,13 @@ package verjinxer;
 
 import java.util.Locale;
 import junit.framework.*;
-import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
+import verjinxer.sequenceanalysis.*;
 import static verjinxer.Globals.*;
 
 /**
- *
- * @author Sven
+ * Test cases for SuffixTrayBuilder
+ * @author Sven Rahmann
  */
 public class SuffixTrayBuilderTest extends TestCase {
   

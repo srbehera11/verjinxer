@@ -124,7 +124,7 @@ public final class QgramIndexer {
 
          // create the q-gram filter
          g.logmsg("qgram: processing: indexname=%s, asize=%d, q=%d%n", indexname, asize, qq);
-         final QGramCoder coder = new QGramCoder(qq, asize);
+         final QGramCoder coder = new QGramCoder(qq, asize); // only needed to produce the filter
          final BitSet thefilter = coder.createFilter(opt.get("F")); // returns empty filter if null
          prj.setProperty("qFilterComplexity", String.valueOf(coder.getFilterComplexity()));
          prj.setProperty("qFilterDelta", String.valueOf(coder.getFilterDelta()));
@@ -513,6 +513,7 @@ public final class QgramIndexer {
     *  -N-1&lt;0, where N is the number of q-grams in the index.
     * @throws java.io.IOException 
     */
+   // TODO: Needs to be adapted to bisulfite!
    public int checkQGramIndex(final String seqfile, final int q, final int asize,
                                final String bucketfile, final String qposfile, final BitSet thefilter)
          throws IOException {

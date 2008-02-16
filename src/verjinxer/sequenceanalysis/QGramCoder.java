@@ -7,8 +7,10 @@
 
 package verjinxer.sequenceanalysis;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Iterator;
 
 /**
  * This class contains routines for coding strings of length q over the alphabet
@@ -61,16 +63,33 @@ public final class QGramCoder
    }
    
    /**
-    * @param qgram a byte array with the numbers to be interpreted as base-asize number
-    * @param offset position to start looking in the qgram array
-    * @return the qgram code >0; or -1 if illegal characters appear
+    * @param qgram  a byte array for which to compute a q-gram code
+    * @param offset position in the array at which to compute the q-gram code
+    * @return the qgram code &gt;=0;  or -1 if illegal characters appear.
     */
    public final int code(final byte[] qgram, final int offset)
    {
-      int c=0; int qi;
+      int c=0;
       for (int i=offset; i<q+offset; i++)
       {
-        qi = qgram[i];
+         final int qi = qgram[i];
+         if(qi<0 || qi>=asize) return(-1);
+         c%=mod; c*=asize; c+=qi;
+      }
+      return c;
+   }
+
+   /**
+    * @param qgram   a ByteBuffer for which to compute a q-gram code
+    * @param offset  position in the buffer at which to compute the q-gram code
+    * @return the qgram code &gt;=0;  or -1 if illegal characters appear.
+    */
+   public final int code(final ByteBuffer qgram, final int offset)
+   {
+      int c=0;
+      for (int i=offset; i<q+offset; i++)
+      {
+         final int qi = qgram.get(i);
          if(qi<0 || qi>=asize) return(-1);
          c%=mod; c*=asize; c+=qi;
       }
@@ -136,6 +155,127 @@ public final class QGramCoder
     }
     return null;
   }
+  
+  // ========================== q-gram Iterators ===============================
+  
+  
+  /**
+   * @param t the text in form of a byte array
+   * @return an iterable object that returns the q-grams in t in consecutive order.
+   *  For each invalid q-gram (non-symbol containing q-gram), a negative value is
+   *  produced. Otherwise the q-gram codes range in 0 .. asize^q - 1.
+   */
+  public Iterable<Integer> SimpleQGramList(final byte[] t) {
+    return new Iterable<Integer>() {
+      public Iterator<Integer> iterator() {
+         return new SimpleQGramIterator(t);
+      }
+    };
+  }
+  
+   class SimpleQGramIterator implements Iterator<Integer> {
+      private final byte[] t;         // text as array
+      private final ByteBuffer b;     // text as buffer
+      private int pos;                // current position in array or buffer
+      private final int end;          // length of t or b
+     
+      public SimpleQGramIterator(final byte[] t) {
+         this.t = t;
+         this.b = null;
+         pos = 0;
+         end = t.length-q+1;
+      }
+      public SimpleQGramIterator(final ByteBuffer b) {
+        if (b.hasArray() && !b.isReadOnly()) {
+           // if possible, use the backing array, it's more efficient
+           this.t = b.array();
+           this.b = null;
+           pos = b.arrayOffset();
+           end = t.length-q+1;
+        } else {
+           this.t = null;
+           this.b = b;
+           pos = 0;
+           end = b.capacity()-q+1;
+        }
+      }
+        
+      public boolean hasNext() { return (pos<end)? true : false; }
+      public Integer next()    { return next0(); }
+      // this iterator does not remove things, but remove() must be implemented.
+      public void remove() { throw new UnsupportedOperationException();  }
+      
+      public final int next0() {
+         return (b==null)?  code(t, pos++) : code(b, pos++);
+      }
+  }
+
+   
+  /**
+   * @param t the text in form of a byte array
+   * @return an iterable object that returns the q-grams in t in consecutive order.
+   *  For each invalid q-gram (non-symbol containing q-gram), a negative value is
+   *  produced. Otherwise the q-gram codes range in 0 .. asize^q - 1.
+   */
+  public Iterable<Long> SparseQGramList(final byte[] t) {
+    return new Iterable<Long>() {
+      public Iterator<Long> iterator() {
+         return new SparseQGramIterator(t);
+      }
+    };
+  }
+  
+   class SparseQGramIterator implements Iterator<Long> {
+      private final byte[] t;         // text as array
+      private final ByteBuffer b;     // text as buffer
+      private int pos;                // current position in array or buffer
+      private final int end;          // length of t or b
+      private int nextc = -1;         // next valid code
+     
+      public SparseQGramIterator(final byte[] t) {
+         this.t = t;
+         this.b = null;
+         pos = 0;
+         end = t.length-q+1;
+      }
+      public SparseQGramIterator(final ByteBuffer b) {
+        if (b.hasArray() && !b.isReadOnly()) {
+           // if possible, use the backing array, it's more efficient
+           this.t = b.array();
+           this.b = null;
+           pos = b.arrayOffset();
+           end = t.length-q+1;
+        } else {
+           this.t = null;
+           this.b = b;
+           pos = 0;
+           end = b.capacity()-q+1;
+        }
+      }
+      public boolean hasNext() { return hasNext0(); }
+      public Long next()       { return next0(); }
+      // this iterator does not remove things, but remove() must be implemented.
+      public void remove()     { throw new UnsupportedOperationException();  }
+      
+      public final boolean hasNext0() {
+         int c=-1;
+         if (b==null) {
+            while (c<0 && pos<end)  c=code(t,pos++);
+         } else {
+            while (c<0 && pos<end)  c=code(t,pos++);
+         }
+         if(c>=0) { nextc=c; return true; }
+         return false;
+      }
+      
+      public final long next0() {
+         assert(nextc>=0 && nextc<numberOfQGrams());
+         return ((pos-1)<<16) + nextc; // pos-1, since pos has already been incremented beyond
+      }
+  }
+
+   
+  // =========================== Filters =======================================
 
   /** create a low-complexity filter for the given instance;
    * this is a BitSet with the property that the c-th bit is 1 iff
