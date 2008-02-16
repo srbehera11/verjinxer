@@ -21,17 +21,16 @@ import java.nio.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Properties;
-import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
+import verjinxer.sequenceanalysis.*;
+import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.*;
 import static verjinxer.Globals.*;
-import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_A;
-import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_C;
-import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_G;
-import static verjinxer.util.BisulfiteQGramCoder.NUCLEOTIDE_T;
+
 
 /**
  *
  * @author Sven Rahmann
+ * @author Marcel Martin
  */
 public class QgramMatcher {
       

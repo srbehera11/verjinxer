@@ -11,11 +11,14 @@ import java.io.IOException;
 import verjinxer.sequenceanalysis.FastaFile;
 
 /**
- *
+ * executable class that writes a Fibonacci string to a FASTA file
  * @author Sven Rahmann
  */
 public class WriteFibonacciString {
-
+   
+   private WriteFibonacciString() {
+   }
+  
   public static final long defaultlength = 14000000L;
   
   /** call this class with arguments (n, fname),
@@ -42,5 +45,5 @@ public class WriteFibonacciString {
     }
     System.out.printf("Done.%n");
   }
-  
+
 }

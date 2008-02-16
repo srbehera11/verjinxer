@@ -1,4 +1,4 @@
-package verjinxer.util;
+package verjinxer.sequenceanalysis;
 
 import java.util.ArrayList;
 import java.util.Collection;
