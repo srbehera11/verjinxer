@@ -4,6 +4,9 @@
  * Created on May 2, 2007, 6:23 PM
  * TODO: include lcp in checking!
  * TODO: include manber myers method!
+ * TODO: the suffix array is written using streams, not channels! This causes a byte-order problem!
+ * TODO: space-efficient lcp not yet implemented
+ * TODO: renaming arrays to be consistent with paper
  */
 
 package verjinxer;
@@ -188,7 +191,7 @@ public class SuffixTrayBuilder {
     // write project data
     try { g.writeProject(prj, di+extprj); } 
     catch (IOException ex) { 
-      g.warnmsg("qgram: could not write %s!%n", di+extprj); 
+      g.warnmsg("suffix: could not write %s!%n", di+extprj); 
       g.terminate(1);
     }
     g.stopplog();
@@ -781,7 +784,7 @@ public class SuffixTrayBuilder {
     int chi, p;
     for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     try {
-      ArrayFile f = new ArrayFile(fname).openW();
+      ArrayFile f = new ArrayFile(fname).openWStream();
       for (p=lexfirst[chi]; p!=-1; p=lexsucc[p])
         f.out().writeInt(p);
       f.close();
@@ -799,7 +802,7 @@ public class SuffixTrayBuilder {
     final int[] lexps = dll.lexps;
     for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     try {
-      ArrayFile f = new ArrayFile(fname).openW();
+      ArrayFile f = new ArrayFile(fname).openWStream();
       for (oldp=-1, p=lexfirst[chi];  p!=-1;  ) {
         f.out().writeInt(p);
         tmp = p;
@@ -858,9 +861,9 @@ public class SuffixTrayBuilder {
     for (chi=0; chi<256 && lexfirst[chi]==-1; chi++)  {}
     ArrayFile f4=null, f2=null, f1=null, f2x=null, f1x=null;
     try {
-      if ((dolcp&4)!=0) f4 = new ArrayFile(fname).openW();
-      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2").openW(); f2x = new ArrayFile(fname+"2x").openW(); }
-      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1").openW(); f1x = new ArrayFile(fname+"1x").openW(); }
+      if ((dolcp&4)!=0) f4 = new ArrayFile(fname).openWStream();
+      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2").openWStream(); f2x = new ArrayFile(fname+"2x").openWStream(); }
+      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1").openWStream(); f1x = new ArrayFile(fname+"1x").openWStream(); }
       for (r=0, p=lexfirst[chi];   p!=-1;   p=lexsucc[p], r++) {
         h = lexpred[p];
         assert(h>=0);

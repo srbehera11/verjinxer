@@ -1,6 +1,5 @@
 /*
  * QgramIndexer.java
- *
  * Created on 30. Januar 2007, 15:15
  *
  */
@@ -19,10 +18,10 @@ import verjinxer.util.*;
 import static verjinxer.Globals.*;
 
 /**
- *
+ * This class provides a q-gram indexer.
  * @author Sven Rahmann
+ * @author Marcel Martin
  */
-
 public final class QgramIndexer {
   
   private Globals g;
@@ -151,33 +150,21 @@ public final class QgramIndexer {
     return returnvalue;
   } // end run
   
+  
   /**
-   * Reads a sequence file from disk into a ByteBuffer.
-   *
-   * @param seqfile Name of the sequence file.
-   * @param external Whether to do more on disk.
-   * @return The sequence.
+   * Read a sequence file from disk into a ByteBuffer.
+   * @param seqfile   name of the sequence file
+   * @param external  whether to use memory mapping instead of reading the sequence
+   * @return The sequence in a ByteBuffer
    */
   private ByteBuffer readSequenceFile(final String seqfile, boolean external) throws IOException
   {
+    if (external) return g.mapRByteArray(seqfile);
+    // not external: read bytes into array-backed buffer
+    g.logmsg("  reading sequence file '%s'...%n",seqfile);
     TicToc timer = new TicToc();
-
-    // Read the sequence file into memory, either by memory mapping or reading it byte-by-byte
-    final FileChannel fcin = new FileInputStream(seqfile).getChannel();
-    final long ll = fcin.size();
-    g.logmsg("  reading %d bytes...%n",ll);
-    ByteBuffer in;
-    if(external) {
-      g.logmsg("  mapping input file to memory%n");
-      in = fcin.map(MapMode.READ_ONLY, 0, ll);
-    } else {
-      in = ByteBuffer.allocate((int)ll);
-      int read=0;
-      while (read<ll) { read+=fcin.read(in); g.logmsg("  read %d bytes%n",read); }
-    }
-    fcin.close();
-    assert(in.limit() == ll);
-    g.logmsg("  ...this took %.1f sec%n",timer.tocs());
+    ByteBuffer in = new ArrayFile(seqfile,0).readIntoNewBuffer();
+    g.logmsg("  ...read %d bytes; this took %.1f sec%n",in.capacity(),timer.tocs());
     return in;
   }
 
@@ -313,7 +300,7 @@ public final class QgramIndexer {
     return result;
   }
 
-  /** generates a q-gram index of the ArrayFile
+  /** generates a q-gram index of a given file.
    * @param seqfile  name of the sequence file (i.e., of the translated text)
    * @param q  q-gram length
    * @param asize  alphabet size; q-grams with characters outside 0..asize-1
@@ -476,7 +463,7 @@ public final class QgramIndexer {
       wtimer.tic();
       g.logmsg("    writing slice to %s%n",qposfile);
       //outfile.putslice(bqposslice, 4*qposstart, 4*qpossize);
-      outfile.dumpToChannel(qposslice, 0, qpossize);
+      outfile.write(qposslice, 0, qpossize); 
       g.logmsg("    writing slice took %.2f sec%n",wtimer.tocs());
       bckstart = bckend;
     }
@@ -495,22 +482,19 @@ public final class QgramIndexer {
   }
   
   
-  /** checks the q-gram index of the ArrayFile for correctness.
+  /** checks the q-gram index of the given file for correctness.
    * @param seqfile name of the sequence file
    * @param q q-gram length
    * @param asize alphabet size
    * @param bucketfile filename of the q-bucket file
    * @param qposfile  filename of the q-gram index
-   * @param qfreqfile  filename of the q-gram frequencies file
-   * @param external  conserve memory, runs possibly slower (currently NOT USED)
    * @param thefilter a BitSet indicating which q-grams should be ignored
    * @return an index &gt;=0 where the first error in qpos is found, or
    *  -N-1&lt;0, where N is the number of q-grams in the index.
    * @throws java.io.IOException 
    */
   public int checkQGramIndex(final String seqfile, final int q, final int asize,
-      final String bucketfile, final String qposfile, final String qfreqfile, 
-      final boolean external, final BitSet thefilter)
+      final String bucketfile, final String qposfile, final BitSet thefilter)
       throws IOException {
     
     // Initialize q-gram storage
@@ -521,52 +505,28 @@ public final class QgramIndexer {
     TicToc timer = new TicToc();
     System.gc();
     g.logmsg("  reading %s and %s%n",seqfile,bucketfile);
-    byte[] s   = new ArrayFile(seqfile).slurp(new byte[0]);
-    int[]  bck = new ArrayFile(bucketfile).slurp(new int[0]);
+    final ArrayFile arf = new ArrayFile(null);
+    byte[] s   = arf.setFilename(seqfile).read((byte[])null);
+    int[]  bck = arf.setFilename(bucketfile).read((int[])null);
     g.logmsg("  reading finished after %.2f sec%n", timer.tocs());
     
     final int n = s.length;
     final BitSet sok = new BitSet(n-q+1);
     
     // Read the q-position array.
-    // First try memory-mapped file, if this doesn't work, try DataInputStream
-    DataInputStream qpos = null;
-    IntBuffer mpos = null;
-    FileChannel fpos = new FileInputStream(qposfile).getChannel();
-    try {
-      mpos = fpos.map(MapMode.READ_ONLY, 0, fpos.size()).asIntBuffer();
-    } catch (IOException ex) {
-      fpos.close();
-    }
-    
+    IntBuffer qpos = g.mapRIntArray(qposfile);
     int b=-1; int bold; int i=-1; int r;
-    if (mpos!=null) {   // memory-mapped file
-      g.logmsg("  scanning %s, memory-mapped...%n", qposfile);
-      for(r=0; true; r++) {
-        try { i=mpos.get(); } catch (BufferUnderflowException e) { break; }
-        bold=b; while (r==bck[b+1]) b++;
-        if (bold!=b) qgram = coder.qGram(b,qgram);
-        for(int p=0; p<q; p++) if(qgram[p]!=s[i+p]) { 
-          g.logmsg("r=%d, i=%d, expected: %s, observed: %s.%n", r,i, Strings.join("",qgram,0,q), Strings.join("",s,i,q));
-          fpos.close(); 
-          return(r); 
-        }
-        assert(i>=0 && i<=n-q);
-        sok.set(i);
+    g.logmsg("  scanning %s, memory-mapped...%n", qposfile);
+    for(r=0; true; r++) {
+      try { i=qpos.get(); } catch (BufferUnderflowException e) { break; }
+      bold=b; while (r==bck[b+1]) b++;
+      if (bold!=b) qgram = coder.qGram(b,qgram);
+      for(int p=0; p<q; p++) if(qgram[p]!=s[i+p]) { 
+        g.logmsg("r=%d, i=%d, expected: %s, observed: %s.%n", r,i, Strings.join("",qgram,0,q), Strings.join("",s,i,q));
+        return(r); 
       }
-      fpos.close();
-    } else {            // mapping failed, so open DataInputStream
-      g.logmsg("  scanning %s, one integer at a time...%n", qposfile);
-      qpos = new DataInputStream(new BufferedInputStream(new FileInputStream(qposfile), 512*1024));
-      for(r=0; true; r++) {
-        try { i=qpos.readInt(); } catch (EOFException e) { break; }
-        bold=b; while (r==bck[b+1]) b++;
-        if (bold!=b) qgram = coder.qGram(b,qgram);
-        for(int p=0; p<q; p++) if(qgram[p]!=s[i+p]) { qpos.close(); return(r); }
-        assert(i>=0 && i<=n-q);
-        sok.set(i);
-      }
-      qpos.close();
+      assert(i>=0 && i<=n-q);
+      sok.set(i);
     }
     
     // now check that all untouched text positions in fact contain filtered or invalid q-grams
@@ -606,7 +566,7 @@ public final class QgramIndexer {
     
     // call checking routine
     try {
-      result = checkQGramIndex(in+extseq, q, asize, in+extqbck, in+extqpos, null, false, fff);
+      result = checkQGramIndex(in+extseq, q, asize, in+extqbck, in+extqpos, fff);
     } catch (IOException ex) {
       g.warnmsg("qgramcheck: error on %s: %s%n",in,ex.toString());
     }

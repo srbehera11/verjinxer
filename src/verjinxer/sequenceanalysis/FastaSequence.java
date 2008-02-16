@@ -21,7 +21,7 @@ public class FastaSequence {
   private StringBuilder sequence;
   
   /** Creates a new instance of FastaSequence
-   * @param header the header (title) of this sequence
+   * @param header  the header (title) of this sequence
    */
   public FastaSequence(String header) {
     if (header==null) this.header = "";

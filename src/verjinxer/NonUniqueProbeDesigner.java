@@ -141,9 +141,10 @@ public class NonUniqueProbeDesigner {
     System.gc();
     g.logmsg("nonunique: reading '%s', '%s', '%s'...%n",seqfile,qbckfile,sspfile);
     try {
-      s    = new ArrayFile(seqfile).slurp(new byte[0]);
-      qbck = new ArrayFile(qbckfile).slurp(new int[0]);
-      ssp  = new ArrayFile(sspfile).slurp(new int[0]);
+      final ArrayFile arf = new ArrayFile(null);
+      s    = arf.setFilename(seqfile).read((byte[])null);
+      qbck = arf.setFilename(qbckfile).read((int[])null);
+      ssp  = arf.setFilename(sspfile).read((int[])null);
     } catch (IOException ex) {
       g.warnmsg("nonunique: reading '%s', '%s', '%s' failed. Stop.%n",
           seqfile, qbckfile, sspfile);
@@ -217,7 +218,7 @@ public class NonUniqueProbeDesigner {
         }
         if (p>=n) break;
         int i; // next valid symbol is now at p, count number of valid symbols
-        for (i=p; i<n && amap.isSymbol(s[i]); i++) {};
+        for (i=p; i<n && amap.isSymbol(s[i]); i++) {}
         symremaining = i-p;
         if (symremaining < pl) continue;
       }
@@ -281,7 +282,7 @@ public class NonUniqueProbeDesigner {
       } // end (3) while loop
       
       // (4) done with these p. Go to next iteration and skip a few more...
-      ;
+      {}
     }
     outputRange(firstgood, lastgood);
     out.close();
