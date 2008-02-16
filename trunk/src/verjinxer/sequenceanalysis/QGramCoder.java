@@ -5,11 +5,10 @@
  *
  */
 
-package verjinxer.util;
+package verjinxer.sequenceanalysis;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import verjinxer.sequenceanalysis.*;
 
 /**
  * This class contains routines for coding strings of length q over the alphabet
@@ -42,8 +41,8 @@ public final class QGramCoder
       mod = (int)power; // asize^(q-1)
    }
    
-   private final int q;
-   private final int asize;
+   private final int q;       // q-gram length
+   private final int asize;   // alphabet size; the alphabet is {0,1, ..., asize-1}
    private final int mod;     // equals asize^(q-1):  q-1 q-2 ... 1 0
    
    /** @return the q-value of this coder */
@@ -131,7 +130,7 @@ public final class QGramCoder
     try {
       byte[] qgram = qGram(qcode);
       StringBuilder s = new StringBuilder(q);
-        for (int i=0; i<q; i++) s.append(amap.preimage(qgram[i]));
+      for (int i=0; i<q; i++) s.append(amap.preimage(qgram[i]));
       return s.toString();
     } catch (InvalidSymbolException ex) {
     }
@@ -141,7 +140,7 @@ public final class QGramCoder
   /** create a low-complexity filter for the given instance;
    * this is a BitSet with the property that the c-th bit is 1 iff
    * the q-gram Q corresponding to code c is low-complexity.
-   * Low-complexity means that at most numchar characters occur in Q
+   * Low-complexity means that at most numchar distinct characters occur in Q
    * after removing one occurrence of the least frequent character for
    * delta times (see source code for details).
    * @param numchar  complexity threshold; 
@@ -191,7 +190,7 @@ public final class QGramCoder
    * @return the filter BitSet; low-complexity q-grams have their corresponding 
    *   bit set.
    */
-  public BitSet createFilter(String filterparams) {
+  public BitSet createFilter(final String filterparams) {
     if(filterparams==null) return createFilter(0,0);
     String[] fstring = filterparams.split(":");
     ffc=Integer.parseInt(fstring[0]);

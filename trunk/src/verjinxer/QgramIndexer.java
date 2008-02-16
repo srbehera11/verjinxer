@@ -8,13 +8,12 @@ package verjinxer;
 
 import java.io.*;
 import java.nio.*;
-import java.nio.channels.*;
-import static java.nio.channels.FileChannel.*;
 import static java.lang.Math.*;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Properties;
 import verjinxer.util.*;
+import verjinxer.sequenceanalysis.*;
 import static verjinxer.Globals.*;
 
 /**

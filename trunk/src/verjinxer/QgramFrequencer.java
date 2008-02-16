@@ -196,8 +196,8 @@ public class QgramFrequencer {
   }
   
   
-  /********************/
-  /* Sorting classes: */
+  /***************************************/
+  /* Sorting as sub-classes of this one: */
   
   final class ByFrequency implements Sortable {
     public final int length() {
