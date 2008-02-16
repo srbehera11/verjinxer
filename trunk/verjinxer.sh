@@ -1,2 +1,3 @@
-# startup-script
-java -server -d64 -ea -Xms3G -Xmx3G -jar ~/java-development/VerJInxer/dist/VerJInxer.jar ${*}
+#!/bin/sh
+# 32-bit machines:
+java -ea -Xms1900M -Xmx1900M -jar ${HOME}/dev/verjinxer/dist/VerJInxer.jar ${*}
