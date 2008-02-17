@@ -30,10 +30,10 @@ public class WriteFibonacciString {
   public static void main(String[] args) {
     long fmax = (args.length<1? defaultlength : Long.parseLong(args[0]));
     String fname = (args.length<2? null : args[1]);
-    int n = Math.fibFind(fmax);
+    int n = MathUtils.fibFind(fmax);
     if (fname==null) fname = String.format("fib-%d.fa",n);
-    System.out.printf("Computing FS(%d) of length %d...%n", n, Math.fib(n));
-    String s = Math.fibString(n);
+    System.out.printf("Computing FS(%d) of length %d...%n", n, MathUtils.fib(n));
+    String s = MathUtils.fibString(n);
     FastaFile ff = new FastaFile(fname);
     System.out.printf("Writing file...%n");
     try {

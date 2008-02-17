@@ -12,9 +12,9 @@ import static java.lang.Math.*;
  * utility class with static mathematical routines
  * @author Sven Rahmann
  */
-public final class Math {
+public final class MathUtils {
 
-   private Math() {
+   private MathUtils() {
    }
   
   private final static double[] lngammacoeff =

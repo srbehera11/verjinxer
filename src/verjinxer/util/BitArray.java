@@ -52,7 +52,7 @@ public class BitArray {
     * @param val bit value to set at position i
     */
    public void set(final int i, final int val) {
-      if(i<0 || i>=size) throw new IllegalArgumentException();
+      if(i<0 || i>=size) throw new IndexOutOfBoundsException(String.format("%d outside [0,%d[", i, size));
       final int idx = i/32;
       final int mod = i%32;
       if ((val&1)==1) bits[idx] |=  (1<<mod);
@@ -64,7 +64,7 @@ public class BitArray {
     * @param bval bit value to set at position i (as a boolean)
     */
    public void set(final int i, final boolean bval) {
-      if(i<0 || i>=size) throw new IllegalArgumentException();
+      if(i<0 || i>=size) throw new IndexOutOfBoundsException(String.format("%d outside [0,%d[", i, size));
       final int idx = i/32;
       final int mod = i%32;
       if (bval) bits[idx] |=  (1<<mod);
@@ -77,7 +77,7 @@ public class BitArray {
     * @return   bit value at position i
     */
    public int get(final int i) {
-      if(i<0 || i>=size) throw new IllegalArgumentException();
+      if(i<0 || i>=size) throw new IndexOutOfBoundsException(String.format("%d outside [0,%d[", i, size));
       final int idx = i/32;
       final int mod = i%32;
       return ( (bits[idx] & (1<<mod)) !=0 )? 1 : 0;

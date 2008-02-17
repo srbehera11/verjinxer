@@ -166,6 +166,21 @@ public final class QGramCoder
     }
     return null;
   }
+
+   /**
+    * check wheter a given q-gram equals another given q-gram, 
+    * @param qgram given q-gram
+    * @param i     starting position within qgram
+    * @param s     another given q-gram
+    * @param p     starting position within s
+    * @return true iff qgram[i..i+q-1] equals s[p..p+q-1].
+    */
+  boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
+     for (int j=0; j<q; j++) if (qgram[i+j]!=s[p+j]) return false;
+     return true;
+   }
+
+  
   
   // ========================== q-gram Iterators ===============================
   
@@ -179,7 +194,7 @@ public final class QGramCoder
    *  For each invalid q-gram (non-symbol containing q-gram), a negative value is
    *  produced. Otherwise the q-gram codes range in 0 .. asize^q - 1.
    */
-  public Iterable<Integer> SimpleQGramListOf(final Object t) {
+  public Iterable<Integer> simpleQGramListOf(final Object t) {
     return new Iterable<Integer>() {
       public Iterator<Integer> iterator() {
          return (t instanceof byte[])?
@@ -227,7 +242,7 @@ public final class QGramCoder
 
    
   /**
-   * produce a lightweigt iterable object with all q-grams in 't'.
+   * Produces an object that iterates over all q-grams in 't'.
    * @param t the text in form of a byte array or a ByteBuffer
    *  (other types of objects will raise a runtime exception)
    * @return an iterable object that returns the q-grams in t, 
@@ -240,64 +255,114 @@ public final class QGramCoder
    *  and code in the low integer, such that
    *  pos =  pc &gt;&gt; 32, and code = pc & 0xffff.
    */
-  public Iterable<Long> SparseQGramListOf(final Object t) {
+  public Iterable<Long> sparseQGramListOf(final Object t) {
+     return sparseQGramListOf(t, false, -1);
+  }
+
+  /**
+   * Produces an object that iterates over all q-grams in 't'.
+   * @param t the text in form of a byte array or a ByteBuffer
+   *  (other types of objects will raise a runtime exception)
+   * @param listSeparators  if true, also iterate over positions of separators;
+   *   the corresponding q-gram code will be -1.
+   * @param separator  only used if listSeparators is true;
+   *   in that case, it specifies the code of the separator in t.
+   * @return an iterable object that returns the q-grams in t,
+   *  ordered by increasing position.
+   *  In contrast to <code>SimpleQGramListOf(t)</code>, 
+   *  only the valid q-grams (and possibly the separators) 
+   *  are returned as a pair pc=(pos,code),
+   *  where pos is the starting position of the q-gram in t,
+   *  and code is the q-gram code. 
+   *  The pair is encoded in a <code>long</code> with pos in the high integer
+   *  and code in the low integer, such that
+   *  pos =  pc &gt;&gt; 32, and code = pc & 0xffff.
+   */
+  public Iterable<Long> sparseQGramListOf(final Object t, final boolean listSeparators, final int separator) {
     return new Iterable<Long>() {
-      public Iterator<Long> iterator() {
-         return (t instanceof byte[])?
-            new SparseQGramIterator((byte[])t) : new SparseQGramIterator((ByteBuffer)t);
-      }
+      public Iterator<Long> iterator() { return sparseQGramIterator(t, listSeparators, separator); }
     };
   }
+
+  
+  /** q-gram iterator over a byte source.
+   * @param t the text in form of a byte array or a ByteBuffer
+   *  (other types of objects will raise a runtime exception)
+   * @param listSeparators  if true, also iterate over positions of separators;
+   *   the corresponding q-gram code will be -1.
+   * @param separator  only used if listSeparators is true;
+   *   in that case, it specifies the code of the separator in t.
+   * @return an iterator that iterates over valid q-grams in t,
+   *   and possibly over separators.
+   */
+  public Iterator<Long> sparseQGramIterator(final Object t, final boolean listSeparators, final int separator) {
+     return (t instanceof byte[])?
+        new SparseQGramIterator((byte[])t, listSeparators, separator) 
+        : new SparseQGramIterator((ByteBuffer)t, listSeparators, separator);
+  }
+  
   
    class SparseQGramIterator implements Iterator<Long> {
       private final byte[] t;         // text as array
       private final ByteBuffer b;     // text as buffer
+      private final int end;          // starting position of last q-gram in t or b
+      private final boolean stopsep;  // stop at separators?
+      private final int separator;    // separator
       private int pos;                // current position in array or buffer
-      private final int end;          // length of t or b
       private int nextc = -1;         // next valid code
      
       /** construct iterator from byte array */
-      public SparseQGramIterator(final byte[] t) {
+      public SparseQGramIterator(final byte[] t, final boolean stopAtSeparator, final int separator) {
          this.t = t;
          this.b = null;
-         pos = 0;
+         this.stopsep = stopAtSeparator;
+         this.separator = separator;
+         pos = -1;
          end = t.length-q+1;
       }
       /** construct iterator from byte buffer */
-      public SparseQGramIterator(final ByteBuffer b) {
+      public SparseQGramIterator(final ByteBuffer b, final boolean stopAtSeparator, final int separator) {
         if (b.hasArray() && !b.isReadOnly()) {
            // if possible, use the backing array, it's more efficient
            this.t = b.array();
            this.b = null;
-           pos = b.arrayOffset();
+           this.stopsep = stopAtSeparator;
+           this.separator = separator;
+           pos = b.arrayOffset()-1;
            end = t.length-q+1;
         } else {
            this.t = null;
            this.b = b;
-           pos = 0;
+           this.stopsep = stopAtSeparator;
+           this.separator = separator;
+           pos = -1;
            end = b.capacity()-q+1;
         }
       }
-      public boolean hasNext() { return hasNext0(); }
-      public Long next()       { return next0(); }
-      // this iterator does not remove things, but remove() must be implemented.
-      public void remove()     { throw new UnsupportedOperationException();  }
+      public final boolean hasNext() { return hasNext0(); }
+      public final Long next()       { return next0(); }
+      
+      /** This iterator does not remove things, but remove() must be implemented.
+       *  So we throw an exception.
+       */
+      public final void remove()     { throw new UnsupportedOperationException();  }
       
       public final boolean hasNext0() {
          int c=-1;
          if (b==null) {
-            while (c<0 && pos<end)  c=code(t,pos++);
+            while (c<0 && pos<end-1)  c=code(t,++pos);
          } else {
-            while (c<0 && pos<end)  c=code(b,pos++);
+            while (c<0 && pos<end-1)  c=code(b,++pos);
          }
          if(c>=0) { nextc=c; return true; }
+         if ( stopsep && pos<end && (((b==null)? t[pos] : b.get(pos))==separator) ) { nextc=-1; return true; }
          return false;
       }
       
       public final long next0() {
-         assert(nextc>=0 && nextc<numberOfQGrams);
-         assert(pos-1>=0 && pos-1<end);
-         return ((pos-1)<<32) + nextc; // pos-1, since pos has already been incremented beyond
+         assert((nextc>=0 || stopsep) && nextc<numberOfQGrams);
+         assert(pos>=0 && pos<end);
+         return (pos<<32) + nextc;
       }
   }
 

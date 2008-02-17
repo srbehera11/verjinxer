@@ -7,7 +7,6 @@
 
 package verjinxer;
 
-//import java.io.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
