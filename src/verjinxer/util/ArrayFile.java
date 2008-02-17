@@ -7,27 +7,31 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 import static java.nio.channels.FileChannel.*;
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.FileImageOutputStream;
 import verjinxer.sequenceanalysis.*;
 
 /**
  * This class provides a connection between an array of a primitive type,
  * such as byte[], short[], int[], long[].
  * It provides methods to write/read an array to/from disk efficiently.
+ * 
  * You should create exactly one ArrayFile per thread.
- * To re-use an ArrayFile for a different array or file, just set a new name.
+ * To re-use an ArrayFile for a different array or file, just set a new name
+ * with the <code>setFilename()</code> method.
  *
  * @author Sven Rahmann
  */
 public class ArrayFile {
-
+   
    private String name = null;                   // file name on disk
    private File file = null;                     // Java.io.File for this file
    private FileChannel channel = null;           // channel, null if not open
-   private DataOutputStream dataout = null;
-   private DataInputStream datain = null;
+   private FileImageOutputStream dataout = null;
+   private FileImageInputStream datain = null;
    private static final int DEFAULT_BUFSIZE = 512 * 1024; // default buffer size is 512K
    private final int bufsize;                     // size of internal buffer, must be divisible by 16
-   private ByteBuffer internalBuffer = null;      // internal buffer
+   private final ByteBuffer internalBuffer;      // internal buffer
 
    /**
     * create a new instance of ArrayFile with the given filename and buffer size
@@ -35,12 +39,11 @@ public class ArrayFile {
     * @param bufsize   size of the internal buffer
     */
    public ArrayFile(String filename, int bufsize) {
-      name = filename;
-      file = null;
       if (bufsize%16 !=0) throw new IllegalArgumentException("bufsize must be divisible by 16");
       this.bufsize = bufsize;
-      internalBuffer = ByteBuffer.allocateDirect(bufsize).order(ByteOrder.nativeOrder());
+      internalBuffer = bufsize>0? ByteBuffer.allocateDirect(bufsize).order(ByteOrder.nativeOrder()) : null;
       // Note: native byte order is not portable between different architectures, but crucial for efficiency.
+      setFilename(filename);
    }
 
    /**
@@ -64,15 +67,18 @@ public class ArrayFile {
     * assign a new file name to this ArrayFile.
     * If 'this' is currently open, it is first closed.
     * After assigning the new name, the file is closed.
-    * @param filename
+    * @param filename  the name of the file to associate
     * @return this ArrayFile (for chaining methods)
-    * @throws java.io.IOException 
     */
-   public ArrayFile setFilename(String filename) throws IOException {
-      close();
+   public ArrayFile setFilename(String filename) {
+      try { 
+         close();
+      } catch (IOException ex) {
+         throw new RuntimeException(ex);
+      }
       name = filename;
-      file = null;
-      internalBuffer.clear();
+      if (internalBuffer!=null) internalBuffer.clear();
+      file = (name!=null)? new File(name) : (File)null;
       return this;
    }
 
@@ -80,7 +86,6 @@ public class ArrayFile {
     * @return length of this file in bytes
     */
    public long length() {
-      if (file == null)  file = new File(name);
       return (file.length());
    }
 
@@ -97,7 +102,7 @@ public class ArrayFile {
     * @throws java.io.IOException 
     */
    public ArrayFile close() throws IOException {
-      // close the DataXXXStream before the channel; otherwise it might not be flushed!
+      // close the streams before the channel; otherwise they might not be flushed!
       if (dataout!=null) { dataout.close(); }
       dataout=null;
       if (datain!=null) { datain.close(); }
@@ -111,11 +116,10 @@ public class ArrayFile {
     * @return this ArrayFile (for method chaining)
     * @throws java.io.IOException 
     */
-   public ArrayFile openW() throws IOException {
-      if (channel != null) throw new IOException("ArrayFile already open");
-      FileOutputStream fos = new FileOutputStream(name);
-      channel = fos.getChannel();
-      //dataout = new DataOutputStream(new BufferedOutputStream(fos, BUFSIZE));
+   public ArrayFile openWChannel() throws IOException {
+      if (channel!=null || datain!=null || dataout !=null)
+         throw new IOException("ArrayFile already open");
+      channel = new FileOutputStream(name).getChannel();
       return this;
    }
 
@@ -123,11 +127,10 @@ public class ArrayFile {
     * @return this ArrayFile (for method chaining)
     * @throws java.io.IOException 
     */
-   public ArrayFile openR() throws IOException {
-      if (channel != null) throw new IOException("ArrayFile already open");
-      FileInputStream fis = new FileInputStream(name);
-      channel = fis.getChannel();
-      //datain = new DataInputStream(new BufferedInputStream(fis, BUFSIZE));
+   public ArrayFile openRChannel() throws IOException {
+      if (channel!=null || datain!=null || dataout !=null)
+         throw new IOException("ArrayFile already open");
+      channel = new FileInputStream(name).getChannel();
       return this;
    }
 
@@ -136,9 +139,10 @@ public class ArrayFile {
     * @throws java.io.IOException  if an error occurs
     */
    public ArrayFile openWStream() throws IOException {
-      if (dataout != null || datain != null) throw new IOException("ArrayFile already open");
-      FileOutputStream fos = new FileOutputStream(name);
-      dataout = new DataOutputStream(new BufferedOutputStream(fos, bufsize));
+      if (channel!=null || datain!=null || dataout !=null)
+         throw new IOException("ArrayFile already open");
+      dataout = new FileImageOutputStream(file);
+      dataout.setByteOrder(ByteOrder.nativeOrder());
       return this;
    }
 
@@ -147,25 +151,26 @@ public class ArrayFile {
     * @throws java.io.IOException  if an error occurs
     */
    public ArrayFile openRStream() throws IOException {
-      if (dataout != null || datain != null) throw new IOException("ArrayFile already open");
-      FileInputStream fis = new FileInputStream(name);
-      datain = new DataInputStream(new BufferedInputStream(fis, bufsize));
+      if (channel!=null || datain!=null || dataout !=null)
+         throw new IOException("ArrayFile already open");
+      datain = new FileImageInputStream(file);
+      datain.setByteOrder(ByteOrder.nativeOrder());
       return this;
    }
 
    /**
     * @return  the output stream of this ArrayFile (null if closed)
     */
-   public DataOutputStream out() { return dataout; }
+   public FileImageOutputStream out() { return dataout; }
    
    /**
     * @return  the input stream of this ArrayFile (null if closed)
     */
-   public DataInputStream in()   { return datain;  }
+   public FileImageInputStream in()   { return datain;  }
    
    
    /**
-    * @return the channel associated to this ArrayFile
+    * @return the channel associated to this ArrayFile (null if closed)
     */
    public FileChannel channel() {
       return channel;
@@ -181,7 +186,7 @@ public class ArrayFile {
    public ByteBuffer mapR(final long position, final long size) throws IOException {
       if (channel!=null || datain!=null || dataout !=null)
          throw new IOException("ArrayFile already open");
-      final FileChannel fc = new FileInputStream(name).getChannel();
+      final FileChannel fc = new java.io.FileInputStream(name).getChannel();
       final ByteBuffer buf = fc.map(MapMode.READ_ONLY, position, size).order(ByteOrder.nativeOrder());
       fc.close();
       return buf;
@@ -206,7 +211,7 @@ public class ArrayFile {
    public ByteBuffer mapRW(final long position, final long size) throws IOException {
       if (channel!=null || datain!=null || dataout !=null)
          throw new IOException("ArrayFile already open");
-      final FileChannel fc = new RandomAccessFile(name, "rw").getChannel();
+      final FileChannel fc = new java.io.RandomAccessFile(name, "rw").getChannel();
       final ByteBuffer buf = fc.map(MapMode.READ_WRITE, position, size).order(ByteOrder.nativeOrder());
       fc.close();
       return buf;
@@ -238,17 +243,20 @@ public class ArrayFile {
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public long write(final int[] a, int start, int len) throws IOException {
+   public long writeArray(final int[] a, int start, int len) throws IOException {
+      if (datain!=null || dataout!=null) throw new IllegalStateException("Stream is open");
       final boolean openclose = (channel==null); // file is not open -> write complete file & close
-      if (openclose) openW();
+      if (openclose) openWChannel();
       internalBuffer.clear();
-      final IntBuffer ib = internalBuffer.asIntBuffer(); // use type compatible to a
+      final IntBuffer ib = internalBuffer.asIntBuffer(); // type depends on a
       while(len>0) {
-         final int itemstowrite = (len<bufsize/BYTES_IN_int)? len : bufsize/BYTES_IN_int; // use type compatible to a
+         final int itemstowrite = (len<bufsize/BYTES_IN_int)? len : bufsize/BYTES_IN_int; // type depends on a
          ib.position(0).limit(itemstowrite);
          ib.put(a, start, itemstowrite); // put part of array into the type-compatible view of the internal buffer
-         internalBuffer.position(0).limit(itemstowrite * BYTES_IN_int);
-         channel.write(internalBuffer);  // write the internal buffer
+         final int bytestowrite = itemstowrite * BYTES_IN_int;  // type depends on a
+         internalBuffer.position(0).limit(bytestowrite); 
+         if (channel.write(internalBuffer)!=bytestowrite)       // write the internal buffer
+            throw new RuntimeException("could not write all bytes");  
          start += itemstowrite; len -= itemstowrite;
       }
       final long p = channel.position();
@@ -264,8 +272,8 @@ public class ArrayFile {
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public long write(final int[] a) throws IOException {
-      return write(a,0,a.length);
+   public long writeArray(final int[] a) throws IOException {
+      return writeArray(a,0,a.length);
    }
 
    
@@ -281,9 +289,9 @@ public class ArrayFile {
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public long write(final byte[] a, int start, int len) throws IOException {
+   public long writeArray(final byte[] a, int start, int len) throws IOException {
       final ByteBuffer b = ByteBuffer.wrap(a, start, len);
-      return write(b);
+      return writeBuffer(b);
    }
 
   /**
@@ -294,9 +302,10 @@ public class ArrayFile {
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public long write(final ByteBuffer b) throws IOException {
+   public long writeBuffer(final ByteBuffer b) throws IOException {
+      if (datain!=null || dataout!=null) throw new IllegalStateException("Stream is open");
       final boolean openclose = (channel==null); // file is not open -> write complete file & close
-      if (openclose) openW();
+      if (openclose) openWChannel();
       channel.write(b);
       final long p = channel.position();
       if (openclose) close();
@@ -304,12 +313,11 @@ public class ArrayFile {
    }
 
    // ========================= write via stram ================================
-   // Note: These functions write in network byte order, not natively. Don't mix!
    
    
    /**
     * write a part of a given array to disk via this ArrayFile. 
-    * Note: In contrast to the write() methods, these methods write in Network Byte Order!
+    * Equivalent to <code>writeArray</code>
     * If this ArrayFile is open for stream writing, write at the current file position.
     * Otherwise, replace the whole file by the given (part of) the array.
     * @param a     the int[] to write
@@ -318,10 +326,10 @@ public class ArrayFile {
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public long writeToStream(final int[] a, final int start, final int len) throws IOException {
+   public long writeArrayStream(final int[] a, final int start, final int len) throws IOException {
       final boolean openclose = (dataout==null); // file is not open -> write complete file & close
       if (openclose) openWStream();
-      for (int i = start; i < start + len; i++) dataout.writeInt(a[i]);
+      dataout.writeInts(a, start, len);
       if (openclose) close();
       return length();
    }
@@ -338,7 +346,7 @@ public class ArrayFile {
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public long writeToStream(final byte[] a, final int start, final int len) throws IOException {
+   public long writeArrayStream(final byte[] a, final int start, final int len) throws IOException {
       final boolean openclose = (dataout==null); // file is not open -> write complete file & close
       if (openclose) openWStream();
       dataout.write(a, start, len);
@@ -348,7 +356,6 @@ public class ArrayFile {
 
    
    // ******************************** read methods *******************************
-   // native order
 
    
    /**
@@ -367,9 +374,9 @@ public class ArrayFile {
     * @return      the int[]
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public int[] read(int[] a, int start, int len, final long fpos) throws IOException {
+   public int[] readArray(int[] a, int start, int len, final long fpos) throws IOException {
       final boolean openclose = (channel==null); // file is not open -> open & close file
-      if (openclose) openR();
+      if (openclose) openRChannel();
       if (fpos>=0) channel.position(BYTES_IN_int*fpos);  // factor depends on 'a'
       final IntBuffer ib = internalBuffer.asIntBuffer(); // type depends on 'a'
       if (len<0) len = (int)((channel.size()-channel.position())/BYTES_IN_int); // factor depends on 'a'
@@ -396,8 +403,8 @@ public class ArrayFile {
     * @return      the int[]
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public int[] read(int[] a) throws IOException {
-      return read(a,0,-1,-1);
+   public int[] readArray(int[] a) throws IOException {
+      return readArray(a,0,-1,-1);
    }
    
    //TODO: copy that code for short[] and long[]. For byte[] see below.
@@ -419,9 +426,9 @@ public class ArrayFile {
     * @return      the byte[]
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public byte[] read(byte[] a, int start, int len, final long fpos) throws IOException {
+   public byte[] readArray(byte[] a, int start, int len, final long fpos) throws IOException {
       final boolean openclose = (channel==null); // file is not open -> open & close file
-      if (openclose) openR();
+      if (openclose) openRChannel();
       if (fpos>=0) channel.position(fpos);
       if (len<0) len = (int)((channel.size()-channel.position()));
       if (a==null) a = new byte[start+len];
@@ -441,8 +448,8 @@ public class ArrayFile {
     * @return      the byte[]
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public byte[] read(byte[] a) throws IOException {
-      return read(a,0,-1,-1);
+   public byte[] readArray(byte[] a) throws IOException {
+      return readArray(a,0,-1,-1);
    }
    
    /**
@@ -452,13 +459,14 @@ public class ArrayFile {
     * @return  an array-backed ByteBuffer containing the file contents
     * @throws java.io.IOException
     */
-   public ByteBuffer readIntoNewBuffer() throws IOException {
+   public ByteBuffer readArrayIntoNewBuffer() throws IOException {
       final boolean openclose = (channel==null); // file is not open -> open & close file
-      if (openclose) openR();
+      if (openclose) openRChannel();
       final int len = (int)((channel.size()-channel.position()));
       final ByteBuffer b = ByteBuffer.allocate(len);
       for(int read=0; read<len; read+=channel.read(b)) {}
       if (openclose) close();
+      b.limit(b.capacity()).position(0);
       return b;
    }
 

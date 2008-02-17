@@ -6,7 +6,6 @@
 package verjinxer;
 
 import java.util.Arrays;
-//import java.util.BitSet;
 import java.util.Properties;
 import static java.lang.Math.*;
 import java.io.IOException;
@@ -43,12 +42,12 @@ public final class QgramIndexer {
       g.logmsg("Options:%n");
       g.logmsg("  -q  <q>                 q-gram length [0=reasonable]%n");
       g.logmsg("  -b, --bisulfite         simulate bisulfite treatment%n");
-      g.logmsg("  -f, --allfreq           write all frequency files (--freq, --sfreq)");
-      g.logmsg("  --freq                  write q-gram frequencies (%s)%n", extqfreq);
+      g.logmsg("  -f, --allfreq           write (unfiltered) frequency files (--freq, --sfreq)");
+      g.logmsg("  --freq                  write (unfiltered) q-gram frequencies (%s)%n", extqfreq);
       g.logmsg("  --seqfreq, --sfreq      write in how many sequences each qgram appears (%s)%n", extqseqfreq);
       g.logmsg("  -c, --check             additionally check index integrity%n");
       g.logmsg("  -C, --onlycheck         ONLY check index integrity%n");
-      g.logmsg("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter%n");
+      g.logmsg("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter to %s%n", extqbck);
       g.logmsg("  -X, --notexternal       DON'T save memory at the cost of lower speed%n");
    }
 
@@ -98,7 +97,7 @@ public final class QgramIndexer {
          String dout = g.outdir + indexname;
 
          // Read properties.
-         // If we only check index integrity, do that and continue with next index
+         // If we only check index integrity, do that and continue with next index.
          // Otherwise, extend the properties and go on building the index.
          Properties prj = g.readProject(di + extprj);
          if (checkonly) {
@@ -136,8 +135,8 @@ public final class QgramIndexer {
 
          Object[] result = null;
          try {
-            String freqfile = (freq ? dout + extqfreq : null);
-            String sfreqfile = (sfreq ? dout + extqseqfreq : null);
+            final String freqfile = (freq ? dout + extqfreq : null);
+            final String sfreqfile = (sfreq ? dout + extqseqfreq : null);
             result = generateQGramIndex(di + extseq, qq, asize, separator,
                   dout + extqbck, dout + extqpos, freqfile, sfreqfile, external, thefilter, bisulfite);
          } catch (Exception e) {
@@ -176,24 +175,26 @@ public final class QgramIndexer {
       // not external: read bytes into array-backed buffer
       g.logmsg("  reading sequence file '%s'...%n", seqfile);
       TicToc timer = new TicToc();
-      ByteBuffer in = new ArrayFile(seqfile, 0).readIntoNewBuffer();
+      ByteBuffer in = new ArrayFile(seqfile, 0).readArrayIntoNewBuffer();
       g.logmsg("  ...read %d bytes; this took %.1f sec%n", in.capacity(), timer.tocs());
       return in;
    }
 
    /**
     * Reads the given ByteBuffer and computes q-gram frequencies.
-    * @param in The input ByteBuffer.
-    * @param coder The q-gram coder.
+    * @param in    the input ByteBuffer.
+    * @param coder the q-gram coder.
     * @param qseqfreqfile If this is not null, an array sfrq will be written to this file.
     *           sfrq[i] == n means: q-gram i appears in n different sequences.
-    * @param separator a sequence separator, only used when qseqfreqfile != null.
+    * @param separator  a sequence separator, only used when qseqfreqfile != null.
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
     */
-   private int[] computeFrequencies(ByteBuffer in, MultiQGramCoder coder, String qseqfreqfile, int separator) {
-      final int aq = coder.numberOfQGrams;
+   public int[] computeFrequencies0(
+         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
+      
       final int q = coder.q;
       final int asize = coder.asize;
+      final int aq = coder.numberOfQGrams;
       int[] lastseq = null;              // lastseq[i] == k := q-gram i was last seen in sequence k
       int[] sfrq = null;                 // sfrq[i] == n    := q-gram i appears in n distinct sequences. 
       final int[] frq = new int[aq + 1]; // frq[i]  == n    := q-gram i appears n times; space for sentinel at the end
@@ -269,72 +270,106 @@ public final class QgramIndexer {
                   coder.reset();
                }
          }
+      in.rewind();
       if (doseqfreq) g.dumpIntArray(qseqfreqfile, sfrq);
-      sfrq = null;
-      lastseq = null;  // hand over to garbage collector TODO necessary?
       return frq;
    }
 
    /**
+    * Reads the given ByteBuffer and computes q-gram frequencies.
+    * This implementation uses q-gram iterators.
+    * At this stage, filters are ignored. 
+    * The frequencies are the orignial frequencies in the byte file, before applying a filter.
+    * @param in    the input ByteBuffer.
+    * @param coder the q-gram coder.
+    * @param qseqfreqfile If this is not null, an array sfrq will be written to this file.
+    *           sfrq[i] == n means: q-gram i appears in n different sequences.
+    * @param separator  a sequence separator, only used when qseqfreqfile != null.
+    * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
+    */
+   public int[] computeFrequencies(
+         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
+      
+      final int aq = coder.numberOfQGrams;
+      int[] lastseq = null;              // lastseq[i] == k := q-gram i was last seen in sequence k
+      int[] sfrq = null;                 // sfrq[i] == n    := q-gram i appears in n distinct sequences. 
+      final int[] frq = new int[aq + 1]; // frq[i]  == n    := q-gram i appears n times; space for sentinel at the end
+
+      final boolean doseqfreq = (qseqfreqfile != null); // true if we compute sequence-based q-gram frequencies
+      if (doseqfreq) {
+         lastseq = new int[aq];
+         Arrays.fill(lastseq, -1);
+         sfrq = new int[aq];
+      }
+
+      int seqnum=0;
+      for (long pc : coder.SparseQGramListOf(in, doseqfreq, separator)) {
+         // final int pos   = (int)((pc>>32)&0xffff); // pos not needed here
+         final int qcode = (int)(pc&0xffff);
+         if (qcode<0) { assert(doseqfreq); seqnum++; continue; }
+         frq[qcode]++;
+         if (doseqfreq && lastseq[qcode] < seqnum) {
+            lastseq[qcode] = seqnum;
+            sfrq[qcode]++;
+         }      
+      }
+      in.rewind();
+      if (doseqfreq) g.dumpIntArray(qseqfreqfile, sfrq);
+      return frq;
+   }
+   
+   
+   /**
     * Given q-gram frequencies, computes the necessary sizes of the buckets,
     * while taking a filter into account.
-    * @param frq
-    * @param external
-    * @param thefilter
-    * @param bucketfile
-    * @return An array of size 2 containing {bck, maxbck}
-    * where bck is the array of bucket positions and maxbck is the largest occurring bucket size.
-    * The actual buckets are in bck[0] .. bck[bck.length-2]. The element bck[bck.length-1] is the sum
-    * over all buckets.
+    * @param frq         the array of q-gram frequencies
+    * @param overwrite   if true, overwrite frq with bck; otherwise, create a separate array for bck
+    * @param thefilter   a QGramFilter, specifies which q-grams to ignore
+    * @return An array of size 2 containing {bck, maxbcksize},
+    * where bck is the array of bucket positions and maxbcksize is the largest occurring bucket size.
+    * The actual buckets starts are in bck[0] .. bck[bck.length-2]. 
+    * The element bck[bck.length-1] is the sum over all buckets (number of q-grams in index).
     */
-   private Object[] computeQGramBuckets(int[] frq, final boolean external, final QGramFilter thefilter, final String bucketfile) {
-      int[] bck;
-      if (external) {
-         bck = frq;
-         frq = null; // TODO MM What did this code do when it was within generateQGramIndex()?  
-      } else
-         // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
-         bck = Arrays.copyOf(frq, frq.length);
-      int aq = bck.length - 1;
+   public Object[] computeBuckets(final int[] frq, final boolean overwrite, final QGramFilter thefilter) {
+      final int[] bck = (overwrite)? frq : Arrays.copyOf(frq, frq.length);
+      // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
+      final int aq = bck.length - 1; // subtract sentinel space
 
-      // apply filter
-      for (int c = 0; c < aq; c++)
-         if (thefilter.getBoolean(c))
-            bck[c] = 0; // reduce frequency to zero
+      // apply filter: at the moment, bck contains frequencies (frq), not yet bucket boundaries!
+      for (int c = 0; c < aq; c++) if (thefilter.getBoolean(c)) bck[c] = 0; // reduce frequency to zero
 
       // compute bck from frq
       int sum = 0;
       int add = 0;
-      int maxbck = 0; // maximum bucket size
+      int maxbcksize = 0; // maximum bucket size
       for (int c = 0; c < aq; c++) {
          add = bck[c];
          bck[c] = sum;
          sum += add;
-         if (add > maxbck)
-            maxbck = add;
+         if (add > maxbcksize) maxbcksize = add;
       }
-      bck[aq] = sum;
-      if (bucketfile != null)
-         g.dumpIntArray(bucketfile, bck);
-      Object[] result = {bck, maxbck};
+      bck[aq] = sum;  // last entry (sentinel) shows how many entries in index
+      final Object[] result = {bck, maxbcksize};
       return result;
    }
 
+   
    /** generates a q-gram index of a given file.
-    * @param seqfile  name of the sequence file (i.e., of the translated text)
-    * @param q  q-gram length
-    * @param asize  alphabet size; q-grams with characters outside 0..asize-1
-    *         are not indexed
-    * @param separator  the alphabet code of the sequence separator (only for seqfreq)
-    * @param bucketfile filename of the q-bucket file (can be null)
-    * @param qposfile  filename of the q-gram index (can be null)
-    * @param qfreqfile filename of the q-gram frequency file (can be null)
+    * @param seqfile       name of the sequence file (i.e., of the translated text)
+    * @param q             q-gram length
+    * @param asize         alphabet size; 
+    *                      q-grams with characters outside 0..asize-1 are not indexed.
+    * @param separator     the alphabet code of the sequence separator (only for seqfreq)
+    * @param bucketfile    filename of the q-bucket file (can be null)
+    * @param qposfile      filename of the q-gram index (can be null)
+    * @param qfreqfile     filename of the q-gram frequency file (can be null)
     * @param qseqfreqfile  filename for q-gram sequence frequencies,
-    *    i.e., in how many different sequences does the q-gram appear?
-    * @param external if true, try to save memory and do more on disk
-    * @param thefilter  a QGramFilter, filtered q-grams are not considered for indexing
-    * @param bisulfite whether to create an index that additionally includes bisulfite treated q-grams
-    * @return array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where
+    *                      i.e., in how many different sequences does the q-gram appear?
+    * @param external      if true, keep as few arrays in memory at the same time as possible.
+    *                      In particular, do not return bck, qpos, qfreq.
+    * @param thefilter     a QGramFilter; filtered q-grams are not considered for indexing.
+    * @param bisulfite     whether to create an index that additionally includes bisulfite treated q-grams.
+    * @return  array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where
     *   int[]    bck:   array of q-bucket starts in qpos (null if external);
     *   int[]    qpos:  array of starting positions of q-grams in the text (null if external);
     *   int[]    qfreq: array of q-gram frequencies (null if external);
@@ -344,7 +379,7 @@ public final class QgramIndexer {
     * @throws java.io.IOException 
     * @throws java.lang.IllegalArgumentException if bisulfite is set, but asize is not 4
     */
-   public Object[] generateQGramIndex(
+   public Object[] generateQGramIndex0(
          final String seqfile,
          final int q,
          final int asize,
@@ -355,7 +390,8 @@ public final class QgramIndexer {
          final String qseqfreqfile,
          final boolean external,
          final QGramFilter thefilter,
-         boolean bisulfite) throws IOException {
+         boolean bisulfite) 
+         throws IOException {
       
       final TicToc totalTimer = new TicToc();
       final ByteBuffer in = readSequenceFile(seqfile, external);
@@ -367,6 +403,8 @@ public final class QgramIndexer {
 
       // Scan file once and count qgrams.
       // One file may contain multiple sequences, separated by the separator.
+      // frq[i] == n means: q-gram with code i occurs n times in the input sequence.
+      // This holds before applying a filter.
       final TicToc timer = new TicToc();
       int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
       g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
@@ -375,14 +413,15 @@ public final class QgramIndexer {
       final double timeFreqCounting = timer.tocs();
       g.logmsg("  time for word counting and writing: %.2f sec%n", timeFreqCounting / 1000.0);
 
-      // Compute and write bucket array
-      // bck[i] == n means: positions of q-grams with code i start at index n within qpos
+      // Compute and write bucket array bck
+      // bck[i] == r means: positions of q-grams with code i start at index r within qpos
       timer.tic();
-      Object[] r = computeQGramBuckets(frq, external, thefilter, bucketfile);
-      int[] bck = (int[]) r[0];
-      int maxbck = (Integer) r[1];
-      if (external) frq = null;
-      int sum = bck[aq];
+      final Object[] r = computeBuckets(frq, external, thefilter);
+      final int[] bck = (int[]) r[0];
+      final int maxbck = (Integer) r[1]; // only needed to return to caller
+      if (external) frq = null;          // in this case, frq has been overwritten with bck anyway
+      final int sum = bck[aq];
+      if (bucketfile != null)  g.dumpIntArray(bucketfile, bck);
       final double timeBckGeneration = timer.tocs();
       g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n", ll, sum);
       g.logmsg("  average number of q-grams per sequence position is %.2f%n", ((double) sum) / ll);
@@ -391,33 +430,28 @@ public final class QgramIndexer {
 
       // Determine slice size
       timer.tic();
-      long free = ArrayUtils.largestAllocatable(4 * (sum + 4096) + 4);
-      long memreq = 4 * sum;  // since sizeof(int)==4
+      final long free = ArrayUtils.largestAllocatable(4 * (sum + 4097));
+      final long memreq = 4 * sum;  // since sizeof(int)==4
       if (free < memreq)
          g.logmsg("  free memory: %d, need: %d, processing in slices!%n", free, memreq);
       long slicesize = (free / 4);  // since sizeof(int)==4
       g.logmsg("  largest needed allocatable int[] is int[%d]; found in %.1f sec%n", slicesize, timer.tocs());
       slicesize -= 4096; // save some resources
-      if (slicesize > sum)
-         slicesize = sum;
-      if (slicesize < 1024 * 1024)
-         slicesize = 1024 * 1024;
+      if (slicesize > sum)        slicesize = sum;
+      if (slicesize < 256 * 1024) slicesize = 256 * 1024;
       final int[] qposslice = new int[(int) slicesize];
-      //final ByteBuffer bqposslice = ByteBuffer.allocate(4*(int)slicesize);
-      //final IntBuffer   qposslice = bqposslice.asIntBuffer();
 
-      ArrayFile outfile = new ArrayFile(qposfile).openW();
+      final ArrayFile outfile = new ArrayFile(qposfile).openWChannel();
       int bckstart = 0;
       while (bckstart < aq) {
          TicToc wtimer = new TicToc();
          wtimer.tic();
-         int qposstart = bck[bckstart];
+         final int qposstart = bck[bckstart];
          int bckend;
-         for (bckend = bckstart; bckend < aq && (bck[bckend + 1] - qposstart) <= slicesize; bckend++) {
-         }
-         int qposend = bck[bckend];
-         int qpossize = qposend - qposstart;
-         double percentdone = (sum == 0) ? 100.0 : 100.0 * (double) qposend / ((double) sum + 0);
+         for (bckend = bckstart; bckend < aq && (bck[bckend + 1] - qposstart) <= slicesize; bckend++) { }
+         final int qposend = bck[bckend];
+         final int qpossize = qposend - qposstart;
+         final double percentdone = (sum == 0) ? 100.0 : 100.0 * (double) qposend / ((double) sum + 0);
          g.logmsg("  collecting qcodes [%d..%d] = qpos[%d..%d] --> %.1f%%%n",
                bckstart, bckend - 1, qposstart, qposend - 1, percentdone);
          assert ((qpossize <= slicesize && qpossize > 0) || sum == 0) : "qgram: internal consistency error";
@@ -482,7 +516,7 @@ public final class QgramIndexer {
          wtimer.tic();
          g.logmsg("    writing slice to %s%n", qposfile);
          //outfile.putslice(bqposslice, 4*qposstart, 4*qpossize);
-         outfile.write(qposslice, 0, qpossize);
+         outfile.writeArray(qposslice, 0, qpossize);
          g.logmsg("    writing slice took %.2f sec%n", wtimer.tocs());
          bckstart = bckend;
       }
@@ -492,13 +526,146 @@ public final class QgramIndexer {
       final double timeQpos = timer.tocMilliSeconds();
       final double timeTotal = totalTimer.tocMilliSeconds();
       final int[] qpos = (slicesize == sum && !external)? qposslice : null;
-      if (external) { bck = null; frq = null; }
 
       double times[] = {timeTotal, timeFreqCounting, timeBckGeneration, timeQpos};
-      Object[] ret = {bck, qpos, frq, times, maxfreq, maxbck};
+      Object[] ret = { (external? null : bck), qpos, frq, times, maxfreq, maxbck};
       return ret;
    }
 
+   
+   /** generates a q-gram index of a given file.
+    * @param seqfile       name of the sequence file (i.e., of the translated text)
+    * @param q             q-gram length
+    * @param asize         alphabet size; 
+    *                      q-grams with characters outside 0..asize-1 are not indexed.
+    * @param separator     the alphabet code of the sequence separator (only for seqfreq)
+    * @param bucketfile    filename of the q-bucket file (can be null)
+    * @param qposfile      filename of the q-gram index (can be null)
+    * @param qfreqfile     filename of the q-gram frequency file (can be null)
+    * @param qseqfreqfile  filename for q-gram sequence frequencies,
+    *                      i.e., in how many different sequences does the q-gram appear?
+    * @param external      if true, keep as few arrays in memory at the same time as possible.
+    *                      In particular, do not return bck, qpos, qfreq.
+    * @param thefilter     a QGramFilter; filtered q-grams are not considered for indexing.
+    * @param bisulfite     whether to create an index that additionally includes bisulfite treated q-grams.
+    * @return  array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where
+    *   int[]    bck:   array of q-bucket starts in qpos (null if external);
+    *   int[]    qpos:  array of starting positions of q-grams in the text (null if external);
+    *   int[]    qfreq: array of q-gram frequencies (null if external);
+    *   double[] times: contains the times taken to compute the q-gram index in seconds;
+    *   Integer  maxfreq:  largest frequency;
+    *   Integer  maxqbck:  largest q-bucket size.
+    * @throws java.io.IOException 
+    * @throws java.lang.IllegalArgumentException if bisulfite is set, but asize is not 4
+    */
+   public Object[] generateQGramIndex(
+         final String seqfile,
+         final int q,
+         final int asize,
+         final int separator,
+         final String bucketfile,
+         final String qposfile,
+         final String qfreqfile,
+         final String qseqfreqfile,
+         final boolean external,
+         final QGramFilter thefilter,
+         boolean bisulfite) 
+         throws IOException {
+      
+      final TicToc totalTimer = new TicToc();
+      final ByteBuffer in = readSequenceFile(seqfile, external);
+      final long ll = in.limit();
+
+      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
+      final int aq = coder.numberOfQGrams;
+      g.logmsg("  counting %d different %d-grams...%n", aq, q);
+
+      // Scan file once and count qgrams.
+      // One file may contain multiple sequences, separated by the separator.
+      // frq[i] == n means: q-gram with code i occurs n times in the input sequence.
+      // This holds before applying a filter.
+      final TicToc timer = new TicToc();
+      int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
+      g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
+      int maxfreq = ArrayUtils.maximumElement(frq);
+      if (qfreqfile != null)  g.dumpIntArray(qfreqfile, frq, 0, aq);
+      final double timeFreqCounting = timer.tocs();
+      g.logmsg("  time for word counting and writing: %.2f sec%n", timeFreqCounting / 1000.0);
+
+      // Compute and write bucket array bck
+      // bck[i] == r means: positions of q-grams with code i start at index r within qpos
+      timer.tic();
+      final Object[] r = computeBuckets(frq, external, thefilter);
+      final int[] bck = (int[]) r[0];
+      final int maxbck = (Integer) r[1]; // only needed to return to caller
+      if (external) frq = null;          // in this case, frq has been overwritten with bck anyway
+      final int sum = bck[aq];
+      if (bucketfile != null)  g.dumpIntArray(bucketfile, bck);
+      final double timeBckGeneration = timer.tocs();
+      g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n", ll, sum);
+      g.logmsg("  average number of q-grams per sequence position is %.2f%n", ((double) sum) / ll);
+
+      //if (sum==0) { Object[] ret = {bck, null, frq, times, maxfreq, maxqbck}; return ret; }
+
+      // Determine slice size
+      timer.tic();
+      final long free = ArrayUtils.largestAllocatable(4 * (sum + 4097));
+      final long memreq = 4 * sum;  // since sizeof(int)==4
+      if (free < memreq)
+         g.logmsg("  free memory: %d, need: %d, processing in slices!%n", free, memreq);
+      long slicesize = (free / 4);  // since sizeof(int)==4
+      g.logmsg("  largest needed allocatable int[] is int[%d]; found in %.1f sec%n", slicesize, timer.tocs());
+      slicesize -= 4096; // save some resources
+      if (slicesize > sum)        slicesize = sum;
+      if (slicesize < 256 * 1024) slicesize = 256 * 1024;
+      final int[] qposslice = new int[(int) slicesize];
+
+      // open outfile and process each slice
+      final ArrayFile outfile = new ArrayFile(qposfile).openWChannel();
+      int bckstart = 0;
+      while (bckstart < aq) {
+         TicToc wtimer = new TicToc();
+         wtimer.tic();
+         final int qposstart = bck[bckstart]; //
+         int bckend;
+         for (bckend = bckstart; bckend < aq && (bck[bckend + 1] - qposstart) <= slicesize; bckend++) { }
+         final int qposend = bck[bckend];
+         final int qpossize = qposend - qposstart;
+         final double percentdone = (sum == 0) ? 100.0 : 100.0 * (double) qposend / ((double) sum + 0);
+         g.logmsg("  collecting qcodes [%d..%d] = qpos[%d..%d] --> %.1f%%%n",
+               bckstart, bckend - 1, qposstart, qposend - 1, percentdone);
+         assert ((qpossize <= slicesize && qpossize > 0) || sum == 0) : "qgram: internal consistency error";
+
+         // read through input and collect all qgrams with  bckstart<=qcode<bckend
+         for (long pc : coder.SparseQGramListOf(in, false, -1)) {
+            final int pos   = (int)((pc>>32)&0xffff);
+            final int qcode = (int)(pc&0xffff);
+            if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode)==0)
+               qposslice[(bck[qcode]++) - qposstart] = pos;
+         }
+         g.logmsg("    collecting slice took %.2f sec%n", wtimer.tocs());
+
+         // write slice to file
+         g.logmsg("    writing slice to %s%n", qposfile);
+         wtimer.tic();
+         outfile.writeArray(qposslice, 0, qpossize);
+         g.logmsg("    writing slice took %.2f sec%n", wtimer.tocs());
+         bckstart = bckend;
+      }
+
+      // clean up, return arrays only if not external and they fit in memory
+      outfile.close();
+      final double timeQpos = timer.tocMilliSeconds();
+      final double timeTotal = totalTimer.tocMilliSeconds();
+      final int[] qpos = (slicesize == sum && !external)? qposslice : null;
+
+      double times[] = {timeTotal, timeFreqCounting, timeBckGeneration, timeQpos};
+      Object[] ret = { (external? null : bck), qpos, frq, times, maxfreq, maxbck};
+      return ret;
+   }
+
+   
+   
    /** checks the q-gram index of the given file for correctness.
     * @param seqfile name of the sequence file
     * @param q q-gram length
@@ -524,8 +691,8 @@ public final class QgramIndexer {
       TicToc timer = new TicToc();
       g.logmsg("  reading %s and %s%n", seqfile, bucketfile);
       final ArrayFile arf = new ArrayFile(null);
-      byte[] s = arf.setFilename(seqfile).read((byte[]) null);
-      int[] bck = arf.setFilename(bucketfile).read((int[]) null);
+      byte[] s = arf.setFilename(seqfile).readArray((byte[]) null);
+      int[] bck = arf.setFilename(bucketfile).readArray((int[]) null);
       g.logmsg("  reading finished after %.2f sec%n", timer.tocs());
 
       final int n = s.length;

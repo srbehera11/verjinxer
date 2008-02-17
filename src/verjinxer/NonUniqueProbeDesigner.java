@@ -142,9 +142,9 @@ public class NonUniqueProbeDesigner {
     g.logmsg("nonunique: reading '%s', '%s', '%s'...%n",seqfile,qbckfile,sspfile);
     try {
       final ArrayFile arf = new ArrayFile(null);
-      s    = arf.setFilename(seqfile).read((byte[])null);
-      qbck = arf.setFilename(qbckfile).read((int[])null);
-      ssp  = arf.setFilename(sspfile).read((int[])null);
+      s    = arf.setFilename(seqfile).readArray((byte[])null);
+      qbck = arf.setFilename(qbckfile).readArray((int[])null);
+      ssp  = arf.setFilename(sspfile).readArray((int[])null);
     } catch (IOException ex) {
       g.warnmsg("nonunique: reading '%s', '%s', '%s' failed. Stop.%n",
           seqfile, qbckfile, sspfile);

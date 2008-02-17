@@ -99,12 +99,13 @@ public class ArrayUtils {
    *@param start  where to start reverse-complementing the array,
    *@param stop where to stop reverse-complementing the array,
    *  in fact a[start..stop-1] is reverse-complemented.
-   * If stop<0 or stop>a.length, then the whole array is reverse-complemented.
+   * If stop&lt;0 or stop&gt;a.length, then the we stop at the end of 'a'.
    *@param compl  in the reversed array, each element x is replaced by compl-x
-   *@param b  if not null, copy the reverse complement of a to b[0..stop-start-1]. Otherwise, reverse-complement in place.
+   *@param b  if not null, copy the reverse complement of a to b[0..stop-start-1]. 
+   *          Otherwise, reverse-complement in place.
    *@return the array a or b containing the reverse complement
    */
-  public static byte[] revcompArray(final byte[] a, int start, int stop, final byte compl, byte[] b) {
+  public static byte[] revcompArray(final byte[] a, final int start, int stop, final byte compl, final byte[] b) {
     if(stop<0 || stop>a.length) stop=a.length;
     byte tmp;
     final int len=stop-start;
@@ -129,14 +130,14 @@ public class ArrayUtils {
     }
   }
   
-  /**
+  /** compute the maximum nonnegative element of an integer array.
    * @param array  the array
-   * @return the maximum element of the given array */
+   * @return the maximum element of the given array.
+   *   If the array is empty or contains only negative elements, 0 is returned.
+   */
   public static int maximumElement(int[] array) {
     int maximum = 0;
-    for (int i=0; i<array.length; i++)
-      if (array[i] > maximum)
-        maximum = array[i];
+    for (int a: array) if (a>maximum) maximum=a;
     return maximum;
   }
 

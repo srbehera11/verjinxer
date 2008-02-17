@@ -149,9 +149,9 @@ public class Translater {
     
     // open the output file stream
     g.logmsg("translate: creating index '%s'...%n", outname);
-    out = new AnnotatedArrayFile(outname + extseq);
+    out = new AnnotatedArrayFile(outname + extseq); // use default buffer size
     try {
-      out.openW();
+      out.openWChannel(); 
     } catch (IOException ex) {
       g.warnmsg("translate: could not create output file '%s'; %s",outname+extseq,ex.toString());
     }
@@ -264,11 +264,11 @@ public class Translater {
         fseq = f.read(); // reads one fasta sequence from file f
         if (fseq==null) break;
         tr = fseq.translateTo(tr, trim, amap, reverse, appendforward);
-        lastbyte = out.write(tr);
+        lastbyte = out.writeBuffer(tr);
         if (addrc) {
           if (!separateRCByWildcard)  out.addInfo(fseq.getHeader(), fseq.length(), (int)(lastbyte-1));
           tr = fseq.translateTo(tr, trim, amap2, true, appendreverse);
-          lastbyte = out.write(tr);
+          lastbyte = out.writeBuffer(tr);
           if (separateRCByWildcard) out.addInfo(fseq.getHeader(), 2*fseq.length()+1, (int)(lastbyte-1));
           else out.addInfo(fseq.getHeader()+" "+dnarcstring, fseq.length(), (int)(lastbyte-1));
         } else { // no reverse complement
@@ -293,14 +293,14 @@ public class Translater {
         fseq = f.read(); // reads one fasta sequence from file f
         if (fseq==null) break;
         tr = fseq.translateDNABiTo(tr, trim, false, false, 1);  // nonmeth-bis-#
-        lastbyte = out.write(tr);
+        lastbyte = out.writeBuffer(tr);
         tr = fseq.translateDNABiTo(tr, trim, false, true,  2);  // nonmeth-cbis-$
-        lastbyte = out.write(tr);
+        lastbyte = out.writeBuffer(tr);
         out.addInfo(fseq.getHeader()+" /nonmeth-bis+cbis", 2*fseq.length()+1, (int)(lastbyte-1));
         tr = fseq.translateDNABiTo(tr, trim, true,  false, 1);  // meth-bis-#
-        lastbyte = out.write(tr);
+        lastbyte = out.writeBuffer(tr);
         tr = fseq.translateDNABiTo(tr, trim, true,  true,  2);  // meth-cbis-$
-        lastbyte = out.write(tr);
+        lastbyte = out.writeBuffer(tr);
         out.addInfo(fseq.getHeader()+" /meth-bis+cbis", 2*fseq.length()+1, (int)(lastbyte-1));
       } catch (Exception e) {
         g.warnmsg("translate: %s%n",e.toString()); break; }
@@ -338,7 +338,7 @@ public class Translater {
           throw new IOException(ex);
         }
       }
-      lastbyte = out.write(tr);
+      lastbyte = out.writeBuffer(tr);
       out.addInfo(fname, len, (int)(lastbyte-1));
     } catch(IOException ex) {
       g.warnmsg("translate: error translating '%s': %s%n",fname,ex.toString());
@@ -350,22 +350,25 @@ public class Translater {
   
   
   /******************************* runs ***********************************/
-  
-  // TODO, BROKEN, FIXME: the run output uses streams, they have the wrong Byte order!
-  
-  /** reads translated sequence and writes run-related files,
-   * primarily using memory-mapped files
-   * @param fname TODO
-   * @return TODO
+    
+  /** reads translated sequence (using memory-mapping) 
+   * and writes run-related files
+   * .runseq: the character sequence of runs (same as original sequence, but each run condensed to a single character);
+   * .runlen: the length of each run (as a byte); for run lengths &gt; 127, we store -1;
+   * .pos2run: pos2run[p]=r means that we are in run r at position p;
+   * .run2pos: run2pos[r]=p means that run r starts at position p.
+   * The run-related files are written using streams in the native byte order.
+   * @param fname  filename (without extension) of the sequence file
+   * @return number of runs in the sequence file
    * @throws java.io.IOException 
    */
   public long computeRuns(String fname) throws IOException {
     int run = -1;
-    ByteBuffer seq = new ArrayFile(fname+extseq).mapR();
-    ArrayFile rseq = new ArrayFile(fname+extrunseq).openWStream();
-    ArrayFile rlen = new ArrayFile(fname+extrunlen).openWStream();
-    ArrayFile  p2r = new ArrayFile(fname+extpos2run).openWStream();
-    ArrayFile  r2p = new ArrayFile(fname+extrun2pos).openWStream();
+    ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
+    ArrayFile rseq = new ArrayFile(fname+extrunseq,0).openWStream();
+    ArrayFile rlen = new ArrayFile(fname+extrunlen,0).openWStream();
+    ArrayFile  p2r = new ArrayFile(fname+extpos2run,0).openWStream();
+    ArrayFile  r2p = new ArrayFile(fname+extrun2pos,0).openWStream();
     final int n = seq.limit();
     byte next;
     byte prev=-1;
@@ -376,7 +379,9 @@ public class Translater {
       if (next!=prev || p==0) {
         run++;
         prev=next;
-        len=p-start;  assert(len>0 || p==0);  if(len>127) len=-1;
+        len=p-start;  
+        assert(len>0 || p==0);  
+        if(len>127) len=-1;
         if (p!=0) rlen.out().write(len);
         start=p;
         rseq.out().writeByte(next);
@@ -385,7 +390,9 @@ public class Translater {
       p2r.out().writeInt(run);
     }
     run++;                 // number of runs
-    len=n-start;  assert(len>0);  if(len>127) len=-1;
+    len=n-start;  
+    assert(len>0);  
+    if(len>127) len=-1;
     rlen.out().write(len);
     r2p.out().writeInt(n); // write sentinel
     rseq.close(); rlen.close(); p2r.close(); r2p.close();

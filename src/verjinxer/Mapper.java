@@ -208,10 +208,8 @@ public class Mapper {
     inum = indices.size();
     for (int i=0; i<inum; i++) {
       String fin = indices.get(i) + mext;
-      ArrayFile fi = new ArrayFile(fin);
       try {
-        fi.openR();
-        fi.close();
+        final ArrayFile fi = new ArrayFile(fin,0).openRChannel().close();
         long filen = fi.length();
         if (filen%4 ==0) {
           if (filen/4 > longestpos) longestpos = filen/4;
@@ -221,10 +219,8 @@ public class Mapper {
         g.terminate(1);
       }
       fin = indices.get(i) + extseq;
-      fi = new ArrayFile(fin);
       try {
-        fi.openR();
-        fi.close();
+        final ArrayFile fi = new ArrayFile(fin,0).openRChannel().close();
         long filen = fi.length();
         totalindexlen += filen;
         if (filen > longestindexlen) longestindexlen = filen;
