@@ -1,5 +1,6 @@
 package verjinxer.sequenceanalysis;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -7,7 +8,7 @@ public class MultiQGramCoder {
   private QGramCoder coder;
   private BisulfiteQGramCoder bicoder;
   private boolean bisulfite;
-  private int qcode = 0;
+  private int qcode = -1;
   
   public final int asize;
   public final int q;
@@ -15,18 +16,21 @@ public class MultiQGramCoder {
   
   public MultiQGramCoder(final int q, final int asize, final boolean bisulfite) {
     if (bisulfite) {
-      if (asize != 4)
-        throw new IllegalArgumentException("If bisulfite is true, asize must be 4.");
+      if (asize != 4) throw new IllegalArgumentException("If bisulfite is true, asize must be 4.");
       bicoder = new BisulfiteQGramCoder(q);
       coder = bicoder.getCoder();
     } else {
       coder = new QGramCoder(q, asize);
     }
-    this.bisulfite = bisulfite;
-    this.asize = asize;
-    this.q     = q;
+    this.bisulfite      = bisulfite;
+    this.asize          = asize;
+    this.q              = q; 
     this.numberOfQGrams = coder.numberOfQGrams;
   }
+
+   public long[] SparseQGramListOf(ByteBuffer in, boolean listSeparators, int separator) {
+      throw new UnsupportedOperationException("Not yet implemented");
+   }
     
   
   public void update(byte next, byte after) {
@@ -55,7 +59,7 @@ public class MultiQGramCoder {
     if (bisulfite)
       return bicoder.getCodes();
     else {
-      Collection<Integer> r = new ArrayList<Integer>();
+      Collection<Integer> r = new ArrayList<Integer>(1);
       r.add(qcode);
       return r;
     }

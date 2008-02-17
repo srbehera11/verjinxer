@@ -4,7 +4,6 @@
  * Created on May 2, 2007, 6:23 PM
  * TODO: include lcp in checking!
  * TODO: include manber myers method!
- * TODO: the suffix array is written using streams, not channels! This causes a byte-order problem!
  * TODO: space-efficient lcp not yet implemented
  */
 
@@ -742,12 +741,13 @@ public class SuffixTrayBuilder {
    *@return  0 on success, 1 on sorting error, 2 on count error
    */
   public int checkpos(String di) {
-    ArrayFile fpos = new ArrayFile(di+extpos);
-    IntBuffer pos = null;
     int returnvalue = 0;
     TicToc ctimer = new TicToc();
     g.logmsg("suffixcheck: checking pos...%n");
+    ArrayFile fpos = null; 
+    IntBuffer pos = null;
     try {
+      fpos = new ArrayFile(di+extpos,0);
       pos = fpos.mapR().asIntBuffer();
     } catch (IOException ex) {
       g.terminate("suffixcheck: could not read .pos file; " + ex.toString());
@@ -788,7 +788,7 @@ public class SuffixTrayBuilder {
     int chi, p;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      ArrayFile f = new ArrayFile(fname).openWStream();
+      final ArrayFile f = new ArrayFile(fname,0).openWStream();
       for (p=lexfirstpos[chi]; p!=-1; p=lexnextpos[p])
         f.out().writeInt(p);
       f.close();
@@ -806,7 +806,7 @@ public class SuffixTrayBuilder {
     final int[] lexps = dll.lexps;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      ArrayFile f = new ArrayFile(fname).openWStream();
+      final ArrayFile f = new ArrayFile(fname,0).openWStream();
       for (oldp=-1, p=lexfirstpos[chi];  p!=-1;  ) {
         f.out().writeInt(p);
         tmp = p;
@@ -865,9 +865,9 @@ public class SuffixTrayBuilder {
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     ArrayFile f4=null, f2=null, f1=null, f2x=null, f1x=null;
     try {
-      if ((dolcp&4)!=0) f4 = new ArrayFile(fname).openWStream();
-      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2").openWStream(); f2x = new ArrayFile(fname+"2x").openWStream(); }
-      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1").openWStream(); f1x = new ArrayFile(fname+"1x").openWStream(); }
+      if ((dolcp&4)!=0) f4 = new ArrayFile(fname,0).openWStream();
+      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2",0).openWStream(); f2x = new ArrayFile(fname+"2x",0).openWStream(); }
+      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1",0).openWStream(); f1x = new ArrayFile(fname+"1x",0).openWStream(); }
       for (r=0, p=lexfirstpos[chi];   p!=-1;   p=lexnextpos[p], r++) {
         h = lexprevpos[p];
         assert(h>=0);

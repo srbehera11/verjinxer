@@ -53,7 +53,7 @@ public class Globals {
   boolean      quiet   = false;       // suppress diagnostics to stdout?
   
   public Globals() {
-     arf = new ArrayFile();           // array file to be used
+     arf = new ArrayFile();        // array file to be used
   }
   
   
@@ -164,7 +164,7 @@ public class Globals {
     byte[] a = null;
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
-      a = arf.setFilename(file).read(a);
+      a = arf.setFilename(file).readArray(a);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -186,7 +186,7 @@ public class Globals {
   byte[] slurpByteArray(String file, long startindex, long stopindex, byte[] a) {
     //logmsg("%s: reading '%s' [%d..%d] into memory...%n", cmdname, file, startindex, stopindex);
     try {
-      a = arf.setFilename(file).read(a, 0, (int)(stopindex-startindex),  startindex);
+      a = arf.setFilename(file).readArray(a, 0, (int)(stopindex-startindex),  startindex);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -205,7 +205,7 @@ public class Globals {
     int[] a = null;
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
-      a = arf.setFilename(file).read(a);
+      a = arf.setFilename(file).readArray(a);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -223,7 +223,7 @@ public class Globals {
   int[] slurpIntArray(String file, int[] a) {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
-      a = arf.setFilename(file).read(a);
+      a = arf.setFilename(file).readArray(a);
     } catch (Exception ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
@@ -307,7 +307,7 @@ public class Globals {
   void dumpIntArray(final String file, final int[] a, final int start, final int len) {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
-      arf.setFilename(file).write(a,start,len);
+      arf.setFilename(file).writeArray(a,start,len);
     } catch (Exception ex) {
       warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
       terminate(1);
@@ -333,7 +333,7 @@ public class Globals {
   void dumpByteArray(final String file, final byte[] a, final int start, final int len) {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
-      arf.setFilename(file).write(a,start,len);
+      arf.setFilename(file).writeArray(a,start,len);
     } catch (Exception ex) {
       warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
       terminate(1);

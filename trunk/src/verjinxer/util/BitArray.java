@@ -96,11 +96,11 @@ public class BitArray {
     * @throws java.io.IOException if any IO error occurs
     */
    public void writeTo(final ArrayFile f) throws IOException {
-      f.write(bits);
+      f.writeArray(bits);
    }
    
    public static BitArray readFrom(final ArrayFile f) throws IOException {
-      final int[] b = f.read((int[])null);
+      final int[] b = f.readArray((int[])null);
       return new BitArray(b);
    }
 
