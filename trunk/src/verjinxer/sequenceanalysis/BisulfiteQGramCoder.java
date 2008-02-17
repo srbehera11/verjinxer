@@ -2,6 +2,7 @@ package verjinxer.sequenceanalysis;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -11,16 +12,21 @@ import java.util.HashSet;
  * @author Marcel Martin
  */
 public final class BisulfiteQGramCoder {
+   
+   public final QGramCoder coder; // underlying q-gram coder
+   private HashSet<Integer> qcodes_bisulfite;    // qcodes for bisulfite treated strand
+   private HashSet<Integer> qcodes_bisulfite_rc; // qcodes for rc of bisulfite treated rc (rc: reverse complement)
+   private final ArrayList<byte[]> compatibleQGrams; // qgrams bis.-compatible to a given q-gram
 
    /**
     * Creates a new BisulfiteQGramCoder. The alphabet size is fixed to 4 (A, C, G, T).
     * @param q length of the q-grams coded by this instance
-    * @throws java.lang.IllegalArgumentException 
     */
-   public BisulfiteQGramCoder(int q) throws IllegalArgumentException {
+   public BisulfiteQGramCoder(int q) {
       coder = new QGramCoder(q, ASIZE);
-      qcodes_bisulfite = new HashSet<Integer>();
-      qcodes_bisulfite_rc = new HashSet<Integer>();
+      qcodes_bisulfite = new HashSet<Integer>(1<<q);
+      qcodes_bisulfite_rc = new HashSet<Integer>(1<<q);
+      compatibleQGrams = new ArrayList<byte[]>(1<<(q+1));
       reset();
    }
    
@@ -29,14 +35,49 @@ public final class BisulfiteQGramCoder {
    public static final byte NUCLEOTIDE_C = 1;
    public static final byte NUCLEOTIDE_G = 2;
    public static final byte NUCLEOTIDE_T = 3;
+   private static final int ASIZE = 4; // alphabet size
    
-   private static final int ASIZE = 4;           // alphabet size
-   private QGramCoder coder;
+
+   
+   /**
+    * check wheter a given q-gram matches another given q-gram, 
+    * under bisulfite replacement rules.
+    * @param qgram given q-gram
+    * @param i     starting position within qgram
+    * @param s     another given q-gram
+    * @param p     starting position within s
+    * @return true iff qgram[i..i+q-1] can be derived from s[p..p+q-1] under bisulfite rules.
+    */   
+   public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
+      for (byte[] biqgram: compatibleQGrams(s,p)) 
+        if (coder.areCompatible(qgram, i, biqgram, 0)) return true;
+      return false; 
+   }
+   
+   /**
+    * 
+    * @param s
+    * @param p
+    * @return
+    */
+   public ArrayList<byte[]> compatibleQGrams(final byte[] s, final int p) {
+      throw new UnsupportedOperationException("Not yet implemented");
+   }
+   
+   /**
+    * 
+    * @param qcode 
+    * @return
+    */
+   public ArrayList<Integer> compatibleQCodes(final int qcode) {
+      throw new UnsupportedOperationException("Not yet implemented");
+   }
+
+   // =============================================================================================
+   
    private int qcode;                            // qcode for regular strand
    private byte previous_nucleotide = -1;
-   private HashSet<Integer> qcodes_bisulfite;	 // qcodes for bisulfite treated strand
-   private HashSet<Integer> qcodes_bisulfite_rc; // qcodes for rc of bisulfite treated rc (rc: reverse complement)
-
+   
    private HashSet<Integer> updateCodes(Collection<Integer> qcodes, byte next) {
       HashSet<Integer> a = new HashSet<Integer>();
       for (int code : qcodes)
@@ -73,6 +114,8 @@ public final class BisulfiteQGramCoder {
     */
 //  private long sizesum = 0;
 //  private int count = 0;
+   
+   
    /** Updates q-gram codes.
     * @param next the next byte in the input.
     * @param after the byte following next in the input.
@@ -132,9 +175,9 @@ public final class BisulfiteQGramCoder {
    }*/
    }
 
-   public QGramCoder getCoder() {
-      return coder;
-   }
+   //public QGramCoder getCoder() {
+   //   return coder;
+   //}
 
    public void reset() {
       qcode = 0;

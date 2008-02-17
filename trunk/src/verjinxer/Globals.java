@@ -1,8 +1,6 @@
 /*
  * Globals.java
- *
  * Created on April 12, 2007, 9:17 AM
- *
  */
 
 package verjinxer;
@@ -38,8 +36,8 @@ public class Globals {
   public final static String extrunlen   = ".runlen";
   public final static String extrun2pos  = ".run2pos";
   public final static String extpos2run  = ".pos2run";
-  public final static String extpos      = ".pos";      // suffix array
-  public final static String extlcp      = ".lcp";      // lcp values
+  public final static String extpos      = ".pos";        // suffix array
+  public final static String extlcp      = ".lcp";        // lcp values
    
   private PrintStream  logger  = null;
   private PrintStream  loggerP = null;
