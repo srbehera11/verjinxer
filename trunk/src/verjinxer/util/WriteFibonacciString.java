@@ -19,7 +19,7 @@ public class WriteFibonacciString {
    private WriteFibonacciString() {
    }
   
-  public static final long defaultlength = 14000000L;
+  public static final long defaultlength = 30000000L;
   
   /** call this class with arguments (n, fname),
    * where n is the length of the Fibonacci string,

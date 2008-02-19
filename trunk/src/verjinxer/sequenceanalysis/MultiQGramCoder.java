@@ -53,14 +53,11 @@ public class MultiQGramCoder {
 
    /**
     * Produces an object that iterates over all q-grams in 't',
-    * taking into account standard and bisulfite q-grams.
-    * 
+    * taking into account standard and bisulfite q-grams,
+    * as well as sequence separators.
     * @param t the text in form of a byte array or a ByteBuffer
     *  (other types of objects will raise a runtime exception)
-    * @param listSeparators  if true, also iterate over positions of separators;
-    *   the corresponding q-gram code will be -1.
-    * @param separator  only used if listSeparators is true;
-    *   in that case, it specifies the code of the separator in t.
+    * @param separator  the separator code
     * @return an iterable object that returns the q-grams in t,
     *  ordered by increasing position.
     *  In contrast to <code>SimpleQGramListOf(t)</code>, 
@@ -72,26 +69,58 @@ public class MultiQGramCoder {
     *  and code in the low integer, such that
     *  pos =  pc &gt;&gt; 32, and code = pc & 0xffff.
     */
-  public Iterable<Long> sparseQGramListOf(final Object t, final boolean listSeparators, final int separator) {
+  public Iterable<Long> sparseQGrams(final Object t, final int separator) {
     return new Iterable<Long>() {
-      public Iterator<Long> iterator() { return sparseQGramIterator(t, listSeparators, separator); }
+      public Iterator<Long> iterator() { return sparseQGramIterator(t, true, separator); }
     };
   }
-   
+
+    public Iterable<Long> sparseQGrams(final Object t) {
+    return new Iterable<Long>() {
+      public Iterator<Long> iterator() { return sparseQGramIterator(t, false, 999); }
+    };
+  }
+
+  /**
+   * Produces an object that iterates over all q-grams in 't'.
+   *  Only the valid q-grams (standard and 
+   *  possibly bisulfite versions), and possibly the separators,
+   *  are returned as a pair pc=(pos,code),
+   *  where pos is the starting position of the q-gram in t,
+   *  and code is the q-gram code. 
+   *  The pair is encoded in a <code>long</code> with pos in the high integer
+   *  and code in the low integer, such that
+   *  pos =  (int)(pc &gt;&gt; 32), and code = pc & 0xffffffff.
+   * @param t the text in form of a byte array or a ByteBuffer
+   *  (other types of objects will raise a runtime exception)
+   * @param showSeparators  whether to include separators in the list
+   *  of returned q-grams.
+   * @param separator  only used if listSeparators is true;
+   *   in that case, it specifies the code of the separator in t.
+   * @return an iterable object that returns the q-grams in t,
+   *  ordered by increasing position, as <code>long</code> integers,
+   *  as described above.
+   */
+  public Iterable<Long> sparseQGrams(final Object t, final boolean showSeparators, final int separator) {
+     if (showSeparators) return sparseQGrams(t,separator);
+     else return sparseQGrams(t);
+  }
+
+  
   /** q-gram iterator over a byte source.
    * @param t the text in form of a byte array or a ByteBuffer
    *  (other types of objects will raise a runtime exception)
-   * @param listSeparators  if true, also iterate over positions of separators;
+   * @param showSeparators  if true, also iterate over positions of separators;
    *   the corresponding q-gram code will be -1.
    * @param separator  only used if listSeparators is true;
    *   in that case, it specifies the code of the separator in t.
    * @return an iterator that iterates over valid q-grams in t,
    *   and possibly over separators.
    */
-  public Iterator<Long> sparseQGramIterator(final Object t, final boolean listSeparators, final int separator) {
+  public Iterator<Long> sparseQGramIterator(final Object t, boolean showSeparators, final int separator) {
      return (t instanceof byte[])?
-        new SparseQGramIterator((byte[])t, listSeparators, separator) 
-        : new SparseQGramIterator((ByteBuffer)t, listSeparators, separator);
+        new SparseQGramIterator((byte[])t, showSeparators, separator) 
+        : new SparseQGramIterator((ByteBuffer)t, showSeparators, separator);
   }
    
    
@@ -100,16 +129,15 @@ public class MultiQGramCoder {
       private final Iterator<Long> it; // iterator of the underlying QGramCoder
       private int bisRemaining = 0;    // number of remaining bisulfite codes
       private ArrayList<Integer> bisCodes = null;  // remaining bisulfite codes
-      private int pos = -1;
+      private long pos = -1;
 
-      SparseQGramIterator(final byte[] t, final boolean stopAtSeparator, final int separator) {
-         it = qcoder.sparseQGramIterator(t, stopAtSeparator, separator);
+      SparseQGramIterator(final Object t, final boolean stopAtSeparator, final int separator) {
+         if (stopAtSeparator) 
+            it = qcoder.sparseQGramIterator(t, separator);
+         else
+            it = qcoder.sparseQGramIterator(t);
       }
       
-      SparseQGramIterator(final ByteBuffer t, final boolean stopAtSeparator, final int separator) {
-         it = qcoder.sparseQGramIterator(t, stopAtSeparator, separator);
-      }
-
       public boolean hasNext() {
          if(bisRemaining>0) return true;
          return it.hasNext();
@@ -122,8 +150,8 @@ public class MultiQGramCoder {
          }
          final long pc = it.next();
          if (!bisulfite) return pc;
-         pos = (int)(pc>>32);
-         bisCodes = bicoder.compatibleQCodes((int)(pc&0xffff));
+         pos = pc>>32;
+         bisCodes = bicoder.compatibleQCodes((int)(pc&0xffffffff));
          bisRemaining = bisCodes.size();
          return pc;
       }

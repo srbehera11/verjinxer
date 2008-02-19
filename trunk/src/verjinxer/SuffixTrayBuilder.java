@@ -788,9 +788,9 @@ public class SuffixTrayBuilder {
     int chi, p;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      final ArrayFile f = new ArrayFile(fname,0).openWStream();
+      final ArrayFile f = new ArrayFile(fname,0).openW();
       for (p=lexfirstpos[chi]; p!=-1; p=lexnextpos[p])
-        f.out().writeInt(p);
+        f.writeInt(p);
       f.close();
     } catch (IOException ex) {
       g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex.toString());
@@ -806,9 +806,9 @@ public class SuffixTrayBuilder {
     final int[] lexps = dll.lexps;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      final ArrayFile f = new ArrayFile(fname,0).openWStream();
+      final ArrayFile f = new ArrayFile(fname,0).openW();
       for (oldp=-1, p=lexfirstpos[chi];  p!=-1;  ) {
-        f.out().writeInt(p);
+        f.writeInt(p);
         tmp = p;
         p = lexps[p] ^ oldp;
         oldp = tmp;
@@ -865,20 +865,20 @@ public class SuffixTrayBuilder {
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     ArrayFile f4=null, f2=null, f1=null, f2x=null, f1x=null;
     try {
-      if ((dolcp&4)!=0) f4 = new ArrayFile(fname,0).openWStream();
-      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2",0).openWStream(); f2x = new ArrayFile(fname+"2x",0).openWStream(); }
-      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1",0).openWStream(); f1x = new ArrayFile(fname+"1x",0).openWStream(); }
+      if ((dolcp&4)!=0) f4 = new ArrayFile(fname,0).openW();
+      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2",0).openW(); f2x = new ArrayFile(fname+"2x",0).openW(); }
+      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1",0).openW(); f1x = new ArrayFile(fname+"1x",0).openW(); }
       for (r=0, p=lexfirstpos[chi];   p!=-1;   p=lexnextpos[p], r++) {
         h = lexprevpos[p];
         assert(h>=0);
-        if ((dolcp&4)!=0) { f4.out().writeInt(h); }
+        if ((dolcp&4)!=0) { f4.writeInt(h); }
         if ((dolcp&2)!=0) {
-          if (h>=65535) { f2.out().writeShort(-1); f2x.out().writeInt(r); f2x.out().writeInt(h); }
-          else f2.out().writeShort(h);
+          if (h>=65535) { f2.writeShort((short)-1); f2x.writeInt(r); f2x.writeInt(h); }
+          else f2.writeShort((short)h);
         }
         if ((dolcp&1)!=0) {
-          if (h>=255)   { f1.out().writeByte(-1);  f1x.out().writeInt(r); f1x.out().writeInt(h); }
-          else f1.out().writeByte(h);
+          if (h>=255)   { f1.writeByte((byte)-1);  f1x.writeInt(r); f1x.writeInt(h); }
+          else f1.writeByte((byte)h);
         } 
       }
       assert(r==n);

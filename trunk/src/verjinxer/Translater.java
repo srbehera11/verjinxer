@@ -62,7 +62,6 @@ public class Translater {
   boolean reverse = false;
   boolean addrc = false;
   boolean bisulfite = false;
-  AnnotatedArrayFile out = null;
   String dnarcstring = null;
   
   
@@ -149,9 +148,9 @@ public class Translater {
     
     // open the output file stream
     g.logmsg("translate: creating index '%s'...%n", outname);
-    out = new AnnotatedArrayFile(outname + extseq); // use default buffer size
+    AnnotatedArrayFile out = new AnnotatedArrayFile(outname + extseq); // use default buffer size
     try {
-      out.openWChannel(); 
+      out.openW(); 
     } catch (IOException ex) {
       g.warnmsg("translate: could not create output file '%s'; %s",outname+extseq,ex.toString());
     }
@@ -160,18 +159,19 @@ public class Translater {
     for (int i=0; i<args.length; i++) {
       String fname = g.dir + args[i];
       g.logmsg("  processing '%s' (%c)...%n",fname,filetype[i]);
-      if (bisulfite && filetype[i]=='f') processFastaB(fname);
-      else if (filetype[i]=='f') processFasta(fname);
-      else if (filetype[i]=='t') processText(fname);
+      if (filetype[i]=='f') processFasta(fname, out);
+      else if (bisulfite && filetype[i]=='f') processFastaB(fname, out);
+      else if (filetype[i]=='t') processText(fname, out);
       else g.terminate("translate: unsupported file type for file "+args[i]);
     }
     // DONE processing all files.
     try { out.close(); } catch (IOException ex) {}
     long totallength=out.length();
+    g.logmsg("translate: translated sequence length: %d%n", totallength);
     if (totallength>=(2L*1024*1024*1024))
-      g.warnmsg("translate: output length %d exceeds 2 GB limit!!%n", totallength);
+      g.warnmsg("translate: length %d exceeds 2 GB limit!!%n", totallength);
     else if (totallength>=(2L*1024*1024*1024*127)/128) 
-      g.warnmsg("translate: long output, %d is within 99% of 2GB limit!%n", totallength);
+      g.warnmsg("translate: long sequence, %d is within 99% of 2GB limit!%n", totallength);
     prj.setProperty("Length",Long.toString(totallength));
     
     // Write the ssp array.
@@ -250,7 +250,7 @@ public class Translater {
   
   /************* processing methods ******************************************************/
   
-  private void processFasta(String fname) {
+  private void processFasta(final String fname, final AnnotatedArrayFile out) {
     FastaFile f = new FastaFile(fname);
     FastaSequence fseq = null;
     ByteBuffer tr = null;
@@ -281,7 +281,7 @@ public class Translater {
   }
 
   
-  private void processFastaB(String fname) {
+  private void processFastaB(final String fname, final AnnotatedArrayFile out) {
     FastaFile f = new FastaFile(fname);
     FastaSequence fseq = null;
     ByteBuffer tr = null;
@@ -316,7 +316,7 @@ public class Translater {
    * -- description is simply the filename;
    * -- separator is appended (never the wildcard).
    */
-  private void processText(String fname) {
+  private void processText(final String fname, final AnnotatedArrayFile out) {
     ByteBuffer tr = null;
     long lastbyte = 0;
     byte appender;
@@ -365,10 +365,10 @@ public class Translater {
   public long computeRuns(String fname) throws IOException {
     int run = -1;
     ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
-    ArrayFile rseq = new ArrayFile(fname+extrunseq,0).openWStream();
-    ArrayFile rlen = new ArrayFile(fname+extrunlen,0).openWStream();
-    ArrayFile  p2r = new ArrayFile(fname+extpos2run,0).openWStream();
-    ArrayFile  r2p = new ArrayFile(fname+extrun2pos,0).openWStream();
+    ArrayFile rseq = new ArrayFile(fname+extrunseq,0).openW();
+    ArrayFile rlen = new ArrayFile(fname+extrunlen,0).openW();
+    ArrayFile  p2r = new ArrayFile(fname+extpos2run,0).openW();
+    ArrayFile  r2p = new ArrayFile(fname+extrun2pos,0).openW();
     final int n = seq.limit();
     byte next;
     byte prev=-1;
@@ -382,19 +382,19 @@ public class Translater {
         len=p-start;  
         assert(len>0 || p==0);  
         if(len>127) len=-1;
-        if (p!=0) rlen.out().write(len);
+        if (p!=0) rlen.writeInt(len);
         start=p;
-        rseq.out().writeByte(next);
-        r2p.out().writeInt(p);
+        rseq.writeByte(next);
+        r2p.writeInt(p);
       }
-      p2r.out().writeInt(run);
+      p2r.writeInt(run);
     }
     run++;                 // number of runs
     len=n-start;  
     assert(len>0);  
     if(len>127) len=-1;
-    rlen.out().write(len);
-    r2p.out().writeInt(n); // write sentinel
+    rlen.writeByte((byte)len); // while 'len' is an int, we only write the least significant byte!
+    r2p.writeInt(n); // write sentinel
     rseq.close(); rlen.close(); p2r.close(); r2p.close();
     seq=null;
     

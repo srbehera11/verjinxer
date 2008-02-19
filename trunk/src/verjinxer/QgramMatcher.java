@@ -260,7 +260,7 @@ public class QgramMatcher {
       assert(sdesc.size()==sm);
     }
     qbck = g.slurpIntArray(qbckfile);
-    if (external) qpos  = g.mapRIntArray(qposfile);
+    if (external) qpos  = g.mapR(qposfile).asIntBuffer();
     else          qposa = g.slurpIntArray(qposfile);
     g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
   

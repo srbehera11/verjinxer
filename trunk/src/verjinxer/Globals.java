@@ -7,9 +7,7 @@ package verjinxer;
 
 import java.util.*;
 import java.io.*;
-import java.nio.*;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
+import java.nio.ByteBuffer;
 import verjinxer.util.*;
 import verjinxer.sequenceanalysis.AlphabetMap;
 
@@ -236,42 +234,18 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the ByteBuffer with the mapped file's contents
    */
-  ByteBuffer mapRByteArray(String file) {
+  ByteBuffer mapR(final String file) {
     ByteBuffer b = null;
     logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
-    FileChannel fc = null;
     try {
-      fc = new FileInputStream(file).getChannel();
-      b = fc.map(MapMode.READ_ONLY, 0, fc.size()).order(ByteOrder.nativeOrder());
-      fc.close();
+      b = new ArrayFile(file,0).mapR();
     } catch (IOException ex) {
-      try {fc.close();} catch(IOException exx) {}
       warnmsg("%s: could not map '%s'; %s. Stop.%n", cmdname, file, ex.toString());
       terminate(1);
     }
     return b;
   }
   
-  /** map the contents of a file into an IntBuffer while printing diagnostics.
-   * Terminate the program when an error occurs.
-   * @param file  the name of the file to be read
-   * @return the IntBuffer with the mapped file's contents
-   */
-  IntBuffer mapRIntArray(String file) {
-    IntBuffer b = null;
-    logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
-    FileChannel fc = null;
-    try {
-      fc = new FileInputStream(file).getChannel();
-      b = fc.map(MapMode.READ_ONLY, 0, fc.size()).order(ByteOrder.nativeOrder()).asIntBuffer();
-      fc.close();
-    } catch (IOException ex) {
-      try {if (fc!=null) fc.close();} catch(IOException exx) {}
-      warnmsg("%s: could not map '%s'; %s. Stop.%n", cmdname, file, ex.toString());
-      terminate(1);
-    }
-    return b;
-  }
   
   //======================= text file readers =================================
   
