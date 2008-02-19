@@ -150,7 +150,7 @@ public class NonUniqueProbeDesigner {
           seqfile, qbckfile, sspfile);
       g.terminate(1);
     }
-    if (external) qpos  = g.mapRIntArray(qposfile);
+    if (external) qpos  = g.mapR(qposfile).asIntBuffer();
     else          qposa = g.slurpIntArray(qposfile);
     g.logmsg("  reading finished after %.1f sec%n", timer.tocMilliSeconds()/1000.0);
     g.logmsg("nonunique: starting probe selection...%n");

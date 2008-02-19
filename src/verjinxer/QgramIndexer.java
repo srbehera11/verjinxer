@@ -137,7 +137,7 @@ public final class QgramIndexer {
          try {
             final String freqfile = (freq ? dout + extqfreq : null);
             final String sfreqfile = (sfreq ? dout + extqseqfreq : null);
-            result = generateQGramIndex(di + extseq, qq, asize, separator,
+            result = generateQGramIndex1(di + extseq, qq, asize, separator,
                   dout + extqbck, dout + extqpos, freqfile, sfreqfile, external, thefilter, bisulfite);
          } catch (Exception e) {
             e.printStackTrace();
@@ -172,7 +172,7 @@ public final class QgramIndexer {
     */
    private ByteBuffer readSequenceFile(final String seqfile, boolean external) throws IOException {
       if (external)
-         return g.mapRByteArray(seqfile);
+         return g.mapR(seqfile);
       // not external: read bytes into array-backed buffer
       g.logmsg("  reading sequence file '%s'...%n", seqfile);
       TicToc timer = new TicToc();
@@ -305,10 +305,12 @@ public final class QgramIndexer {
       }
 
       int seqnum=0;
-      for (long pc : coder.sparseQGramListOf(in, doseqfreq, separator)) {
-         // final int pos   = (int)((pc>>32)&0xffff); // pos not needed here
-         final int qcode = (int)(pc&0xffff);
+      for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
+         final int qcode = (int)pc;
+         final int pos   = (int)(pc>>32); // DEBUG
          if (qcode<0) { assert(doseqfreq); seqnum++; continue; }
+         assert(qcode>=0 && qcode<frq.length) 
+               : String.format("Error: qcode=%d at pos %d (%s)%n", qcode, pos, StringUtils.join("",coder.qcoder.qGram(qcode),0,coder.q)); // DEBUG
          frq[qcode]++;
          if (doseqfreq && lastseq[qcode] < seqnum) {
             lastseq[qcode] = seqnum;
@@ -453,7 +455,7 @@ public final class QgramIndexer {
       final int[] qposslice = getIntSlice(sum);
       final int slicesize = qposslice.length;
 
-      final ArrayFile outfile = new ArrayFile(qposfile).openWChannel();
+      final ArrayFile outfile = new ArrayFile(qposfile).openW();
       int bckstart = 0;
       while (bckstart < aq) {
          TicToc wtimer = new TicToc();
@@ -525,11 +527,11 @@ public final class QgramIndexer {
          g.logmsg("    collecting slice took %.2f sec%n", wtimer.tocs());
 
          // write slice to file
+         g.logmsg("    writing slice of %d bytes to %s%n", 4*qpossize, qposfile);
          wtimer.tic();
-         g.logmsg("    writing slice to %s%n", qposfile);
-         //outfile.putslice(bqposslice, 4*qposstart, 4*qpossize);
-         outfile.writeArray(qposslice, 0, qpossize);
-         g.logmsg("    writing slice took %.2f sec%n", wtimer.tocs());
+         //g.logmsg("    mode of outfile is %s%n", outfile.getMode());
+         final long outpos = outfile.writeArray(qposslice, 0, qpossize);
+         g.logmsg("    writing slice took %.2f sec; not at position %d%n", wtimer.tocs(), outpos);
          bckstart = bckend;
       }
 
@@ -625,7 +627,7 @@ public final class QgramIndexer {
       final int slicesize = qposslice.length;
       
       // open outfile and process each slice
-      final ArrayFile outfile = new ArrayFile(qposfile).openWChannel();
+      final ArrayFile outfile = new ArrayFile(qposfile).openW();
       int bckstart = 0;
       while (bckstart < aq) {
          TicToc wtimer = new TicToc();
@@ -641,9 +643,9 @@ public final class QgramIndexer {
          assert ((qpossize <= slicesize && qpossize > 0) || sum == 0) : "qgram: internal consistency error";
 
          // read through input and collect all qgrams with  bckstart<=qcode<bckend
-         for (long pc : coder.sparseQGramListOf(in, false, -1)) {
-            final int pos   = (int)((pc>>32)&0xffff);
-            final int qcode = (int)(pc&0xffff);
+         for (long pc : coder.sparseQGrams(in)) {
+            final int pos   = (int)((pc>>32)&0xffffffff);
+            final int qcode = (int)(pc&0xffffffff);
             if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode)==0)
                qposslice[(bck[qcode]++) - qposstart] = pos;
          }
@@ -706,7 +708,7 @@ public final class QgramIndexer {
       g.logmsg("  %s has length %d, contains %d %d-grams%n", seqfile, n, n-q+1, q);
 
       // Read the q-position array.
-      IntBuffer qpos = g.mapRIntArray(qposfile);
+      IntBuffer qpos = g.mapR(qposfile).asIntBuffer();
       int b = -1;
       int bold;
       int i = -1;
