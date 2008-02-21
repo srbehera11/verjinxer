@@ -1,6 +1,5 @@
 package verjinxer.sequenceanalysis;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -26,6 +25,7 @@ public class MultiQGramCoder {
    public final int numberOfQGrams;
    /** using bisulfite? */
    public final boolean bisulfite;
+   
    private int qcode = 0;  // TODO: why 0, not -1 or other invalid?
    
 
@@ -67,7 +67,7 @@ public class MultiQGramCoder {
     *  and code is the q-gram code. 
     *  The pair is encoded in a <code>long</code> with pos in the high integer
     *  and code in the low integer, such that
-    *  pos =  pc &gt;&gt; 32, and code = pc & 0xffff.
+    *  pos =  (int)(pc &gt;&gt; 32), and code = pc & 0xffffffff.
     */
   public Iterable<Long> sparseQGrams(final Object t, final int separator) {
     return new Iterable<Long>() {
@@ -118,12 +118,10 @@ public class MultiQGramCoder {
    *   and possibly over separators.
    */
   public Iterator<Long> sparseQGramIterator(final Object t, boolean showSeparators, final int separator) {
-     return (t instanceof byte[])?
-        new SparseQGramIterator((byte[])t, showSeparators, separator) 
-        : new SparseQGramIterator((ByteBuffer)t, showSeparators, separator);
+     return new SparseQGramIterator(t, showSeparators, separator);
   }
    
-   
+   // ------------------------------------------------------------------------------------
    // iterator class
    private class SparseQGramIterator implements Iterator<Long> {
       private final Iterator<Long> it; // iterator of the underlying QGramCoder
@@ -150,8 +148,8 @@ public class MultiQGramCoder {
          }
          final long pc = it.next();
          if (!bisulfite) return pc;
-         pos = pc>>32;
-         bisCodes = bicoder.compatibleQCodes((int)(pc&0xffffffff));
+         pos = pc>>>32;
+         bisCodes = bicoder.compatibleQCodes((int)pc);
          bisRemaining = bisCodes.size();
          return pc;
       }
@@ -160,7 +158,8 @@ public class MultiQGramCoder {
          throw new UnsupportedOperationException("remove not supported.");
       }
    } // end iterator class
-
+   // --------------------------------------------------------------------------
+   
    
    /**
     * check wheter a given q-gram matches another given q-gram, 

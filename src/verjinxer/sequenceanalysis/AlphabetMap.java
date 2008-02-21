@@ -431,8 +431,8 @@ public class AlphabetMap {
     * @throws java.io.IOException   if an IO error occurs
     */
    public boolean isApplicableToFile(final String fname) throws IOException {
-      final ArrayFile arf = new ArrayFile(fname, 0);
-      final long[] counts = arf.byteCounts();
+      final ArrayFile arf = new ArrayFile(fname, 0); // uses only mapping -> buffer size 0 is ok
+      final long[] counts = arf.byteCounts(); 
       for (int i = 0; i < counts.length; i++)
          if (counts[i] > 0 && !this.isPreValid(i)) return false;
       return true;
@@ -447,12 +447,12 @@ public class AlphabetMap {
     */
    public void translateFileToFile(final String inname, final String outname, final boolean appendSeparator)
            throws IOException, InvalidSymbolException {
-      final ArrayFile afin = new ArrayFile(inname, 0);
+      final ArrayFile afin = new ArrayFile(inname, 0); // mapping only -> buffer size 0 is ok
       final ByteBuffer in = afin.mapR();
       final long length = afin.length();
       final long ll = appendSeparator ? length + 1 : length;
       final ArrayFile afout = new ArrayFile(outname, 0);
-      final ByteBuffer out = afout.mapRW();
+      final ByteBuffer out = afout.mapRW(0,ll);
       for (long i = 0; i < length; i++)  out.put(this.code(in.get()));
       if (appendSeparator) out.put(this.codeSeparator());
    }

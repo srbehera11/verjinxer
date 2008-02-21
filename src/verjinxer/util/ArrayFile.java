@@ -11,8 +11,8 @@ import verjinxer.sequenceanalysis.*;
 
 /**
  * This class provides a connection between an array of a primitive type,
- * such as byte[], short[], int[], long[] and files on disk storing
- * such arrays in <b>native</b> byte order.
+ * such as byte[], short[], int[], long[],
+ * and files on disk storing such arrays in <b>native</b> byte order.
  * It provides methods to write/read an array to/from disk efficiently.
  * 
  * You should create only as many ArrayFiles per thread as need to
@@ -22,7 +22,7 @@ import verjinxer.sequenceanalysis.*;
  * subsequently.
  * 
  * To re-use an ArrayFile for a different array or file, just set a new name
- * with the <code>setFilename()</code> method
+ * with the <code>setFilename()</code> method.
  *
  * @author Sven Rahmann
  */
@@ -31,28 +31,36 @@ public class ArrayFile {
    private String name = null;                   // file name on disk
    private File file = null;                     // Java.io.File for this file
    private FileChannel channel = null;           // channel, null if not open
-   private Mode mode = null;
-   //private FileImageOutputStream dataout = null;
-   //private FileImageInputStream datain = null;
-   private static final int DEFAULT_BUFSIZE = 255 * 1024; // default buffer size is 255K
+   private Mode mode = null;   
    private final int bufsize;                    // size of internal buffer, must be divisible by 16
    private final ByteBuffer internalBuffer;      // internal buffer
 
+   private static final int BUFBLOCKS    = 1023;     // default buffer size is this blocks
+   private static final int BUFBLOCKSIZE = 1024;     // each block has this size in byes
+   private static final int BUFCYCLES    = 16;       // number of buffers with different sizes
+   private static int numbuf = 0;                    // counter: current number of buffers;
+                                                     // buffer #i gets (BUFBLOCKS - i % BUFCYCLES) blocks,
+                                                     // so each buffer has a slightly different size
+  
    private enum Mode { READ, WRITE };
    
    /**
     * Create a new instance of ArrayFile with the given filename and buffer size.
     * The buffer size must be divisible by 16. If it is not, it is rounded up
-    * to be divisible by 16.
+    * to be divisible by 16. The buffer is allocated as a direct buffer.
     * @param filename  the name of this file on disk;
     *   it can be null and specified/changed later by <code>setFilename()</code>
-    * @param bufsize   size of the internal buffer
+    * @param bufsize   size of the internal buffer of this ArrayFile in bytes.
+    *   If bufsize==0, no buffer object is created (not even one of size zero)!
+    *   This is useful if and only if this ArrayFile will only be used with memory mapping.
+    *   Attempting anything else will then throw a NullPointerException.
     */
    public ArrayFile(final String filename, int bufsize) {
-      bufsize += 16 - (bufsize%16);
+      bufsize += (16 - (bufsize%16)) %16; // make buffer size divisible by 16 bytes
       this.bufsize = bufsize;
       internalBuffer = bufsize>0? ByteBuffer.allocateDirect(bufsize).order(ByteOrder.nativeOrder()) : null;
-      // Note: native byte order is not portable between different architectures, but crucial for efficiency.
+      // Note 1: A direct buffer should be faster when writing to disk (see ByteBuffer javadoc)
+      // Note 2: native byte order is not portable between different architectures, but crucial for efficiency.
       setFilename(filename);
    }
 
@@ -62,7 +70,7 @@ public class ArrayFile {
     *   it can be null and specified/changed later by <code>setFilename()</code>
     */
    public ArrayFile(final String filename) {
-      this(filename, DEFAULT_BUFSIZE);
+      this(filename, (BUFBLOCKS - numbuf++ % BUFCYCLES) * BUFBLOCKSIZE);
    }
 
    /**
@@ -70,19 +78,22 @@ public class ArrayFile {
     * without specifying a file name yet (this can be done later with setFilename()).
     */
    public ArrayFile() {
-      this(null, DEFAULT_BUFSIZE);
+      this((String)null);
    }
 
    /**
-    * Create a new instance of ArrayFile with the buffer size.
-    * The buffer size must be divisible by 16. If it is not, it is rounded up
-    * to be divisible by 16.
+    * Create a new instance of ArrayFile with the given buffer size.
+    * The buffer size (in bytes) must be divisible by 16. 
+    * If it is not, it is rounded up to be divisible by 16.
     * No file name is associated yet; this must be done later through
     * the <code>setFilename()</code> method.
-    * @param bufsize   size of the internal buffer
+    * @param bufsize   size of the internal buffer in bytes
+    *   If bufsize==0, no buffer object is created (not even one of size zero)!
+    *   This is useful if and only if this ArrayFile will only be used with memory mapping.
+    *   Attempting anything else will then throw a NullPointerException.
     */
    public ArrayFile(int bufsize) {
-      this(null, bufsize);
+      this((String)null, bufsize);
    }
 
    
@@ -132,7 +143,7 @@ public class ArrayFile {
       // Note: close any streams written to, before closing the channel;
       // otherwise the streams might not be flushed!
       flush();
-      internalBuffer.clear();
+      if (internalBuffer!=null) internalBuffer.clear();
       if (channel != null) { channel.force(true); channel.close(); }
       channel = null;
       mode = null;
@@ -229,7 +240,6 @@ public class ArrayFile {
     * @param size  the size of the region to be mapped (in bytes)
     * @return the MappedByteBuffer
     * @throws java.io.IOException  if an error occurs during mapping
-    * @deprecated
     */
    public ByteBuffer mapRW(final long position, final long size) throws IOException {
       flush();
@@ -346,19 +356,25 @@ public class ArrayFile {
       return p;
    }
    
-   public ArrayFile writeInt(int x) throws IOException {
+   public final ArrayFile writeLong(final long x) throws IOException {
+      if (internalBuffer.position() >= bufsize-8) flush();
+      internalBuffer.putLong(x);          
+      return this;
+   }
+
+   public final ArrayFile writeInt(final int x) throws IOException {
       if (internalBuffer.position() >= bufsize-4) flush();
       internalBuffer.putInt(x);          
       return this;
    }
    
-   public ArrayFile writeShort(short x) throws IOException {
+   public final ArrayFile writeShort(final short x) throws IOException {
       if (internalBuffer.position() >= bufsize-2) flush();
       internalBuffer.putShort(x);          
       return this;
    }
    
-   public ArrayFile writeByte(byte x) throws IOException {
+   public final ArrayFile writeByte(final byte x) throws IOException {
       if (internalBuffer.position() >= bufsize-1) flush();
       internalBuffer.put(x);          
       return this;

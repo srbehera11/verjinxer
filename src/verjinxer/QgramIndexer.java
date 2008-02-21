@@ -11,7 +11,6 @@ import static java.lang.Math.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.nio.BufferUnderflowException;
 import verjinxer.util.*;
 import verjinxer.sequenceanalysis.*;
 import static verjinxer.Globals.*;
@@ -137,7 +136,7 @@ public final class QgramIndexer {
          try {
             final String freqfile = (freq ? dout + extqfreq : null);
             final String sfreqfile = (sfreq ? dout + extqseqfreq : null);
-            result = generateQGramIndex1(di + extseq, qq, asize, separator,
+            result = generateQGramIndex(di + extseq, qq, asize, separator,
                   dout + extqbck, dout + extqpos, freqfile, sfreqfile, external, thefilter, bisulfite);
          } catch (Exception e) {
             e.printStackTrace();
@@ -181,17 +180,28 @@ public final class QgramIndexer {
       return in;
    }
 
+   
    /**
     * Reads the given ByteBuffer and computes q-gram frequencies.
+    * At this stage, filters are ignored:
+    * The frequencies are the orignial frequencies in the byte file, before applying a filter.
     * @param in    the input ByteBuffer.
     * @param coder the q-gram coder.
     * @param qseqfreqfile If this is not null, an array sfrq will be written to this file.
     *           sfrq[i] == n means: q-gram i appears in n different sequences.
     * @param separator  a sequence separator, only used when qseqfreqfile != null.
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
-    * @deprecated use iterator-based method instead
     */
    public int[] computeFrequencies(
+         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
+      return computeFrequencies0(in, coder, qseqfreqfile, separator);
+   }
+
+   
+    /** 
+     *  @deprecated use iterator-based method <code>computeFrequencies1()</code> instead.
+     */
+    private int[] computeFrequencies0(
          final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
       
       final int q = coder.q;
@@ -277,19 +287,11 @@ public final class QgramIndexer {
       return frq;
    }
 
-   /**
-    * Reads the given ByteBuffer and computes q-gram frequencies.
-    * This implementation uses q-gram iterators.
-    * At this stage, filters are ignored. 
-    * The frequencies are the orignial frequencies in the byte file, before applying a filter.
-    * @param in    the input ByteBuffer.
-    * @param coder the q-gram coder.
-    * @param qseqfreqfile If this is not null, an array sfrq will be written to this file.
-    *           sfrq[i] == n means: q-gram i appears in n different sequences.
-    * @param separator  a sequence separator, only used when qseqfreqfile != null.
-    * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
+    
+   /** See documentation of computeFrequencies().
+    * This implementation uses a sparse q-gram iterator. 
     */
-   public int[] computeFrequencies1(
+    private int[] computeFrequencies1(
          final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
       
       final int aq = coder.numberOfQGrams;
@@ -307,7 +309,7 @@ public final class QgramIndexer {
       int seqnum=0;
       for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
          final int qcode = (int)pc;
-         final int pos   = (int)(pc>>32); // DEBUG
+         final int pos   = (int)(pc>>32); // pos only necessary for assert statement, otherwise unused!
          if (qcode<0) { assert(doseqfreq); seqnum++; continue; }
          assert(qcode>=0 && qcode<frq.length) 
                : String.format("Error: qcode=%d at pos %d (%s)%n", qcode, pos, StringUtils.join("",coder.qcoder.qGram(qcode),0,coder.q)); // DEBUG
@@ -358,21 +360,7 @@ public final class QgramIndexer {
    }
 
    
-   private int[] getIntSlice(final int intsRequired) {
-      int attempt = intsRequired;
-      int oldattempt = attempt+1;
-      for (int t=1; attempt<oldattempt && t<=100; t++) {
-         oldattempt = attempt;
-         System.gc();
-         try {
-            int[] slice = new int[attempt];  
-            return slice; // in iteration t, it has 1/t times requested size
-         } catch (OutOfMemoryError e) {
-           attempt = (int) Math.ceil((double)attempt * t/(t+1.0) * 1.01);
-         }
-      }
-      return null; // after 100 tries, give up!
-   }
+   
 
    
    /** generates a q-gram index of a given file.
@@ -399,9 +387,28 @@ public final class QgramIndexer {
     *   Integer  maxqbck:  largest q-bucket size.
     * @throws java.io.IOException 
     * @throws java.lang.IllegalArgumentException if bisulfite is set, but asize is not 4
-    * @deprecated  use the iterator version <code>generateQGramIndex</code> instead.
     */
    public Object[] generateQGramIndex(
+         final String seqfile,
+         final int q,
+         final int asize,
+         final int separator,
+         final String bucketfile,
+         final String qposfile,
+         final String qfreqfile,
+         final String qseqfreqfile,
+         final boolean external,
+         final QGramFilter thefilter,
+         boolean bisulfite) 
+         throws IOException {
+      return generateQGramIndex0(seqfile,q,asize, separator, bucketfile, qposfile, qfreqfile, qseqfreqfile, external, thefilter, bisulfite);
+   }
+
+   
+   /**
+    * @deprecated  use the iterator version <code>generateQGramIndex1()</code> instead.
+    */
+   private Object[] generateQGramIndex0(
          final String seqfile,
          final int q,
          final int asize,
@@ -452,7 +459,7 @@ public final class QgramIndexer {
 
       // Determine slice size
       timer.tic();
-      final int[] qposslice = getIntSlice(sum);
+      final int[] qposslice = ArrayUtils.getIntSlice(sum);
       final int slicesize = qposslice.length;
 
       final ArrayFile outfile = new ArrayFile(qposfile).openW();
@@ -547,32 +554,11 @@ public final class QgramIndexer {
    }
 
    
-   /** generates a q-gram index of a given file.
-    * @param seqfile       name of the sequence file (i.e., of the translated text)
-    * @param q             q-gram length
-    * @param asize         alphabet size; 
-    *                      q-grams with characters outside 0..asize-1 are not indexed.
-    * @param separator     the alphabet code of the sequence separator (only for seqfreq)
-    * @param bucketfile    filename of the q-bucket file (can be null)
-    * @param qposfile      filename of the q-gram index (can be null)
-    * @param qfreqfile     filename of the q-gram frequency file (can be null)
-    * @param qseqfreqfile  filename for q-gram sequence frequencies,
-    *                      i.e., in how many different sequences does the q-gram appear?
-    * @param external      if true, keep as few arrays in memory at the same time as possible.
-    *                      In particular, do not return bck, qpos, qfreq.
-    * @param thefilter     a QGramFilter; filtered q-grams are not considered for indexing.
-    * @param bisulfite     whether to create an index that additionally includes bisulfite treated q-grams.
-    * @return  array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where
-    *   int[]    bck:   array of q-bucket starts in qpos (null if external);
-    *   int[]    qpos:  array of starting positions of q-grams in the text (null if external);
-    *   int[]    qfreq: array of q-gram frequencies (null if external);
-    *   double[] times: contains the times taken to compute the q-gram index in seconds;
-    *   Integer  maxfreq:  largest frequency;
-    *   Integer  maxqbck:  largest q-bucket size.
+    /**
     * @throws java.io.IOException 
     * @throws java.lang.IllegalArgumentException if bisulfite is set, but asize is not 4
     */
-   public Object[] generateQGramIndex1(
+   private Object[] generateQGramIndex1(
          final String seqfile,
          final int q,
          final int asize,
@@ -599,7 +585,7 @@ public final class QgramIndexer {
       // frq[i] == n means: q-gram with code i occurs n times in the input sequence.
       // This holds before applying a filter.
       final TicToc timer = new TicToc();
-      int[] frq = computeFrequencies1(in, coder, qseqfreqfile, separator);
+      int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
       g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
       int maxfreq = ArrayUtils.maximumElement(frq);
       if (qfreqfile != null)  g.dumpIntArray(qfreqfile, frq, 0, aq);
@@ -623,7 +609,7 @@ public final class QgramIndexer {
 
       // Determine slice size
       timer.tic();
-      final int[] qposslice = getIntSlice(sum);
+      final int[] qposslice = ArrayUtils.getIntSlice(sum);
       final int slicesize = qposslice.length;
       
       // open outfile and process each slice
@@ -692,7 +678,7 @@ public final class QgramIndexer {
       // Initialize q-gram storage
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
       final QGramCoder     qcoder = coder.qcoder;
-      byte[] qgram = new byte[q];
+      byte[] qgram = new byte[q+1];
 
       // Read s and bck into arrays
       System.gc();
@@ -712,15 +698,13 @@ public final class QgramIndexer {
       int b = -1;
       int bold;
       int i = -1;
-      int r;
       g.logmsg("  scanning %s, memory-mapped...%n", qposfile);
-      for (r = 0; true; r++) {
-         try {
-            i = qpos.get();
-         } catch (BufferUnderflowException e) {
-            break;
-         }
+      int r;  // can't declare r in 'for' statement, because we need it as return value!
+      final int rend = qpos.capacity();
+      for (r = 0; r<rend; r++) {
+         i = qpos.get();
          bold = b;
+          // maybe have reached a new bucket; in this case, generate the new correct q-gram
          while (r == bck[b + 1])   b++;
          if (bold != b) qgram = qcoder.qGram(b, qgram);
          // TODO: check whether qgram (in index) is  bis-compatible to s[i...i+q-1] (text q-gram).
@@ -737,14 +721,14 @@ public final class QgramIndexer {
       g.logmsg("  checking %d remaining text positions...%n", n - q + 1 - sok.cardinality());
       for (int ii=0; ii<n-q+1; ii++) {
          if (sok.get(ii)==1) continue;
-         int cd = qcoder.code(s, ii);
+         final int cd = qcoder.code(s, ii);
          if (cd < 0 || thefilter.get(cd)==1) continue;
-         g.logmsg("  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and filtered!%n",
+         g.logmsg("  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and not filtered!%n",
                ii, cd, StringUtils.join("", qcoder.qGram(cd, qgram), 0, q));
          return n; // error: return length of the text ( > number of q-positions)
       }
 
-      g.logmsg("  checking finished after %.2f sec%n", timer.tocs());
+      g.logmsg("  checking finished after (total) %.2f sec%n", timer.tocs());
       return (-r - 1);
    }
 
