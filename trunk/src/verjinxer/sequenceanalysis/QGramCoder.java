@@ -64,19 +64,21 @@ public final class QGramCoder
    ///** @return the alphabet size of this coder */
    //public int getAsize() { return asize; }
   
-   /** compute the q-gram code (at position zero) of a byte array 
+   /** compute the q-gram code (at position zero) of a byte array.
     * @param qgram a byte array with the numbers to be interpreted as base-asize number
-    * @return the qgram code >0; or -1 if illegal characters appear
+    * @return the qgram code &gt;=0 if there is a valid q-gram;
+    *   but if an illegal character appears at position i, return -i-1 &lt; 0.
     */
    public final int code(final byte[] qgram)
    {
       return code(qgram, 0);
    }
    
-   /** compute the q-gram code at a given position of a byte array
+   /** compute the q-gram code at a given position of a byte array.
     * @param qgram  a byte array for which to compute a q-gram code
     * @param offset position in the array at which to compute the q-gram code
-    * @return the qgram code &gt;=0;  or -1 if illegal characters appear.
+    * @return the qgram code &gt;=0 if there is a valid q-gram;
+    *   but if an illegal character appears at position i, return -i-1 &lt; 0.
     */
    public final int code(final byte[] qgram, final int offset)
    {
@@ -84,16 +86,17 @@ public final class QGramCoder
       for (int i=offset; i<q+offset; i++)
       {
          final int qi = qgram[i];
-         if(qi<0 || qi>=asize) return(-1);
+         if(qi<0 || qi>=asize) return(-1-(i-offset));
          c%=mod; c*=asize; c+=qi;
       }
       return c;
    }
 
-   /** compute the q-gram code at the given offset in a ByteBuffer
+   /** compute the q-gram code at the given offset in a ByteBuffer.
     * @param qgram   a ByteBuffer for which to compute a q-gram code
     * @param offset  position in the buffer at which to compute the q-gram code
-    * @return the qgram code &gt;=0;  or -1 if illegal characters appear.
+    * @return the qgram code &gt;=0 if there is a valid q-gram;
+    *   but if an illegal character appears at position i, return -i-1 &lt; 0.
     */
    public final int code(final ByteBuffer qgram, final int offset)
    {
@@ -101,7 +104,7 @@ public final class QGramCoder
       for (int i=offset; i<q+offset; i++)
       {
          final int qi = qgram.get(i);
-         if(qi<0 || qi>=asize) return(-1);
+         if(qi<0 || qi>=asize) return(-1-(i-offset));
          c%=mod; c*=asize; c+=qi;
       }
       return c;
@@ -205,42 +208,6 @@ public final class QGramCoder
   }
   
   
-   private class SimpleQGramIterator implements Iterator<Integer> {
-      private final byte[] t;         // text as array
-      private final ByteBuffer b;     // text as buffer
-      private int pos;                // current position in array or buffer
-      private final int end;          // length of t or b
-     
-      public SimpleQGramIterator(final byte[] t) {
-         this.t = t;
-         this.b = null;
-         pos = 0;
-         end = t.length-q+1;
-      }
-      public SimpleQGramIterator(final ByteBuffer b) {
-        if (b.hasArray() && !b.isReadOnly()) {
-           // if possible, use the backing array, it's more efficient
-           this.t = b.array();
-           this.b = null;
-           pos = b.arrayOffset();
-           end = t.length-q+1;
-        } else {
-           this.t = null;
-           this.b = b;
-           pos = 0;
-           end = b.capacity()-q+1;
-        }
-      }
-        
-      public boolean hasNext() { return (pos<end)? true : false; }
-      public Integer next()    { return next0(); }
-      // this iterator does not remove things, but remove() must be implemented.
-      public void remove() { throw new UnsupportedOperationException();  }
-      
-      public final int next0() {
-         return (b==null)?  code(t, pos++) : code(b, pos++);
-      }
-  }
 
    
   /**
@@ -304,10 +271,9 @@ public final class QGramCoder
   /** Produce a q-gram iterator over a byte source.
    * @param t the text in form of a byte array or a ByteBuffer
    *  (other types of objects will raise a runtime exception)
-   * @param separator  only used if listSeparators is true;
-   *   in that case, it specifies the code of the separator in t.
+   * @param separator  specifies the code of the separator in t.
    * @return an iterator that iterates over valid q-grams in t,
-   *   and possibly over separators.
+   *   and over separators.
    */
   public Iterator<Long> sparseQGramIterator(final Object t, final int separator) {
      if (t instanceof byte[])
@@ -316,21 +282,66 @@ public final class QGramCoder
         return new SparseQGramSepIterator((ByteBuffer)t, separator);
   }
 
-  // ============== innter iterator class =====================================
-    
+  // ===================================================================
+  // ============== internal iterator classes ==========================
+  // ===================================================================
+
+  
+  /** simple iterator class, stops at every position and returns the code */
+  private class SimpleQGramIterator implements Iterator<Integer> {
+      private final byte[] t;         // text as array
+      private final ByteBuffer b;     // text as buffer
+      private int pos;                // current position in array or buffer
+      private final int end;          // length of t or b
+     
+      public SimpleQGramIterator(final byte[] t) {
+         this.t = t;
+         this.b = null;
+         pos = 0;
+         end = t.length-q+1;
+      }
+      public SimpleQGramIterator(final ByteBuffer b) {
+        if (b.hasArray() && !b.isReadOnly()) {
+           // if possible, use the backing array, it's more efficient
+           this.t = b.array();
+           this.b = null;
+           pos = b.arrayOffset();
+           end = t.length-q+1;
+        } else {
+           this.t = null;
+           this.b = b;
+           pos = 0;
+           end = b.capacity()-q+1;
+        }
+      }
+        
+      public boolean hasNext() { return (pos<end)? true : false; }
+      public Integer next()    { return next0(); }
+      // this iterator does not remove things, but remove() must be implemented.
+      public void remove() { throw new UnsupportedOperationException();  }
+      
+      public final int next0() {
+         return (b==null)?  code(t, pos++) : code(b, pos++);
+      }
+   }
+ 
+   //--------------------------------------------------------------------------
+   /** sparse iterator class */
    private class SparseQGramIterator implements Iterator<Long> {
       private final byte[] t;         // text as array
       private final ByteBuffer b;     // text as buffer
-      private final int end;          // starting position of last q-gram in t or b
+      private final int end;          // 1 + starting position of last q-gram in t or b
       private int pos;                // current position in array or buffer
       private int nextc = -1;         // next valid code
+      private boolean hasnext = true; // result of next hasnext() call
      
       /** construct iterator from byte array */
       public SparseQGramIterator(final byte[] t) {
          this.t = t;
          this.b = null;
-         pos = -1;
+         pos = 0;
          end = t.length-q+1;
+         findNextT();
       }
       
       /** construct iterator from byte buffer */
@@ -339,101 +350,153 @@ public final class QGramCoder
            // if possible, use the backing array, because it's more efficient
            this.t = b.array();
            this.b = null;
-           pos = b.arrayOffset()-1;
+           pos = b.arrayOffset();
            end = t.length-q+1;
+           findNextT();
         } else {
            this.t = null;
            this.b = b;
-           pos = -1;
+           pos = 0;
            end = b.capacity()-q+1;
+           findNextB();
         }
       }
                   
-      public final boolean hasNext() {
-         int c=-1;
-         if (b==null) {
-            while (c<0 && (++pos <end))  c=code(t,pos);
-         } else {
-            while (c<0 && (++pos <end))  c=code(b,pos);
-         }
-         if(c<0) return false; // reached the end
-         nextc=c;              // guaranteed >= 0
-         return true;
-      }
+      public final boolean hasNext() { return hasnext; }
       
       public final Long next() {
          assert(nextc>=0 && nextc<numberOfQGrams);
          assert(pos>=0 && pos<end);
-         return (((long)pos)<<32) + nextc;
+         final long pc = (((long)pos++)<<32) + nextc;  // pos is incremented here!
+         if (b==null) findNextT(); else findNextB();
+         return pc;
       }
      
+      private void findNextT() { // current pos is first position to look at
+         while(true) {
+            //System.out.printf("in findNextT: pos=%d, nextc=%d, hasnext=%s%n", pos, nextc, hasnext); // DEBUG
+            if (pos>=end) { hasnext=false; nextc=-1; return; }
+            if (nextc>=0) {
+               nextc = codeUpdate(nextc, t[pos+q-1]);
+               if (nextc>=0) return;
+               pos += q; // the new character is invalid!
+            } else { //nextc<0
+               nextc = code(t,pos);
+               if (nextc>=0) return;
+               pos -= nextc; // now nextc == -(position of first invalid character), counting starting at 1.
+            }
+         }
+      }
+               
+      private void findNextB() { // current pos is first position to look at
+         while(true) {
+            if (pos>=end) { hasnext=false; nextc=-1; return; }
+            if (nextc>=0) {
+               nextc = codeUpdate(nextc, b.get(pos+q-1));
+               if (nextc>=0) return;
+               pos += q; // the new character is invalid!
+            } else { //nextc<0
+               nextc = code(b,pos);
+               if (nextc>=0) return;
+               pos -= nextc; // skip over invalid character
+            }
+         }
+      }
+
       public final void remove()     { throw new UnsupportedOperationException();  }
    }
 
-   // ------------------------------------------------------------------------
    
+   //--------------------------------------------------------------------------- 
    /** iterator class with separators */
    private class SparseQGramSepIterator implements Iterator<Long> {
       private final byte[] t;         // text as array
       private final ByteBuffer b;     // text as buffer
-      private final int end;          // starting position of last q-gram in t or b
+      private final int end;          // 1 + starting position of last q-gram in t or b
       private final int separator;    // separator code
       private int pos;                // current position in array or buffer
       private int nextc = -1;         // next valid code
+      private boolean hasnext = true; // result of next hasnext() call
      
       /** construct iterator from byte array */
       public SparseQGramSepIterator(final byte[] t, final int sep) {
          this.t = t;
          this.b = null;
-         pos = -1;
+         pos = 0;
          end = t.length-q+1;
          separator = sep;
+         findNextT();
       }
       
       /** construct iterator from byte buffer */
       public SparseQGramSepIterator(final ByteBuffer b, final int sep) {
-        if (b.hasArray() && !b.isReadOnly()) {
+         separator = sep;
+         if (b.hasArray() && !b.isReadOnly()) {
            // if possible, use the backing array, because it's more efficient
            this.t = b.array();
            this.b = null;
-           pos = b.arrayOffset()-1;
+           pos = b.arrayOffset();
            end = t.length-q+1;
-        } else {
+           findNextT();
+         } else {
            this.t = null;
            this.b = b;
-           pos = -1;
+           pos = 0;
            end = b.capacity()-q+1;
-        }
-        separator = sep;
+           findNextB();
+         }
       }
 
-      public final boolean hasNext() {
-         int c=-1;
-         if (b==null) {
-            while (c<0 && (++pos <end)) {
-               if (t[pos]==separator) { c=-1; break; }
-               c=code(t,pos);
-            }
-         } else {
-            while (c<0 && (++pos <end)) {
-               if (b.get(pos)==separator) { c=-1; break; }
-               c=code(b,pos);
-            }
-         }
-         if(pos>=end) return false;
-         nextc=c;
-         return true;
-      }
+      public final boolean hasNext() { return hasnext; }
       
       public final Long next() {
-         assert(nextc>=-1 && nextc<numberOfQGrams);
+         assert(nextc>=-1 && nextc<numberOfQGrams); // -1 since separator may be used
          assert(pos>=0 && pos<end);
-         return (((long)pos)<<32) + (nextc&0xffffffffL);
+         final long pc = (((long)pos++)<<32) + (nextc&0xffffffffL);  // pos is incremented here!
+         if (b==null) findNextT(); else findNextB();
+         return pc;
       }
-      
-      public final void remove()     { throw new UnsupportedOperationException();  }
+     
+      private void findNextT() { // current pos is first position to look at
+         while(true) {
+            // System.out.printf("in findNextT: pos=%d, nextc=%d, hasnext=%s%n", pos, nextc, hasnext); // DEBUG
+            if (pos>=end) { hasnext=false; nextc=-1; return; }
+            if (nextc>=0) {
+               nextc = codeUpdate(nextc, t[pos+q-1]);
+               if (nextc>=0) return;
+               pos += q-1; // the new character is invalid, but may be a separator!
+            } else { //nextc<0, may be looking at a separator!
+               nextc = code(t,pos);
+               if (nextc>=0) return;
+               pos -= nextc +1; // skip up to invalid character
+               if (t[pos]==separator) return;
+               pos++;
+            }
+         }
+      }
+               
+      private void findNextB() { // current pos is first position to look at
+         while(true) {
+            System.out.printf("in findNextT: pos=%d, nextc=%d, hasnext=%s%n", pos, nextc, hasnext);
+            if (pos>=end) { hasnext=false; nextc=-1; return; }
+            if (nextc>=0) {
+               nextc = codeUpdate(nextc, b.get(pos+q-1));
+               if (nextc>=0) return;
+               pos += q-1; // the new character is invalid, but may be a separator!
+            } else { //nextc<0, may be looking at a separator!
+               nextc = code(b,pos);
+               if (nextc>=0) return;
+               pos -= nextc +1; // skip up to invalid character
+               if (b.get(pos)==separator) return;
+               pos++;
+            }
+         }
+      }
 
+      public final void remove()     { throw new UnsupportedOperationException();  }
    }
+   
+   
    
    // ================== end iterator classes ===========================
    

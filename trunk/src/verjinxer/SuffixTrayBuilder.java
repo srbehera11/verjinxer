@@ -788,7 +788,7 @@ public class SuffixTrayBuilder {
     int chi, p;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      final ArrayFile f = new ArrayFile(fname,0).openW();
+      final ArrayFile f = new ArrayFile(fname).openW();
       for (p=lexfirstpos[chi]; p!=-1; p=lexnextpos[p])
         f.writeInt(p);
       f.close();
@@ -806,7 +806,7 @@ public class SuffixTrayBuilder {
     final int[] lexps = dll.lexps;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      final ArrayFile f = new ArrayFile(fname,0).openW();
+      final ArrayFile f = new ArrayFile(fname).openW();
       for (oldp=-1, p=lexfirstpos[chi];  p!=-1;  ) {
         f.writeInt(p);
         tmp = p;
@@ -842,7 +842,7 @@ public class SuffixTrayBuilder {
   /** lcp computation according to Kasai et al.'s algorithm
    * when lexprevpos[] is available.
    *@param fname filename for lcp array
-   *@param dolcp which lcp arrays to compute (1+2+4)
+   *@param dolcp which lcp arrays to compute (0..7, any combination of 1+2+4)
    */
   private void lcp_L(String fname, int dolcp) {
     TicToc timer = new TicToc();
@@ -865,9 +865,9 @@ public class SuffixTrayBuilder {
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     ArrayFile f4=null, f2=null, f1=null, f2x=null, f1x=null;
     try {
-      if ((dolcp&4)!=0) f4 = new ArrayFile(fname,0).openW();
-      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2",0).openW(); f2x = new ArrayFile(fname+"2x",0).openW(); }
-      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1",0).openW(); f1x = new ArrayFile(fname+"1x",0).openW(); }
+      if ((dolcp&4)!=0) f4 = new ArrayFile(fname).openW();
+      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2").openW(); f2x = new ArrayFile(fname+"2x",0).openW(); }
+      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1").openW(); f1x = new ArrayFile(fname+"1x",0).openW(); }
       for (r=0, p=lexfirstpos[chi];   p!=-1;   p=lexnextpos[p], r++) {
         h = lexprevpos[p];
         assert(h>=0);

@@ -14,12 +14,45 @@ public class ArrayUtils {
 
    private ArrayUtils() {
    }
+   
+   /** Allocate and return an int[] of the requested size N, if possible.
+    * Otherwise, successively attempt to allocate an int[] of N/2, N/3, N/4, ...
+    * until we succeed, or give up (in which case null is returned).
+    * @param intsRequired  number of desired elements in the array
+    * @return the allocated array, or null if not possible.
+    */
+   public static int[] getIntSlice(final int intsRequired) {
+      int attempt = intsRequired;
+      int oldattempt = attempt+1;
+      for (int t=1; attempt<oldattempt && t<=100; t++) {
+         oldattempt = attempt;
+         System.gc();
+         try {
+            int[] slice = new int[attempt];  
+            return slice; // in iteration t, it has 1/t times requested size
+         } catch (OutOfMemoryError e) {
+           attempt = (int) Math.ceil((double)attempt * t/(t+1.0) * 1.01);
+         }
+      }
+      return null; // after 100 tries, give up!
+   }
+   
   
+   /**
+    * @return size of largest allocatable byte array
+    * @deprecated
+    */
   public static final int largestAllocatable() {
     return largestAllocatable(0);
   }
   
   
+   /**
+    * @param lmax  desired number of bytes to be allocated
+    * @return lmax, or size of largest allocatable byte array
+    *  if an array of size lmax cannot be allocated.
+    * @deprecated
+    */
   public static final int largestAllocatable(long lmax) {
     int min = 0;           // lower bound
     int max = 0x7fffffff;  // upper bound

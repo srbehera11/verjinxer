@@ -7,6 +7,7 @@ package verjinxer;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
@@ -218,7 +219,7 @@ public class Translater {
     try {
       prj.setProperty("Separator", Byte.toString(amap.codeSeparator()));
     } catch (InvalidSymbolException ex) {
-      prj.setProperty("Separator", "128"); // illegal byte code -> nothing
+      prj.setProperty("Separator", "128"); // illegal byte code 128 -> nothing
     }
     g.logmsg("translate: finished translation after %.1f secs.%n", gtimer.tocs());
     
@@ -239,7 +240,7 @@ public class Translater {
     try {
       g.writeProject(prj,outname+extprj); 
     }  catch (IOException ex) { 
-      g.terminate("translate: could not write project file"); 
+      g.terminate(String.format("translate: could not write project file; %s", ex.toString())); 
     }
     
     // that's all
@@ -362,13 +363,62 @@ public class Translater {
    * @return number of runs in the sequence file
    * @throws java.io.IOException 
    */
-  public long computeRuns(String fname) throws IOException {
+  public long computeRuns(final String fname) throws IOException {
+     return computeRunsAF(fname);
+  }
+
+  /** compute runs using memory mapping where possible */
+  long computeRunsM(final String fname) throws IOException {
     int run = -1;
     ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
-    ArrayFile rseq = new ArrayFile(fname+extrunseq,0).openW();
-    ArrayFile rlen = new ArrayFile(fname+extrunlen,0).openW();
-    ArrayFile  p2r = new ArrayFile(fname+extpos2run,0).openW();
-    ArrayFile  r2p = new ArrayFile(fname+extrun2pos,0).openW();
+    ArrayFile rseq = new ArrayFile(fname+extrunseq).openW();
+    ArrayFile rlen = new ArrayFile(fname+extrunlen).openW();
+    IntBuffer  p2r = new ArrayFile(fname+extpos2run,0).mapRW().asIntBuffer();
+    ArrayFile  r2p = new ArrayFile(fname+extrun2pos).openW();
+    final int n = seq.limit();
+    
+    byte next;
+    byte prev=-1;
+    int start = 0;
+    int len;
+    for (int p=0; p<n; p++) {
+      next = seq.get();
+      if (next!=prev || p==0) {
+        run++;
+        prev=next;
+        len=p-start;  
+        assert(len>0 || p==0);  
+        if(len>127) len=-1;
+        if (p!=0) rlen.writeByte((byte)len);
+        start=p;
+        rseq.writeByte(next);
+        r2p.writeInt(p);
+      }
+      p2r.put(run);
+    }
+    run++;                 // number of runs
+    len=n-start;  
+    assert(len>0);  
+    if(len>127) len=-1;
+    rlen.writeByte((byte)len); // while 'len' is an int, we only write the least significant byte!
+    r2p.writeInt(n); // write sentinel
+    rseq.close(); rlen.close(); r2p.close();
+    seq=null;
+    
+    assert(4*run == r2p.length()-4) :
+      String.format("n=%d, runs=%d, rseq=%d. 4*run=%d, run2pos=%d, pos2run=%d",
+        n, run, rseq.length(), 4*run, r2p.length(), p2r.position());
+    return run;
+  }
+
+  /** compute runs using array files for writing, mmap only for reading */
+  long computeRunsAF(final String fname) throws IOException {
+    int run = -1;
+    ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
+    ArrayFile rseq = new ArrayFile(fname+extrunseq).openW();
+    ArrayFile rlen = new ArrayFile(fname+extrunlen).openW();
+    ArrayFile  p2r = new ArrayFile(fname+extpos2run).openW();
+    ArrayFile  r2p = new ArrayFile(fname+extrun2pos).openW();
     final int n = seq.limit();
     byte next;
     byte prev=-1;
@@ -382,7 +432,7 @@ public class Translater {
         len=p-start;  
         assert(len>0 || p==0);  
         if(len>127) len=-1;
-        if (p!=0) rlen.writeInt(len);
+        if (p!=0) rlen.writeByte((byte)len);
         start=p;
         rseq.writeByte(next);
         r2p.writeInt(p);

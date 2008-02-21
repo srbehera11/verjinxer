@@ -39,7 +39,7 @@ public class Globals {
    
   private PrintStream  logger  = null;
   private PrintStream  loggerP = null;
-  private ArrayFile    arf     = null;
+  private final ArrayFile    arf;
   
   String       cmdname = programname; // prefix to diagnostic messages
   String[]     action  = null;        // all arguments to Main for logfile

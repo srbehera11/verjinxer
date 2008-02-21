@@ -58,11 +58,7 @@ public class QGramCoderTest extends TestCase {
    public void testQGrams() {
       final QGramCoder coder = new QGramCoder(q, 4); // |A|=4   
       final int[] correct = new int[text.length-q+1];
-      for(int p=0; p<correct.length; p++) {
-         final int c = coder.code(text, p);
-         if (c>=0) correct[p]=c;
-         else correct[p] = -1;
-      }
+      for(int p=0; p<correct.length; p++) correct[p] = coder.code(text, p);
       
       final int[] qcodes  = new int[correct.length];
       Arrays.fill(qcodes, SKIP);
