@@ -136,7 +136,7 @@ public final class QgramIndexer {
          try {
             final String freqfile = (freq ? dout + extqfreq : null);
             final String sfreqfile = (sfreq ? dout + extqseqfreq : null);
-            result = generateQGramIndex(di + extseq, qq, asize, separator,
+            result = generateQGramIndex(di + extseq, qq, asize, (byte)separator,
                   dout + extqbck, dout + extqpos, freqfile, sfreqfile, external, thefilter, bisulfite);
          } catch (Exception e) {
             e.printStackTrace();
@@ -193,8 +193,8 @@ public final class QgramIndexer {
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
     */
    public int[] computeFrequencies(
-         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
-      return computeFrequencies0(in, coder, qseqfreqfile, separator);
+         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final byte separator) {
+      return computeFrequencies1(in, coder, qseqfreqfile, separator);
    }
 
    
@@ -202,8 +202,9 @@ public final class QgramIndexer {
      *  @deprecated use iterator-based method <code>computeFrequencies1()</code> instead.
      */
     private int[] computeFrequencies0(
-         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
+         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final byte separator) {
       
+      final TicToc timer = new TicToc();
       final int q = coder.q;
       final int asize = coder.asize;
       final int aq = coder.numberOfQGrams;
@@ -283,6 +284,7 @@ public final class QgramIndexer {
                }
          }
       in.rewind();
+      g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());      
       if (doseqfreq) g.dumpIntArray(qseqfreqfile, sfrq);
       return frq;
    }
@@ -292,8 +294,9 @@ public final class QgramIndexer {
     * This implementation uses a sparse q-gram iterator. 
     */
     private int[] computeFrequencies1(
-         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final int separator) {
+         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final byte separator) {
       
+      final TicToc timer = new TicToc();
       final int aq = coder.numberOfQGrams;
       int[] lastseq = null;              // lastseq[i] == k := q-gram i was last seen in sequence k
       int[] sfrq = null;                 // sfrq[i] == n    := q-gram i appears in n distinct sequences. 
@@ -306,6 +309,7 @@ public final class QgramIndexer {
          sfrq = new int[aq];
       }
 
+      //g.logmsg("doseqfreq = %s, separator = %d%n", doseqfreq, separator); // DEBUG
       int seqnum=0;
       for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
          final int qcode = (int)pc;
@@ -320,6 +324,7 @@ public final class QgramIndexer {
          }      
       }
       in.rewind();
+      g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());     
       if (doseqfreq) g.dumpIntArray(qseqfreqfile, sfrq);
       return frq;
    }
@@ -392,7 +397,7 @@ public final class QgramIndexer {
          final String seqfile,
          final int q,
          final int asize,
-         final int separator,
+         final byte separator,
          final String bucketfile,
          final String qposfile,
          final String qfreqfile,
@@ -401,7 +406,7 @@ public final class QgramIndexer {
          final QGramFilter thefilter,
          boolean bisulfite) 
          throws IOException {
-      return generateQGramIndex0(seqfile,q,asize, separator, bucketfile, qposfile, qfreqfile, qseqfreqfile, external, thefilter, bisulfite);
+      return generateQGramIndex1(seqfile,q,asize, separator, bucketfile, qposfile, qfreqfile, qseqfreqfile, external, thefilter, bisulfite);
    }
 
    
@@ -412,7 +417,7 @@ public final class QgramIndexer {
          final String seqfile,
          final int q,
          final int asize,
-         final int separator,
+         final byte separator,
          final String bucketfile,
          final String qposfile,
          final String qfreqfile,
@@ -436,7 +441,6 @@ public final class QgramIndexer {
       // This holds before applying a filter.
       final TicToc timer = new TicToc();
       int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
-      g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
       int maxfreq = ArrayUtils.maximumElement(frq);
       if (qfreqfile != null)  g.dumpIntArray(qfreqfile, frq, 0, aq);
       final double timeFreqCounting = timer.tocs();
@@ -562,7 +566,7 @@ public final class QgramIndexer {
          final String seqfile,
          final int q,
          final int asize,
-         final int separator,
+         final byte separator,
          final String bucketfile,
          final String qposfile,
          final String qfreqfile,
@@ -586,7 +590,6 @@ public final class QgramIndexer {
       // This holds before applying a filter.
       final TicToc timer = new TicToc();
       int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
-      g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
       int maxfreq = ArrayUtils.maximumElement(frq);
       if (qfreqfile != null)  g.dumpIntArray(qfreqfile, frq, 0, aq);
       final double timeFreqCounting = timer.tocs();

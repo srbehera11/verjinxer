@@ -65,9 +65,16 @@ public final class BisulfiteQGramCoder {
    }
    
    /**
-    * 
-    * @param qcode 
-    * @return
+    * For a given q-gram code (with alphabet size 4),
+    * generate all q-gram codes that can arise from it by bisulfite treatment.
+    * (v1) all Cs -> T.
+    * (v2) all Cs -> T, except CG remains CG;
+    *      If there is a C at the last position, we need more information.
+    * (v3) all Gs -> A.
+    * (v4) all Gs -> A, except CG remains CG;
+    *     If there is a G at the first q-gram position, we need more information.
+    * @param qcode the original q-gram code.
+    * @return a list of possible bisulfite-treated q-gram codes.
     */
    public ArrayList<Integer> compatibleQCodes(final int qcode) {
       throw new UnsupportedOperationException("Not yet implemented");
