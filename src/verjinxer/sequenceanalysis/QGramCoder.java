@@ -101,7 +101,7 @@ public final class QGramCoder
    public final int code(final ByteBuffer qgram, final int offset)
    {
       int c=0;
-      for (int i=offset; i<q+offset; i++)
+      for (int i=offset; i<offset+q; i++)
       {
          final int qi = qgram.get(i);
          if(qi<0 || qi>=asize) return(-1-(i-offset));
@@ -115,12 +115,12 @@ public final class QGramCoder
     * @param old  the old q-gram code.
     *   If 'old' is not a valid q-gram code (eg, -1), the behavior is unspecified!
     * @param next the next byte to shift in
-    * @return     the new q-gram code; or -1 if 'next' is not in the alphabet
+    * @return     the new q-gram code; or a negative value (-q) if 'next' is not in the alphabet
     */
    public final int codeUpdate(final int old, final byte next)
    {
       assert(old>=0 && old<numberOfQGrams);
-      if (next<0 || next>=asize) return(-1);
+      if (next<0 || next>=asize) return(-q);
       return (old%mod)*asize + next;
    }
   
@@ -293,12 +293,15 @@ public final class QGramCoder
       private final ByteBuffer b;     // text as buffer
       private int pos;                // current position in array or buffer
       private final int end;          // length of t or b
+      private boolean hasnext = true; // is there a next q-gram?
+      private int nextc = -1;         // next code to be returned; initially indicate new computation
      
       public SimpleQGramIterator(final byte[] t) {
          this.t = t;
          this.b = null;
          pos = 0;
          end = t.length-q+1;
+         findNextT();
       }
       public SimpleQGramIterator(final ByteBuffer b) {
         if (b.hasArray() && !b.isReadOnly()) {
@@ -307,23 +310,52 @@ public final class QGramCoder
            this.b = null;
            pos = b.arrayOffset();
            end = t.length-q+1;
+           findNextT();
         } else {
            this.t = null;
            this.b = b;
            pos = 0;
            end = b.capacity()-q+1;
+           findNextB();
         }
       }
         
-      public boolean hasNext() { return (pos<end)? true : false; }
-      public Integer next()    { return next0(); }
-      // this iterator does not remove things, but remove() must be implemented.
-      public void remove() { throw new UnsupportedOperationException();  }
+      public boolean hasNext() { return hasnext; }
       
-      public final int next0() {
-         return (b==null)?  code(t, pos++) : code(b, pos++);
+      public Integer next()    {
+         assert(nextc>=-q && nextc<=numberOfQGrams);
+         assert(pos>=0 && pos<end);
+         final int cod=nextc;
+         pos++;
+         if(b==null) findNextT(); else findNextB();
+         return cod;
       }
-   }
+      
+      private void findNextT() {
+         if (pos>=end) { hasnext=false; nextc=-1; return; }
+         if (nextc>=0) {
+            nextc = codeUpdate(nextc, t[pos+q-1]); // this is >= 0 or  == -q
+         } else { //nextc<0
+            nextc++;
+            if (nextc==0) nextc = code(t,pos);
+         }
+      }
+
+      private void findNextB() {
+         if (pos>=end) { hasnext=false; nextc=-1; return; }
+         if (nextc>=0) {
+            nextc = codeUpdate(nextc, b.get(pos+q-1)); // this is >= 0 or  == -q
+         } else { //nextc<0
+            nextc++;
+            if (nextc==0) nextc = code(b,pos);
+         }
+      }
+      
+      /** this iterator does not remove things, but remove() must be implemented;
+       * so we throw an exception. */
+      public void remove() { throw new UnsupportedOperationException();  }
+   } // end class SimpleQGramIterator
+      
  
    //--------------------------------------------------------------------------
    /** sparse iterator class */
@@ -477,7 +509,7 @@ public final class QGramCoder
                
       private void findNextB() { // current pos is first position to look at
          while(true) {
-            System.out.printf("in findNextT: pos=%d, nextc=%d, hasnext=%s%n", pos, nextc, hasnext);
+            //System.out.printf("in findNextT: pos=%d, nextc=%d, hasnext=%s%n", pos, nextc, hasnext);
             if (pos>=end) { hasnext=false; nextc=-1; return; }
             if (nextc>=0) {
                nextc = codeUpdate(nextc, b.get(pos+q-1));
