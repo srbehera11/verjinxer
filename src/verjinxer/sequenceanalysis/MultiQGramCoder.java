@@ -155,7 +155,7 @@ public class MultiQGramCoder {
       private long pos = -1;
 
       SparseQGramIterator(final Object t, final boolean stopAtSeparator, final int separator) {
-         assert(bisulfite==true);
+         assert bisulfite;
          if (stopAtSeparator) 
             it = qcoder.sparseQGramIterator(t, separator);
          else
@@ -168,15 +168,17 @@ public class MultiQGramCoder {
       }
 
       public Long next() {
+         throw new UnsupportedOperationException("this does not work");
+         /*
          if(bisRemaining>0) {
             final long pc = (pos<<32) + bisCodes.get(--bisRemaining);
             return pc;
          }
          final long pc = it.next();
          pos = pc>>>32;
-         bisCodes = bicoder.compatibleQCodes((int)pc);
+         // TODO bisCodes = bicoder.compatibleQCodes((int)pc);
          bisRemaining = bisCodes.size();
-         return pc;
+         return pc;*/
       }
 
       public void remove() {
@@ -191,11 +193,11 @@ public class MultiQGramCoder {
    
    
    /**
-    * check wheter a given q-gram matches another given q-gram, 
+    * Checks whether a given q-gram matches another given q-gram, 
     * possibly taking bisulfite treatment into account.
-    * @param qgram given q-gram
+    * @param qgram given q-gram (bis.-treated)
     * @param i     starting position within qgram
-    * @param s     another given q-gram
+    * @param s     another given q-gram (in text)
     * @param p     starting position within s
     * @return true iff qgram[i..i+q-1] equals s[p..p+q-1], possibly after bisulfite-treatment of s.
     */

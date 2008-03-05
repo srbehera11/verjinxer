@@ -384,17 +384,61 @@ public class QgramMatcher {
   }
 
   /**
-   * Compares two symbols, taking bisulfite treatment into account.
-   * @param cs original symbol (from reference sequence)
-   * @param ct potentially bisulfite-treated symbol
-   * @return true if cs could have led to ct during bisulfite treatment or if cs==ct.
+   * Compares sequences s and t, allowing bisulfite replacements.
+   * @param sp start index in s
+   * @param tp start index in t
+   * @return length of match
    */
-  private boolean bisulfiteEquals(byte cs, byte ct) {
-    return (cs == ct) ||
-      (cs == NUCLEOTIDE_C && ct == NUCLEOTIDE_T) ||
-      (cs == NUCLEOTIDE_G && ct == NUCLEOTIDE_A);
+  private int bisulfiteMatchLength(int sp, int tp) {
+     int ga = 2; // 0: false, 1: true, 2: maybe/unknown
+     int ct = 2;
+     
+     int offset = 0;
+     boolean done = false;
+     while (!done) {
+        if (!amap.isSymbol(s[sp+offset])) break;
+        
+        // What follows is some ugly logic to find out what type
+        // of match this is. That is, whether we should allow C -> T or
+        // G -> A replacements.
+        // For C->T, the rules are:
+        // If there's a C->T replacement, we must only allow those.
+        // If there's a C not preceding a G that has not been replaced
+        // by a T, then we must not allow C->T replacements.
+        
+        if (s[sp+offset] == NUCLEOTIDE_G && t[tp+offset] == NUCLEOTIDE_A) {
+           if (ct == 1 || ga == 0) break;
+           else ga = 1; // must have G->A
+        }
+        else if (offset > 0 && 
+                s[sp+offset-1] != NUCLEOTIDE_C &&
+                t[tp+offset-1] != NUCLEOTIDE_C &&
+                s[sp+offset] == NUCLEOTIDE_G &&
+                t[tp+offset] == NUCLEOTIDE_G) {
+           if (ga == 1) break;
+           else ga = 0; // not G->A
+        }
+
+        else if (s[sp+offset] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T) {
+           if (ct == 0 || ga == 1) break;
+           else ct = 1; // must have C->T
+        }
+        else if (sp+offset+1 < s.length && tp+offset+1 < t.length &&
+                s[sp+offset+1] != NUCLEOTIDE_G &&
+                /*t[tp+offset+1] != NUCLEOTIDE_G &&*/
+                s[sp+offset] == NUCLEOTIDE_C &&
+                t[tp+offset] == NUCLEOTIDE_C) {
+           if (ct == 1) break;
+           else ct = 0; // not C->T
+        } else {
+           if (s[sp+offset] != t[tp+offset]) break;
+        }
+        offset++;
+     }
+     assert offset >= q;
+     return offset;
   }
-  
+
   /*
    * writes to:
    * active
@@ -414,9 +458,9 @@ public class QgramMatcher {
     final int newactive = qbck[qcode+1] - r; // number of new active q-grams
     //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
     
-    // decrease the length of the active matches, as long as they stay >= q
+    // decrease length of active matches, as long as they stay >= q
     int ai;
-    for(ai=0; ai<active; ai++) { 
+    for (ai=0; ai<active; ai++) { 
       activepos[ai]++;  
       if (activelen[ai]>q) activelen[ai]--;
       else activelen[ai]=0; 
@@ -445,13 +489,13 @@ public class QgramMatcher {
     if (external) { qpos.position(r);  qpos.get(newpos, 0, newactive); } 
     else          { System.arraycopy(qposa, r, newpos, 0, newactive);  }
     //g.logmsg("    qpos = [%s]%n", Strings.join(" ",newpos, 0, newactive));
- 
+
     // iterate over all new matches 
     ai=0;
     for (int ni=0; ni<newactive; ni++) {
       while (ai<active && activelen[ai]<q) ai++; 
       assert(ai==active || newpos[ni]<=activepos[ai])
-        : String.format("spos=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d",
+        : String.format("tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d",
           tp,ai,active,ni,newpos[ni],activepos[ai], activelen[ai]);
       if (ai>=active || newpos[ni]!=activepos[ai]) { 
         // this is a new match:
@@ -465,40 +509,12 @@ public class QgramMatcher {
             sp++;
             offset++;
           }
+          sp -= offset; // go back to start of match
         } else {
-          // bisulfite comparison
-          // start comparison from the beginning of the q-gram to find out
-          // whether we should allow C -> T or G -> A replacements
-          offset = 0;
           sp = newpos[ni];
-          while (s[sp]==t[tp+offset]) {
-            assert(amap.isSymbol(s[sp]));
-            sp++;
-            offset++;
-          }
-          // first mismatch tells us what to do
-          if (amap.isSymbol(s[sp]) && s[sp] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T) {
-            // C -> T replacement
-            sp++;
-            offset++;
-            while ((s[sp]==t[tp+offset] || s[sp] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T)
-                    && amap.isSymbol(s[sp])) {
-              sp++;
-              offset++;
-            }
-          } else {
-            // assume G -> A replacements
-            // if we are at a real mismatch, nothing happens
-            while ((s[sp]==t[tp+offset] || s[sp] == NUCLEOTIDE_G && t[tp+offset] == NUCLEOTIDE_A)
-                    && amap.isSymbol(s[sp])) {
-              sp++;
-              offset++;
-            }
-          }
-          assert(offset >= q);
+          offset = bisulfiteMatchLength(sp, tp);
         }
         newlen[ni] = offset;
-        sp -= offset;             // go back to start of match
         // maximal match (tp, sp, offset), i.e. ((seqnum,tp-seqstart), (i,sss), offset)
         if (offset>=minlen) { // report match
           int i = seqindex(newpos[ni]);
