@@ -1,7 +1,5 @@
 package verjinxer.sequenceanalysis;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,7 +14,7 @@ public final class BisulfiteQGramCoder {
    public final QGramCoder coder; // underlying q-gram coder
    private HashSet<Integer> qcodes_bisulfite;    // qcodes for bisulfite treated strand
    private HashSet<Integer> qcodes_bisulfite_rc; // qcodes for rc of bisulfite treated rc (rc: reverse complement)
-   private final ArrayList<byte[]> compatibleQGrams; // qgrams bis.-compatible to a given q-gram
+   private final ArrayList<int[][]> compatibleQCodes; // qgrams bis.-compatible to a given q-gram
 
    /**
     * Creates a new BisulfiteQGramCoder. The alphabet size is fixed to 4 (A, C, G, T).
@@ -26,43 +24,125 @@ public final class BisulfiteQGramCoder {
       coder = new QGramCoder(q, ASIZE);
       qcodes_bisulfite = new HashSet<Integer>(1<<q);
       qcodes_bisulfite_rc = new HashSet<Integer>(1<<q);
-      compatibleQGrams = new ArrayList<byte[]>(1<<(q+1));
+      compatibleQCodes = new ArrayList<int[][]>(1<<(q+1));     
+      computeCompatibleQCodes();
       reset();
    }
-   
+
+   /** 
+    * For each q-code, computes the q-codes that are
+    * compatible under bisulfite treatment rules.
+    * For each q-code, there are four different possible
+    * sets of compatible q-codes, depending on whether
+    * the corresponding q-gram is preceded by a C or
+    * followed by a G. The four different combinations are
+    * numbered as follows:
+    * 0: no C | qgram | no G
+    * 1: no C | qgram | G
+    * 2: C    | qgram | no G
+    * 3: C    | qgram | G
+    * 
+    * compatibleQCodes accordingly contains, at each position, a four-element
+    * array of int arrays.
+    */
+   private void computeCompatibleQCodes() {
+      compatibleQCodes.clear();
+      for (int c = 0; c < coder.numberOfQGrams; ++c) {
+         byte qgram[] = coder.qGram(c);
+         
+         // case 1: no C before q-gram, no G after q-gram
+         reset();
+         for (int i = 0; i < qgram.length-1; ++i) update(qgram[i], qgram[i+1]);
+         update(qgram[qgram.length-1], NUCLEOTIDE_A);
+         Collection<Integer> qcodesNoCNoG = getCodes();
+
+         // case 2: no C before q-gram, but G after q-gram
+         reset();
+         for (int i = 0; i < qgram.length-1; ++i) update(qgram[i], qgram[i+1]);
+         update(qgram[qgram.length-1], NUCLEOTIDE_G);
+         Collection<Integer> qcodesNoCG = getCodes();
+
+         // case 2: C before q-gram, no G after q-gram
+         reset();
+         update(NUCLEOTIDE_C, qgram[0]);
+         for (int i = 0; i < qgram.length-1; ++i) update(qgram[i], qgram[i+1]);
+         update(qgram[qgram.length-1], NUCLEOTIDE_A);
+         Collection<Integer> qcodesCNoG = getCodes();
+         
+         // case 4: C before q-gram and G after q-gram
+         reset();
+         update(NUCLEOTIDE_C, qgram[0]);
+         for (int i = 0; i < qgram.length-1; ++i) update(qgram[i], qgram[i+1]);
+         update(qgram[qgram.length-1], NUCLEOTIDE_G);
+         Collection<Integer> qcodesCG = getCodes();
+
+         reset();
+
+         // add found codes to compatibleQCodes
+         int[][] tmp = new int[4][];
+         tmp[0] = new int[qcodesNoCNoG.size()];
+         tmp[1] = new int[qcodesNoCG.size()];
+         tmp[2] = new int[qcodesCNoG.size()];
+         tmp[3] = new int[qcodesCG.size()];
+         
+         int i = 0;
+         for (int x : qcodesNoCNoG) {
+            tmp[0][i++] = x;
+         }
+         i = 0;
+         for (int x : qcodesNoCG) {
+            tmp[1][i++] = x;
+         }
+         i = 0;
+         for (int x : qcodesCNoG) {
+            tmp[2][i++] = x;
+         }
+         i = 0;
+         for (int x : qcodesCG) {
+            tmp[3][i++] = x;
+         }
+         compatibleQCodes.add(tmp);
+      }    
+   }
+
    // (hardcoded) encoding for nucleotides
    public static final byte NUCLEOTIDE_A = 0;    // private enum Nucleotide { A, C, G, T; }
    public static final byte NUCLEOTIDE_C = 1;
    public static final byte NUCLEOTIDE_G = 2;
    public static final byte NUCLEOTIDE_T = 3;
    private static final int ASIZE = 4; // alphabet size
-   
 
-   
+
    /**
-    * check wheter a given q-gram matches another given q-gram, 
+    * Checks whether a given q-gram matches another given q-gram, 
     * under bisulfite replacement rules.
-    * @param qgram given q-gram
+    * @param qgram given q-gram (in index, bis.-treated)
     * @param i     starting position within qgram
-    * @param s     another given q-gram
+    * @param s     another given q-gram (original, in text)
     * @param p     starting position within s
     * @return true iff qgram[i..i+q-1] can be derived from s[p..p+q-1] under bisulfite rules.
     */   
    public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
-      for (byte[] biqgram: compatibleQGrams(s,p)) 
-        if (coder.areCompatible(qgram, i, biqgram, 0)) return true;
+      int biCode = coder.code(qgram, i);
+      int type = 0;
+      if (p > 0 && s[p-1] == NUCLEOTIDE_C) type = 2;
+      if (p+coder.q < s.length && s[p+coder.q] == NUCLEOTIDE_G) type += 1;
+      
+      for (int code : compatibleQCodes.get(coder.code(s, p))[type]) {
+         if (code == biCode) return true;
+      }
       return false; 
    }
    
    /**
-    * 
+    * Returns 
     * @param s
     * @param p
     * @return
     */
-   public ArrayList<byte[]> compatibleQGrams(final byte[] s, final int p) {
+   /*public ArrayList<byte[]> compatibleQGrams(final byte[] s, final int p) {
       throw new UnsupportedOperationException("Not yet implemented");
-   }
+   }*/
    
    /**
     * For a given q-gram code (with alphabet size 4),
@@ -76,12 +156,10 @@ public final class BisulfiteQGramCoder {
     * @param qcode the original q-gram code.
     * @return a list of possible bisulfite-treated q-gram codes.
     */
-   public ArrayList<Integer> compatibleQCodes(final int qcode) {
+   /*public ArrayList<Integer> compatibleQCodes(final int qcode) {
       throw new UnsupportedOperationException("Not yet implemented");
-   }
+   }*/
 
-   // =============================================================================================
-   
    private int qcode;                            // qcode for regular strand
    private byte previous_nucleotide = -1;
    
@@ -102,28 +180,7 @@ public final class BisulfiteQGramCoder {
    }
 
    /**
-    * Takes all qcodes of the collection and adds copies to the collection. In the copies,
-    * the last nucleotide has been replaced by new_nucleotide.
-    * The last nucleotide is assumed to be old_nucleotide.  
-    * @param qcodes
-    * @param oldcode
-    * @param newcode
-    */
-   /*	private HashSet<Integer> updateCodes3(Collection<Integer> qcodes, byte old_nucleotide, byte new_nucleotide) {
-   // bisulfite codes: take the old codes (which end with 'T')
-   // and create a copy with a 'C' in the end
-   HashSet<Integer> a = new HashSet<Integer>();
-   for (int code : qcodes) {
-   a.add(code - old_nucleotide + new_nucleotide);
-   }
-   return a;
-   }
-    */
-//  private long sizesum = 0;
-//  private int count = 0;
-   
-   
-   /** Updates q-gram codes.
+    * Updates q-gram codes.
     * @param next the next byte in the input.
     * @param after the byte following next in the input.
     * May be an invalid alphabet character if there is no regular character following.  
@@ -160,31 +217,10 @@ public final class BisulfiteQGramCoder {
             break;
 
          default:
-            // TODO something
             throw new IllegalArgumentException("expecting a valid alphabet character");
       }
       previous_nucleotide = next;
-   /*assert(qcodes_bisulfite.contains(qcode));
-   assert(qcodes_bisulfite_rc.contains(qcode));
-   int size = getCodes().size();
-   sizesum += size;
-   count++;
-   char c;
-   AlphabetMap amap = AlphabetMap.DNA();
-   try {
-   c = amap.preimage(next);
-   } catch (InvalidSymbolException e) {
-   c = 'x';
    }
-   System.out.format("next is %c. number of qcodes now %d. sum %d. count %d. avg %f%n", c, size, sizesum, count, ((double)sizesum)/count);
-   for (int code : getCodes()) {
-   System.out.println(coder.qGramString(code, amap));
-   }*/
-   }
-
-   //public QGramCoder getCoder() {
-   //   return coder;
-   //}
 
    public void reset() {
       qcode = 0;
@@ -195,37 +231,6 @@ public final class BisulfiteQGramCoder {
       previous_nucleotide = -1;
    }
 
-   /*
-   public void update(byte next) {
-   // regular qcode always gets updated
-   qcode = coder.codeUpdate(qcode, next);
-   switch (next) {
-   case NUCLEOTIDE_A:
-   case NUCLEOTIDE_T:
-   // if A or T is found, nothing special happens
-   qcodes_bisulfite = updateCodes(qcodes_bisulfite, next);
-   qcodes_bisulfite_rc = updateCodes(qcodes_bisulfite_rc, next);
-   break;
-   case NUCLEOTIDE_C:
-   qcodes_bisulfite = updateCodes(qcodes_bisulfite, NUCLEOTIDE_T);
-   qcodes_bisulfite_rc = updateCodes(qcodes_bisulfite_rc, NUCLEOTIDE_C);
-   break;
-   case NUCLEOTIDE_G:
-   if (previous_nucleotide == NUCLEOTIDE_C) {
-   qcodes_bisulfite_rc = updateCodes2(qcodes_bisulfite_rc, NUCLEOTIDE_A, NUCLEOTIDE_G);
-   qcodes_bisulfite = updateCodes3(qcodes_bisulfite, NUCLEOTIDE_T, NUCLEOTIDE_C);
-   } else {
-   qcodes_bisulfite = updateCodes(qcodes_bisulfite, NUCLEOTIDE_G);
-   qcodes_bisulfite_rc = updateCodes(qcodes_bisulfite_rc, NUCLEOTIDE_A);
-   }
-   break;
-   default:
-   // TODO something
-   System.exit(-1);
-   }
-   previous_nucleotide = next;
-   }
-    */
    public Collection<Integer> getCodes() {
       HashSet<Integer> codes = new HashSet<Integer>();
       codes.add(qcode);
@@ -235,25 +240,4 @@ public final class BisulfiteQGramCoder {
       return codes;
    }
 
-   public static void main(String[] args) {
-      AlphabetMap alphabetmap = AlphabetMap.DNA();
-      QGramCoder coder = new QGramCoder(5, 4); // q=5
-      InputStream in = System.in;
-      //ByteBuffer buf = new 
-      int c;
-      int code = 0;
-      try {
-         while ((c = in.read()) != -1) {
-            if (c == '\n')
-               continue;
-            code = coder.codeUpdate(code, alphabetmap.code((byte) c));
-            System.out.println(code);
-         }
-      } catch (IOException e) {
-         System.exit(1);
-      } catch (InvalidSymbolException e) {
-         System.err.println("invalid symbol");
-         System.exit(1);
-      }
-   }
 }
