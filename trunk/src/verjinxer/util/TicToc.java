@@ -44,6 +44,7 @@ public final class TicToc
    
    /**
     * @return  milliseconds since last tic()
+    * @deprecated use tocs instead
     */
    public long tocMilliSeconds()
    {

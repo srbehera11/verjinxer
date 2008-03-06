@@ -164,13 +164,13 @@ public final class QgramIndexer {
    
    
    /**
-    * Read a sequence file from disk into a ByteBuffer.
-    * @param seqfile   name of the sequence file
-    * @param external  whether to use memory mapping instead of reading the sequence
-    * @return The sequence in a ByteBuffer
+    * Reads a sequence file from disk into a ByteBuffer.
+    * @param seqfile      name of the sequence file
+    * @param memoryMapped whether to use memory mapping instead of reading the sequence
+    * @return             the sequence in a ByteBuffer
     */
-   private ByteBuffer readSequenceFile(final String seqfile, boolean external) throws IOException {
-      if (external)
+   private ByteBuffer readSequenceFile(final String seqfile, boolean memoryMapped) throws IOException {
+      if (memoryMapped)
          return g.mapR(seqfile);
       // not external: read bytes into array-backed buffer
       g.logmsg("  reading sequence file '%s'...%n", seqfile);
@@ -255,7 +255,7 @@ public final class QgramIndexer {
                   if (doseqfreq && lastseq[qcode] < seqnum) {
                      lastseq[qcode] = seqnum;
                      sfrq[qcode]++;
-                  } // TODO is this still correct?
+                  }
                }
             atSequenceStart = false;
          } else { // attempt simple update
@@ -289,7 +289,6 @@ public final class QgramIndexer {
       return frq;
    }
 
-    
    /** See documentation of computeFrequencies().
     * This implementation uses a sparse q-gram iterator. 
     */
@@ -331,22 +330,23 @@ public final class QgramIndexer {
    
    
    /**
-    * Given q-gram frequencies, computes the necessary sizes of the buckets,
+    * Computes the necessary sizes of q-gram buckets from q-gram frequencies, 
     * while taking a filter into account.
     * @param frq         the array of q-gram frequencies
     * @param overwrite   if true, overwrite frq with bck; otherwise, create a separate array for bck
-    * @param thefilter   a QGramFilter, specifies which q-grams to ignore
-    * @return An array of size 2 containing {bck, maxbcksize},
+    * @param thefilter   a filter that specifies which q-grams to ignore
+    * @return
+    * An array of size 2 containing {bck, maxbcksize},
     * where bck is the array of bucket positions and maxbcksize is the largest occurring bucket size.
-    * The actual buckets starts are in bck[0] .. bck[bck.length-2]. 
-    * The element bck[bck.length-1] is the sum over all buckets (number of q-grams in index).
+    * The actual buckets starts are in bck[0..bck.length-2]. 
+    * The element bck[bck.length-1] is the sum over all buckets (that is, the number of q-grams in the index).
     */
    public Object[] computeBuckets(final int[] frq, final boolean overwrite, final QGramFilter thefilter) {
       final int[] bck = (overwrite)? frq : Arrays.copyOf(frq, frq.length);
       // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
       final int aq = bck.length - 1; // subtract sentinel space
 
-      // apply filter: at the moment, bck contains frequencies (frq), not yet bucket boundaries!
+      // apply filter: at the moment, bck contains frequencies (frq), not yet bucket sizes!
       for (int c = 0; c < aq; c++) if (thefilter.getBoolean(c)) bck[c] = 0; // reduce frequency to zero
 
       // compute bck from frq
@@ -364,11 +364,7 @@ public final class QgramIndexer {
       return result;
    }
 
-   
-   
-
-   
-   /** generates a q-gram index of a given file.
+   /** Generates a q-gram index of a given file.
     * @param seqfile       name of the sequence file (i.e., of the translated text)
     * @param q             q-gram length
     * @param asize         alphabet size; 
@@ -557,10 +553,7 @@ public final class QgramIndexer {
       return ret;
    }
 
-   
-    /**
-    * @throws java.io.IOException 
-    * @throws java.lang.IllegalArgumentException if bisulfite is set, but asize is not 4
+   /** Generates a q-gram index of a given file.
     */
    private Object[] generateQGramIndex1(
          final String seqfile,
@@ -661,7 +654,7 @@ public final class QgramIndexer {
 
    
    
-   /** checks the q-gram index of the given files for correctness.
+   /** Checks the q-gram index of the given files for correctness.
     * @param seqfile     name of the sequence file
     * @param q           q-gram length
     * @param asize       alphabet size
@@ -676,14 +669,7 @@ public final class QgramIndexer {
    public int checkQGramIndex(final String seqfile, final int q, final int asize,
          final String bucketfile, final String qposfile, final QGramFilter thefilter, final boolean bisulfite)
          throws IOException {
-      // TODO: Needs to be adapted to bisulfite!
-
-      // Initialize q-gram storage
-      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
-      final QGramCoder     qcoder = coder.qcoder;
-      byte[] qgram = new byte[q+1];
-
-      // Read s and bck into arrays
+      // Read sequence and bucketfile into arrays
       System.gc();
       TicToc timer = new TicToc();
       g.logmsg("  reading %s and %s%n", seqfile, bucketfile);
@@ -693,12 +679,17 @@ public final class QgramIndexer {
       g.logmsg("  reading finished after %.2f sec%n", timer.tocs());
 
       final int n = s.length;
-      final BitArray sok = new BitArray(n - q + 1);
+      final BitArray sok = new BitArray(n - q + 1); // TODO what is sok?
       g.logmsg("  %s has length %d, contains %d %d-grams%n", seqfile, n, n-q+1, q);
+
+      // Initialize q-gram storage
+      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
+      final QGramCoder     qcoder = coder.qcoder;
+      byte[] qgram = new byte[q];
 
       // Read the q-position array.
       IntBuffer qpos = g.mapR(qposfile).asIntBuffer();
-      int b = -1;
+      int b = -1; // current bucket
       int bold;
       int i = -1;
       g.logmsg("  scanning %s, memory-mapped...%n", qposfile);
@@ -707,16 +698,17 @@ public final class QgramIndexer {
       for (r = 0; r<rend; r++) {
          i = qpos.get();
          bold = b;
-          // maybe have reached a new bucket; in this case, generate the new correct q-gram
-         while (r == bck[b + 1])   b++;
+         // maybe have reached a new bucket; in this case, generate the new correct q-gram
+         while (r == bck[b + 1])   
+            b++;
          if (bold != b) qgram = qcoder.qGram(b, qgram);
          // TODO: check whether qgram (in index) is  bis-compatible to s[i...i+q-1] (text q-gram).
          if (!coder.areCompatible(qgram, 0, s, i)) {
             g.logmsg("r=%d, i=%d, expected: %s, observed: %s.%n", 
                   r, i, StringUtils.join("", qgram, 0, q), StringUtils.join("", s, i, q));
-            return (r);
+            return r;
          }
-         assert (i >= 0 && i <= n - q);
+         assert i >= 0 && i <= n - q;
          sok.set(i, true);
       }
 

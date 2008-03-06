@@ -152,7 +152,7 @@ public class NonUniqueProbeDesigner {
     }
     if (external) qpos  = g.mapR(qposfile).asIntBuffer();
     else          qposa = g.slurpIntArray(qposfile);
-    g.logmsg("  reading finished after %.1f sec%n", timer.tocMilliSeconds()/1000.0);
+    g.logmsg("  reading finished after %.1f sec%n", timer.tocs());
     g.logmsg("nonunique: starting probe selection...%n");
     n = s.length;
     m = ssp.length;
@@ -241,7 +241,7 @@ public class NonUniqueProbeDesigner {
         // (3x) Status
         while(p>=nextslice) {
           g.logmsg("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d%n",
-              percentdone, timer.tocMilliSeconds()/1000.0, p, n-1, seqnum, m-1);
+              percentdone, timer.tocs(), p, n-1, seqnum, m-1);
           percentdone += 1;  nextslice += slicesize;
         }
         
@@ -286,7 +286,7 @@ public class NonUniqueProbeDesigner {
     }
     outputRange(firstgood, lastgood);
     out.close();
-    g.logmsg("nonunique: probe selection took %.1f sec%n", timer.tocMilliSeconds()/1000.0);
+    g.logmsg("nonunique: probe selection took %.1f sec%n", timer.tocs());
     
     // Finally, write statistics
     g.logmsg("nonunique: writing statistics to '%s'%n",statfile);
@@ -311,7 +311,7 @@ public class NonUniqueProbeDesigner {
     }
     
     // that's all
-    g.logmsg("nonunique: total time was %.1f sec%n", gtimer.tocMilliSeconds()/1000.0);
+    g.logmsg("nonunique: total time was %.1f sec%n", gtimer.tocs());
     return returnvalue;
   }
   
