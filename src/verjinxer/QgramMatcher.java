@@ -5,7 +5,7 @@
  * Sample usage:
  *
  * To map a 454 sequencing run ('run1') against human chromosome 1:
- * ... qmatch -l 25 -M 15 -f 2:0 -t #  run1  c01
+ * ... qmatch -l 25 -M 15 -F 2:0 -t #  run1  c01
  * We expect a perfect read of length 100.  This should give rise to at least one perfect match of length >= 25.
  * We expect a unique location on the genome. This should give rise to at most 15 hits of length >= 25.
  * We do not allow hits to start a degenerate q-grams that consist  of only 2 different nucleotides.

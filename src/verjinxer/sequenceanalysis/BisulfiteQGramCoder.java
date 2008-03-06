@@ -106,7 +106,7 @@ public final class BisulfiteQGramCoder {
    }
 
    // (hardcoded) encoding for nucleotides
-   public static final byte NUCLEOTIDE_A = 0;    // private enum Nucleotide { A, C, G, T; }
+   public static final byte NUCLEOTIDE_A = 0;
    public static final byte NUCLEOTIDE_C = 1;
    public static final byte NUCLEOTIDE_G = 2;
    public static final byte NUCLEOTIDE_T = 3;
@@ -181,9 +181,10 @@ public final class BisulfiteQGramCoder {
 
    /**
     * Updates q-gram codes.
-    * @param next the next byte in the input.
+    * @param next the next byte in the input
     * @param after the byte following next in the input.
-    * May be an invalid alphabet character if there is no regular character following.  
+    * May be an invalid alphabet character if there is no regular character following.
+    * @throws IllegalArgumentException if next is not a regular alphabet symbol.
     */
    public void update(byte next, byte after) {
       // update qcode of unmodified sequence

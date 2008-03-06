@@ -7,7 +7,6 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 import static java.nio.channels.FileChannel.*;
-import verjinxer.sequenceanalysis.*;
 
 /**
  * This class provides a connection between an array of a primitive type,
@@ -45,7 +44,7 @@ public class ArrayFile {
    private enum Mode { READ, WRITE };
    
    /**
-    * Create a new instance of ArrayFile with the given filename and buffer size.
+    * Creates a new instance of ArrayFile with the given filename and buffer size.
     * The buffer size must be divisible by 16. If it is not, it is rounded up
     * to be divisible by 16. The buffer is allocated as a direct buffer.
     * @param filename  the name of this file on disk;
@@ -65,7 +64,7 @@ public class ArrayFile {
    }
 
    /**
-    * Create a new instance of ArrayFile with the given filename and default buffer size
+    * Creates a new instance of ArrayFile with the given filename and default buffer size
     * @param filename  the name of this file on disk;
     *   it can be null and specified/changed later by <code>setFilename()</code>
     */
@@ -74,7 +73,7 @@ public class ArrayFile {
    }
 
    /**
-    * create a new instance of ArrayFile with default buffer size, 
+    * creates a new instance of ArrayFile with default buffer size, 
     * without specifying a file name yet (this can be done later with setFilename()).
     */
    public ArrayFile() {
@@ -98,7 +97,7 @@ public class ArrayFile {
 
    
    /**
-    * assign a (new) file name to this ArrayFile.
+    * Assigns a (new) file name to this ArrayFile.
     * If this ArrayFile is currently open, it is first closed.
     * After assigning the new name, the file is in closed state.
     * @param filename  the name of the file to associate
@@ -116,14 +115,14 @@ public class ArrayFile {
       return this;
    }
 
-   /** returns the length of the ArrayFile in bytes
+   /** Returns the length of the ArrayFile in bytes
     * @return length of this file in bytes
     */
    public long length() {
       return (file.length());
    }
 
-   /** returns the length of the ArrayFile in bytes, synonymous to length()
+   /** Returns the length of the ArrayFile in bytes, synonymous to length()
     * @return length of this file in bytes
     */
    public long size() {
@@ -135,7 +134,7 @@ public class ArrayFile {
    }
 
    /**
-    * closes this ArrayFile
+    * Closes this ArrayFile
     * @return this ArrayFile (for chaining methods)
     * @throws java.io.IOException 
     */
@@ -150,7 +149,7 @@ public class ArrayFile {
       return this;
    }
    
-   /** Write the contents of the internal buffer to a file,
+   /** Writes the contents of the internal buffer to a file,
     * (if the file is open in write mode).
     * @return this ArrayFile (for method chaining)
     * @throws java.io.IOException 
@@ -165,7 +164,7 @@ public class ArrayFile {
       return this;
    }
 
-   /** open this ArrayFile for writing 
+   /** Opens this ArrayFile for writing 
     * @return this ArrayFile (for method chaining)
     * @throws java.io.IOException 
     */
@@ -178,7 +177,7 @@ public class ArrayFile {
       return this;
    }
 
-   /** opens this ArrayFile for reading
+   /** Opens this ArrayFile for reading
     * @return this ArrayFile (for method chaining)
     * @throws java.io.IOException 
     */
@@ -190,7 +189,7 @@ public class ArrayFile {
       return this;
    }
    
-   /** opens this ArrayFile for reading and writing
+   /** Opens this ArrayFile for reading and writing
     * @return this ArrayFile (for method chaining)
     * @throws java.io.IOException 
     */
@@ -210,7 +209,7 @@ public class ArrayFile {
       return channel;
    }
 
-   /** creates a MappedByteBuffer for a part of this ArrayFile.
+   /** Creates a MappedByteBuffer for a part of this ArrayFile.
     * The file may already be open for reading and writing, 
     * but this is not recommended (results unspecified).
     * @param position the position in the file at which the mapping starts
@@ -225,7 +224,7 @@ public class ArrayFile {
       return buf;
    }
 
-   /** creates a MappedByteBuffer for this whole ArrayFile;
+   /** Creates a MappedByteBuffer for this whole ArrayFile;
     * the file need not (and probably should not) be open.
     * @return the MappedByteBuffer
     * @throws java.io.IOException  if an error occurs during mapping
@@ -234,7 +233,7 @@ public class ArrayFile {
       return mapR(0, length());
    }
 
-   /** creates a MappedByteBuffer for reading/writing a part of this ArrayFile;
+   /** Creates a MappedByteBuffer for reading/writing a part of this ArrayFile;
     * the file may already be open, but this is not recommended (results unspecified).
     * @param position the position in the file at which the mapping starts
     * @param size  the size of the region to be mapped (in bytes)
@@ -249,7 +248,7 @@ public class ArrayFile {
       return buf;
    }
 
-   /** creates a read/write MappedByteBuffer for this whole ArrayFile;
+   /** Creates a read/write MappedByteBuffer for this whole ArrayFile;
     * the file need not (and probably should not) be open.
     * @return the MappedByteBuffer
     * @throws java.io.IOException  if an error occurs during mapping
@@ -262,7 +261,7 @@ public class ArrayFile {
    
    
    /**
-    * write a part of a given array to disk via this ArrayFile. 
+    * Writes a part of a given array to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
     * Otherwise, replace the whole file by the given (part of) the array.
     * @param a      the int[] to write
@@ -296,7 +295,7 @@ public class ArrayFile {
    }
    
    /**
-    * write a whole given array to disk via this ArrayFile. 
+    * Writes a whole given array to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
     * Otherwise, replace the whole file by the given (part of) the array.
     * @param a     the int[] to write
@@ -327,7 +326,7 @@ public class ArrayFile {
    }
    
    /**
-    * write a whole byte array to disk via this array file.
+    * Writes a whole byte array to disk via this array file.
     * If this ArrayFile is open for writing, write at the current file position.
     * Otherwise, replace the whole file by the given (part of) the array.
     * @param a
@@ -339,7 +338,7 @@ public class ArrayFile {
    }
 
   /**
-    * write the given ByteBuffer (between position and limit) to disk via this ArrayFile. 
+    * Writes the given ByteBuffer (between position and limit) to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
     * Otherwise, replace the whole file by the given (part of) the array.
     * @param b     the ByteBuffer to write
@@ -385,7 +384,7 @@ public class ArrayFile {
 
    
    /**
-    * read a part of a file on disk via this ArrayFile into a part of an array,
+    * Reads a part of a file on disk via this ArrayFile into a part of an array,
     * a[start .. start+len-1].
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is smaller than (start+len), a runtime exception occurs.
@@ -423,7 +422,7 @@ public class ArrayFile {
    }
 
    /**
-    * read a file on disk via this ArrayFile into an array a[0 .. end].
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is too small, a runtime exception occurs.
     * If this ArrayFile is presently closed, it is opened, and closed when done.
@@ -440,7 +439,7 @@ public class ArrayFile {
   
    
    /**
-    * read a part of a file on disk via this ArrayFile into a part of an array,
+    * Reads a part of a file on disk via this ArrayFile into a part of an array,
     * a[start .. start+len-1].
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is smaller than (start+len), a runtime exception occurs.
@@ -468,7 +467,7 @@ public class ArrayFile {
    }
 
    /**
-    * read a file on disk via this ArrayFile into an array a[0 .. end].
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is too small, a runtime exception occurs.
     * If this ArrayFile is presently closed, it is opened, and closed when done.
@@ -482,7 +481,7 @@ public class ArrayFile {
    }
    
    /**
-    * read a file on disk via this ArrayFile into a newly allocated
+    * Reads a file on disk via this ArrayFile into a newly allocated
     * ByteBuffer that exactly fits the size of the file,
     * or the remainder of the file, if the file is already open.
     * @return  an array-backed ByteBuffer containing the file contents
@@ -503,7 +502,7 @@ public class ArrayFile {
    // ============ memory mapped read()s =======================================
    
    /**
-    * read a part of a file on disk via this ArrayFile into a part of an array,
+    * Reads a part of a file on disk via this ArrayFile into a part of an array,
     * a[start .. start+len-1], using memory mapping.
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is smaller than (start+len), a runtime exception occurs.
@@ -529,7 +528,7 @@ public class ArrayFile {
    }
 
    /**
-    * read a file on disk via this ArrayFile into an array a[0 .. end].
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is too small, a runtime exception occurs.
     * @param a     the int[] to read
@@ -542,7 +541,7 @@ public class ArrayFile {
 
    
    /**
-    * read a part of a file on disk via this ArrayFile into a part of an array,
+    * Reads a part of a file on disk via this ArrayFile into a part of an array,
     * a[start .. start+len-1], using memory mapping.
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is smaller than (start+len), a runtime exception occurs.
@@ -566,7 +565,7 @@ public class ArrayFile {
    }
 
    /**
-    * read a file on disk via this ArrayFile into an array a[0 .. end].
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
     * If a is null, a sufficiently large new array is allocated.
     * If the size of the given array is too small, a runtime exception occurs.
     * @param a     the int[] to read
@@ -581,7 +580,8 @@ public class ArrayFile {
    //=============================================================================================
               
 
-   /** counts the number of occurrences of each byte (0..255) in the file.
+   /**
+    * Counts the number of occurrences of each byte (0..255) in the file.
     * @param counts array where to store the counts. 
     *   If its size is different from 256, a new array is allocated. 
     * @return counts or a new long[256] containing the counts
@@ -599,7 +599,8 @@ public class ArrayFile {
       return counts;
    }
 
-   /** counts the number of occurrences of each byte (0..255) in the file.
+   /**
+    * Counts the number of occurrences of each byte (0..255) in the file.
     * @return a new long[256] array containing the counts
     * @throws java.io.IOException 
     */
@@ -607,7 +608,8 @@ public class ArrayFile {
       return byteCounts(null);
    }
 
-   /** prints the given count array to the specified PrintStream.
+   /**
+    * Prints the given count array to the specified PrintStream.
     * This is a convenience method for testing/debugging.
     * @param out the stream to print to
     * @param counts the array containing counts

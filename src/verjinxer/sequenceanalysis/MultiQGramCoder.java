@@ -204,18 +204,16 @@ public class MultiQGramCoder {
    public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
       if (qcoder.areCompatible(qgram, i, s, p)) return true;
       if (!bisulfite) return false;
-      return (bicoder.areCompatible(qgram, i, s, p));
+      return bicoder.areCompatible(qgram, i, s, p);
    }
    
-   // ======================================================================================================
-
    public void update(byte next, byte after) {
       if (bisulfite) {
-         assert (0 <= next && next < asize);
+         assert 0 <= next && next < asize;
          bicoder.update(next, after);
       } else {
          qcode = qcoder.codeUpdate(qcode, next);
-         assert (qcode >= 0);
+         assert qcode >= 0;
       }
    }
 
