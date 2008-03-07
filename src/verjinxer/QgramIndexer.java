@@ -1,7 +1,6 @@
 /*
  * QgramIndexer.java
  * Created on 30. Januar 2007, 15:15
- *
  */
 package verjinxer;
 
@@ -402,7 +401,7 @@ public final class QgramIndexer {
          final QGramFilter thefilter,
          boolean bisulfite) 
          throws IOException {
-      return generateQGramIndex1(seqfile,q,asize, separator, bucketfile, qposfile, qfreqfile, qseqfreqfile, external, thefilter, bisulfite);
+      return generateQGramIndex0(seqfile,q,asize, separator, bucketfile, qposfile, qfreqfile, qseqfreqfile, external, thefilter, bisulfite);
    }
 
    
@@ -538,7 +537,7 @@ public final class QgramIndexer {
          wtimer.tic();
          //g.logmsg("    mode of outfile is %s%n", outfile.getMode());
          final long outpos = outfile.writeArray(qposslice, 0, qpossize);
-         g.logmsg("    writing slice took %.2f sec; not at position %d%n", wtimer.tocs(), outpos);
+         g.logmsg("    writing slice took %.2f sec; now at position %d%n", wtimer.tocs(), outpos);
          bckstart = bckend;
       }
 

@@ -1,5 +1,6 @@
 package verjinxer.sequenceanalysis;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -147,38 +148,61 @@ public class MultiQGramCoder {
   }
    
    // ------------------------------------------------------------------------------------
-   // sparse iterator class for bisulfite!
+   // sparse iterator class for both standard and bisulfite q-grams
+   // (if bisulfite == false in the encolsing instance,
+   // the iterator is deferred to the QGramCoder class.)
    private class SparseQGramIterator implements Iterator<Long> {
-      private final Iterator<Long> it; // iterator of the underlying QGramCoder
-      private int bisRemaining = 0;    // number of remaining bisulfite codes
-      private ArrayList<Integer> bisCodes = null;  // remaining bisulfite codes
+      private final Iterator<Long> it;    // iterator of the underlying QGramCoder
+      private int bisFwdRemaining = 0;    // number of remaining forward bisulfite codes
+      private int bisRevRemaining = 0;    // number of ramaining reverse bisulfite codes
+      private ArrayList<Integer> bisF = null;  // remaining forward bisulfite codes
+      private ArrayList<Integer> bisR = null;  // remaining reverse bisulfite codes
       private long pos = -1;
+      private final Object t;
+      private final int tLength;
 
       SparseQGramIterator(final Object t, final boolean stopAtSeparator, final int separator) {
          assert bisulfite;
+         this.t = t;
+         tLength = (t instanceof byte[])? ((byte[])t).length : ((ByteBuffer)t).limit();
          if (stopAtSeparator) 
             it = qcoder.sparseQGramIterator(t, separator);
          else
             it = qcoder.sparseQGramIterator(t);
       }
       
+      public byte charAt(final int p) {
+         if (p<0 || p>=tLength) return((byte)-1);
+         return ((t instanceof byte[]) ? ((byte[]) t)[p] : ((ByteBuffer) t).get(p));
+      }
+      
       public boolean hasNext() {
-         if(bisRemaining>0) return true;
+         if(bisFwdRemaining>0) return true;
+         if(bisRevRemaining>0) return true;
          return it.hasNext();
       }
 
       public Long next() {
-         throw new UnsupportedOperationException("this does not work");
-         /*
-         if(bisRemaining>0) {
-            final long pc = (pos<<32) + bisCodes.get(--bisRemaining);
+         if(bisFwdRemaining>0) {
+            final long pc = (pos<<32) + bisF.get(--bisFwdRemaining);
             return pc;
          }
+         if(bisRevRemaining>0) {
+            final long pc = (pos<<32) + bisR.get(--bisRevRemaining);
+            return pc;
+         }
+         // get standard q-code first (no bisulfite replacement)
          final long pc = it.next();
          pos = pc>>>32;
-         // TODO bisCodes = bicoder.compatibleQCodes((int)pc);
-         bisRemaining = bisCodes.size();
-         return pc;*/
+         final int qcod = (int)pc;
+         // get forward bisulfite q-codes. If original q-code is invalid, get empty list.
+         bisF = bicoder.bisulfiteQCodes(qcod, false, charAt((int)(pos+q))==BisulfiteQGramCoder.NUCLEOTIDE_G);
+         bisFwdRemaining = bisF.size();
+         // get reverse bisulfite q-codes. If original q-code is invalid, get empty list.
+         bisR = bicoder.bisulfiteQCodes(qcod, true,  charAt((int)(pos-1))==BisulfiteQGramCoder.NUCLEOTIDE_C);
+         bisRevRemaining = bisR.size();
+         //System.out.printf("   [pos=%d, fwd=%d, rev=%d]%n", pos, bisFwdRemaining, bisRevRemaining);
+         return pc;
       }
 
       public void remove() {
