@@ -5,7 +5,7 @@ import java.util.Arrays;
 import junit.framework.TestCase;
 
 /**
- *
+ * Unit Tests for QGramCoder, BisulfiteQGramCoder, and MultiQGramCoder
  * @author Sven Rahmann
  */
 public class QGramCoderTest extends TestCase {
@@ -24,34 +24,14 @@ public class QGramCoderTest extends TestCase {
         super.tearDown();
     }
 
-   /**
-    * Test of code method, of class QGramCoder.
-    */
-   public void testCode() {
-   }
-
-   /**
-    * Test of codeUpdate method, of class QGramCoder.
-    */
-   public void testCodeUpdate() {
-   }
-
-   /**
-    * Test of qGram method, of class QGramCoder.
-    */
-   public void testQGram() {
-   }
-
-   /**
-    * Test of qGramString method, of class QGramCoder.
-    */
-   public void testQGramString() {
-   }
 
    private final int SKIP = -99;
-   final byte[] text = {0, 1, 2, 4, 5, 2, 0, -1, 9, 3, 2, 4, -1, 0};
-   final int q=2;
+   // TODO: repeat tests for many texts and values of q
+   final byte[] text = {0, 1, 2, 4, 5, 2, 2, 1, 2, 1, 0, -1, 9, 3, 2, 4, -1, 0, 0};
+   //                   A  C  G  x  x  G  G  C  G  C  A  .   x  T  G  x  .   A  A
+   final int q=3;
 
+   
    /**
     * Test of simple iteration
     */
@@ -76,7 +56,7 @@ public class QGramCoderTest extends TestCase {
    
 
    /**
-    * Test iteration without separators
+    * Test of sparse iteration without separators
     */
    public void testSparseQGrams() {
       final QGramCoder coder = new QGramCoder(q, 4); // |A|=4   
@@ -101,7 +81,7 @@ public class QGramCoderTest extends TestCase {
    }
 
    /**
-    * test iteration with separators
+    * test of sparse iteration with separators
     */
    public void testSparseQGramsWithSeparators() {
       final QGramCoder coder = new QGramCoder(q, 4); // |A|=4   
@@ -123,6 +103,17 @@ public class QGramCoderTest extends TestCase {
       System.out.println();
       for(int p=0; p<correct.length; p++) 
          assertEquals(String.format("Error at position %d",p),correct[p], qcodes[p]);
+   }
+   
+   public void testMulti() {
+      final AlphabetMap DNA = AlphabetMap.DNA();
+      final MultiQGramCoder coder = new MultiQGramCoder(q, 4, true);
+      for(long pc: coder.sparseQGrams(text, (byte)-1)) {
+         final int p = (int)(pc>>32);
+         final int c = (int)pc;
+         System.out.printf("pos=%d:  code=%d  (%s)%n", p, c, coder.qcoder.qGramString(c, DNA));
+      }
+      System.out.println();
    }
 
 }

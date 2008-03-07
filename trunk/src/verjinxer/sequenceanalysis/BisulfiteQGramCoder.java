@@ -7,25 +7,38 @@ import java.util.HashSet;
 /**
  * This class is a special QGramCoder that simulates bisulfite treatment on its input sequence.
  * It creates all possible q-grams. The alphabet size is fixed to four.
+ * 
+ * Make sure that different threads use different instances of a BisulfiteQGramCoder.
+ * 
  * @author Marcel Martin
+ * @author Sven Rahmann
  */
 public final class BisulfiteQGramCoder {
    
    public final QGramCoder coder; // underlying q-gram coder
+   public final int q;            // q-gram length
    private HashSet<Integer> qcodes_bisulfite;    // qcodes for bisulfite treated strand
    private HashSet<Integer> qcodes_bisulfite_rc; // qcodes for rc of bisulfite treated rc (rc: reverse complement)
    private final ArrayList<int[][]> compatibleQCodes; // qgrams bis.-compatible to a given q-gram
-
+   private final ArrayList<Integer> fwdCompatibleQCodes;
+   private final ArrayList<Integer> rrcCompatibleQCodes;
+   private final byte[] tmpQGram;
+   
    /**
     * Creates a new BisulfiteQGramCoder. The alphabet size is fixed to 4 (A, C, G, T).
     * @param q length of the q-grams coded by this instance
     */
    public BisulfiteQGramCoder(int q) {
       coder = new QGramCoder(q, ASIZE);
+      this.q = q;
       qcodes_bisulfite = new HashSet<Integer>(1<<q);
       qcodes_bisulfite_rc = new HashSet<Integer>(1<<q);
       compatibleQCodes = new ArrayList<int[][]>(1<<(q+1));     
       computeCompatibleQCodes();
+      final int zweiHochQHalbe = (1<<((q+1)/2)) + 2; // 2^ceil(q/2) plus some extra space
+      fwdCompatibleQCodes = new ArrayList<Integer>(zweiHochQHalbe);
+      rrcCompatibleQCodes = new ArrayList<Integer>(zweiHochQHalbe);
+      tmpQGram = new byte[q];
       reset();
    }
 
@@ -149,16 +162,66 @@ public final class BisulfiteQGramCoder {
     * generate all q-gram codes that can arise from it by bisulfite treatment.
     * (v1) all Cs -> T.
     * (v2) all Cs -> T, except CG remains CG;
-    *      If there is a C at the last position, we need more information.
+    *      If there is a C after the last position, we need more information.
     * (v3) all Gs -> A.
     * (v4) all Gs -> A, except CG remains CG;
-    *     If there is a G at the first q-gram position, we need more information.
-    * @param qcode the original q-gram code.
-    * @return a list of possible bisulfite-treated q-gram codes.
+    *     If there is a G before the first q-gram position, we need more information.
+    * @param qcode           the original q-gram code.
+    * @param reverse         if true, produce revcomp-bisulfite-revcomp instead of forward-bisulfite q-gram codes
+    * @param specialBorder   indicate whether there is a C after the last (if reverse, a G before the first) position
+    * @return a list of bisulfite-treated q-gram codes for the given q-gram code.
     */
-   /*public ArrayList<Integer> compatibleQCodes(final int qcode) {
-      throw new UnsupportedOperationException("Not yet implemented");
-   }*/
+   public ArrayList<Integer> bisulfiteQCodes(final int qcode, final boolean reverse, final boolean specialBorder) {
+      ArrayList<Integer> result = null;
+      int loneReactions = 0;
+      coder.qGram(qcode, tmpQGram); // get the q-gram into tmpQGram (which is pre-allocated)
+ 
+      if (!reverse) {  // forward
+         result = fwdCompatibleQCodes;
+         result.clear();
+         if (qcode<0) return result;
+         result.add(0);
+         for(int p=0; p<q; p++) {
+            final byte ch = tmpQGram[p];
+            final byte chbi = (ch==NUCLEOTIDE_C)? NUCLEOTIDE_T : ch;
+            final boolean GFollows = (p<q-1 && tmpQGram[p+1]==NUCLEOTIDE_G) || (p==q-1 && specialBorder);
+            final boolean isCG = (ch==NUCLEOTIDE_C && GFollows);
+            final int L = result.size();
+            for (int l=0; l<L; l++) {
+               final int shifted = result.get(l)*4;
+               result.set(l,  shifted + chbi);
+               if (isCG) result.add(shifted+NUCLEOTIDE_C);
+            }
+            if (ch==NUCLEOTIDE_C && !GFollows) loneReactions++;
+         }
+      } else {         // reverse
+         result = rrcCompatibleQCodes;
+         result.clear();
+         if (qcode<0) return result;
+         result.add(0);
+         for(int p=0; p<q; p++) {
+            final byte ch = tmpQGram[p];
+            final byte chbi = (ch==NUCLEOTIDE_G)? NUCLEOTIDE_A : ch;
+            final boolean CBefore = (p>0 && tmpQGram[p-1]==NUCLEOTIDE_C) || (p==0 && specialBorder);
+            final boolean isCG = (ch==NUCLEOTIDE_G && CBefore);
+            final int L = result.size();
+            for (int l=0; l<L; l++) {
+               final int shifted = result.get(l)*4;
+               result.set(l, shifted + chbi);
+               if (isCG) result.add(shifted+NUCLEOTIDE_G);
+            }
+            if (ch==NUCLEOTIDE_G && !CBefore) loneReactions++;
+         }
+      } // end else (reverse case)
+      if (loneReactions==0) { 
+         // no lone reactions: we have re-generated the original q-code, too.
+         // the original q-code must be the last one in the list -> remove it.
+        final int last = result.size()-1;
+        assert(result.get(last) == qcode); // last inserted must be equal to original
+        result.remove(last);
+      }
+      return result;
+   }
 
    private int qcode;                            // qcode for regular strand
    private byte previous_nucleotide = -1;

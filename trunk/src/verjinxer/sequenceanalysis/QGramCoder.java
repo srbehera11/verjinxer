@@ -50,11 +50,11 @@ public final class QGramCoder
    }
    
    /** the q-gram length */
-   public final int q;              // intentionally public, cannot be changed!
+   public final int q;              // intentionally public; final cannot be changed!
    /** alphabet size; the alphabet is {0,1, ..., asize-1} */
-   public final int asize;          // intentionally public, cannot be changed!
+   public final int asize;          // intentionally public; final cannot be changed!
    /** the number of different q-grams, equals asize^q */
-   public final int numberOfQGrams; // intentionally public, cannot be changed!
+   public final int numberOfQGrams; // intentionally public; final cannot be changed!
 
    private final int mod;       // equals asize^(q-1):  q-1 q-2 ... 1 0
    
@@ -154,6 +154,7 @@ public final class QGramCoder
     *  null if invalid symbols are encountered
     */
   public String qGramString(final int qcode, final AlphabetMap amap) {
+     if(qcode<0 || qcode>=numberOfQGrams) return null;
     try {
       byte[] qgram = qGram(qcode);
       StringBuilder s = new StringBuilder(q);
