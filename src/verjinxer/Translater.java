@@ -44,6 +44,7 @@ public class Translater {
     g.logmsg("     generate new rc sequences and add <desc> to their headers.%n");
     g.logmsg("  --dnabi              translate to bisulfite-treated DNA%n");
     g.logmsg("  --protein            use standard protein alphabet%n");
+    g.logmsg("  --masked             lowercase bases are replaced with wildcards (only for DNA alphabets)%n");
     g.logmsg("  -r, --runs           additionally create run-related files%n");
   }
   
@@ -73,7 +74,7 @@ public class Translater {
     Properties prj = new Properties();
     prj.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"",args)+ "\"");
     
-    Options opt = new Options("i=index=indexname:,t=trim,a=amap:,dna,rc=rconly,dnarc:,dnabi,protein,r=run=runs");
+    Options opt = new Options("i=index=indexname:,t=trim,a=amap:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs");
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException e) {
@@ -111,11 +112,14 @@ public class Translater {
     if (opt.isGiven("protein")) givenmaps++;
     if (givenmaps>1) g.terminate("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein}.");
     
+    if (opt.isGiven("masked") && !(opt.isGiven("dna") || opt.isGiven("rc") || opt.isGiven("dnarc")))
+       g.terminate("translate: --masked can be used only in combination with one of {--dna, --rconly, --dnarc}.");
     if (opt.isGiven("a")) amap = g.readAlphabetMap(g.dir+opt.get("a"));
-    if (opt.isGiven("dna") || opt.isGiven("dnarc")) amap = AlphabetMap.DNA();
-    if (opt.isGiven("rc")) { reverse = true; amap = AlphabetMap.cDNA(); }
+    if (opt.isGiven("dna") || opt.isGiven("dnarc")) amap = opt.isGiven("masked") ? AlphabetMap.maskedDNA() : AlphabetMap.DNA();
+    
+    if (opt.isGiven("rc")) { reverse = true; amap = opt.isGiven("masked") ? AlphabetMap.maskedcDNA() : AlphabetMap.cDNA(); }
     if (opt.isGiven("dnarc")) {
-      amap2 = AlphabetMap.cDNA();
+      amap2 = opt.isGiven("masked") ? AlphabetMap.maskedcDNA() : AlphabetMap.cDNA();
       addrc = true;
       dnarcstring = opt.get("dnarc");
       if (dnarcstring.equals("")) separateRCByWildcard = true;
