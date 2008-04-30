@@ -357,7 +357,21 @@ public class AlphabetMap {
       "##separators:-1" });
     return a;
   }
-  
+
+  /** 
+   * @return the standard DNA alphabet, but repeat-masked.
+   * This means that lowercase nucleotides are wildcards.
+   */
+  public static final AlphabetMap maskedDNA() {
+    AlphabetMap a = new AlphabetMap();
+    a.init(new String[] {
+      "##symbols:0", "A","C","G","TU",
+      "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVvacgtu",
+      "##wildcards", "#",
+      "##separators:-1" });
+    return a;
+  }
+ 
   /**
    * @return  the standard complementary DNA alphabet
    */
@@ -366,6 +380,19 @@ public class AlphabetMap {
     a.init(new String[] {
       "##symbols:0", "TtUu","Gg","Cc","Aa",
       "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVv",
+      "##wildcards", "#",
+      "##separators:-1" });
+    return a;
+  }
+
+  /**
+   * @return  the standard complementary DNA alphabet
+   */
+  public static final AlphabetMap maskedcDNA() {
+    AlphabetMap a = new AlphabetMap();
+    a.init(new String[] {
+      "##symbols:0", "TU","G","C","A",
+      "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVvtugca",
       "##wildcards", "#",
       "##separators:-1" });
     return a;
