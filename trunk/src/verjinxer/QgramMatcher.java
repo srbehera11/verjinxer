@@ -59,6 +59,7 @@ public class QgramMatcher {
     g.logmsg("  -t, --tmh <filename> name of too-many-hits-filter file (use #)%n");
     g.logmsg("  -o, --out <filename> specify output file (use # for stdout)%n");
     g.logmsg("  -x, --external       save memory at the cost of lower speed%n");
+    g.logmsg("  -c, --cmatchesc      C matches C, even if not before G%n");
   }
   
   /** if run independently, call main
@@ -109,6 +110,7 @@ public class QgramMatcher {
   ArrayList<GlobMatch>   globmatches  = null; // list for unsorted matches
   
   boolean bisulfite = false; // whether the index is for bisulfite sequences
+  boolean c_matches_c = false; // whether C matches C, even if not before G
  
   /**
    * @param args the command line arguments
@@ -122,7 +124,7 @@ public class QgramMatcher {
     String tname, sname, dt, ds;
     
     Options opt = new Options
-        ("l=length:,s=sort=sorted,o=out=output:,x=external,m=min=minmatch=minmatches:,M=max:,F=filter:,t=tmh:,self");
+        ("l=length:,s=sort=sorted,o=out=output:,x=external,m=min=minmatch=minmatches:,M=max:,F=filter:,t=tmh:,self,c=cmatchesc");
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
@@ -198,7 +200,12 @@ public class QgramMatcher {
       else outname=opt.get("o");
     }
     if (outname!=null)  outname = g.outdir + outname + (sorted? ".sorted-matches" : ".matches");
-    
+
+    c_matches_c = opt.isGiven("c");
+
+    if (c_matches_c) g.logmsg("qmatch: C matches C, even if no G follows%n");
+    else g.logmsg("qmatch: C matches C only before G%n");
+
     // end of option parsing
 
     openFiles(dt, ds, outname); // provides tm
@@ -282,6 +289,7 @@ public class QgramMatcher {
    * @param maxactive
    * @param thefilter
    * @param toomanyhits gets modified
+   * @param c_matches_c whether C always matches C, even if not before G
    */
   private void match(QGramCoder coder, int maxactive, final QGramFilter thefilter, BitArray toomanyhits) {
     // Walk through t:
@@ -394,8 +402,7 @@ public class QgramMatcher {
      int ct = 2;
      
      int offset = 0;
-     boolean done = false;
-     while (!done) {
+     while (true) {
         if (!amap.isSymbol(s[sp+offset])) break;
         
         // What follows is some ugly logic to find out what type
@@ -433,6 +440,47 @@ public class QgramMatcher {
         } else {
            if (s[sp+offset] != t[tp+offset]) break;
         }
+        offset++;
+     }
+     assert offset >= q;
+     return offset;
+  }
+
+  /**
+   * Compares sequences s and t, allowing bisulfite replacements.
+   * Allows that a C matches a C, even if not before G (and that a
+   * G matches G even if not after C).
+   * @param sp start index in s
+   * @param tp start index in t
+   * @return length of match
+   */
+  private int bisulfiteMatchLengthCmC(int sp, int tp) {
+     int type = 0; // 0: unknown. 1: C->T, 2: G->A
+     
+     int offset = 0;
+     
+     //while (!amap.isSymbol(s[sp+offset]) && s[sp+offset] == t[tp+offset]) offset++;
+     while (true) {
+        if (!amap.isSymbol(s[sp+offset])) break;
+        
+        // What follows is some ugly logic to find out what type
+        // of match this is. That is, whether we should allow C -> T or
+        // G -> A replacements.
+        // For C->T, the rules are:
+        // If there's a C->T replacement, we must only allow those.
+        
+        byte s_char = s[sp+offset];
+        byte t_char = t[tp+offset];
+        if (s_char == t_char || (type == 1 && s_char == NUCLEOTIDE_C && t_char == NUCLEOTIDE_T) || (type == 2 && s_char == NUCLEOTIDE_G && t_char == NUCLEOTIDE_A)) {
+           offset++;
+           continue;
+        }
+        if (type != 0) break;
+        if (s_char == NUCLEOTIDE_C && t_char == NUCLEOTIDE_T)
+           type = 1;
+        else if (s_char == NUCLEOTIDE_G && t_char == NUCLEOTIDE_A)
+           type = 2;
+        else break;
         offset++;
      }
      assert offset >= q;
@@ -493,8 +541,10 @@ public class QgramMatcher {
     // iterate over all new matches 
     ai=0;
     for (int ni=0; ni<newactive; ni++) {
-      while (ai<active && activelen[ai]<q) ai++; 
-      assert(ai==active || newpos[ni]<=activepos[ai])
+      while (ai<active && activelen[ai]<q) ai++;
+      
+      // make sure that newly found q-grams overlap the old ones (unless c_matches_c)
+      assert(c_matches_c || (ai==active || newpos[ni]<=activepos[ai]))
         : String.format("tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d",
           tp,ai,active,ni,newpos[ni],activepos[ai], activelen[ai]);
       if (ai>=active || newpos[ni]!=activepos[ai]) { 
@@ -512,7 +562,7 @@ public class QgramMatcher {
           sp -= offset; // go back to start of match
         } else {
           sp = newpos[ni];
-          offset = bisulfiteMatchLength(sp, tp);
+          offset = c_matches_c ? bisulfiteMatchLengthCmC(sp, tp) : bisulfiteMatchLength(sp, tp);
         }
         newlen[ni] = offset;
         // maximal match (tp, sp, offset), i.e. ((seqnum,tp-seqstart), (i,sss), offset)
