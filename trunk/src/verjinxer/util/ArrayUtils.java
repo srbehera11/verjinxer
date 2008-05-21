@@ -168,12 +168,18 @@ public class ArrayUtils {
    * @return the maximum element of the given array.
    *   If the array is empty or contains only negative elements, 0 is returned.
    */
-  public static int maximumElement(int[] array) {
+  public static int maximumElement(final int[] array) {
     int maximum = 0;
     for (int a: array) if (a>maximum) maximum=a;
     return maximum;
   }
 
+  public static String bytesToString(final byte[] a, final int p) {
+    StringBuilder sb = new StringBuilder(a.length-p+1);
+    for(int i=p; i<a.length; i++)
+      sb.append(a[i]<0?"$":a[i]);
+    return sb.toString();
+  }
   
 }
 
