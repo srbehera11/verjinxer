@@ -130,7 +130,7 @@ public class SuffixTrayBuilder {
     steps = 0;
     if (method.equals("L"))            buildpos_L();
     else if (method.equals("R"))       buildpos_R();
-    else if (method.equals("minLR"))   buildpos_minLR();
+    else if (method.equals("minLR"))   buildpos_minLR(false);
     else if (method.equals("bothLR"))  buildpos_bothLR();
     else if (method.equals("bothLR2")) buildpos_bothLR2();
     else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
@@ -286,8 +286,9 @@ public class SuffixTrayBuilder {
    * by walking BIDIRECTIONALLY along a partially constructed doubly linked suffix list
    * until the first matching character is found in EITHER direction.
    * Needs text 's' and its length 'n' correctly set.
+   * @param show  write intermediate results to stdout?
    */
-  public void buildpos_minLR() {
+  public void buildpos_minLR(final boolean show) {
     lexfirstpos = new int[256];
     lexlastpos  = new int[256];
     lexprevpos  = new int[n];
@@ -332,7 +333,7 @@ public class SuffixTrayBuilder {
           } // end switch
         } // end symbol character
       } // end seeing character ch again
-      //showpos_R(String.format("List after step %d: [%d]%n", p, s[p])); // DEBUG
+      if (show) showall_R(String.format("List after step %d: [%d]%n", p, s[p])); // DEBUG
     } // end for p
   }
   
@@ -824,17 +825,17 @@ public class SuffixTrayBuilder {
    * where lexnextpos[] is available.
    *@param header  a header string to print
    */
-  private void showpos_R(String header) {
+  private void showall_R(String header) {
     int chi, p;
     System.out.printf(header);
     for (chi=0; chi<256; chi++) {
       assert(lexfirstpos[chi]==-1 || lexlastpos[chi]!=-1);
-      if (lexfirstpos[chi]!=-1)
-        System.out.printf("  char %d: lexfirst=%2d, lexlast=%2d%n", chi-128, lexfirstpos[chi], lexlastpos[chi]);
+      //if (lexfirstpos[chi]!=-1)
+      //  System.out.printf("  char %d: lexfirst=%2d, lexlast=%2d%n", chi-128, lexfirstpos[chi], lexlastpos[chi]);
     }
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     for (p=lexfirstpos[chi]; p!=-1; p=lexnextpos[p])
-      System.out.printf("  %2d: %d...%n", p, s[p]);
+      System.out.printf("  %2d: [%c] %s%n", p, (char)(p>0?s[p-1]+48:'$'), ArrayUtils.bytesToString(s,p));
   }
   
 // ==================== lcp routines ==================================

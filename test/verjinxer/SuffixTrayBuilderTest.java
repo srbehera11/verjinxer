@@ -36,12 +36,33 @@ public class SuffixTrayBuilderTest extends TestCase {
    * Test of main method, of class verjinxer.SuffixTrayBuilder.
    */
   public void testAll() {
-    doAllBinaryStrings();
+    doOneString("10100000100010000000001");
+    //doAllBinaryStrings();
     //doKlausStrings();
     //doAAA();
   }
  
   
+  public void doOneString(String text) {
+    final Globals g = new Globals();
+    g.quiet = true;
+    final int L = text.length();
+    text = text + "$";
+    final byte[] t = text.getBytes();
+    for(int j=0; j<L; j++) t[j]-=48;
+    t[L]=-1;
+    
+    final SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
+    stb.amap = AlphabetMap.NUMERIC();
+    stb.s = t;
+    stb.n = L+1;
+    stb.steps = 0;
+    stb.buildpos_minLR(true);
+
+    long totalSteps = stb.steps -1; // -1 for $
+    System.out.printf("Steps for %s: %d%n",text,totalSteps);
+
+  }
   
   public void doKlausStrings() {
     final int MAXONES = 25;
@@ -79,7 +100,7 @@ public class SuffixTrayBuilderTest extends TestCase {
       stb.s = t;
       stb.n = L+1;
       stb.steps = 0;
-      stb.buildpos_minLR();
+      stb.buildpos_minLR(false);
       stp = (int) stb.steps -1; // -1 for $
       //result = stb.checkpos_R();
       //assertEquals(0, result);
@@ -92,8 +113,8 @@ public class SuffixTrayBuilderTest extends TestCase {
   
   public void doAllBinaryStrings() {
     final int asize =  2;
-    final int minL  = 28;
-    final int maxL  = 30;
+    final int minL  = 23;
+    final int maxL  = 23;
     
     Globals g = new Globals();
     g.quiet = true;
@@ -119,7 +140,7 @@ public class SuffixTrayBuilderTest extends TestCase {
         // 1. process t
         stb.steps = 0;
         cntr++;
-        stb.buildpos_minLR();
+        stb.buildpos_minLR(false);
         //result = stb.checkpos_R();
         //assertEquals(0, result);
         totalsteps[L]+=stb.steps;
