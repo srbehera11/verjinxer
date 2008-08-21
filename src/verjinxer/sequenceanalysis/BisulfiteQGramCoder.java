@@ -217,7 +217,7 @@ public final class BisulfiteQGramCoder {
          // no lone reactions: we have re-generated the original q-code, too.
          // the original q-code must be the last one in the list -> remove it.
         final int last = result.size()-1;
-        assert(result.get(last) == qcode); // last inserted must be equal to original
+        assert result.get(last) == qcode; // last inserted must be equal to original
         result.remove(last);
       }
       return result;
