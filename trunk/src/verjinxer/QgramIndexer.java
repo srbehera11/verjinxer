@@ -184,6 +184,7 @@ public final class QgramIndexer {
     * Reads the given ByteBuffer and computes q-gram frequencies.
     * At this stage, filters are ignored:
     * The frequencies are the orignial frequencies in the byte file, before applying a filter.
+    * This implementation uses a sparse q-gram iterator. 
     * @param in    the input ByteBuffer.
     * @param coder the q-gram coder.
     * @param qseqfreqfile If this is not null, an array sfrq will be written to this file.
@@ -192,106 +193,6 @@ public final class QgramIndexer {
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n times.
     */
    public int[] computeFrequencies(
-         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final byte separator) {
-      return computeFrequencies1(in, coder, qseqfreqfile, separator);
-   }
-
-   
-    /** 
-     *  @deprecated use iterator-based method <code>computeFrequencies1()</code> instead.
-     */
-    private int[] computeFrequencies0(
-         final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final byte separator) {
-      
-      final TicToc timer = new TicToc();
-      final int q = coder.q;
-      final int asize = coder.asize;
-      final int aq = coder.numberOfQGrams;
-      int[] lastseq = null;              // lastseq[i] == k := q-gram i was last seen in sequence k
-      int[] sfrq = null;                 // sfrq[i] == n    := q-gram i appears in n distinct sequences. 
-      final int[] frq = new int[aq + 1]; // frq[i]  == n    := q-gram i appears n times; space for sentinel at the end
-
-      final boolean doseqfreq = (qseqfreqfile != null);
-      if (doseqfreq) {
-         lastseq = new int[aq];
-         Arrays.fill(lastseq, -1);
-         sfrq = new int[aq];
-      }
-
-      int seqnum = 0;
-      boolean atSequenceStart = true;
-      in.position(0);
-      long ll = in.limit();
-      byte after;
-      if (ll > 0)
-         after = in.get();
-      else
-         after = -1;
-      for (int i = 0; i < ll; i++)
-         if (atSequenceStart) {
-            int success;
-            // No previous qcode available, scan ahead for at least q new bytes
-            for (success = 0; success < q && i < ll; i++) {
-               byte next = after;
-               if (i < ll - 1)
-                  after = in.get();
-               else
-                  after = -1;
-               if (next < 0 || next >= asize) {
-                  coder.reset();
-                  success = 0;
-                  if (next == separator)
-                     seqnum++;
-               } else {
-                  coder.update(next, after);
-                  success++;
-               }
-            }
-            i--; // already incremented i beyond read position, so i--
-            if (success == q)
-               for (int qcode : coder.getCodes()) {
-                  frq[qcode]++;
-                  if (doseqfreq && lastseq[qcode] < seqnum) {
-                     lastseq[qcode] = seqnum;
-                     sfrq[qcode]++;
-                  }
-               }
-            atSequenceStart = false;
-         } else { // attempt simple update
-            byte next = after;
-            if (i < ll - 1)
-               after = in.get();
-            else
-               after = -1;
-            if (next == separator) {
-               seqnum++;
-               atSequenceStart = true;
-               coder.reset();
-            } else
-               if (0 <= next && next < asize) {
-                  coder.update(next, after); // read pos i, have q-gram at i-q+1
-                  for (int qcode : coder.getCodes()) {
-                     frq[qcode]++;
-                     if (doseqfreq && lastseq[qcode] < seqnum) {
-                        lastseq[qcode] = seqnum;
-                        sfrq[qcode]++;
-                     }
-                  }
-               } else {
-                  atSequenceStart = true;
-                  coder.reset();
-               }
-         }
-      in.rewind();
-      g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());      
-      if (doseqfreq) g.dumpIntArray(qseqfreqfile, sfrq);
-      return frq;
-   }
-
-   /** See documentation of computeFrequencies().
-    * This implementation uses a sparse q-gram iterator. 
-    */
-    private int[] computeFrequencies1(
          final ByteBuffer in, final MultiQGramCoder coder, final String qseqfreqfile, final byte separator) {
       
       final TicToc timer = new TicToc();
@@ -401,26 +302,6 @@ public final class QgramIndexer {
          final QGramFilter thefilter,
          boolean bisulfite) 
          throws IOException {
-      return generateQGramIndex0(seqfile,q,asize, separator, bucketfile, qposfile, qfreqfile, qseqfreqfile, external, thefilter, bisulfite);
-   }
-
-   
-   /**
-    * @deprecated  use the iterator version <code>generateQGramIndex1()</code> instead.
-    */
-   private Object[] generateQGramIndex0(
-         final String seqfile,
-         final int q,
-         final int asize,
-         final byte separator,
-         final String bucketfile,
-         final String qposfile,
-         final String qfreqfile,
-         final String qseqfreqfile,
-         final boolean external,
-         final QGramFilter thefilter,
-         boolean bisulfite) 
-         throws IOException {
       
       final TicToc totalTimer = new TicToc();
       final ByteBuffer in = readSequenceFile(seqfile, external);
@@ -428,152 +309,7 @@ public final class QgramIndexer {
 
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
       final int aq = coder.numberOfQGrams;
-      g.logmsg("  counting %d different %d-grams...%n", aq, q);
-
-      // Scan file once and count qgrams.
-      // One file may contain multiple sequences, separated by the separator.
-      // frq[i] == n means: q-gram with code i occurs n times in the input sequence.
-      // This holds before applying a filter.
-      final TicToc timer = new TicToc();
-      int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
-      int maxfreq = ArrayUtils.maximumElement(frq);
-      if (qfreqfile != null)  g.dumpIntArray(qfreqfile, frq, 0, aq);
-      final double timeFreqCounting = timer.tocs();
-      g.logmsg("  time for word counting and writing: %.2f sec%n", timeFreqCounting);
-
-      // Compute and write bucket array bck
-      // bck[i] == r means: positions of q-grams with code i start at index r within qpos
-      timer.tic();
-      final Object[] r = computeBuckets(frq, external, thefilter);
-      final int[] bck = (int[]) r[0];
-      final int maxbck = (Integer) r[1]; // only needed to return to caller
-      if (external) frq = null;          // in this case, frq has been overwritten with bck anyway
-      final int sum = bck[aq];
-      if (bucketfile != null)  g.dumpIntArray(bucketfile, bck);
-      final double timeBckGeneration = timer.tocs();
-      g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n", ll, sum);
-      g.logmsg("  average number of q-grams per sequence position is %.2f%n", ((double) sum) / ll);
-
-      //if (sum==0) { Object[] ret = {bck, null, frq, times, maxfreq, maxqbck}; return ret; }
-
-      // Determine slice size
-      timer.tic();
-      final int[] qposslice = ArrayUtils.getIntSlice(sum);
-      final int slicesize = qposslice.length;
-
-      final ArrayFile outfile = new ArrayFile(qposfile).openW();
-      int bckstart = 0;
-      while (bckstart < aq) {
-         TicToc wtimer = new TicToc();
-         wtimer.tic();
-         final int qposstart = bck[bckstart];
-         int bckend;
-         for (bckend = bckstart; bckend < aq && (bck[bckend + 1] - qposstart) <= slicesize; bckend++) { }
-         final int qposend = bck[bckend];
-         final int qpossize = qposend - qposstart;
-         final double percentdone = (sum == 0) ? 100.0 : 100.0 * (double) qposend / ((double) sum + 0);
-         g.logmsg("  collecting qcodes [%d..%d] = qpos[%d..%d] --> %.1f%%%n",
-               bckstart, bckend - 1, qposstart, qposend - 1, percentdone);
-         assert ((qpossize <= slicesize && qpossize > 0) || sum == 0) : "qgram: internal consistency error";
-
-         // read through input and collect all qgrams with  bckstart<=qcode<bckend
-         boolean atSequenceStart = true;
-         in.position(0);
-         byte after;
-         if (ll > 0)
-            after = in.get();
-         else
-            after = -1;
-         for (int i = 0; i < ll; i++)
-            if (atSequenceStart) {
-               // No previous qcode available, scan ahead for at least q new bytes
-               int success;
-               for (success = 0; success < q && i < ll; i++) {
-                  byte next = after;
-                  if (i < ll - 1)
-                     after = in.get();
-                  else
-                     after = -1;
-                  if (next < 0 || next >= asize) {
-                     coder.reset();
-                     success = 0;
-                  } else {
-                     coder.update(next, after);
-                     success++;
-                  }
-               }
-               i--; // already incremented i beyond read position
-               if (success == q)
-                  for (int qcode : coder.getCodes()) {
-                     assert (qcode >= 0);
-                     if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode)==0)
-                        //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
-                        // the starting position of this q-gram is i-q+1
-                        qposslice[(bck[qcode]++) - qposstart] = i - q + 1;
-                  }
-               atSequenceStart = false;
-            } else {
-               byte next = after;
-               if (i < ll - 1)
-                  after = in.get();
-               else
-                  after = -1;
-               if (0 <= next && next < asize) {
-                  coder.update(next, after);
-                  for (int qcode : coder.getCodes())
-                     if (qcode >= 0 && bckstart <= qcode && qcode < bckend && thefilter.get(qcode)==0)
-                        //qposslice.put((bck[qcode]++)-qposstart,  i-q+1);
-                        // the starting position of this q-gram is i-q+1
-                        qposslice[(bck[qcode]++) - qposstart] = i - q + 1;
-               } else {
-                  atSequenceStart = true;
-                  coder.reset();
-               }
-            }
-         g.logmsg("    collecting slice took %.2f sec%n", wtimer.tocs());
-
-         // write slice to file
-         g.logmsg("    writing slice of %d bytes to %s%n", 4*qpossize, qposfile);
-         wtimer.tic();
-         //g.logmsg("    mode of outfile is %s%n", outfile.getMode());
-         final long outpos = outfile.writeArray(qposslice, 0, qpossize);
-         g.logmsg("    writing slice took %.2f sec; now at position %d%n", wtimer.tocs(), outpos);
-         bckstart = bckend;
-      }
-
-      // clean up, return arrays only if not external and they fit in memory
-      outfile.close();
-      final double timeQpos = timer.tocs();
-      final double timeTotal = totalTimer.tocs();
-      final int[] qpos = (slicesize == sum && !external)? qposslice : null;
-
-      double times[] = {timeTotal, timeFreqCounting, timeBckGeneration, timeQpos};
-      Object[] ret = { (external? null : bck), qpos, frq, times, maxfreq, maxbck};
-      return ret;
-   }
-
-   /** Generates a q-gram index of a given file.
-    */
-   private Object[] generateQGramIndex1(
-         final String seqfile,
-         final int q,
-         final int asize,
-         final byte separator,
-         final String bucketfile,
-         final String qposfile,
-         final String qfreqfile,
-         final String qseqfreqfile,
-         final boolean external,
-         final QGramFilter thefilter,
-         boolean bisulfite) 
-         throws IOException {
-      
-      final TicToc totalTimer = new TicToc();
-      final ByteBuffer in = readSequenceFile(seqfile, external);
-      final long ll = in.limit();
-
-      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
-      final int aq = coder.numberOfQGrams;
+      g.logmsg("  initializing MultiQGramCoder took %.2f s%n", totalTimer.tocs());
       g.logmsg("  counting %d different %d-grams...%n", aq, q);
 
       // Scan file once and count qgrams.

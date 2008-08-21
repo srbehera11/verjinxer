@@ -140,11 +140,14 @@ public class MultiQGramCoder {
    *   and possibly over separators.
    */
   public Iterator<Long> sparseQGramIterator(final Object t, boolean showSeparators, final byte separator) {
-     return (bisulfite)?
-        new SparseQGramIterator(t, showSeparators, separator)
-        : (showSeparators)? 
-           qcoder.sparseQGramIterator(t, separator)
-           : qcoder.sparseQGramIterator(t);
+     if (bisulfite) 
+        return new SparseQGramIterator(t, showSeparators, separator);
+     else {
+        if (showSeparators)
+           return qcoder.sparseQGramIterator(t, separator);
+        else
+           return qcoder.sparseQGramIterator(t);
+     }
   }
    
    // ------------------------------------------------------------------------------------
@@ -177,9 +180,7 @@ public class MultiQGramCoder {
       }
       
       public boolean hasNext() {
-         if(bisFwdRemaining>0) return true;
-         if(bisRevRemaining>0) return true;
-         return it.hasNext();
+         return bisFwdRemaining>0 || bisRevRemaining>0 || it.hasNext();
       }
 
       public Long next() {
@@ -224,6 +225,8 @@ public class MultiQGramCoder {
     * @param s     another given q-gram (in text)
     * @param p     starting position within s
     * @return true iff qgram[i..i+q-1] equals s[p..p+q-1], possibly after bisulfite-treatment of s.
+    * 
+    * @deprecated
     */
    public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
       if (qcoder.areCompatible(qgram, i, s, p)) return true;
@@ -231,6 +234,7 @@ public class MultiQGramCoder {
       return bicoder.areCompatible(qgram, i, s, p);
    }
    
+   /** @deprecated 
    public void update(byte next, byte after) {
       if (bisulfite) {
          assert 0 <= next && next < asize;
@@ -239,18 +243,19 @@ public class MultiQGramCoder {
          qcode = qcoder.codeUpdate(qcode, next);
          assert qcode >= 0;
       }
-   }
+   }*/
 
+   /** @deprecated 
    public void reset() {
       if (bisulfite)
          bicoder.reset();
       else
          qcode = 0;
-   }
+   }*/
 
    /**
     * 
-    * @return 
+    * @return
     */
    public Collection<Integer> getCodes() {
       if (bisulfite)
