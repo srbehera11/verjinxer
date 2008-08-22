@@ -40,7 +40,8 @@ public class Main {
     g.logmsg("  qgram        ...          create qgram-index of translated file(s)%n");
     g.logmsg("  qfreq        ...          report most frequent q-grams in an index%n");
     g.logmsg("  qmatch       ...          report maximal matches of sequences vs index%n");
-    g.logmsg("  suffix       ...          build suffixtray (tree+array) of translated file(s)%n");
+    g.logmsg("  suffix       ...          build suffixtray of translated file(s)%n");
+    g.logmsg("  bigsuffix    ...          build suffixtray of HUGE translated file(s)%n");
     g.logmsg("  map          ...          map sequences to an index%n");
     g.logmsg("  nonunique    ...          find non-unique specific probes in an index%n");
     g.logmsg("Global options:%n");
@@ -116,6 +117,8 @@ public class Main {
       new QgramMatcher(g).run(rest);
     } else if (command.startsWith("su")) {
       new SuffixTrayBuilder(g).run(rest);
+    } else if (command.startsWith("bigsu")) {
+      new BigSuffixTrayBuilder(g).run(rest);
     } else if (command.startsWith("ma")) {
       new Mapper(g).run(rest);
     } else if (command.startsWith("nu") || command.startsWith("nonunique")) {
@@ -155,6 +158,8 @@ public class Main {
       new QgramMatcher(g).help();
     } else if (command.startsWith("su")) {
       new SuffixTrayBuilder(g).help();
+    } else if (command.startsWith("bigsu")) {
+      new BigSuffixTrayBuilder(g).help();
     } else if (command.startsWith("ma")) {
       new Mapper(g).help();
     } else if (command.startsWith("nu") || command.startsWith("nonunique")) {

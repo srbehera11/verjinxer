@@ -180,6 +180,15 @@ public class ArrayUtils {
       sb.append(a[i]<0?"$":a[i]);
     return sb.toString();
   }
+
+  public static String bytesToString(final HugeByteArray a, final long p) {
+    final long size = a.length-p+1;
+    if (size > ((1L<<32)-1)) throw new IllegalArgumentException("Array too big");
+    StringBuilder sb = new StringBuilder((int)size);
+    for(long i=p; i<a.length; i++)
+      sb.append(a.get(i)<0?"$":a.get(i));
+    return sb.toString();
+  }
   
 }
 

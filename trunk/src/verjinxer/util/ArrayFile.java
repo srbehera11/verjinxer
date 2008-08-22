@@ -35,7 +35,7 @@ public class ArrayFile {
    private final ByteBuffer internalBuffer;      // internal buffer
 
    private static final int BUFBLOCKS    = 1023;     // default buffer size is this blocks
-   private static final int BUFBLOCKSIZE = 1024;     // each block has this size in byes
+   private static final int BUFBLOCKSIZE = 1024;     // each block has this size in bytes
    private static final int BUFCYCLES    = 16;       // number of buffers with different sizes
    private static int numbuf = 0;                    // counter: current number of buffers;
                                                      // buffer #i gets (BUFBLOCKS - i % BUFCYCLES) blocks,
@@ -578,7 +578,8 @@ public class ArrayFile {
    public byte[] readArray(byte[] a) throws IOException {
       return readArray(a,0,-1,-1);
    }
-   
+
+
    /**
     * Reads a file on disk via this ArrayFile into a newly allocated
     * ByteBuffer that exactly fits the size of the file,
