@@ -2,6 +2,8 @@
  * QgramMatcher.java
  * Created on 25. April 2007, 12:32
  *
+ * TODO: adapt to 64-bit files
+ * 
  * Sample usage:
  *
  * To map a 454 sequencing run ('run1') against human chromosome 1:
@@ -81,7 +83,7 @@ public class QgramMatcher {
   AlphabetMap amap        = null;   // the alphabet map
   
   byte[]      t           = null;   // the target sequence text (coded)
-  int[]       tssp        = null;   // sequence separator positions in text t
+  long[]       tssp       = null;   // sequence separator positions in text t
   // int tm; number of sequences in t
   ArrayList<String> tdesc = null;   // sequence descriptions of t
   
@@ -92,7 +94,7 @@ public class QgramMatcher {
   
   byte[]      s           = null;   // the index text (coded)
   int[]       qbck        = null;   // bucket boundaries
-  int[]       ssp         = null;   // sequence separator positions in index s
+  long[]       ssp        = null;   // sequence separator positions in index s
   int         sm          = 0;      // number of sequences in s
   ArrayList<String> sdesc = null;   // sequence descriptions of s
   IntBuffer   qpos        = null;   // q-gram positions as buffer
@@ -253,7 +255,7 @@ public class QgramMatcher {
     final String qposfile = ds+extqpos;
     System.gc();
     t    = g.slurpByteArray(tfile);
-    tssp = g.slurpIntArray(tsspfile);
+    tssp = g.slurpLongArray(tsspfile);
     tdesc= g.slurpTextFile(dt+extdesc, tssp.length);
     assert(tdesc.size()==tssp.length);
 
@@ -261,7 +263,7 @@ public class QgramMatcher {
       s=t; ssp=tssp; sm=tssp.length; sdesc=tdesc;
     } else {
       s    = g.slurpByteArray(seqfile);
-      ssp  = g.slurpIntArray(sspfile);
+      ssp  = g.slurpLongArray(sspfile);
       sm   = ssp.length;
       sdesc= g.slurpTextFile(ds+extdesc, sm);
       assert(sdesc.size()==sm);
@@ -339,7 +341,7 @@ public class QgramMatcher {
         if (tp>=tn) break;
         if (toomanyhits.get(seqnum)==1) {
           symremaining=0;
-          tp=tssp[seqnum];
+          tp=(int)tssp[seqnum];
           continue;
         }
         int i; // next valid symbol is now at p, count number of valid symbols
@@ -359,7 +361,7 @@ public class QgramMatcher {
         findactive(tp, qcode, thefilter.getBoolean(qcode)); // updates active, activepos, lenforact
       } catch (TooManyHitsException ex) {
           symremaining=0; 
-          tp = tssp[seqnum]; 
+          tp = (int)tssp[seqnum]; 
           toomanyhits.set(seqnum, true);
       }
       
@@ -380,7 +382,7 @@ public class QgramMatcher {
             findactive(tp, qcode, thefilter.getBoolean(qcode));
           } catch (TooManyHitsException ex) {
             symremaining=0;
-            tp = tssp[seqnum];
+            tp = (int)tssp[seqnum];
             toomanyhits.set(seqnum, true);
           }
         }
@@ -569,7 +571,7 @@ public class QgramMatcher {
         if (offset>=minlen) { // report match
           int i = seqindex(newpos[ni]);
           int ttt = tp - seqstart;
-          int sss = sp - (i==0? 0 : ssp[i-1]+1);
+          int sss = sp - (i==0? 0 : (int)ssp[i-1]+1);
           if (sorted) { 
             matches.get(i).add(new Match(ttt, sss, offset)); 
           } else { 

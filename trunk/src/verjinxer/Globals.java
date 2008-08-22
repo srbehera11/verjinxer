@@ -228,6 +228,42 @@ public class Globals {
     return a;
   }
   
+  /** slurp the contents of a file into a long[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the newly created array with the file's contents
+   */
+  long[] slurpLongArray(String file) {
+    long[] a = null;
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = arf.setFilename(file).readArray(a);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
+
+  /** slurp the contents of a file into an int[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @param a  an existing array to be used if large enough.
+   * @return the int[] with the file's contents
+   */
+  long[] slurpIntArray(String file, long[] a) {
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = arf.setFilename(file).readArray(a);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
+  
   
   /** map the contents of a file into a ByteBuffer while printing diagnostics.
    * Terminate the program when an error occurs.
@@ -276,7 +312,7 @@ public class Globals {
    * @param start  index at which to start dumping a
    * @param len  the number of elements to dump
    */
-  void dumpIntArray(final String file, final int[] a, final int start, final int len) {
+  final void dumpIntArray(final String file, final int[] a, final int start, final int len) {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
       arf.setFilename(file).writeArray(a,start,len);
@@ -291,8 +327,34 @@ public class Globals {
    * @param file  the name of the file to be written
    * @param a  the array to be dumped
    */
-  void dumpIntArray(final String file, final int[] a) {
+  final void dumpIntArray(final String file, final int[] a) {
     dumpIntArray(file, a, 0, a.length);
+  }
+  
+  /** Dump the first given number of ints of the given array to the given file,
+   * while printing diagnostics. Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   * @param start  index at which to start dumping a
+   * @param len  the number of elements to dump
+   */
+  final void dumpLongArray(final String file, final long[] a, final int start, final int len) {
+    logmsg("%s: writing '%s'...%n", cmdname, file);
+    try {
+      arf.setFilename(file).writeArray(a,start,len);
+    } catch (Exception ex) {
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
+      terminate(1);
+    }
+  }
+
+  /** Dump the given array to the given file while printing diagnostics. 
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   */
+  final void dumpLongArray(final String file, final long[] a) {
+    dumpLongArray(file, a, 0, a.length);
   }
   
   /** Dump the first given number of bytes of the given array to the given file,

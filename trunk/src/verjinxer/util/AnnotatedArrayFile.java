@@ -26,15 +26,15 @@ public class AnnotatedArrayFile extends ArrayFile
    public class Info
    {
       public String description;
-      public int length;
-      public int ssp;
+      public long length;
+      public long ssp;
       
-      public Info(final String d, final int l, final int s)
+      public Info(final String d, final long l, final long s)
       { description=d; length=l; ssp=s; }
    }
    
    
-   public void addInfo(final String d, final int l, final int s)
+   public void addInfo(final String d, final long l, final long s)
    {
       info.add(new Info(d,l,s));
    }
@@ -57,18 +57,18 @@ public class AnnotatedArrayFile extends ArrayFile
       return d;
    }
    
-   public int[] getSsps()
+   public long[] getSsps()
    {
       int size = info.size();
-      int[] s = new int[size];
+      long[] s = new long[size];
       for (int i=0; i<size; i++) s[i]=info.get(i).ssp;
       return s;
    }
 
-   public int[] getLengths()
+   public long[] getLengths()
    {
       int size = info.size();
-      int[] l = new int[size];
+      long[] l = new long[size];
       for (int i=0; i<size; i++) l[i]=info.get(i).length;
       return l;
    }

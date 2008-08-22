@@ -72,7 +72,7 @@ public class NonUniqueProbeDesigner {
   byte[]      s     = null;  // the text (coded)
   int         n     = 0;     // length of s
   int[]       qbck  = null;  // bucket boundaries
-  int[]       ssp   = null;  // sequence separator positions
+  long[]      ssp   = null;  // sequence separator positions
   int         m     = 0;     // number of sequences
   IntBuffer   qpos  = null;  // q-gram positions
   int[]       qposa = null;  // q-gram positions as array
@@ -144,7 +144,7 @@ public class NonUniqueProbeDesigner {
       final ArrayFile arf = new ArrayFile(null);
       s    = arf.setFilename(seqfile).readArray((byte[])null);
       qbck = arf.setFilename(qbckfile).readArray((int[])null);
-      ssp  = arf.setFilename(sspfile).readArray((int[])null);
+      ssp  = arf.setFilename(sspfile).readArray((long[])null);
     } catch (IOException ex) {
       g.warnmsg("nonunique: reading '%s', '%s', '%s' failed. Stop.%n",
           seqfile, qbckfile, sspfile);
@@ -188,11 +188,11 @@ public class NonUniqueProbeDesigner {
     } catch (FileNotFoundException ex) {
       g.terminate("nonunique: could not create output file. Stop.");
     }
-    int middle = -1;
+    long middle = -1;
     if (dontdorc) {
       middle = (ssp[seqnum]-1)/2;
       //g.logmsg("ssp-1=%d,  %%2=%d,  middle=%d,  s[middle]=%d,  isWildcard=%b%n", ssp[seqnum]-1, (ssp[seqnum]-1)%2, middle, s[middle], amap.isWildcard(s[middle]));
-      assert((ssp[seqnum]-1)%2==0 && amap.isWildcard(s[middle])) :
+      assert((ssp[seqnum]-1)%2==0 && amap.isWildcard(s[(int)middle])) :
         "nonunique: index does not contain reverse complements; use --noskip option";
     }
     
@@ -208,11 +208,11 @@ public class NonUniqueProbeDesigner {
             seqnum++; seqstart=p+1;
             if (dontdorc) {
               middle = (ssp[seqnum-1] + ssp[seqnum])/2; //ok
-              assert((ssp[seqnum]-1)%2==0 && amap.isWildcard(s[middle])) :
+              assert((ssp[seqnum]-1)%2==0 && amap.isWildcard(s[(int)middle])) :
                 "nonunique: index does not contain reverse complements; use --noskip option";
             }           
           } else if (p==middle && dontdorc) {
-            p = ssp[seqnum]-1; // -1 because of p++
+            p = (int)(ssp[seqnum]-1); // -1 because of p++
             g.logmsg("  skipping reverse complement to ssp at %d%n",p+1);
           }
         }
@@ -386,7 +386,7 @@ public class NonUniqueProbeDesigner {
     if (first<0) return;
     assert(first<=last);
     int si = seqindex(first);
-    int ss = si==0? 0 : ssp[si-1]+1;
+    int ss = si==0? 0 : (int)(ssp[si-1]+1);
     int le = last-first+1;
     assert(le>=1);
     // g.logmsg("%d %d-mers: seq %d [%d..%d];  pos %d..%d%n", le, pl, si, first-ss, last-ss, first, last);
@@ -413,7 +413,7 @@ public class NonUniqueProbeDesigner {
   }
   
   private final void outputDetails(int pp, int si) {
-    int ss = (si==0? 0 : ssp[si-1]+1);
+    int ss = (si==0? 0 : (int)(ssp[si-1]+1));
     out.printf("# seq=%d[%d];  pos=%d: ", si, pp-ss, pp);
     out.printf("%s%n", StringUtils.join(" ", thislcf, 0, m));
   }
