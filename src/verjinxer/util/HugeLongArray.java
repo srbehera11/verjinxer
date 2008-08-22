@@ -1,20 +1,4 @@
 /*
- * ==begincut
- * This class is a template for
- * HugeLongArray
- * HugeIntArray
- * HugeByteArray
- * 
- * Modify this class, do not modify the four above mentioned classes,
- * as they are automatically generated!
- * 
- * Automatic generation of huge arrays of primitive types:
- * In this process, Short is replaced by each of {Long, Int, Byte},
- * and short is replaced by each of {long, int, byte}.
- * Each of these automatically generated classes can then be compiled.
- * Also, everything between lines that contain 'begincut' and 'endcut' tags
- * is removed when replacing the generic short by a basic numeric type.
- * ==endcut
  */
 package verjinxer.util;
 
@@ -22,25 +6,25 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.ShortBuffer;
+import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 /**
  * This class provides huge (&lt; 2 Giga Elements) arrays
- * of basic type short.
+ * of basic type long.
  * Since Java limits array indices to int's, we need to use several
  * primitive arrays to emulate a huge array.
  * This causes some overhead and hence loss of efficiency,
  * but appears to be the only method to create arrays with more
  * than 2^31 ~ 2 billion elements.
- * This particular class provides huge short arrays.
+ * This particular class provides huge long arrays.
  * @author Sven Rahmann
  */
-public class HugeShortArray {
+public class HugeLongArray {
 
    /** number of bytes per element */
-   public final static int BYTESPERELEMENT = Short.SIZE/8;
+   public final static int BYTESPERELEMENT = Long.SIZE/8;
    
    /** number of elements in the array */
    public final long length;
@@ -50,34 +34,34 @@ public class HugeShortArray {
    // number of components
    private final int num;
    // internal array of arrays
-   private final short[][] arr;
+   private final long[][] arr;
 
-   /** create a new HugeShortArray 
+   /** create a new HugeLongArray 
     * @param size  number of elements in the array, up to (2^63 -1)
     */
-   public HugeShortArray(final long size) {
+   public HugeLongArray(final long size) {
       num = (int) ((size + ELEMENTSPERCOMPONENT - 1) / ELEMENTSPERCOMPONENT);
       int lastnumel = (int) (size % ELEMENTSPERCOMPONENT);
       if (lastnumel == 0) {
          lastnumel = ELEMENTSPERCOMPONENT;
       }
       length = size;
-      arr = new short[num][];
+      arr = new long[num][];
       for (int i = 0; i < num - 1; i++) {
-         arr[i] = new short[ELEMENTSPERCOMPONENT];
+         arr[i] = new long[ELEMENTSPERCOMPONENT];
       }
       if (num >= 1) {
-         arr[num - 1] = new short[lastnumel];
+         arr[num - 1] = new long[lastnumel];
       }
    }
 
    /** create a new HugeTypeArray as an exact copy of an existing one
     * @param o  the existing array
     */
-   public HugeShortArray(final HugeShortArray o) {
+   public HugeLongArray(final HugeLongArray o) {
       length = o.length;
       num = o.num;
-      arr = new short[num][];
+      arr = new long[num][];
       for (int i = 0; i < num; i++) {
          System.arraycopy(o.arr[i], 0, arr[i], 0, o.arr[i].length);
       }
@@ -88,7 +72,7 @@ public class HugeShortArray {
     * @param i element number
     * @return value of element i
     */
-   public final short get(final long i) {
+   public final long get(final long i) {
       return (arr[(int) (i / ELEMENTSPERCOMPONENT)][(int) (i % ELEMENTSPERCOMPONENT)]);
    }
 
@@ -96,14 +80,14 @@ public class HugeShortArray {
     * @param i  number of element to set
     * @param x  new value of element i
     */
-   public final void set(final long i, final short x) {
+   public final void set(final long i, final long x) {
       arr[(int) (i / ELEMENTSPERCOMPONENT)][(int) (i % ELEMENTSPERCOMPONENT)] = x;
    }
 
    /** fill the whole array with one value
     * @param x  value to fill the array with
     */
-   public final void fill(final short x) {
+   public final void fill(final long x) {
       for (int i = 0; i < num; i++) {
          Arrays.fill(arr[i], x);
       }
@@ -111,10 +95,10 @@ public class HugeShortArray {
 
    @Override
    public boolean equals(Object other) {
-      if (!(other instanceof HugeShortArray)) {
+      if (!(other instanceof HugeLongArray)) {
          return false;
       }
-      HugeShortArray o = (HugeShortArray) other;
+      HugeLongArray o = (HugeLongArray) other;
       if (length != o.length) {
          return false;
       }
@@ -151,14 +135,14 @@ public class HugeShortArray {
     *  Otherwise, -(i+1) for a hypothetical index i at which the
     *  key should be inserted to maintain a sorted array.
     */
-   public long binarySearch(final short key,
+   public long binarySearch(final long key,
          final long fromIndex, final long toIndex) {
       long low = fromIndex;
       long high = toIndex - 1;
 
       while (low <= high) {
          long mid = (low + high) >>> 1;
-         final short midVal = get(mid);
+         final long midVal = get(mid);
          //int cmp = midVal.compareTo(key);
 
          if (midVal < key) {
@@ -182,7 +166,7 @@ public class HugeShortArray {
     *  Otherwise, -(i+1) for a hypothetical index i at which the
     *  key should be inserted to maintain a sorted array.
     */
-   public long binarySearch(final short key) {
+   public long binarySearch(final long key) {
       return binarySearch(key, 0, length);
    }
 
@@ -221,7 +205,7 @@ public class HugeShortArray {
          }
          m = med3(l, m, n); // Mid-size, med of 3
       }
-      final short v = get(m);
+      final long v = get(m);
 
       // Establish Invariant: v* (<v)* (>v)* v*
       long a = off, b = a, c = off + len - 1, d = c;
@@ -266,7 +250,7 @@ public class HugeShortArray {
     * @param j 
     */
    public void swap(final long i, final long j) {
-      final short t = get(i);
+      final long t = get(i);
       set(i, get(j));
       set(j, t);
    }
@@ -295,8 +279,8 @@ public class HugeShortArray {
    /**
     * @return an exact copy of this array
     */
-   public HugeShortArray copy() {
-      return new HugeShortArray(this);
+   public HugeLongArray copy() {
+      return new HugeLongArray(this);
    }
 
    /** creates a new array with 'to' - 'from' elements 
@@ -306,9 +290,9 @@ public class HugeShortArray {
     * @param to index before which copying stops.
     * @return a copy of a range of this array
     */
-   public HugeShortArray copyRange(final long from, final long to) {
+   public HugeLongArray copyRange(final long from, final long to) {
       final long newsize = to - from;
-      final HugeShortArray c = new HugeShortArray(newsize);
+      final HugeLongArray c = new HugeLongArray(newsize);
       for (long i = 0; i < newsize; i++) {
          c.set(i, get(i + from));
       }
@@ -354,7 +338,7 @@ public class HugeShortArray {
    private final ByteBuffer _bb = ByteBuffer.allocateDirect((int)BUFSIZE).order(ByteOrder.nativeOrder());
    
    /**
-    * Reads a part of a file on disk into a part of this HugeShortArray.
+    * Reads a part of a file on disk into a part of this HugeLongArray.
     * If the size of this array is smaller than (start+len), a runtime exception occurs.
     * We read 'len' items from the given file position if the given position is &ge;= 0. 
     * If the given position is negative, we read from the current file position.
@@ -362,13 +346,13 @@ public class HugeShortArray {
     * @param fname    file name
     * @param start    position in this array at which to start filling it
     * @param nItems   number of entries to read. If negative, read the whole (remaining) file.
-    * @param fpos     file index (in 'short' units) at which to start reading
+    * @param fpos     file index (in 'long' units) at which to start reading
     * @throws java.io.IOException  if any I/O error occurs
     */
    public final void read(final String fname, long start, long nItems, final long fpos) throws IOException {
       final FileChannel channel = new FileInputStream(fname).getChannel();
       if (fpos>=0) channel.position(BYTESPERELEMENT*fpos);
-      final ShortBuffer ib = _bb.asShortBuffer(); // type depends on 'a'
+      final LongBuffer ib = _bb.asLongBuffer(); // type depends on 'a'
       if (nItems<0) nItems = (channel.size()-channel.position())/BYTESPERELEMENT;
       while(nItems>0) {
          int bytestoread = (int)((nItems*BYTESPERELEMENT < BUFSIZE)? nItems*BYTESPERELEMENT : BUFSIZE);
@@ -388,17 +372,17 @@ public class HugeShortArray {
       channel.close();
    }
    
-   /** factory function for constructing a HugeShortArray from a binary file
+   /** factory function for constructing a HugeLongArray from a binary file
     * @param fname  the file name
-    * @return  a HugeShortArray with the file's contents
+    * @return  a HugeLongArray with the file's contents
     * @throws java.io.IOException 
     */
-   public static final HugeShortArray fromFile(final String fname) throws IOException {
+   public static final HugeLongArray fromFile(final String fname) throws IOException {
      final FileChannel channel = new FileInputStream(fname).getChannel();
      final long flen = channel.size();
      if (flen % BYTESPERELEMENT !=0)
-       throw new IOException("File size not compatible with HugeShortArray");
-     final HugeShortArray a = new HugeShortArray(flen/BYTESPERELEMENT);
+       throw new IOException("File size not compatible with HugeLongArray");
+     final HugeLongArray a = new HugeLongArray(flen/BYTESPERELEMENT);
      a.read(fname, 0, flen/BYTESPERELEMENT, 0);
      return a;
    }

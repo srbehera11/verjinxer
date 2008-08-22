@@ -191,6 +191,24 @@ public class Globals {
     return a;
   }
 
+  /** slurp the contents of a file into an array while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the newly created HugeByteArray with the file's contents
+   */
+  HugeByteArray slurpHugeByteArray(final String file) {
+    HugeByteArray a = null;
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = HugeByteArray.fromFile(file);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
+
   
   /** slurp the contents of a file into an int[] while printing diagnostics.
    * Terminate the program when an error occurs.
