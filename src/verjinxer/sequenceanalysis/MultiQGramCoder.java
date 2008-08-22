@@ -26,9 +26,6 @@ public class MultiQGramCoder {
    public final int numberOfQGrams;
    /** using bisulfite? */
    public final boolean bisulfite;
-   
-   private int qcode = 0;  // TODO: why 0, not -1 or other invalid?
-   
 
    /**
     * Creata a new MultiQGramcoder for the given q-gram length and alphabet size.
@@ -158,11 +155,12 @@ public class MultiQGramCoder {
       private final Iterator<Long> it;    // iterator of the underlying QGramCoder
       private int bisFwdRemaining = 0;    // number of remaining forward bisulfite codes
       private int bisRevRemaining = 0;    // number of ramaining reverse bisulfite codes
-      private ArrayList<Integer> bisF = null;  // remaining forward bisulfite codes
-      private ArrayList<Integer> bisR = null;  // remaining reverse bisulfite codes
+      private int[] bisF = null;  // remaining forward bisulfite codes
+      private int[] bisR = null;  // remaining reverse bisulfite codes
       private long pos = -1;
       private final Object t;
       private final int tLength;
+//      private int callcount = 0;
 
       SparseQGramIterator(final Object t, final boolean stopAtSeparator, final int separator) {
          assert bisulfite;
@@ -185,11 +183,11 @@ public class MultiQGramCoder {
 
       public Long next() {
          if(bisFwdRemaining>0) {
-            final long pc = (pos<<32) + bisF.get(--bisFwdRemaining);
+            final long pc = (pos<<32) + bisF[--bisFwdRemaining];
             return pc;
          }
          if(bisRevRemaining>0) {
-            final long pc = (pos<<32) + bisR.get(--bisRevRemaining);
+            final long pc = (pos<<32) + bisR[--bisRevRemaining];
             return pc;
          }
          // get standard q-code first (no bisulfite replacement)
@@ -198,11 +196,15 @@ public class MultiQGramCoder {
          final int qcod = (int)pc;
          // get forward bisulfite q-codes. If original q-code is invalid, get empty list.
          bisF = bicoder.bisulfiteQCodes(qcod, false, charAt((int)(pos+q))==BisulfiteQGramCoder.NUCLEOTIDE_G);
-         bisFwdRemaining = bisF.size();
+         bisFwdRemaining = bisF.length;
          // get reverse bisulfite q-codes. If original q-code is invalid, get empty list.
          bisR = bicoder.bisulfiteQCodes(qcod, true,  charAt((int)(pos-1))==BisulfiteQGramCoder.NUCLEOTIDE_C);
-         bisRevRemaining = bisR.size();
+         bisRevRemaining = bisR.length;
          //System.out.printf("   [pos=%d, fwd=%d, rev=%d]%n", pos, bisFwdRemaining, bisRevRemaining);
+         
+//         callcount++;
+//         if (callcount % 100000 == 0)
+//            System.out.printf("%d %f%n", callcount, bicoder.getCacheFill());
          return pc;
       }
 
@@ -225,45 +227,10 @@ public class MultiQGramCoder {
     * @param s     another given q-gram (in text)
     * @param p     starting position within s
     * @return true iff qgram[i..i+q-1] equals s[p..p+q-1], possibly after bisulfite-treatment of s.
-    * 
-    * @deprecated
     */
    public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
       if (qcoder.areCompatible(qgram, i, s, p)) return true;
       if (!bisulfite) return false;
       return bicoder.areCompatible(qgram, i, s, p);
-   }
-   
-   /** @deprecated 
-   public void update(byte next, byte after) {
-      if (bisulfite) {
-         assert 0 <= next && next < asize;
-         bicoder.update(next, after);
-      } else {
-         qcode = qcoder.codeUpdate(qcode, next);
-         assert qcode >= 0;
-      }
-   }*/
-
-   /** @deprecated 
-   public void reset() {
-      if (bisulfite)
-         bicoder.reset();
-      else
-         qcode = 0;
-   }*/
-
-   /**
-    * 
-    * @return
-    */
-   public Collection<Integer> getCodes() {
-      if (bisulfite)
-         return bicoder.getCodes();
-      else {
-         Collection<Integer> r = new ArrayList<Integer>(1);
-         r.add(qcode);
-         return r;
-      }
    }
 }

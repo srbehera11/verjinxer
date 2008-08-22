@@ -309,7 +309,6 @@ public final class QgramIndexer {
 
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
       final int aq = coder.numberOfQGrams;
-      g.logmsg("  initializing MultiQGramCoder took %.2f s%n", totalTimer.tocs());
       g.logmsg("  counting %d different %d-grams...%n", aq, q);
 
       // Scan file once and count qgrams.
