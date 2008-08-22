@@ -306,8 +306,54 @@ public class ArrayFile {
       return writeArray(a,0,a.length);
    }
 
+   /**
+    * Writes a part of a given array to disk via this ArrayFile. 
+    * If this ArrayFile is open for writing, write at the current file position.
+    * Otherwise, replace the whole file by the given (part of) the array.
+    * @param a      the int[] to write
+    * @param start  position in array 'a' at which to start writing
+    * @param items  number of array entries to write
+    * @return       length of this ArrayFile after writing
+    * @throws java.io.IOException  if any I/O error occurs
+    */
+   public long writeArray(final long[] a, int start, int items) throws IOException {
+      final int factor = Long.SIZE/8; // !!! factor depends on 'a'
+      final boolean openclose = (channel==null);
+      if (openclose) openW(); else flush(); // clear buffer!
+      if (mode!=Mode.WRITE) throw new IOException("non-writable ArrayFile "+mode.toString());
+      // internal buffer is now clear to write
+      final int bufitems = bufsize / factor;
+      final LongBuffer ib = internalBuffer.asLongBuffer(); // !!! type depends on 'a'
+      while(items>0) {
+         final int itemstowrite = (items<bufitems)? items : bufitems;
+         ib.clear();
+         ib.put(a, start, itemstowrite);
+         int bytestowrite = itemstowrite * factor;         
+         internalBuffer.position(0).limit(bytestowrite); 
+         while (bytestowrite>0) bytestowrite -= channel.write(internalBuffer);
+         assert(bytestowrite==0);
+         start += itemstowrite; items -= itemstowrite;
+      }
+      internalBuffer.clear();
+      final long p = channel.position();
+      if (openclose) close();
+      return p;
+   }
    
-   // TODO: copy the above code for short[] and long[]. For byte[], see below.
+   /**
+    * Writes a whole given array to disk via this ArrayFile. 
+    * If this ArrayFile is open for writing, write at the current file position.
+    * Otherwise, replace the whole file by the given (part of) the array.
+    * @param a     the int[] to write
+    * @return      length of this ArrayFile after writing
+    * @throws java.io.IOException  if any I/O error occurs
+    */
+   public long writeArray(final long[] a) throws IOException {
+      return writeArray(a,0,a.length);
+   }
+
+   
+   // TODO: copy the above code for short[]. For byte[], see below.
 
    /** (BYTE array:) 
     * write a part of a given array to disk via this ArrayFile. 
@@ -399,7 +445,7 @@ public class ArrayFile {
     * @return      the int[]
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public int[] readArray(int[] a, int start, int nItems, final long fpos) throws IOException {
+   public final int[] readArray(int[] a, int start, int nItems, final long fpos) throws IOException {
       final int factor = Integer.SIZE / 8; // depends on 'a'
       final boolean openclose = (channel==null);
       if (openclose) openR();
@@ -431,11 +477,64 @@ public class ArrayFile {
     * @return      the int[]
     * @throws java.io.IOException  if any I/O error occurs
     */
-   public int[] readArray(int[] a) throws IOException {
+   public final int[] readArray(int[] a) throws IOException {
       return readArray(a,0,-1,-1);
    }
    
-   //TODO: copy that code for short[] and long[]. For byte[] see below.
+   
+   /**
+    * Reads a part of a file on disk via this ArrayFile into a part of an array,
+    * a[start .. start+len-1].
+    * If a is null, a sufficiently large new array is allocated.
+    * If the size of the given array is smaller than (start+len), a runtime exception occurs.
+    * If this ArrayFile is presently closed, it is opened, and closed when done.
+    * We read 'len' items from the given position if the given position is &ge;= 0. 
+    * If the given position is negative, read from the current position.
+    * If len is negative, we read till the end.
+    * @param a     the int[] to read
+    * @param start position in array 'a' at which to start reading
+    * @param nItems   number of entries to read. If negative, read the whole (remaining) file.
+    * @param fpos  file index at which to start reading
+    * @return      the int[]
+    * @throws java.io.IOException  if any I/O error occurs
+    */
+   public final long[] readArray(long[] a, int start, int nItems, final long fpos) throws IOException {
+      final int factor = Long.SIZE / 8; // depends on 'a'
+      final boolean openclose = (channel==null);
+      if (openclose) openR();
+      if (mode!=Mode.READ) throw new IOException("ArrayFile not open for reading");
+      if (fpos>=0) channel.position(factor*fpos);
+      final LongBuffer ib = internalBuffer.asLongBuffer(); // type depends on 'a'
+      if (nItems<0) nItems = (int)((channel.size()-channel.position())/factor);
+      if (a==null) a = new long[start+nItems]; // type depends on 'a'
+      while(nItems>0) {
+         int bytestoread = (nItems*factor < bufsize)? nItems*factor : bufsize;
+         final int itemstoread = bytestoread / factor;
+         internalBuffer.position(0).limit(bytestoread);
+         while ((bytestoread -= channel.read(internalBuffer))>0) {}
+         ib.position(0).limit(itemstoread);
+         ib.get(a, start, itemstoread);
+         start += itemstoread; nItems -= itemstoread;
+      }
+      if (openclose) close();
+      return a;
+   }
+
+   /**
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
+    * If a is null, a sufficiently large new array is allocated.
+    * If the size of the given array is too small, a runtime exception occurs.
+    * If this ArrayFile is presently closed, it is opened, and closed when done.
+    * We read from the current position (or the start) of the file to the end.
+    * @param a     the int[] to read
+    * @return      the int[]
+    * @throws java.io.IOException  if any I/O error occurs
+    */
+   public final long[] readArray(long[] a) throws IOException {
+      return readArray(a,0,-1,-1);
+   }
+   
+  //TODO: copy that code for short[]. For byte[] see below.
   
    
    /**

@@ -2,7 +2,7 @@
  * Cutter.java
  *
  * Created on 28. Juni 2007, 13:49
- *
+ * TODO: adapt to 64-bit files (files >2 GB)
  */
 
 package verjinxer;
@@ -120,12 +120,12 @@ public class Cutter {
     ArrayList<Integer> matchPositions = new ArrayList<Integer>(10*1024*1024); // 10M positions initially
     matchPositions.add(0); totalMatches++;
 
-    int[] ssp = null;
+    long[] ssp = null;
     if (!opt.isGiven("nossp") || opt.isGiven("i")) {
-      ssp = g.slurpIntArray(ds+extssp, new int[0]);
+      ssp = g.slurpLongArray(ds+extssp);
     }
     if (!opt.isGiven("nossp")) {
-      for (int i: ssp) { matchPositions.add(i); matchPositions.add(i+1); }
+      for (long i: ssp) { matchPositions.add((int)i); matchPositions.add((int)(i+1)); }
       g.logmsg("cut: sequence separators cut 2*%d = %d times%n", ssp.length, 2*ssp.length);
       totalMatches += 2*ssp.length;
     }
@@ -161,8 +161,8 @@ public class Cutter {
           int sspindex = java.util.Arrays.binarySearch(ssp,i);
           assert(sspindex<0);
           sspindex = -sspindex - 1;
-          final int left  = (sspindex==0? -1 : ssp[sspindex-1]);
-          final int right = ssp[sspindex];
+          final int left  = (sspindex==0? -1 : (int) ssp[sspindex-1]);
+          final int right = (int)ssp[sspindex];
           assert(left<i && i<right-pat.length+1);
           if (i-left <= ignoredist || right-pat.length-i+1 <= ignoredist) continue;
         }

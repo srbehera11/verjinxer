@@ -110,7 +110,8 @@ public class Translater {
     if (opt.isGiven("dnarc")) givenmaps++;
     if (opt.isGiven("dnabi")) givenmaps++;
     if (opt.isGiven("protein")) givenmaps++;
-    if (givenmaps>1) g.terminate("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein}.");
+    if (givenmaps > 1) 
+      g.terminate("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein}.");
     
     if (opt.isGiven("masked") && !(opt.isGiven("dna") || opt.isGiven("rc") || opt.isGiven("dnarc")))
        g.terminate("translate: --masked can be used only in combination with one of {--dna, --rconly, --dnarc}.");
@@ -180,13 +181,13 @@ public class Translater {
     prj.setProperty("Length",Long.toString(totallength));
     
     // Write the ssp array.
-    g.dumpIntArray(outname+extssp, out.getSsps());
+    g.dumpLongArray(outname+extssp, out.getSsps());
     prj.setProperty("NumberSequences",Integer.toString(out.getSsps().length));
     
     // Write sequence length statistics.
     long maxseqlen=0;
     long minseqlen=Long.MAX_VALUE;
-    for (int seqlen : out.getLengths()) {
+    for (long seqlen : out.getLengths()) {
       if (seqlen>maxseqlen) maxseqlen=seqlen;
       if (seqlen<minseqlen) minseqlen=seqlen;
     }

@@ -5,6 +5,7 @@
  * TODO: qgramatonce, suffix, suffixatonce
  * TODO: pvalues and Evalues
  * TODO / BROKEN: Especially the alignment code needs review!
+ * TODO: adapt to 64-bit files
  */
 
 package verjinxer;
@@ -83,8 +84,8 @@ public class Mapper {
   int         tm          = 0;      // number of sequences
   byte[]      tall        = null;   // the whole text
   //byte[]      t           = null;   // the text (coded)
-  int         tn          = 0;      // length of t
-  int[]       tssp        = null;   // sequence separator positions in text t
+  long         tn          = 0;      // length of t
+  long[]       tssp        = null;   // sequence separator positions in text t
   ArrayList<String> tdesc = null;   // sequence descriptions of t
   long longestsequence    = 0;
   long shortestsequence   = 0;
@@ -235,7 +236,7 @@ public class Mapper {
     if(revcomp && asize!=4) g.terminate("map: can only use reverse complement option with DNA sequences. Stop.");
     amap = g.readAlphabetMap(g.dir + tname + extalph);
     String tsspfile = dt + extssp;
-    tssp = g.slurpIntArray(tsspfile);
+    tssp = g.slurpLongArray(tsspfile);
     assert(tm  == tssp.length);
     tdesc = g.slurpTextFile(dt+extdesc, tm);
     longestsequence  = Long.parseLong(tprj.getProperty("LongestSequence"));
@@ -359,8 +360,8 @@ public class Mapper {
       
       for (int j=0; j<tm; j++) {
         if (tselect.get(j)==0 || trepeat.get(j)==1) continue;  // skip if not selected, or if repeat
-        int jstart = (j==0? 0: tssp[j-1]+1); // first character
-        int jstop  = tssp[j] +1;             // one behind last character = [separatorpos. +1]
+        int jstart = (j==0? 0: (int)(tssp[j-1]+1)); // first character
+        int jstop  = (int)(tssp[j] +1);             // one behind last character = [separatorpos. +1]
         final int jlength = jstop - jstart;  // length including separator
         processQGramBlocks(idx, coder, tall, jstart, jlength, j, 1, clip, bcounter, blocksize, blow);
         if (revcomp && trepeat.get(j)==0) {
@@ -508,8 +509,8 @@ public class Mapper {
       
     for (int j=0; j<tm; j++) {
       if (tselect.get(j)==0 || trepeat.get(j)==1) continue;  // skip if not selected, or if repeat
-      final int jstart = (j==0? 0: tssp[j-1]+1); // first character
-      final int jstop  = tssp[j] +1;             // one behind last character = [separatorpos. +1]
+      final int jstart = (j==0? 0: (int)(tssp[j-1]+1)); // first character
+      final int jstop  = (int)(tssp[j] +1);             // one behind last character = [separatorpos. +1]
       final int jlength = jstop - jstart;  // length including separator
       for(int idx=0; idx<inum; idx++) {
         g.logmsg("  aligning seq %d against idx %d %s%n",j,idx,iname[idx]);
@@ -685,8 +686,8 @@ public class Mapper {
     
     // sift through all sequences
     for (int j=0; j<tm; j++) {
-      jstart = (j==0? 0: tssp[j-1]+1);
-      jstop  = tssp[j];
+      jstart = (j==0? 0: (int)(tssp[j-1]+1));
+      jstop  = (int)tssp[j];
       jlength = jstop - jstart;
       maxqgrams = jlength-qq+1;
       goodqgrams = seenqgrams = 0;
