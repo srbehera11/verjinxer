@@ -19,7 +19,6 @@
 package verjinxer;
 
 import java.io.*;
-import java.nio.*;
 import java.util.ArrayList;
 import java.util.Properties;
 import verjinxer.util.*;
@@ -73,32 +72,49 @@ public class QgramMatcher {
 
   
   /* Variables */
-  boolean     external    = false;
   boolean     sorted      = false;
-  int         minmatch    = 1;      // min number of matches for output
-  boolean     selfcmp     = false;  // comparing text against itself?
-  int         minlen      = 0;      // min. match length
-  int         q           = 0;      // q-gram length
-  int         asize       = 0;      // alphabet size
-  AlphabetMap amap        = null;   // the alphabet map
+
+  /** minimum number of matches for output */
+  int         minseqmatches = 1;
   
-  byte[]      t           = null;   // the target sequence text (coded)
-  long[]       tssp       = null;   // sequence separator positions in text t
+  /** comparing text against itself? */
+  boolean     selfcmp     = false;
+  
+  /** min. match length */
+  int         minlen      = 0;
+  
+  /** q-gram length */
+  int         q           = 0;
+  
+  /** alphabet size */
+  int         asize       = 0;
+  
+  /** the alphabet map */
+  AlphabetMap amap        = null;
+  
+  /** the target sequence text (coded) */
+  byte[]      t           = null;
+  
+  /** sequence separator positions in text t */
+  long[]       tssp        = null;
+  
   // int tm; number of sequences in t
-  ArrayList<String> tdesc = null;   // sequence descriptions of t
   
+  /** sequence descriptions of t */
+  ArrayList<String> tdesc = null; 
+  
+  /** Positions of all q-grams */
+  QGramIndex qgramindex = null;
+
 //  int         tp          = 0;      // current position in t
   int         seqstart    = 0;      // starting pos of current sequence in t
   int         seqnum      = 0;      // number of current sequence in t
   PrintWriter out         = null;        
   
   byte[]      s           = null;   // the index text (coded)
-  int[]       qbck        = null;   // bucket boundaries
   long[]       ssp        = null;   // sequence separator positions in index s
   int         sm          = 0;      // number of sequences in s
   ArrayList<String> sdesc = null;   // sequence descriptions of s
-  IntBuffer   qpos        = null;   // q-gram positions as buffer
-  int[]       qposa       = null;   // q-gram positions as array
   
   int     active    = 0;            // number of active matches
   int[]   activepos = null;         // starting positions of active matches in s
@@ -109,7 +125,7 @@ public class QgramMatcher {
   int     maxseqmatches = -1;       // maximum number of allowed matches
   
   ArrayList<ArrayList<Match>> matches = null; // list for sorted matches
-  ArrayList<GlobMatch>   globmatches  = null; // list for unsorted matches
+  ArrayList<GlobalMatch>   globalmatches  = null; // list for unsorted matches
   
   boolean bisulfite = false; // whether the index is for bisulfite sequences
   boolean c_matches_c = false; // whether C matches C, even if not before G
@@ -183,20 +199,20 @@ public class QgramMatcher {
     }
     
     // Determine option values
-    external  = (opt.isGiven("x"));
+    boolean external  = (opt.isGiven("x"));
     sorted = (opt.isGiven("s"));
     minlen = (opt.isGiven("l")? Integer.parseInt(opt.get("l")) : q);
     if (minlen<q) {
       g.warnmsg("qmatch: increasing minimum match length to q=%d!%n",q);
       minlen=q;
     }
-    minmatch = (opt.isGiven("m")? Integer.parseInt(opt.get("m")) : 1);
-    if (minmatch<1) {
+    minseqmatches = (opt.isGiven("m")? Integer.parseInt(opt.get("m")) : 1);
+    if (minseqmatches<1) {
       g.warnmsg("qmatch: increasing minimum match number to 1!%n");
-      minmatch=1;
+      minseqmatches=1;
     }  
     
-    String outname = String.format("%s-%s-%dx%d",tname, sname, minmatch, minlen);
+    String outname = String.format("%s-%s-%dx%d", tname, sname, minseqmatches, minlen);
     if (opt.isGiven("o")) {
       if (outname.length()==0 || outname.startsWith("#"))  outname = null;
       else outname=opt.get("o");
@@ -210,7 +226,7 @@ public class QgramMatcher {
 
     // end of option parsing
 
-    openFiles(dt, ds, outname); // provides tm
+    openFiles(dt, ds, outname, external); // provides tm
     if (toomanyhits==null) toomanyhits = new BitArray(tssp.length); // if -t not given, start with a clean filter
     int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
     bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
@@ -227,7 +243,7 @@ public class QgramMatcher {
   }
   
   /**
-   * global variables written to in this method:
+   * variables written to in this method:
    * t
    * tn
    * tssp
@@ -242,9 +258,9 @@ public class QgramMatcher {
    * 
    * out
    */
-  private void openFiles(String dt, String ds, String outname) {
+  private void openFiles(String dt, String ds, String outname, boolean external) {
     // Read text, text-ssp, seq, qbck, ssp into arrays;  
-    // read sequence descripitions;
+    // read sequence descriptions;
     // memory-map or read qpos.
     TicToc ttimer = new TicToc();
     final String tfile    = dt+extseq;
@@ -268,9 +284,9 @@ public class QgramMatcher {
       sdesc= g.slurpTextFile(ds+extdesc, sm);
       assert(sdesc.size()==sm);
     }
-    qbck = g.slurpIntArray(qbckfile);
-    if (external) qpos  = g.mapR(qposfile).asIntBuffer();
-    else          qposa = g.slurpIntArray(qposfile);
+    
+    qgramindex = new QGramIndex(g, qposfile, qbckfile, external);
+    
     g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
   
   
@@ -306,7 +322,7 @@ public class QgramMatcher {
       matches = new ArrayList<ArrayList<Match>>(sm);
       for (int i=0; i<sm; i++) matches.add(i, new ArrayList<Match>(32));
     } else {
-      globmatches = new ArrayList<GlobMatch>(maxseqmatches<127? maxseqmatches+1: 128);
+      globalmatches = new ArrayList<GlobalMatch>(maxseqmatches<127? maxseqmatches+1: 128);
     }
     
     // (B) Walking ...
@@ -332,7 +348,7 @@ public class QgramMatcher {
           if (amap.isSeparator(t[tp])) {
             assert(tp==tssp[seqnum]);
             if (sorted) writeMatches();
-            else writeGlobMatches();
+            else writeGlobalMatches();
             seqnum++;
             seqstart = tp+1; 
             seqmatches = 0;
@@ -504,8 +520,6 @@ public class QgramMatcher {
    */
   private final void findactive(final int tp, final int qcode, final boolean filtered) 
   throws TooManyHitsException {
-    final int r = qbck[qcode];
-    final int newactive = qbck[qcode+1] - r; // number of new active q-grams
     //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
     
     // decrease length of active matches, as long as they stay >= q
@@ -532,14 +546,11 @@ public class QgramMatcher {
     }
     //if (tp % 1000 == 0) g.logmsg("  findactive. tp=%d, newactive=%d%n", tp, newactive /*coder.qGramString(qcode,amap), lrmmrow, r*/);
 
-    // TODO implement a method getQGramPositions() or better: a class QGramIndex
-
     // this q-gram is not filtered!
-    // copy starting positions of current matches positions into 'newpos'
-    if (external) { qpos.position(r);  qpos.get(newpos, 0, newactive); } 
-    else          { System.arraycopy(qposa, r, newpos, 0, newactive);  }
-    //g.logmsg("    qpos = [%s]%n", Strings.join(" ",newpos, 0, newactive));
 
+    qgramindex.getQGramPositions(qcode, newpos);
+    final int newactive = qgramindex.bucketSize(qcode); // number of new active q-grams
+    
     // iterate over all new matches 
     ai=0;
     for (int ni=0; ni<newactive; ni++) {
@@ -575,7 +586,7 @@ public class QgramMatcher {
           if (sorted) { 
             matches.get(i).add(new Match(ttt, sss, offset)); 
           } else { 
-            if (!selfcmp || sp>tp) globmatches.add(new GlobMatch(ttt, i, sss, offset));
+            if (!selfcmp || sp>tp) globalmatches.add(new GlobalMatch(ttt, i, sss, offset));
           }
           seqmatches++;
         }
@@ -626,7 +637,7 @@ public class QgramMatcher {
       if (mi.size()==0) continue;
       ms = 0;
       for(Match mm : mi)  ms+=mm.len;
-      if (ms>=minmatch*minlen) {
+      if (ms>=minseqmatches*minlen) {
         total += mi.size();
         mseq++;
         out.printf("@%d:'''%s'''%n",i,sdesc.get(i));
@@ -639,19 +650,19 @@ public class QgramMatcher {
   }
   
   /** write the list of matches in current target sequence against whole index */
-  private void writeGlobMatches() {
-    if (globmatches.size()==0) return;
-    if (globmatches.size()<minmatch) { globmatches.clear(); return; }
-    if (globmatches.size()>maxseqmatches) {
-      //g.logmsg("qmatch: Sequence %d has too many (>=%d/%d) matches, skipping output%n", seqnum, globmatches.size(), maxseqmatches);
-      globmatches.clear();
+  private void writeGlobalMatches() {
+    if (globalmatches.size()==0) return;
+    if (globalmatches.size()<minseqmatches) { globalmatches.clear(); return; }
+    if (globalmatches.size()>maxseqmatches) {
+      //g.logmsg("qmatch: Sequence %d has too many (>=%d/%d) matches, skipping output%n", seqnum, globalmatches.size(), maxseqmatches);
+      globalmatches.clear();
       return;
     }    
-    for(GlobMatch gm : globmatches) {
+    for(GlobalMatch gm : globalmatches) {
       out.printf("%d %d %d %d %d %d%n", seqnum, gm.tpos, gm.sseqnum, gm.spos, gm.len, (long)gm.spos-gm.tpos); 
       // (sequence number, sequence position, index sequence number, index sequence position, length, diagonal)      
     }
-    globmatches.clear();
+    globalmatches.clear();
   }
   
   
@@ -666,12 +677,12 @@ public class QgramMatcher {
    }
 
     /** simple structure for unsorted (global) matches */
-   private class GlobMatch {
+   private class GlobalMatch {
      final int tpos;
      final int sseqnum;
      final int spos;
      final int len;
-     public GlobMatch(final int tpos, final int sseqnum, final int spos, final int len) {
+     public GlobalMatch(final int tpos, final int sseqnum, final int spos, final int len) {
        this.tpos=tpos; this.sseqnum=sseqnum; this.spos=spos; this.len=len;
      }
    }

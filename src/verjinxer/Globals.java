@@ -215,7 +215,7 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the newly created int[] with the file's contents
    */
-  int[] slurpIntArray(String file) {
+  public int[] slurpIntArray(String file) {
     int[] a = null;
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
@@ -288,7 +288,7 @@ public class Globals {
    * @param file  the name of the file to be read
    * @return the ByteBuffer with the mapped file's contents
    */
-  ByteBuffer mapR(final String file) {
+  public ByteBuffer mapR(final String file) {
     ByteBuffer b = null;
     logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
     try {

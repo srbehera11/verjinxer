@@ -1,8 +1,6 @@
 package verjinxer.sequenceanalysis;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * This class is a special QGramCoder that simulates bisulfite treatment on its input sequence.
