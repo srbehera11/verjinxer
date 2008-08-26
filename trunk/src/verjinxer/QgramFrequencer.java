@@ -7,7 +7,6 @@
 
 package verjinxer;
 
-import java.nio.*;
 import java.util.Arrays;
 import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
@@ -49,24 +48,15 @@ public class QgramFrequencer {
     g.logmsg("  -r, --reverse       output the LEAST instead of most frequent q-grams%n");
     g.logmsg("  -p, --prefix  <p>   report only words starting with p, where |p|<=q%n");
     g.logmsg("  -F, --filter  <c:d> filter q-grams by complexity <c> and delta <d>%n");
-    g.logmsg("  -x, --external      save memory at the cost of lower speed%n");
   }
   
   /* Variables */
   boolean countseq = false;
   byte[]  word     = null;
-  boolean external = false;
   boolean rev      = false;
   int asize;
   int q;
   AlphabetMap amap  = null;  // the alphabet map
-  byte[]      s     = null;  // the text (coded)
-  int         n     = 0;     // length of s
-  int[]       qbck  = null;  // bucket boundaries
-  int[]       ssp   = null;  // sequence separator positions
-  int         m     = 0;     // number of sequences
-  IntBuffer   qpos  = null;  // q-gram positions
-  int[]       qposa = null;  // q-gram positions as array
   
   int Lcode = 0;
   int Hcode = 0;
@@ -76,7 +66,6 @@ public class QgramFrequencer {
   int num   = 30;
   int NUM   = 0;
   
-  
   /**
    * @param args the command line arguments
    * @return zero on success, nonzero if there is a problem
@@ -85,7 +74,7 @@ public class QgramFrequencer {
     TicToc gtimer = new TicToc();
     g.cmdname = "qfreq";
     int returnvalue = 0;
-    Options opt = new Options("F=filter:,s=sequences,p=prefix:,x=external,n=number:,N=Number:,r=rev=reverse");
+    Options opt = new Options("F=filter:,s=sequences,p=prefix:,n=number:,N=Number:,r=rev=reverse");
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
@@ -102,7 +91,6 @@ public class QgramFrequencer {
     if (args.length>1) g.warnmsg("qfreq: ignoring all arguments except first '%s'%n", args[0]);
     
     // Determine options values
-    external = (opt.isGiven("x"));
     rev      = (opt.isGiven("r"));
     countseq = (opt.isGiven("s"));
     String wordstring = (opt.isGiven("p")? opt.get("p") : null);

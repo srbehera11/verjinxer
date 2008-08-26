@@ -736,7 +736,8 @@ public class Mapper {
   
   
   
-  /** compute expected number of hit parallelograms */
+  /** compute expected number of hit parallelograms */ 
+  @SuppressWarnings("unused")
   final double[] computeEValues(long max, int q, long textlen, int bwidth, double match) {
     final int maxlen = (int)max;
     double[] ev = new double[maxlen+1];

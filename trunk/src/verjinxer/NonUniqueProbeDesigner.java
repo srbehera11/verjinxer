@@ -8,7 +8,6 @@
 package verjinxer;
 
 import java.io.*;
-import java.nio.*;
 import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
@@ -59,7 +58,7 @@ public class NonUniqueProbeDesigner {
   
   
   /* Variables */
-  boolean     external = false;
+//  boolean     external = false;
   boolean     dontdorc = false;
   boolean outputdetails= false;
   int         pl    = 0;     // probe length
@@ -71,13 +70,10 @@ public class NonUniqueProbeDesigner {
   AlphabetMap amap  = null;  // the alphabet map
   byte[]      s     = null;  // the text (coded)
   int         n     = 0;     // length of s
-  int[]       qbck  = null;  // bucket boundaries
   long[]      ssp   = null;  // sequence separator positions
   int         m     = 0;     // number of sequences
-  IntBuffer   qpos  = null;  // q-gram positions
-  int[]       qposa = null;  // q-gram positions as array
   PrintWriter out= null;
- 
+  QGramIndex qgramindex;
   
   /**
    * @param args the command line arguments
@@ -103,7 +99,7 @@ public class NonUniqueProbeDesigner {
       g.warnmsg("nonunique: ignoring all arguments except first '%s'%n", args[0]); }
         
     // Determine options values
-    external = (opt.isGiven("x"));
+    boolean external = (opt.isGiven("x"));
     dontdorc = !(opt.isGiven("noskip"));
     outputdetails = (opt.isGiven("details"));
     pl = (opt.isGiven("l")? Integer.parseInt(opt.get("l")) : 70);  // ell
@@ -143,15 +139,13 @@ public class NonUniqueProbeDesigner {
     try {
       final ArrayFile arf = new ArrayFile(null);
       s    = arf.setFilename(seqfile).readArray((byte[])null);
-      qbck = arf.setFilename(qbckfile).readArray((int[])null);
       ssp  = arf.setFilename(sspfile).readArray((long[])null);
     } catch (IOException ex) {
       g.warnmsg("nonunique: reading '%s', '%s', '%s' failed. Stop.%n",
           seqfile, qbckfile, sspfile);
       g.terminate(1);
     }
-    if (external) qpos  = g.mapR(qposfile).asIntBuffer();
-    else          qposa = g.slurpIntArray(qposfile);
+    qgramindex = new QGramIndex(g, qposfile, qbckfile, external);
     g.logmsg("  reading finished after %.1f sec%n", timer.tocs());
     g.logmsg("nonunique: starting probe selection...%n");
     n = s.length;
@@ -168,7 +162,6 @@ public class NonUniqueProbeDesigner {
     int m1 = (int)(m*ufrac);
     if (ufrac>0.0 && m1<m0 ) m0 = m1;
     int symremaining = 0;
-    int seqstart = 0;
     int seqnum = 0;
     int p = 0;
     int qcode;
@@ -205,7 +198,7 @@ public class NonUniqueProbeDesigner {
           if (amap.isSeparator(s[p])) {
             assert(p==ssp[seqnum]);
             if(p>=n-1) { p=n; break; }
-            seqnum++; seqstart=p+1;
+            seqnum++; /*seqstart=p+1;*/
             if (dontdorc) {
               middle = (ssp[seqnum-1] + ssp[seqnum])/2; //ok
               assert((ssp[seqnum]-1)%2==0 && amap.isWildcard(s[(int)middle])) :
@@ -329,8 +322,6 @@ public class NonUniqueProbeDesigner {
   
   
   private final void findlrmm(final int qcode, final int sp, final int lrmmrow) {
-    final int r = qbck[qcode];
-    final int newactive = qbck[qcode+1] - r;
     int ai, ni;
     
     //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
@@ -340,7 +331,9 @@ public class NonUniqueProbeDesigner {
     else
       java.util.Arrays.fill(LRMM[lrmmrow], 0);
     
-    if (external) { qpos.position(r);  qpos.get(newpos, 0, newactive); } else { System.arraycopy(qposa, r, newpos, 0, newactive); }
+    qgramindex.getQGramPositions(qcode, newpos);
+    final int newactive = qgramindex.bucketSize(qcode); // number of new active q-grams
+    
     //g.logmsg("    qpos = [%s]%n", Strings.join(" ",newpos, 0, newactive));
     for(ni=0, ai=0; ni<newactive; ni++) {
       while(ai<active && lenforact[ai]<q) ai++;
