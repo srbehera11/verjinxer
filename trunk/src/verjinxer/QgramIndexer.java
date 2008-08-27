@@ -19,7 +19,7 @@ import static verjinxer.Globals.*;
  * @author Sven Rahmann
  * @author Marcel Martin
  */
-public final class QgramIndexer {
+public final class QgramIndexer implements Subcommand {
 
    private Globals g;
 
@@ -158,7 +158,7 @@ public final class QgramIndexer {
          g.stopplog();
       } // end for each file
       return returnvalue; // 1 if failed on any of the indices; 0 if everything ok.
-   } // end run
+   }
 
    
    
