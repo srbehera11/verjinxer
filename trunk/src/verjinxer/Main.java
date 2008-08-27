@@ -10,6 +10,7 @@
 package verjinxer;
 import java.io.*;
 import java.util.Arrays;
+
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import static verjinxer.Globals.*;
@@ -96,7 +97,8 @@ public class Main {
     
     title();
     if (args.length == 0) {
-      usage(); g.terminate(0);
+      usage(); 
+      g.terminate(0);
     }
     
     String   command = args[0].toLowerCase();
@@ -114,7 +116,7 @@ public class Main {
     } else if (command.startsWith("qf")) {
       new QgramFrequencer(g).run(rest);
     } else if (command.startsWith("qm")) {
-      new QgramMatcher(g).run(rest);
+      new QgramMatcherSubcommand(g).run(rest);
     } else if (command.startsWith("su")) {
       new SuffixTrayBuilder(g).run(rest);
     } else if (command.startsWith("bigsu")) {
@@ -155,7 +157,7 @@ public class Main {
     } else if (command.startsWith("qf")) {
       new QgramFrequencer(g).help();
     } else if (command.startsWith("qm")) {
-      new QgramMatcher(g).help();
+      new QgramMatcherSubcommand(g).help();
     } else if (command.startsWith("su")) {
       new SuffixTrayBuilder(g).help();
     } else if (command.startsWith("bigsu")) {

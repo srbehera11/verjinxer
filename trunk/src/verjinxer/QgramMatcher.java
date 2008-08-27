@@ -1,249 +1,161 @@
-/*
- * QgramMatcher.java
- * Created on 25. April 2007, 12:32
- *
- * TODO: adapt to 64-bit files
- * 
- * Sample usage:
- *
- * To map a 454 sequencing run ('run1') against human chromosome 1:
- * ... qmatch -l 25 -M 15 -F 2:0 -t #  run1  c01
- * We expect a perfect read of length 100.  This should give rise to at least one perfect match of length >= 25.
- * We expect a unique location on the genome. This should give rise to at most 15 hits of length >= 25.
- * We do not allow hits to start a degenerate q-grams that consist  of only 2 different nucleotides.
- * Running hits can extend beyond these, however.
- * We keep track of the sequences that have already been identified as repeats (ie, have too many hits). 
- *
- */
-
 package verjinxer;
 
-import java.io.*;
+import static verjinxer.Globals.extalph;
+import static verjinxer.Globals.extdesc;
+import static verjinxer.Globals.extqbck;
+import static verjinxer.Globals.extqpos;
+import static verjinxer.Globals.extseq;
+import static verjinxer.Globals.extssp;
+import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_A;
+import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_C;
+import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_G;
+import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_T;
+
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Properties;
-import verjinxer.util.*;
-import verjinxer.sequenceanalysis.*;
-import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.*;
-import static verjinxer.Globals.*;
 
+import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.QGramCoder;
+import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.sequenceanalysis.QGramIndex;
+import verjinxer.util.BitArray;
+import verjinxer.util.TicToc;
 
-/**
- *
- * @author Sven Rahmann
- * @author Marcel Martin
- */
 public class QgramMatcher {
+   final Globals g;
       
-  private Globals g;
-  
-  /** Creates a new instance of QgramMatcher 
-   * @param gl the Globals structure
-   */
-  public QgramMatcher(Globals gl) {
-    g = gl;
-  }
-  
-  /**
-   * print help on usage
-   */
-  public void help() {
-    g.logmsg("Usage:%n  %s qmatch  [options]  [<sequences>]  <index>%n", programname);
-    g.logmsg("Reports all maximal matches at least as long as a given length >=q,%n");
-    g.logmsg("in human-readable output format. Writes .matches or .sorted-matches.%n");
-    g.logmsg("Options:%n");
-    g.logmsg("  -l, --length <len>   minimum match length [q of q-gram-index]%n");
-    g.logmsg("  -s, --sort           write matches sorted per index sequence%n");
-    g.logmsg("  -m, --min    <min>   show matches only if >=min (per index seq if sorted)%n");
-    g.logmsg("  -M, --max    <max>   stop considering sequences at max+1 matches%n");
-    g.logmsg("  -F, --filter <c:d>   apply q-gram filter <complexity:delta>%n");
-    g.logmsg("  --self               compare index against itself%n");
-    g.logmsg("  -t, --tmh <filename> name of too-many-hits-filter file (use #)%n");
-    g.logmsg("  -o, --out <filename> specify output file (use # for stdout)%n");
-    g.logmsg("  -x, --external       save memory at the cost of lower speed%n");
-    g.logmsg("  -c, --cmatchesc      C matches C, even if not before G%n");
-  }
-  
-  /** if run independently, call main
-   *@param args (ignored)
-   */
-  public static void main(String[] args) {
-    new QgramMatcher(new Globals()).run(args);
-  }
-
-  
-  /* Variables */
   boolean     sorted      = false;
 
   /** minimum number of matches for output */
-  int         minseqmatches = 1;
+   final int minseqmatches;
   
   /** comparing text against itself? */
-  boolean     selfcmp     = false;
+   final boolean selfcmp;
   
   /** min. match length */
-  int         minlen      = 0;
+   final int minlen;
   
   /** q-gram length */
-  int         q           = 0;
+   final int q;
   
   /** alphabet size */
-  int         asize       = 0;
+   final int asize;
   
   /** the alphabet map */
-  AlphabetMap amap        = null;
+   final AlphabetMap amap;
   
   /** the target sequence text (coded) */
-  byte[]      t           = null;
+   final byte[] t;
   
   /** sequence separator positions in text t */
-  long[]       tssp        = null;
+   final long[] tssp;
   
   // int tm; number of sequences in t
   
   /** sequence descriptions of t */
-  ArrayList<String> tdesc = null; 
+   final ArrayList<String> tdesc; 
   
   /** Positions of all q-grams */
-  QGramIndex qgramindex = null;
+   final QGramIndex qgramindex;
 
-//  int         tp          = 0;      // current position in t
-  int         seqstart    = 0;      // starting pos of current sequence in t
-  int         seqnum      = 0;      // number of current sequence in t
-  PrintWriter out         = null;        
+   final PrintWriter out;
   
-  byte[]      s           = null;   // the index text (coded)
-  long[]       ssp        = null;   // sequence separator positions in index s
-  int         sm          = 0;      // number of sequences in s
-  ArrayList<String> sdesc = null;   // sequence descriptions of s
+   /** the index text (coded) */
+   final byte[] s;
   
+   /** sequence separator positions in index s */
+   final long[] ssp;
+   
+   /** number of sequences in s */
+   final int sm;
+   
+   /** number of sequences in s */
+   final ArrayList<String> sdesc;
+   
+   /** maximum number of allowed matches */
+   final int maxseqmatches;
+   
+   /** list for sorted matches */
+   final ArrayList<ArrayList<Match>> matches; 
+   
+   /** list for unsorted matches */
+   final ArrayList<GlobalMatch> globalmatches; 
+   
+   final BitArray toomanyhits;
+   
+   final boolean bisulfite; // whether the index is for bisulfite sequences
+   final boolean c_matches_c; // whether C matches C, even if not before G
+
   int     active    = 0;            // number of active matches
   int[]   activepos = null;         // starting positions of active matches in s
   int[]   newpos    = null;         // starting positions of new matches in s
   int[]   activelen = null;         // match lengths for active matches
   int[]   newlen = null;         // match lengths for new matches
   int     seqmatches= 0;            // number of matches in current target sequence
-  int     maxseqmatches = -1;       // maximum number of allowed matches
+// int         tp          = 0;      // current position in t
+   int seqstart = 0;      // starting pos of current sequence in t
+   int seqnum = 0;      // number of current sequence in t
   
-  ArrayList<ArrayList<Match>> matches = null; // list for sorted matches
-  ArrayList<GlobalMatch>   globalmatches  = null; // list for unsorted matches
-  
-  boolean bisulfite = false; // whether the index is for bisulfite sequences
-  boolean c_matches_c = false; // whether C matches C, even if not before G
- 
-  /**
+   /** Creates a new instance of QgramMatcherSubcommand 
+    * @param gl the Globals structure
    * @param args the command line arguments
-   * @return zero on successful completion, nonzero value otherwise.
+    * @param toomanyhits may be null
    */
-  public int run(String[] args) {
-    TicToc totalTimer = new TicToc();
-    g.cmdname = "qmatch";
-    // t: text to find
-    // s: sequence in which to search
-    String tname, sname, dt, ds;
+   public QgramMatcher(
+         Globals g,
+         String dt, 
+         String ds, 
+         String toomanyhitsfilename,
+         int maxseqmatches, 
+         int minseqmatches, 
+         int minlen,
+         int maxactive,
+         final QGramCoder qgramcoder,
+         final QGramFilter qgramfilter,
+         final PrintWriter out,
+         final boolean sorted, 
+         final boolean external,
+         final boolean selfcmp, 
+         final boolean bisulfite,
+         final boolean c_matches_c
+         ) 
+   {
+     this.g = g;
+     this.selfcmp = selfcmp;
+     this.bisulfite = bisulfite;
+     this.asize = qgramcoder.asize;
+     this.q = qgramcoder.q;
+     this.out = out;
+     this.c_matches_c = c_matches_c;
     
-    Options opt = new Options
-        ("l=length:,s=sort=sorted,o=out=output:,x=external,m=min=minmatch=minmatches:,M=max:,F=filter:,t=tmh:,self,c=cmatchesc");
-    try {
-      args = opt.parse(args);
-    } catch (IllegalOptionException ex) {
-      g.terminate("qmatch: "+ex.toString());
-    }
-    
-    selfcmp = opt.isGiven("self");
-    if (args.length<1 || (args.length==1 && !selfcmp)) {
-      help(); g.terminate("qmatch: need both <sequences> and <index>, or --self and <index>!");  
-    } 
-    if (args.length==1) {
-      assert(selfcmp);
-      tname = args[0];
-      sname = tname;
-    } else { 
-      assert(args.length>=2);
-      if (selfcmp) g.logmsg("qmatch: using --self with indices will suppress symmetric matches%n");
-      tname = args[0];
-      sname = args[1];
-      if (selfcmp && !tname.equals(sname)) g.warnmsg("qmatch: using --self, but %s != %s%n", tname,sname);
-    }
-    dt = g.dir + tname;
-    ds = g.dir + sname;
-    g.startplog(ds+extlog);
-    
-    // Read project data and determine asize, q; read alphabet map
-    Properties prj = g.readProject(ds+extprj);
-    try { 
-      asize = Integer.parseInt(prj.getProperty("qAlphabetSize"));
-      q = Integer.parseInt(prj.getProperty("q"));
-    } catch (NumberFormatException ex) {
-      g.warnmsg("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s%n", ds, ex.toString());
-      g.terminate(1);
-    }
-    QGramCoder coder = new QGramCoder(q,asize);
     amap  = g.readAlphabetMap(ds+extalph);
     
-    // Prepare the q-gram filter from -F option
-    final int[] filterparam = QGramFilter.parseFilterParameters(opt.get("F"));
-    final QGramFilter thefilter = new QGramFilter(q, asize, filterparam[0], filterparam[1]);
     //final BitSet thefilter = coder.createFilter(opt.get("F")); // empty filter if null
-
-    // Prepare the sequence filter
-    maxseqmatches = Integer.MAX_VALUE;
-    if (opt.isGiven("M")) maxseqmatches = Integer.parseInt(opt.get("M"));
-    
-    BitArray toomanyhits = null;
-    if (opt.isGiven("t")) {
-      if (opt.get("t").startsWith("#")) {
-        toomanyhits = g.slurpBitArray(dt+".toomanyhits-filter");
-      } else {
-        toomanyhits = g.slurpBitArray(g.dir + opt.get("t"));
-      }
-    }
-    
-    // Determine option values
-    boolean external  = (opt.isGiven("x"));
-    sorted = (opt.isGiven("s"));
-    minlen = (opt.isGiven("l")? Integer.parseInt(opt.get("l")) : q);
     if (minlen<q) {
       g.warnmsg("qmatch: increasing minimum match length to q=%d!%n",q);
       minlen=q;
     }
-    minseqmatches = (opt.isGiven("m")? Integer.parseInt(opt.get("m")) : 1);
+     this.minlen = minlen;
+     
     if (minseqmatches<1) {
       g.warnmsg("qmatch: increasing minimum match number to 1!%n");
       minseqmatches=1;
     }  
-    
-    String outname = String.format("%s-%s-%dx%d", tname, sname, minseqmatches, minlen);
-    if (opt.isGiven("o")) {
-      if (outname.length()==0 || outname.startsWith("#"))  outname = null;
-      else outname=opt.get("o");
+     this.minseqmatches = minseqmatches;
+     this.maxseqmatches = maxseqmatches;
+     if (sorted) {
+        matches = new ArrayList<ArrayList<Match>>();
+        globalmatches = null;
+      } else {
+        globalmatches = new ArrayList<GlobalMatch>(maxseqmatches<127? maxseqmatches+1: 128);
+        matches = null;
     }
-    if (outname!=null)  outname = g.outdir + outname + (sorted? ".sorted-matches" : ".matches");
-
-    c_matches_c = opt.isGiven("c");
 
     if (c_matches_c) g.logmsg("qmatch: C matches C, even if no G follows%n");
     else g.logmsg("qmatch: C matches C only before G%n");
 
-    // end of option parsing
-
-    openFiles(dt, ds, outname, external); // provides tm
-    if (toomanyhits==null) toomanyhits = new BitArray(tssp.length); // if -t not given, start with a clean filter
-    int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
-    bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
-    if (bisulfite) g.logmsg("qmatch: index is for bisulfite sequences, using bisulfite matching%n");
-    match(coder, maxactive, thefilter, toomanyhits);
-    out.close();
-    g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
-        toomanyhits.cardinality(), tssp.length, toomanyhits.cardinality()*100.0/tssp.length);
-    g.dumpBitArray(dt+".toomanyhits-filter", toomanyhits);
-    g.logmsg("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());
-    g.stopplog();
-
-    return 0;
-  }
-  
   /**
-   * variables written to in this method:
+      * variables written to in the following
    * t
    * tn
    * tssp
@@ -253,13 +165,11 @@ public class QgramMatcher {
    * ssp
    * sm
    * sdesc
-   * qbck
-   * qpos bzw. qposa
    * 
    * out
    */
-  private void openFiles(String dt, String ds, String outname, boolean external) {
-    // Read text, text-ssp, seq, qbck, ssp into arrays;  
+/*     private void openFiles(String dt, String ds, String outname, boolean external) {
+ */      // Read text, text-ssp, seq, qbck, ssp into arrays;  
     // read sequence descriptions;
     // memory-map or read qpos.
     TicToc ttimer = new TicToc();
@@ -289,17 +199,18 @@ public class QgramMatcher {
     
     g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
   
-  
-    // start output
-    out = new PrintWriter(System.out);
-    if (outname!=null) {
-      try {
-        out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outname),32*1024), false);
-      } catch (FileNotFoundException ex) {
-        g.terminate("qmatch: could not create output file. Stop.");
+    //toomanyhits = new  BitArray toomanyhits;
+     if (toomanyhitsfilename != null) {
+        toomanyhits = g.slurpBitArray(toomanyhitsfilename);
+     } else {
+        toomanyhits = new BitArray(tssp.length); // if -t not given, start with a clean filter
       }
     }
-    g.logmsg("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
+   
+   public void tooManyHits(String filename) {
+      g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
+            toomanyhits.cardinality(), tssp.length, toomanyhits.cardinality()*100.0/tssp.length);
+        g.dumpBitArray(filename, toomanyhits);
   }
 
   /**
@@ -309,7 +220,7 @@ public class QgramMatcher {
    * @param toomanyhits gets modified
    * @param c_matches_c whether C always matches C, even if not before G
    */
-  private void match(QGramCoder coder, int maxactive, final QGramFilter thefilter, BitArray toomanyhits) {
+   public void match(QGramCoder coder, int maxactive, final QGramFilter thefilter) {
     // Walk through t:
     // (A) Initialization
     TicToc timer = new TicToc();
@@ -319,10 +230,11 @@ public class QgramMatcher {
     activelen = new int[maxactive];
     newlen = new int[maxactive];
     if (sorted) {
-      matches = new ArrayList<ArrayList<Match>>(sm);
-      for (int i=0; i<sm; i++) matches.add(i, new ArrayList<Match>(32));
+       matches.ensureCapacity(sm);
+       for (int i=0; i<sm; i++) 
+          matches.add(i, new ArrayList<Match>(32));
     } else {
-      globalmatches = new ArrayList<GlobalMatch>(maxseqmatches<127? maxseqmatches+1: 128);
+       globalmatches.ensureCapacity(maxseqmatches<127? maxseqmatches+1: 128);
     }
     
     // (B) Walking ...
@@ -692,4 +604,3 @@ public class QgramMatcher {
 class TooManyHitsException extends Exception {
   private static final long serialVersionUID = -1841832699464945659L;
 }
-
