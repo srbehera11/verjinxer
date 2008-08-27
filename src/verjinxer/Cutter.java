@@ -24,10 +24,10 @@ public class Cutter {
   private Globals g;
   
   /** Creates a new instance of Cutter
-   * @param gl  globals object to use (contains e.g. streams for logging, etc)
+   * @param g  globals object to use (contains e.g. streams for logging, etc)
    */
-  public Cutter(Globals gl) {
-    g = gl;
+  public Cutter(Globals g) {
+    this.g = g;
   }
   
   /**

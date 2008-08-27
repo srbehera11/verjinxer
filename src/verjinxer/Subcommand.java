@@ -1,7 +1,23 @@
 package verjinxer;
 
-/** TODO remove dependency on Globals */
+/**
+ * All subcommands must implement the Subcommand interface.
+ * 
+ * @author Marcel Martin
+ * 
+ * TODO rename to 'Module'?
+ */
 public interface Subcommand {
-   void run(String[] args);
+
+   /**
+    * Runs this subcommand.
+    * 
+    * @param args
+    *           the command-line parameters
+    * 
+    */
+   int run(String[] args);
+
+   /** Prints help for this Subcommand */
    void help();
 }

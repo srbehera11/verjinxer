@@ -104,19 +104,21 @@ public class Main {
     String   command = args[0].toLowerCase();
     String[] rest    = Arrays.asList(args).subList(1, args.length).toArray(new String[0]);
     
+    Subcommand subcommand = null;
+    
     // Process all available commands
     if (command.startsWith("he")) {
       help(rest);
     } else if (command.startsWith("tr")) {
-      new Translater(g).run(rest);
+      subcommand = new TranslaterSubcommand(g);
     } else if (command.startsWith("cut")) {
       new Cutter(g).run(rest);
     } else if (command.startsWith("qg")) {
-      new QgramIndexer(g).run(rest);
+      subcommand = new QgramIndexer(g);
     } else if (command.startsWith("qf")) {
       new QgramFrequencer(g).run(rest);
     } else if (command.startsWith("qm")) {
-      new QgramMatcherSubcommand(g).run(rest);
+      subcommand = new QgramMatcherSubcommand(g);
     } else if (command.startsWith("su")) {
       new SuffixTrayBuilder(g).run(rest);
     } else if (command.startsWith("bigsu")) {
@@ -130,6 +132,8 @@ public class Main {
       g.warnmsg("Unrecognized command: '%s'%n", command);
       g.terminate(1);
     }
+    if (subcommand != null)
+       subcommand.run(rest);
   }
   
   private void title() {
@@ -138,26 +142,29 @@ public class Main {
   
   private void help(String[] args) {
     if (args.length == 0) {
-      usage(); g.terminate(0);
+      usage(); 
+      g.terminate(0);
     }
     
     String   command = args[0];
     //String[] rest    = Arrays.asList(args).subList(1, args.length).toArray(new String[0]);
       // waere schoen, wenn man rest=args[1..end] einfacher erhalten koennte
     
+    Subcommand subcommand = null;
+
     // Process help on each command
     if (command.startsWith("he")) {
       usage(); g.terminate(0);
     } else if (command.startsWith("cut")) {
       new Cutter(g).help();
     } else if (command.startsWith("tr")) {
-      new Translater(g).help();
+      subcommand = new TranslaterSubcommand(g);
     } else if (command.startsWith("qg")) {
-      new QgramIndexer(g).help();
+      subcommand = new QgramIndexer(g);
     } else if (command.startsWith("qf")) {
       new QgramFrequencer(g).help();
     } else if (command.startsWith("qm")) {
-      new QgramMatcherSubcommand(g).help();
+      subcommand = new QgramMatcherSubcommand(g);
     } else if (command.startsWith("su")) {
       new SuffixTrayBuilder(g).help();
     } else if (command.startsWith("bigsu")) {
@@ -171,6 +178,7 @@ public class Main {
       g.warnmsg("Unrecognized command: '%s'%n", command);
       g.terminate(1);
     }
+    if (subcommand != null)
+       subcommand.help();
   }
 }
-

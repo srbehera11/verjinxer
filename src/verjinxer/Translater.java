@@ -8,7 +8,6 @@ package verjinxer;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.Properties;
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
 import static verjinxer.Globals.*;
@@ -19,244 +18,38 @@ import static verjinxer.Globals.*;
  */
 public class Translater {
   
-  private Globals g;
-  
-  public Translater(Globals gl) {
-    g = gl;
-  }
-  
-  /**
-   * print help on usage and options
-   */
-  public void help() {
-    g.logmsg("Usage:%n  %s translate [options] <TextAndFastaFiles...>%n",programname);
-    g.logmsg("translates one or more text or FASTA files, using an alphabet map;%n");
-    g.logmsg("creates %s, %s, %s, %s, %s;%n", extseq, extdesc, extalph, extssp, extprj);
-    g.logmsg("with option -r, also creates %s, %s, %s, %s.%n", extrunseq, extrunlen, extrun2pos, extpos2run);
-    g.logmsg("Options:%n");
-    g.logmsg("  -i, --index <name>   name of index files [first filename]%n");
-    g.logmsg("  -t, --trim           trim non-symbol characters at both ends%n");
-    g.logmsg("  -a, --amap  <file>   filename of alphabet map%n");
-    g.logmsg("  --dna                use standard DNA alphabet%n");
-    g.logmsg("  --rconly             translate to reverse DNA complement%n");
-    g.logmsg("  --dnarc     <desc>   combines --dna and --rconly;%n");
-    g.logmsg("     if <desc> is empty or '#', concatenate rc with dna; otherwise,%n");
-    g.logmsg("     generate new rc sequences and add <desc> to their headers.%n");
-    g.logmsg("  --dnabi              translate to bisulfite-treated DNA%n");
-    g.logmsg("  --protein            use standard protein alphabet%n");
-    g.logmsg("  --masked             lowercase bases are replaced with wildcards (only for DNA alphabets)%n");
-    g.logmsg("  -r, --runs           additionally create run-related files%n");
-  }
-  
-  
-  /**
-   * @param args the command line arguments
-   */
-  public static void main(String[] args) {
-    new Translater(new Globals()).run(args);
-  }
+  final Globals g;
   
   
   // Translater variables
-  boolean trim=false;
-  AlphabetMap amap=null, amap2=null;
-  boolean separateRCByWildcard = false;
-  boolean reverse = false;
-  boolean addrc = false;
-  boolean bisulfite = false;
-  String dnarcstring = null;
+  final boolean trim;
+  final AlphabetMap amap, amap2;
+  final boolean separateRCByWildcard;
+  final boolean reverse;
+  final boolean addrc;
+  final boolean bisulfite;
+  final String dnarcstring;
   
-  
-  
-  public int run(String[] args) {
-    TicToc gtimer = new TicToc();
-    g.cmdname = "translate";
-    Properties prj = new Properties();
-    prj.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"",args)+ "\"");
-    
-    Options opt = new Options("i=index=indexname:,t=trim,a=amap:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs");
-    try {
-      args = opt.parse(args);
-    } catch (IllegalOptionException e) {
-      g.terminate(e.toString()); }
-    
-    if (args.length==0) {
-      help();
-      g.logmsg("translate: no files given%n");
-      g.terminate(0);
-    }
-    prj.setProperty("NumberSourceFiles", Integer.toString(args.length));
-    
-    // determine trimming
-    trim = opt.isGiven("t");
-    prj.setProperty("TrimmedSequences", Boolean.toString(trim));
-    
-    // determine the name of the index
-    String outname;
-    if (opt.isGiven("i")) outname=opt.get("i");
-    else { // take base name of first FASTA file
-      outname = new File(args[0]).getName();
-      int lastdot = outname.lastIndexOf('.');
-      if (lastdot>=0) outname = outname.substring(0,lastdot);
-    }
-    outname = g.outdir + outname;
-    g.startplog(outname + extlog, true);  // start new project log
-    
-    // determine the alphabet map(s)
-    int givenmaps = 0;
-    if (opt.isGiven("a")) givenmaps++;
-    if (opt.isGiven("dna")) givenmaps++;
-    if (opt.isGiven("rconly")) givenmaps++;
-    if (opt.isGiven("dnarc")) givenmaps++;
-    if (opt.isGiven("dnabi")) givenmaps++;
-    if (opt.isGiven("protein")) givenmaps++;
-    if (givenmaps > 1) 
-      g.terminate("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein}.");
-    
-    if (opt.isGiven("masked") && !(opt.isGiven("dna") || opt.isGiven("rc") || opt.isGiven("dnarc")))
-       g.terminate("translate: --masked can be used only in combination with one of {--dna, --rconly, --dnarc}.");
-    if (opt.isGiven("a")) amap = g.readAlphabetMap(g.dir+opt.get("a"));
-    if (opt.isGiven("dna") || opt.isGiven("dnarc")) amap = opt.isGiven("masked") ? AlphabetMap.maskedDNA() : AlphabetMap.DNA();
-    
-    if (opt.isGiven("rc")) { reverse = true; amap = opt.isGiven("masked") ? AlphabetMap.maskedcDNA() : AlphabetMap.cDNA(); }
-    if (opt.isGiven("dnarc")) {
-      amap2 = opt.isGiven("masked") ? AlphabetMap.maskedcDNA() : AlphabetMap.cDNA();
-      addrc = true;
-      dnarcstring = opt.get("dnarc");
-      if (dnarcstring.equals("")) separateRCByWildcard = true;
-      if (dnarcstring.startsWith("#")) separateRCByWildcard = true;
-    }
-    if (opt.isGiven("dnabi")) {
-      bisulfite = true;
-      amap  = AlphabetMap.DNA(); // do translation on-line
-    }
-    if (opt.isGiven("protein")) amap = AlphabetMap.Protein();
-    if (amap==null) 
-      g.terminate("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --protein}.");
-    
-    
-    // determine the file types: FASTA or TEXT
-    // FASTA 'f': First non-whitespace character is a '>''
-    // TEXT  't': all others
-    char[] filetype = new char[args.length];
-    for(int i=0; i<args.length; i++) {
-      String fname = g.dir + args[i];
-      int ch = ' ';
-      try {
-        FileReader reader = new FileReader(fname);
-        for(ch=reader.read(); ch!=-1 && Character.isWhitespace(ch); ch=reader.read()) {}
-        reader.close();
-      } catch (Exception e) {
-        g.terminate("translate: could not open sequence file '"+fname+"'; "+e.toString()); }
-      if (ch=='>') filetype[i]='f';
-      else filetype[i]='t';
-    }
-    
-    // open the output file stream
-    g.logmsg("translate: creating index '%s'...%n", outname);
-    AnnotatedArrayFile out = new AnnotatedArrayFile(outname + extseq); // use default buffer size
-    try {
-      out.openW(); 
-    } catch (IOException ex) {
-      g.warnmsg("translate: could not create output file '%s'; %s",outname+extseq,ex.toString());
-    }
-    
-    // process each file according to type
-    for (int i=0; i<args.length; i++) {
-      String fname = g.dir + args[i];
-      g.logmsg("  processing '%s' (%c)...%n",fname,filetype[i]);
-      if (filetype[i]=='f') processFasta(fname, out);
-      else if (bisulfite && filetype[i]=='f') processFastaB(fname, out);
-      else if (filetype[i]=='t') processText(fname, out);
-      else g.terminate("translate: unsupported file type for file "+args[i]);
-    }
-    // DONE processing all files.
-    try { out.close(); } catch (IOException ex) {}
-    long totallength=out.length();
-    g.logmsg("translate: translated sequence length: %d%n", totallength);
-    if (totallength>=(2L*1024*1024*1024))
-      g.warnmsg("translate: length %d exceeds 2 GB limit!!%n", totallength);
-    else if (totallength>=(2L*1024*1024*1024*127)/128) 
-      g.warnmsg("translate: long sequence, %d is within 99% of 2GB limit!%n", totallength);
-    prj.setProperty("Length",Long.toString(totallength));
-    
-    // Write the ssp array.
-    g.dumpLongArray(outname+extssp, out.getSsps());
-    prj.setProperty("NumberSequences",Integer.toString(out.getSsps().length));
-    
-    // Write sequence length statistics.
-    long maxseqlen=0;
-    long minseqlen=Long.MAX_VALUE;
-    for (long seqlen : out.getLengths()) {
-      if (seqlen>maxseqlen) maxseqlen=seqlen;
-      if (seqlen<minseqlen) minseqlen=seqlen;
-    }
-    prj.setProperty("LongestSequence",  Long.toString(maxseqlen));
-    prj.setProperty("ShortestSequence", Long.toString(minseqlen));
-    
-    // Write the descriptions
-    PrintWriter descfile = null;
-    try {
-      descfile = new PrintWriter(outname+extdesc);
-      for (String s : out.getDescriptions()) descfile.println(s);
-      descfile.close();
-    } catch (IOException ex) {
-      g.warnmsg("translate: %s%s: %s%n",outname,extdesc,ex.toString());
-      g.terminate(1);
-    }
-    
-    // Write the alphabet and project file
-    PrintWriter alfile = null;
-    try {
-      //alfile = new PrintWriter(outname + extamap);
-      //amap.showImage(alfile);
-      //alfile.close();
-      alfile = new PrintWriter(outname + extalph);
-      amap.showSourceStrings(alfile);
-      alfile.close();
-    } catch (IOException ex) {
-      g.terminate("translate: could not write alphabet: " + ex.toString());
-    }
-    
-    prj.setProperty("SmallestSymbol",Integer.toString(amap.smallestSymbol()));
-    prj.setProperty("LargestSymbol",Integer.toString(amap.largestSymbol()));
-    prj.setProperty("LastAction","translate");
-    try {
-      prj.setProperty("Separator", Byte.toString(amap.codeSeparator()));
-    } catch (InvalidSymbolException ex) {
-      prj.setProperty("Separator", "128"); // illegal byte code 128 -> nothing
-    }
-    g.logmsg("translate: finished translation after %.1f secs.%n", gtimer.tocs());
-    
-    
-    // compute runs
-    if (opt.isGiven("r")) {
-      g.logmsg("translate: computing runs...%n");
-      long runs = 0;
-      try {
-        runs = computeRuns(outname);
-      } catch (IOException ex) {
-        g.terminate("translate: could not create run-related files; "+ex.toString());
-      }
-      prj.setProperty("Runs", Long.toString(runs));
-    }
-    
-    // write project file
-    try {
-      g.writeProject(prj,outname+extprj); 
-    }  catch (IOException ex) { 
-      g.terminate(String.format("translate: could not write project file; %s", ex.toString())); 
-    }
-    
-    // that's all
-    g.logmsg("translate: done; total time was %.1f secs.%n", gtimer.tocs());
-    return 0;
-  }
-  
-  
+  public Translater(Globals g, boolean trim, AlphabetMap amap, AlphabetMap amap2, boolean separateRCByWildcard,
+        boolean reverse,
+        boolean addrc,
+        boolean bisulfite,
+        String dnarcstring) {
+     this.g = g;
+     this.trim = trim;
+     this.amap = amap;
+     this.amap2 = amap2;
+     this.separateRCByWildcard = separateRCByWildcard;
+     this.reverse = reverse;
+     this.bisulfite = bisulfite;
+     this.dnarcstring = dnarcstring;
+     this.addrc = addrc;
+   }
+
+ 
   /************* processing methods ******************************************************/
   
-  private void processFasta(final String fname, final AnnotatedArrayFile out) {
+  void processFasta(final String fname, final AnnotatedArrayFile out) {
     FastaFile f = new FastaFile(fname);
     FastaSequence fseq = null;
     ByteBuffer tr = null;
@@ -264,7 +57,13 @@ public class Translater {
     final int appendreverse = 2; // always append separator
     long lastbyte = 0;
     
-    try { f.open(); } catch (Exception e) { g.warnmsg("translate: skipping '%s': %s%n",fname, e.toString()); return; }
+    try { 
+       f.open(); 
+    } 
+    catch (IOException e) { 
+       g.warnmsg("translate: skipping '%s': %s%n",fname, e.toString()); 
+       return; 
+    }
     while(true) {
       try {
         fseq = f.read(); // reads one fasta sequence from file f
@@ -272,22 +71,40 @@ public class Translater {
         tr = fseq.translateTo(tr, trim, amap, reverse, appendforward);
         lastbyte = out.writeBuffer(tr);
         if (addrc) {
-          if (!separateRCByWildcard)  out.addInfo(fseq.getHeader(), fseq.length(), (int)(lastbyte-1));
+          if (!separateRCByWildcard)
+             out.addInfo(fseq.getHeader(), fseq.length(), (int)(lastbyte-1));
           tr = fseq.translateTo(tr, trim, amap2, true, appendreverse);
           lastbyte = out.writeBuffer(tr);
-          if (separateRCByWildcard) out.addInfo(fseq.getHeader(), 2*fseq.length()+1, (int)(lastbyte-1));
-          else out.addInfo(fseq.getHeader()+" "+dnarcstring, fseq.length(), (int)(lastbyte-1));
+          if (separateRCByWildcard) 
+             out.addInfo(fseq.getHeader(), 2*fseq.length()+1, (int)(lastbyte-1));
+          else 
+             out.addInfo(fseq.getHeader()+" "+dnarcstring, fseq.length(), (int)(lastbyte-1));
         } else { // no reverse complement
-          out.addInfo(fseq.getHeader(), fseq.length(), (int)(lastbyte-1)); }
-      } catch (Exception e) {
-        g.warnmsg("translate: %s%n",e.toString()); break; }
+          out.addInfo(fseq.getHeader(), fseq.length(), (int)(lastbyte-1)); 
+        }
+      } catch (InvalidSymbolException e) {
+         g.warnmsg("translate: %s%n", e.toString()); 
+         break; 
+      }
+      catch (IOException e) {
+         g.warnmsg("translate: %s%n", e.toString()); 
+         break;
+      }
+      catch (FastaFormatException e) {
+         g.warnmsg("translate: %s%n", e.toString()); 
+         break;
+      }
     }
     // close file
-    try {  f.close(); } catch (Exception e) { g.warnmsg("translate: %s%n",e.toString()); }
+    try {  
+       f.close(); 
+    } catch (IOException e) { 
+       g.warnmsg("translate: %s%n",e.toString()); 
+    }
   }
 
   
-  private void processFastaB(final String fname, final AnnotatedArrayFile out) {
+  void processFastaB(final String fname, final AnnotatedArrayFile out) {
     FastaFile f = new FastaFile(fname);
     FastaSequence fseq = null;
     ByteBuffer tr = null;
@@ -322,7 +139,7 @@ public class Translater {
    * -- description is simply the filename;
    * -- separator is appended (never the wildcard).
    */
-  private void processText(final String fname, final AnnotatedArrayFile out) {
+  void processText(final String fname, final AnnotatedArrayFile out) {
     ByteBuffer tr = null;
     long lastbyte = 0;
     byte appender;
@@ -368,12 +185,12 @@ public class Translater {
    * @return number of runs in the sequence file
    * @throws java.io.IOException 
    */
-  public long computeRuns(final String fname) throws IOException {
+  long computeRuns(final String fname) throws IOException {
      return computeRunsAF(fname);
   }
 
   /** compute runs using memory mapping where possible */
-  long computeRunsM(final String fname) throws IOException {
+  private long computeRunsM(final String fname) throws IOException {
     int run = -1;
     ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
     ArrayFile rseq = new ArrayFile(fname+extrunseq).openW();
@@ -417,7 +234,7 @@ public class Translater {
   }
 
   /** compute runs using array files for writing, mmap only for reading */
-  long computeRunsAF(final String fname) throws IOException {
+  private long computeRunsAF(final String fname) throws IOException {
     int run = -1;
     ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
     ArrayFile rseq = new ArrayFile(fname+extrunseq).openW();
@@ -458,6 +275,4 @@ public class Translater {
         n, run, rseq.length(), 4*run, r2p.length(), p2r.length());
     return run;
   }
-  
-// end class
 }

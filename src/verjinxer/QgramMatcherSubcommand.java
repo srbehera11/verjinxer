@@ -72,7 +72,7 @@ public class QgramMatcherSubcommand implements Subcommand {
      g = gl;
   }
 
-  public void run(String[] args) {
+  public int run(String[] args) {
      TicToc totalTimer = new TicToc();
      g.cmdname = "qmatch";
 
@@ -213,6 +213,8 @@ public class QgramMatcherSubcommand implements Subcommand {
      out.close();
      g.logmsg("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());
      g.stopplog();
+     
+     return 0;
   }
 }
 
