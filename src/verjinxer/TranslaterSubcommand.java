@@ -189,10 +189,10 @@ public class TranslaterSubcommand implements Subcommand {
       // process each file according to type
       for (int i = 0; i < args.length; i++) {
          String fname = g.dir + args[i];
-         g.logmsg("  processing '%s' (%c)...%n", fname, filetype[i]);
+         g.logmsg("  processing '%s' (%s)...%n", fname, filetype[i].toString());
          if (filetype[i] == FileType.FASTA)
             translater.processFasta(fname, out);
-         else if (bisulfite && filetype[i] == FileType.FASTA)
+         else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
             translater.processFastaB(fname, out);
          else if (filetype[i] == FileType.TEXT)
             translater.processText(fname, out);
