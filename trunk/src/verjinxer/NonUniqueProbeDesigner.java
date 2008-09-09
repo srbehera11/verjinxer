@@ -145,7 +145,14 @@ public class NonUniqueProbeDesigner {
           seqfile, qbckfile, sspfile);
       g.terminate(1);
     }
-    qgramindex = new QGramIndex(g, qposfile, qbckfile, external);
+    final int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
+    try {
+       qgramindex = new QGramIndex(g, qposfile, qbckfile, maxactive);
+    } catch (IOException e) {
+       e.printStackTrace();
+       g.warnmsg(e.getMessage());
+       g.terminate(1);
+    }
     g.logmsg("  reading finished after %.1f sec%n", timer.tocs());
     g.logmsg("nonunique: starting probe selection...%n");
     n = s.length;
@@ -166,7 +173,7 @@ public class NonUniqueProbeDesigner {
     int p = 0;
     int qcode;
     LRMM = new int[pl-q+1][m];
-    int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
+    // TODO int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
     activepos = new int[maxactive];  active=0;
     newpos    = new int[maxactive];
     lenforact = new int[maxactive];
@@ -332,7 +339,7 @@ public class NonUniqueProbeDesigner {
       java.util.Arrays.fill(LRMM[lrmmrow], 0);
     
     qgramindex.getQGramPositions(qcode, newpos);
-    final int newactive = qgramindex.bucketSize(qcode); // number of new active q-grams
+    final int newactive = qgramindex.getBucketSize(qcode); // number of new active q-grams
     
     //g.logmsg("    qpos = [%s]%n", Strings.join(" ",newpos, 0, newactive));
     for(ni=0, ai=0; ni<newactive; ni++) {

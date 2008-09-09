@@ -382,8 +382,7 @@ public final class QgramIndexer implements Subcommand {
       final int[] qpos = (slicesize == sum && !external)? qposslice : null;
 
       double times[] = {timeTotal, timeFreqCounting, timeBckGeneration, timeQpos};
-      Object[] ret = { (external? null : bck), qpos, frq, times, maxfreq, maxbck};
-      return ret;
+      return new Object[] { (external? null : bck), qpos, frq, times, maxfreq, maxbck};
    }
 
    

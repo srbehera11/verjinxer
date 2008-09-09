@@ -11,6 +11,7 @@ import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_C;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_G;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_T;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
@@ -96,7 +97,7 @@ public class QgramMatcher {
    int seqstart = 0;      // starting pos of current sequence in t
    int seqnum = 0;      // number of current sequence in t
   
-   /** Creates a new instance of QgramMatcherSubcommand 
+   /** Creates a new instance of QgramMatcher
     * @param gl the Globals structure
    * @param args the command line arguments
     * @param toomanyhits may be null
@@ -119,6 +120,7 @@ public class QgramMatcher {
          final boolean bisulfite,
          final boolean c_matches_c
          ) 
+   throws IOException
    {
      this.g = g;
      this.selfcmp = selfcmp;
@@ -195,8 +197,7 @@ public class QgramMatcher {
       assert(sdesc.size()==sm);
     }
     
-    qgramindex = new QGramIndex(g, qposfile, qbckfile, external);
-    
+    qgramindex = new QGramIndex(g, qposfile, qbckfile, maxactive);
     g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
   
     //toomanyhits = new  BitArray toomanyhits;
@@ -220,11 +221,12 @@ public class QgramMatcher {
    * @param toomanyhits gets modified
    * @param c_matches_c whether C always matches C, even if not before G
    */
-   public void match(QGramCoder coder, int maxactive, final QGramFilter thefilter) {
+   public void match(QGramCoder coder, final QGramFilter thefilter) {
     // Walk through t:
     // (A) Initialization
     TicToc timer = new TicToc();
     
+    int maxactive = qgramindex.getMaximumBucketSize();
     activepos = new int[maxactive];  active=0;
     newpos    = new int[maxactive];
     activelen = new int[maxactive];
@@ -461,8 +463,8 @@ public class QgramMatcher {
     // this q-gram is not filtered!
 
     qgramindex.getQGramPositions(qcode, newpos);
-    final int newactive = qgramindex.bucketSize(qcode); // number of new active q-grams
-    
+    final int newactive = qgramindex.getBucketSize(qcode); // number of new active q-grams
+
     // iterate over all new matches 
     ai=0;
     for (int ni=0; ni<newactive; ni++) {
@@ -522,9 +524,9 @@ public class QgramMatcher {
     //
     // The same holds for the match length arrays activelen and newlen. 
     
-    // swap activepos <-> newpos  and  lenforact <-> lenfornew
+    // swap activepos <-> newpos  and  activelen <-> newlen
     int[] tmp;
-    tmp = activepos;  activepos = newpos;    newpos    = tmp;
+    tmp = activepos;  activepos = newpos; newpos = tmp;
     tmp = activelen;  activelen = newlen; newlen = tmp;
     active = newactive;
     if (seqmatches > maxseqmatches) throw new TooManyHitsException();

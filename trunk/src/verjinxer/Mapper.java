@@ -100,7 +100,7 @@ public class Mapper {
   
   PrintWriter allout        = null;
   
-  enum Method { QGRAM, SUFFIX, FULL };
+  enum Method { QGRAM, SUFFIX, FULL }
   Method method;
   
   /**

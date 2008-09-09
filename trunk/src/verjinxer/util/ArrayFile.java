@@ -446,22 +446,22 @@ public class ArrayFile {
     * @throws java.io.IOException  if any I/O error occurs
     */
    public final int[] readArray(int[] a, int start, int nItems, final long fpos) throws IOException {
-      final int factor = Integer.SIZE / 8; // depends on 'a'
+      final int bytesperint = Integer.SIZE / 8; // depends on 'a'
       final boolean openclose = (channel==null);
       if (openclose) openR();
       if (mode!=Mode.READ) throw new IOException("ArrayFile not open for reading");
-      if (fpos>=0) channel.position(factor*fpos);
+      if (fpos>=0) channel.position(bytesperint*fpos);
       final IntBuffer ib = internalBuffer.asIntBuffer(); // type depends on 'a'
-      if (nItems<0) nItems = (int)((channel.size()-channel.position())/factor);
+      if (nItems<0) nItems = (int)((channel.size()-channel.position())/bytesperint);
       if (a==null) a = new int[start+nItems]; // type depends on 'a'
       while(nItems>0) {
-         int bytestoread = (nItems*factor < bufsize)? nItems*factor : bufsize;
-         final int itemstoread = bytestoread / factor;
+         int bytestoread = (nItems*bytesperint < bufsize)? nItems*bytesperint : bufsize;
+         final int intstoread = bytestoread / bytesperint;
          internalBuffer.position(0).limit(bytestoread);
          while ((bytestoread -= channel.read(internalBuffer))>0) {}
-         ib.position(0).limit(itemstoread);
-         ib.get(a, start, itemstoread);
-         start += itemstoread; nItems -= itemstoread;
+         ib.position(0).limit(intstoread);
+         ib.get(a, start, intstoread);
+         start += intstoread; nItems -= intstoread;
       }
       if (openclose) close();
       return a;

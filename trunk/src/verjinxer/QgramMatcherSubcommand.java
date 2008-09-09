@@ -190,6 +190,7 @@ public class QgramMatcherSubcommand implements Subcommand {
      final boolean bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
      if (bisulfite) g.logmsg("qmatch: index is for bisulfite sequences, using bisulfite matching%n");
  
+     try {
      QgramMatcher qgrammatcher = new QgramMatcher(
            g,
            dt, 
@@ -207,9 +208,11 @@ public class QgramMatcherSubcommand implements Subcommand {
            selfcmp, 
            bisulfite,
            c_matches_c);
-     qgrammatcher.match(qgramcoder, maxactive, qgramfilter);
+     qgrammatcher.match(qgramcoder, qgramfilter);
      qgrammatcher.tooManyHits(dt+".toomanyhits-filter");
-
+     } catch (IOException e) {
+        g.warnmsg("could not initialize qgrammatcher: "+e.getMessage());
+     }
      out.close();
      g.logmsg("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());
      g.stopplog();
