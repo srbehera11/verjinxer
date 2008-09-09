@@ -141,7 +141,7 @@ public class Globals {
   final AlphabetMap readAlphabetMap(String fname) {
     AlphabetMap amap = null;
     try {
-      amap = new AlphabetMap().init(fname);
+      amap = AlphabetMap.fromFile(fname);
     } catch (IOException ex) {
       warnmsg("%s: could not read alphabet map '%s'. Stop.%n", cmdname, fname);
       terminate(1);

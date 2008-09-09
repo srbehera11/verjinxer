@@ -28,13 +28,22 @@ public class AlphabetMap {
   static final int SEPARATOR = 8;
   
   private String[] initstrings;
-  private byte[] myimage;
-  private byte[] mypreimage;
-  private byte[] modepreimage;
-  private byte[] modeimage;
-  private int mywhitespace = 128+WHITESPACE;
-  private int mywildcard   = 128+WILDCARD;
-  private int myseparator =  128+SEPARATOR;
+  private final byte[] myimage;
+  private final byte[] mypreimage;
+  private final byte[] modepreimage;
+  
+  /** maps a code to a mode */ 
+  private final byte[] modeimage;
+  private static int mywhitespace = 128+WHITESPACE;
+  private static int mywildcard   = 128+WILDCARD;
+  private static int myseparator =  128+SEPARATOR;
+  
+  private AlphabetMap() {
+     myimage = new byte[256];
+     mypreimage = new byte[256];
+     modepreimage = new byte[256];
+     modeimage = new byte[256];     
+  }
   
   /** creates an alphabet map from the given text lines.
    * It is best to see the example alphabet maps for how to do this,
@@ -42,32 +51,34 @@ public class AlphabetMap {
    *@param lines  the text lines from which to create the alphabet map
    *@return  the created alphabet map
    */
-  public AlphabetMap init(final String[] lines) {
+  AlphabetMap(final String[] lines) {
+    this();
     initstrings = lines;
-    mywhitespace = 128+WHITESPACE;
-    mywildcard   = 128+WILDCARD;
-    myseparator  = 128+SEPARATOR;
-    myimage = new byte[256];
-    mypreimage = new byte[256];
-    modepreimage = new byte[256];
-    modeimage = new byte[256];
-    
+   
     int i=0;
-    byte mode=1;
+    byte mode = NORMAL;
     for (String l : lines) {
       if(l.startsWith("##")) {
         String ll=l.substring(2);
         String istring;
-        int icolon;
-        if ((icolon=ll.indexOf(':'))>=0) {
+        int icolon = ll.indexOf(':');
+        if (icolon >= 0) {
           istring=ll.substring(icolon+1);
           if (istring.length()>0) i=Integer.decode(istring);
           ll=ll.substring(0,icolon);
         }
         int ii = (i<0)?i+256:i;
+        
+        /* at this point, a line like this:
+         * "##separators:-1" has been parsed into
+         * ll = "separators"
+         * i = -1
+         * ii = 255
+         */
+        
         ll = ll.toLowerCase();
         if(ll.startsWith("symbol")) 
-          mode=1;
+          mode = NORMAL;
         else if(ll.startsWith("wildcard")) {
           mode=WILDCARD; modeimage[ii]=mode; mywildcard=i;
         } else if(ll.startsWith("separator")) {
@@ -83,19 +94,18 @@ public class AlphabetMap {
           throw new RuntimeException("Invalid annotation in alphabet map file: "+ll);
       } else {
         int ii = (i<0)?i+256:i;
-        byte[] chs = l.getBytes();
-        if (chs.length==0) { modeimage[i++]=mode; continue; }
-        mypreimage[ii]=chs[0];
+        byte[] characters = l.getBytes();
+        if (characters.length==0) { modeimage[i++]=mode; continue; }
+        mypreimage[ii]=characters[0];
         modeimage[ii]=mode;
-        for (int j=0; j<chs.length; j++) {
-          int ch=chs[j]; if (ch<0) ch+=256;
+        for (int j=0; j<characters.length; j++) {
+          int ch=characters[j]; if (ch<0) ch+=256;
           myimage[ch]=(byte)i;
           modepreimage[ch]=mode;
         }
         i++;
       }
     } // end for (l in lines)
-    return this;
   } // end method 'init'
   
   
@@ -106,13 +116,14 @@ public class AlphabetMap {
    * @return  the created alphabet map
    * @throws java.io.IOException 
    */
-  public AlphabetMap init(final String fname) throws IOException {
+  public static AlphabetMap fromFile(final String fname) throws IOException {
     ArrayList<String> lines = new ArrayList<String>();
     BufferedReader inf = new BufferedReader(new FileReader(fname));
     String s;
     while((s = inf.readLine())!=null) lines.add(s);
     inf.close();
-    return this.init(lines.toArray(new String[0]));
+    
+    return new AlphabetMap(lines.toArray(new String[0]));
   }
   
   
@@ -349,13 +360,11 @@ public class AlphabetMap {
    * @return the standard DNA alphabet
    */
   public static final AlphabetMap DNA() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "##symbols:0", "Aa","Cc","Gg","TtUu",
       "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVv",
       "##wildcards", "#",
       "##separators:-1" });
-    return a;
   }
 
   /** 
@@ -363,90 +372,76 @@ public class AlphabetMap {
    * This means that lowercase nucleotides are wildcards.
    */
   public static final AlphabetMap maskedDNA() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "##symbols:0", "A","C","G","TU",
       "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVvacgtu",
       "##wildcards", "#",
       "##separators:-1" });
-    return a;
   }
  
   /**
    * @return  the standard complementary DNA alphabet
    */
   public static final AlphabetMap cDNA() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "##symbols:0", "TtUu","Gg","Cc","Aa",
       "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVv",
       "##wildcards", "#",
       "##separators:-1" });
-    return a;
   }
 
   /**
    * @return  the standard complementary DNA alphabet
    */
   public static final AlphabetMap maskedcDNA() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "##symbols:0", "TU","G","C","A",
       "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVvtugca",
       "##wildcards", "#",
       "##separators:-1" });
-    return a;
   }
   
   /**
    * @return a representation of the bisulfite-treated nonmethylated DNA alphabet
    */
   public static final AlphabetMap biDNA() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "##symbols:0", "Aa","Zz","Gg","CcTtUu",
       "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVv",
       "##wildcards", "#",
       "##separators:-1" });
-    return a;
   }
   
   /** 
    * @return a representation of the complementary bisulfite-treated nonmethylated DNA alphabet
    */
   public static final AlphabetMap cbiDNA() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "##symbols:0", "AaGg","Cc","Zz","TtUu",
       "##wildcards", "XxNnWwRrKkYySsMmBbHhDdVv",
       "##wildcards", "#",
       "##separators:-1" });
-    return a;
   }
 
   /**
    * @return the numeric alphabet 0..9
    */
   public static final AlphabetMap NUMERIC() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
       "##separators:-1" });
-    return a;
   }
   
   /**
    * @return  the standard protein alphebet
    */
   public static final AlphabetMap Protein() {
-    AlphabetMap a = new AlphabetMap();
-    a.init(new String[] {
+    return new AlphabetMap(new String[] {
       "##symbols:0", "Aa", "Cc", "Dd", "Ee", "Ff", "Gg", "Hh", "Ii", "Kk", 
         "Ll", "Mm", "Nn", "Pp", "Qq", "Rr", "Ss", "Tt", "Vv", "Ww", "Yy",
       "##wildcards", "BbXxZz",
       "##wildcards", "#",
       "##separators:-1" });
-    return a;
   }
   
   /**************************************************************/
