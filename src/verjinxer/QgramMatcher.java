@@ -45,7 +45,7 @@ public class QgramMatcher {
   /** the alphabet map */
    final AlphabetMap amap;
   
-  /** the target sequence text (coded) */
+  /** the query sequence text (coded) */
    final byte[] t;
   
   /** sequence separator positions in text t */
@@ -53,7 +53,7 @@ public class QgramMatcher {
   
   // int tm; number of sequences in t
   
-  /** sequence descriptions of t */
+  /** sequence descriptions of t (queries) */
    final ArrayList<String> tdesc; 
   
   /** Positions of all q-grams */
@@ -61,25 +61,25 @@ public class QgramMatcher {
 
    final PrintWriter out;
   
-   /** the index text (coded) */
+   /** the indexed text (coded) */
    final byte[] s;
-  
-   /** sequence separator positions in index s */
+   
+   /** sequence separator positions in indexed sequence s */
    final long[] ssp;
    
    /** number of sequences in s */
    final int sm;
    
-   /** number of sequences in s */
+   /** description of sequences in indexed sequence s */
    final ArrayList<String> sdesc;
    
    /** maximum number of allowed matches */
    final int maxseqmatches;
    
-   /** list for sorted matches */
+   /** list of sorted matches */
    final ArrayList<ArrayList<Match>> matches; 
    
-   /** list for unsorted matches */
+   /** list of unsorted matches */
    final ArrayList<GlobalMatch> globalmatches; 
    
    final BitArray toomanyhits;
@@ -387,33 +387,25 @@ public class QgramMatcher {
    * @return length of match
    */
   private int bisulfiteMatchLengthCmC(int sp, int tp) {
-     int type = 0; // 0: unknown. 1: C->T, 2: G->A
-     
      int offset = 0;
      
-     //while (!amap.isSymbol(s[sp+offset]) && s[sp+offset] == t[tp+offset]) offset++;
-     while (true) {
-        if (!amap.isSymbol(s[sp+offset])) break;
-        
-        // What follows is some ugly logic to find out what type
-        // of match this is. That is, whether we should allow C -> T or
-        // G -> A replacements.
-        // For C->T, the rules are:
-        // If there's a C->T replacement, we must only allow those.
-        
-        byte s_char = s[sp+offset];
-        byte t_char = t[tp+offset];
-        if (s_char == t_char || (type == 1 && s_char == NUCLEOTIDE_C && t_char == NUCLEOTIDE_T) || (type == 2 && s_char == NUCLEOTIDE_G && t_char == NUCLEOTIDE_A)) {
-           offset++;
-           continue;
-        }
-        if (type != 0) break;
-        if (s_char == NUCLEOTIDE_C && t_char == NUCLEOTIDE_T)
-           type = 1;
-        else if (s_char == NUCLEOTIDE_G && t_char == NUCLEOTIDE_A)
-           type = 2;
-        else break;
+     while (amap.isSymbol(s[sp+offset]) && s[sp+offset] == t[tp+offset]) 
         offset++;
+     
+     // the first mismatch tells us what type of match this is
+     byte s_char = s[sp+offset];
+     byte t_char = t[tp+offset];
+     if (s_char == NUCLEOTIDE_C && t_char == NUCLEOTIDE_T) {
+        // we have C -> T replacements
+        offset++;
+        while (amap.isSymbol(s[sp+offset]) && (s[sp+offset] == t[tp+offset] || s[sp+offset] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T)) 
+           offset++;
+     }
+     else if (s_char == NUCLEOTIDE_G && t_char == NUCLEOTIDE_A) {
+        // we have G -> A replacements
+        offset++;
+        while (amap.isSymbol(s[sp+offset]) && (s[sp+offset] == t[tp+offset] || s[sp+offset] == NUCLEOTIDE_G && t[tp+offset] == NUCLEOTIDE_A)) 
+           offset++;
      }
      assert offset >= q;
      return offset;
