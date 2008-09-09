@@ -1,0 +1,10 @@
+To Do
+
+steps for making the q-gram index cope with long sequences
+
+- allow each bucket to have a size of 2 GB
+
+
+
+- use exceptions instead of terminating the program
+(remove g.terminate() method)

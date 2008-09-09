@@ -49,6 +49,9 @@ public class Translater {
  
   /************* processing methods ******************************************************/
   
+  /** 
+   * 
+   * */
   void processFasta(final String fname, final AnnotatedArrayFile out) {
     FastaFile f = new FastaFile(fname);
     FastaSequence fseq = null;
@@ -110,7 +113,7 @@ public class Translater {
     ByteBuffer tr = null;
     long lastbyte = 0;
     
-    try { f.open(); } catch (Exception e) { g.warnmsg("translate: skipping '%s': %s%n",fname, e.toString()); return; }
+    try { f.open(); } catch (IOException e) { g.warnmsg("translate: skipping '%s': %s%n",fname, e.toString()); return; }
     while(true) {
       try {
         fseq = f.read(); // reads one fasta sequence from file f

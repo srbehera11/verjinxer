@@ -298,6 +298,22 @@ public class HugeIntArray {
       }
       return c;
    }
+   /** creates a new int array with 'to' - 'from' elements 
+    * by copying the range [from .. to-1] of this array.
+    * @param from index where copying starts
+    * @param to index before which copying stops.
+    * @return a copy of a range of this array
+    */
+   public int[] copyRangeToIntArray(final long from, final long to) {
+      final long newsize = to - from;
+      if (newsize > Integer.MAX_VALUE)
+         throw new IndexOutOfBoundsException();
+      int[] c = new int[(int)newsize];
+      for (int i = 0; i < newsize; i++) {
+         c[i] = get(i + from);
+      }
+      return c;
+   }
 
    // ======================== toString ================================
    /**
