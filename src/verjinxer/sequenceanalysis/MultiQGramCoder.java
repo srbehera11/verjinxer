@@ -149,13 +149,18 @@ public class MultiQGramCoder {
    // sparse iterator class for both standard and bisulfite q-grams
    // (if bisulfite == false in the encolsing instance,
    // the iterator is deferred to the QGramCoder class.)
-   private class SparseQGramIterator implements Iterator<Long> {
+  /**
+   * 
+   */ 
+  private class SparseQGramIterator implements Iterator<Long> {
       private final Iterator<Long> it;    // iterator of the underlying QGramCoder
       private int bisFwdRemaining = 0;    // number of remaining forward bisulfite codes
       private int bisRevRemaining = 0;    // number of ramaining reverse bisulfite codes
-      private int[] bisF = null;  // remaining forward bisulfite codes
-      private int[] bisR = null;  // remaining reverse bisulfite codes
+      private int[] bisFwdCodes = null;  // remaining forward bisulfite codes
+      private int[] bisRevCodes = null;  // remaining reverse bisulfite codes
       private long pos = -1;
+      
+      /** sequence over which to iterate */
       private final Object t;
       private final int tLength;
 //      private int callcount = 0;
@@ -181,23 +186,23 @@ public class MultiQGramCoder {
 
       public Long next() {
          if(bisFwdRemaining>0) {
-            final long pc = (pos<<32) + bisF[--bisFwdRemaining];
+            final long pc = (pos<<32) + bisFwdCodes[--bisFwdRemaining];
             return pc;
          }
          if(bisRevRemaining>0) {
-            final long pc = (pos<<32) + bisR[--bisRevRemaining];
+            final long pc = (pos<<32) + bisRevCodes[--bisRevRemaining];
             return pc;
          }
          // get standard q-code first (no bisulfite replacement)
          final long pc = it.next();
          pos = pc>>>32;
-         final int qcod = (int)pc;
+         final int qcode = (int)pc;
          // get forward bisulfite q-codes. If original q-code is invalid, get empty list.
-         bisF = bicoder.bisulfiteQCodes(qcod, false, charAt((int)(pos+q))==BisulfiteQGramCoder.NUCLEOTIDE_G);
-         bisFwdRemaining = bisF.length;
+         bisFwdCodes = bicoder.bisulfiteQCodes(qcode, false, charAt((int)(pos+q))==BisulfiteQGramCoder.NUCLEOTIDE_G);
+         bisFwdRemaining = bisFwdCodes.length;
          // get reverse bisulfite q-codes. If original q-code is invalid, get empty list.
-         bisR = bicoder.bisulfiteQCodes(qcod, true,  charAt((int)(pos-1))==BisulfiteQGramCoder.NUCLEOTIDE_C);
-         bisRevRemaining = bisR.length;
+         bisRevCodes = bicoder.bisulfiteQCodes(qcode, true,  charAt((int)(pos-1))==BisulfiteQGramCoder.NUCLEOTIDE_C);
+         bisRevRemaining = bisRevCodes.length;
          //System.out.printf("   [pos=%d, fwd=%d, rev=%d]%n", pos, bisFwdRemaining, bisRevRemaining);
          
 //         callcount++;

@@ -21,6 +21,8 @@ import static verjinxer.Globals.*;
  */
 public final class QgramIndexer implements Subcommand {
 
+   /** only store q-grams whose positions are divisible by stride */
+   private int stride = 1;
    private Globals g;
 
    /** Creates a new instance of QgramIndexer
@@ -39,6 +41,7 @@ public final class QgramIndexer implements Subcommand {
       g.logmsg("writes %s, %s, %s, %s.%n", extqbck, extqpos, extqfreq, extqseqfreq);
       g.logmsg("Options:%n");
       g.logmsg("  -q  <q>                 q-gram length [0=reasonable]%n");
+      g.logmsg("  -s, --stride <stride>   only store q-grams whose positions are divisible by stride (default: %d)%n", stride);
       g.logmsg("  -b, --bisulfite         simulate bisulfite treatment%n");
       g.logmsg("  -f, --allfreq           write (unfiltered) frequency files (--freq, --sfreq)");
       g.logmsg("  --freq                  write (unfiltered) q-gram frequencies (%s)%n", extqfreq);
@@ -65,7 +68,7 @@ public final class QgramIndexer implements Subcommand {
       int returnvalue = 0;
       String action = "qgram \"" + StringUtils.join("\" \"", args) + "\"";
       Options opt = new Options(
-            "q:,F=filter:,c=check,C=onlycheck,X=notexternal=nox=noexternal,b=bisulfite,freq=fr,sfreq=seqfreq=sf,f=allfreq");
+            "q:,F=filter:,c=check,C=onlycheck,X=notexternal=nox=noexternal,b=bisulfite,s=stride:,freq=fr,sfreq=seqfreq=sf,f=allfreq");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -88,6 +91,9 @@ public final class QgramIndexer implements Subcommand {
       // Determine parameter q
       final int q = (opt.isGiven("q"))? Integer.parseInt(opt.get("q")) : 0;
 
+      stride = opt.isGiven("s") ? Integer.parseInt(opt.get("s")) : 1;
+      
+      g.logmsg("stride width is %d%n", stride);
       // Loop through all files
       for (String indexname : args) {
          String di = g.dir + indexname;
@@ -108,6 +114,7 @@ public final class QgramIndexer implements Subcommand {
          prj.setProperty("LastAction", "qgram");
          prj.setProperty("Bisulfite", Boolean.toString(bisulfite));
          prj.setProperty("qAlphabetSize", Integer.toString(asize));
+         prj.setProperty("Stride", Integer.toString(stride));
 
          // determine q-gram size qq, either from given -q option, or default by length
          int qq;
@@ -216,11 +223,11 @@ public final class QgramIndexer implements Subcommand {
          if (qcode<0) { assert(doseqfreq); seqnum++; continue; }
          assert(qcode>=0 && qcode<frq.length) 
                : String.format("Error: qcode=%d at pos %d (%s)%n", qcode, pos, StringUtils.join("",coder.qcoder.qGram(qcode),0,coder.q)); // DEBUG
-         frq[qcode]++;
+         if (pos % stride == 0) frq[qcode]++;
          if (doseqfreq && lastseq[qcode] < seqnum) {
             lastseq[qcode] = seqnum;
-            sfrq[qcode]++;
-         }      
+            if (pos % stride==0) sfrq[qcode]++;
+         }
       }
       in.rewind();
       g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());     
@@ -233,12 +240,12 @@ public final class QgramIndexer implements Subcommand {
     * Computes the necessary sizes of q-gram buckets from q-gram frequencies, 
     * while taking a filter into account.
     * @param frq         the array of q-gram frequencies
-    * @param overwrite   if true, overwrite frq with bck; otherwise, create a separate array for bck
+    * @param overwrite   if true, overwrites frq with bck; otherwise, creates a separate array for bck
     * @param thefilter   a filter that specifies which q-grams to ignore
     * @return
     * An array of size 2 containing {bck, maxbcksize},
     * where bck is the array of bucket positions and maxbcksize is the largest occurring bucket size.
-    * The actual buckets starts are in bck[0..bck.length-2]. 
+    * The actual bucket starts are in bck[0..bck.length-2]. 
     * The element bck[bck.length-1] is the sum over all buckets (that is, the number of q-grams in the index).
     */
    public Object[] computeBuckets(final int[] frq, final boolean overwrite, final QGramFilter thefilter) {
@@ -247,7 +254,7 @@ public final class QgramIndexer implements Subcommand {
       final int aq = bck.length - 1; // subtract sentinel space
 
       // apply filter: at the moment, bck contains frequencies (frq), not yet bucket sizes!
-      for (int c = 0; c < aq; c++) if (thefilter.getBoolean(c)) bck[c] = 0; // reduce frequency to zero
+      for (int c = 0; c < aq; c++) if (thefilter.isFiltered(c)) bck[c] = 0; // reduce frequency to zero
 
       // compute bck from frq
       int sum = 0;
@@ -360,8 +367,10 @@ public final class QgramIndexer implements Subcommand {
 
          // read through input and collect all qgrams with  bckstart<=qcode<bckend
          for (long pc : coder.sparseQGrams(in)) {
-            final int pos   = (int)((pc>>32)&0xffffffff);
-            final int qcode = (int)(pc&0xffffffff);
+            final int pos = (int)(pc>>>32);
+            if (pos % stride != 0)
+               continue;            
+            final int qcode = (int)(pc);
             if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode)==0)
                qposslice[(bck[qcode]++) - qposstart] = pos;
          }

@@ -153,7 +153,7 @@ public class QgramFrequencer {
     final int[] filterparam = QGramFilter.parseFilterParameters(opt.get("F"));
     final QGramFilter filter = new QGramFilter(q, asize, filterparam[0], filterparam[1]);
     g.logmsg("qfreq: filtering out %d / %d q-grams%n", filter.cardinality(), aq);
-    for (int i=0; i<aq; i++) if (filter.getBoolean(i)) f[i]=0;
+    for (int i=0; i<aq; i++) if (filter.isFiltered(i)) f[i]=0;
     //for (int i = filter.nextSetBit(0); i >= 0; i = filter.nextSetBit(i+1)) f[i]=0;
     
     // sort frequencies, generate soring permutation

@@ -288,7 +288,7 @@ public class QgramMatcher {
       qcode = coder.code(t, tp);
       assert(qcode>=0);
       try {
-        findactive(tp, qcode, thefilter.getBoolean(qcode)); // updates active, activepos, lenforact
+        findactive(tp, qcode, thefilter.isFiltered(qcode)); // updates active, activepos, lenforact
       } catch (TooManyHitsException ex) {
           symremaining=0; 
           tp = (int)tssp[seqnum]; 
@@ -309,7 +309,7 @@ public class QgramMatcher {
           qcode = coder.codeUpdate(qcode, t[tp+q-1]);
           assert(qcode>=0);
           try {
-            findactive(tp, qcode, thefilter.getBoolean(qcode));
+            findactive(tp, qcode, thefilter.isFiltered(qcode));
           } catch (TooManyHitsException ex) {
             symremaining=0;
             tp = (int)tssp[seqnum];
