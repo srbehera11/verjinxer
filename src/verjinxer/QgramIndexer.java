@@ -43,7 +43,7 @@ public final class QgramIndexer implements Subcommand {
       g.logmsg("  -q  <q>                 q-gram length [0=reasonable]%n");
       g.logmsg("  -s, --stride <stride>   only store q-grams whose positions are divisible by stride (default: %d)%n", stride);
       g.logmsg("  -b, --bisulfite         simulate bisulfite treatment%n");
-      g.logmsg("  -f, --allfreq           write (unfiltered) frequency files (--freq, --sfreq)");
+      g.logmsg("  -f, --allfreq           write (unfiltered) frequency files (--freq, --sfreq)%n");
       g.logmsg("  --freq                  write (unfiltered) q-gram frequencies (%s)%n", extqfreq);
       g.logmsg("  --seqfreq, --sfreq      write in how many sequences each qgram appears (%s)%n", extqseqfreq);
       g.logmsg("  -c, --check             additionally check index integrity%n");
@@ -93,7 +93,7 @@ public final class QgramIndexer implements Subcommand {
 
       stride = opt.isGiven("s") ? Integer.parseInt(opt.get("s")) : 1;
       
-      g.logmsg("stride width is %d%n", stride);
+      g.logmsg("qgram: stride width is %d%n", stride);
       // Loop through all files
       for (String indexname : args) {
          String di = g.dir + indexname;
