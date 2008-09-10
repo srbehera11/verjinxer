@@ -428,7 +428,7 @@ public class QgramMatcher {
   throws TooManyHitsException {
     //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
     
-    // decrease length of active matches, as long as they stay >= q
+    // decrease length of active matches, as long as they stay >= q TODO >= minlen?
     int ai;
     for (ai=0; ai<active; ai++) { 
       activepos[ai]++;  
@@ -462,11 +462,19 @@ public class QgramMatcher {
     for (int ni=0; ni<newactive; ni++) {
       while (ai<active && activelen[ai]<q) ai++;
       
+      if (c_matches_c) {
+         // we must skip those matches that are only active because
+         // of the 'C matches C' rule. They don't have q-grams
+         // in common with the query anymore
+         while (ai < active && newpos[ni] > activepos[ai])
+            ai++;
+      }
       // make sure that newly found q-grams overlap the old ones (unless c_matches_c)
-      assert(c_matches_c || (ai==active || newpos[ni]<=activepos[ai]))
+      assert ai==active || newpos[ni]<=activepos[ai]
         : String.format("tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d",
           tp,ai,active,ni,newpos[ni],activepos[ai], activelen[ai]);
-      if (ai>=active || newpos[ni]!=activepos[ai]) { 
+      assert ai <= active;
+      if (ai==active || newpos[ni] < activepos[ai]) { 
         // this is a new match:
         // determine newlen[ni] by comparing s[sp...] with t[tp...]
         int sp;
