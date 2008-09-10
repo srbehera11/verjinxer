@@ -406,7 +406,7 @@ public class Mapper {
       if (qcode>=0) // attempt simple update
       {
         qcode = coder.codeUpdate(qcode,txt[i]);
-        if (qcode>=0 && !ifilter.getBoolean(qcode)) 
+        if (qcode>=0 && !ifilter.isFiltered(qcode)) 
           incrementBCounters(i+idelta,qcode,overlap, bcounter, blocksize, blow);
         continue;
       }
@@ -420,7 +420,7 @@ public class Mapper {
       if (success==q) {
         qcode = coder.code(qgram);
         assert(qcode>=0);
-        if (!ifilter.getBoolean(qcode)) 
+        if (!ifilter.isFiltered(qcode)) 
           incrementBCounters(i+idelta,qcode,overlap, bcounter, blocksize, blow);
       }
     } // end for i

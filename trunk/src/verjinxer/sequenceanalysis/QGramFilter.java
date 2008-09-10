@@ -118,7 +118,7 @@ public class QGramFilter {
     * @param c    q-gram whose filter value to change
     * @return     true iff q-gram c is filtered; false otherwise.
     */
-   public boolean getBoolean(final int c) {
+   public boolean isFiltered(final int c) {
       return (bits.get(c)!=0);
    }
 
