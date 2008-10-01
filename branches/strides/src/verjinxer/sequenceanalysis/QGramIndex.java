@@ -38,17 +38,21 @@ public class QGramIndex {
    
    /** Maximum size of a bucket */
    final int maximumBucketSize;
+   
+   /** Stride length of this index (only q-grams whose positions are divisible by stride are indexed) */
+   final int stride;
 
    /**
-    * TODO remove the maxactive parameter and add a project parameter
+    * TODO remove the maxactive and stride parameters and add a project parameter
     * @param gl
     * @param qposfile
     * @param qbckfile
     * @param maxactive
     * @throws IOException
     */
-   public QGramIndex(final Globals gl, final String qposfile, final String qbckfile, int maxactive) throws IOException {
+   public QGramIndex(final Globals gl, final String qposfile, final String qbckfile, int maxactive, int stride) throws IOException {
       this.g = gl;
+      this.stride = stride;
       this.qbck = g.slurpIntArray(qbckfile);
       final int buckets = qbck.length - 1;
             
@@ -89,6 +93,14 @@ public class QGramIndex {
       return qbck.length-1;
    }
    
+   /**
+    * TODO where should meta information about the index go? into this class?
+    * @return stride width of this index
+    */
+   public int getStride() {
+      return stride;
+   }
+
    /**
     * Gets the positions of the given q-gram (represented by its q-code). The destination array must
     * not be written to. It will have length bucketSize(qcode).

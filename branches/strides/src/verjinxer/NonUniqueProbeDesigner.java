@@ -147,7 +147,7 @@ public class NonUniqueProbeDesigner {
     }
     final int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
     try {
-       qgramindex = new QGramIndex(g, qposfile, qbckfile, maxactive);
+       qgramindex = new QGramIndex(g, qposfile, qbckfile, maxactive, 1); // FIXME
     } catch (IOException e) {
        e.printStackTrace();
        g.warnmsg(e.getMessage());

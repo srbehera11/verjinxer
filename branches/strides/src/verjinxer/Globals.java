@@ -18,7 +18,7 @@ import verjinxer.sequenceanalysis.AlphabetMap;
 public class Globals {
   
   public final static String programname = "VerJInxer";
-  public final static String version     = "0.4";
+  public final static String version     = "0.4 working";
   public final static String extseq      = ".seq";
   public final static String extprj      = ".prj";
   public final static String extlog      = ".log";
