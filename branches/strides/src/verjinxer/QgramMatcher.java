@@ -94,6 +94,9 @@ public class QgramMatcher {
   int[]   newpos    = null;         // starting positions of new matches in s
   int[]   activelen = null;         // match lengths for active matches
   int[]   newlen = null;         // match lengths for new matches
+  
+  int[] activediag;
+  int[] newdiag;
   int     seqmatches= 0;            // number of matches in current target sequence
 // int         tp          = 0;      // current position in t
    int seqstart = 0;      // starting pos of current sequence in t
@@ -227,11 +230,15 @@ public class QgramMatcher {
     // (A) Initialization
     TicToc timer = new TicToc();
     
-    int maxactive = qgramindex.getMaximumBucketSize();
-    activepos = new int[maxactive];  active=0;
-    newpos    = new int[maxactive];
+    final int maxactive = qgramindex.getMaximumBucketSize();
+    activepos = new int[maxactive];  active=0; // TODO these allocations could be moved to the constructor
+    activediag = new int[maxactive];
     activelen = new int[maxactive];
+
+    newpos    = new int[maxactive];
     newlen = new int[maxactive];
+    newdiag = new int[maxactive];
+    
     if (sorted) {
        matches.ensureCapacity(sm);
        for (int i=0; i<sm; i++) 
@@ -505,7 +512,7 @@ public class QgramMatcher {
   }
 
   /** Given the next q-code of the query sequence, this function updates the currently 
-   * active intervals.
+   * active intervals (activepos, activelen, activediag).
    * 
    *  
    * writes to:
@@ -543,10 +550,10 @@ public class QgramMatcher {
      // loop over all new q-gram positions and construct the new array of active intervals
      // (overwriting newpos)
      
-//     for (int ai = 0; ai < active; ++ai) {
-     while (ai < active || ni < newactive) {
-//     for (int ni = 0; ni < newactive; ++ni) {
-        while (ni < newactive && (ai == active || newpos[ni] < activepos[ai])) {
+     // the following loop is similar to merging two sorted lists
+     
+     while (ni < newactive) {
+        if (ai == active || newpos[ni]-tp < activediag[ai]) {
            // no intersection with any active match: we have a new match.
            // determine its length
            if (bisulfite) {
@@ -561,38 +568,38 @@ public class QgramMatcher {
            
            if (len >= minlen) {
               reportMatch(sstart, tstart, len);
+              if (seqmatches > maxseqmatches) 
+                 break;
               // there should not be a q-gram that overlaps the beginning of an active match
               // and that leads to a match
               //assert ai == active || newpos[ni] < activepos[ai] - q;
            }
+           assert sstart - tstart == newpos[ni] - tp;
            // save this as a new active match
            newpos[k] = sstart;
            newlen[k] = len;
+           newdiag[k] = sstart - tstart;
            ++k;
            ++ni;
-        }
-        if (ai == active) continue;
-        boolean b = false;
-        while (ni < newactive && newpos[ni] < activepos[ai] + activelen[ai]) {
-           // not a new match, ignore this q-gram
-           b = true;
-           ++ni;
-        }
-        if (b) {
-           // at least one q-gram matched in interval ai
-           // therefore, we need to keep it
+        } else if (newpos[ni]-tp == activediag[ai]) {
+           // this q-gram is within an active match. report nothing, only copy the active match
            newpos[k] = activepos[ai];
            newlen[k] = activelen[ai];
+           newdiag[k] = activediag[ai];
            ++k;
+           ++ai;
+           ++ni;
+        } else {
+           assert newpos[ni] - tp > activediag[ai];
+           ++ai;
         }
-        ++ai;
      }
   
-     System.out.printf("tp=%d. new active%n", tp);
-     for (int m = 0; m < k; ++m) {
-        System.out.format("%d:%d ", newpos[m], newlen[m]);
-     }
-     System.out.println();
+//     System.out.printf("tp=%d. new active%n", tp);
+//     for (int m = 0; m < k; ++m) {
+//        System.out.format("%d:%d ", newpos[m], newlen[m]);
+//     }
+//     System.out.println();
 //    // decrease length of active matches, as long as they stay >= q TODO >= minlen?
 //    int ai;
 //    for (ai=0; ai<active; ai++) { 
@@ -693,6 +700,7 @@ public class QgramMatcher {
     int[] tmp;
     tmp = activepos;  activepos = newpos; newpos = tmp;
     tmp = activelen;  activelen = newlen; newlen = tmp;
+    tmp = activediag; activediag = newdiag; newdiag = tmp;
     active = k;//newactive;
     if (seqmatches > maxseqmatches) throw new TooManyHitsException();
   }
@@ -713,7 +721,7 @@ public class QgramMatcher {
         if (!selfcmp || sstart>tstart) globalmatches.add(new GlobalMatch(ttt, i, sss, matchlength));
      }
      seqmatches++;
-     System.out.format("reportMatch. i: %d. sss: %d. ttt: %d. matchlen: %d%n", i, sss, ttt, matchlength);
+//     System.out.format("reportMatch. i: %d. sss: %d. ttt: %d. matchlen: %d%n", i, sss, ttt, matchlength);
   }
   
    
