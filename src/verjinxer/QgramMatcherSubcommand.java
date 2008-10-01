@@ -188,6 +188,8 @@ public class QgramMatcherSubcommand implements Subcommand {
      final int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
      final QGramCoder qgramcoder = new QGramCoder(q, asize);
      final boolean bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
+     final int stride = Integer.parseInt(prj.getProperty("Stride"));
+     g.logmsg("qmatch: stride of index is %d%n", stride);
      if (bisulfite) g.logmsg("qmatch: index is for bisulfite sequences, using bisulfite matching%n");
  
      try {
@@ -200,6 +202,7 @@ public class QgramMatcherSubcommand implements Subcommand {
            minseqmatches, 
            minlen,
            maxactive,
+           stride,
            qgramcoder,
            qgramfilter,
            out,
