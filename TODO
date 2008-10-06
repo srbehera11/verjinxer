@@ -27,3 +27,12 @@ verlängern
 
 - neugefundene Matches müssen sofort aktiv gemacht werden bzw. es muss dafür gesorgt werden, dass sich q-gramme,
  die sich innerhalb eines buckets überlagern, rausgefiltert werden
+ 
+ - problem: a q-gram matches and its first character comes from a c/t substitution. the match is extended,
+ using c/t substitutions. then, at the next position, on the same diagonal, the q-gram matches again,
+ but this time we throw the match away and do not see that using g/a substitutions would lead to a longer match
+    
+    
+- make qmatch accept fasta files
+
+- sorted rausfactorn
