@@ -162,7 +162,7 @@ public final class QgramIndexer implements Subcommand {
             final String sfreqfile = (sfreq ? dout + FileNameExtensions.qseqfreq : null);
             result = generateQGramIndex(di + FileNameExtensions.seq, qq, asize, (byte)separator,
                   dout + FileNameExtensions.qbuckets, dout + FileNameExtensions.qpositions, freqfile, sfreqfile, external, thefilter, bisulfite);
-         } catch (Exception e) {
+         } catch (IOException e) {
             e.printStackTrace();
             g.warnmsg("qgram: failed on %s: %s; continuing with remainder...%n", indexname, e.toString());
             g.stopplog();

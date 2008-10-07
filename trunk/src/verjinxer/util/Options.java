@@ -57,7 +57,8 @@ public class Options
       }
    }
    
-   /** parses command line arguments into options and true arguments.
+   /** 
+    * Parses command line arguments into options and true arguments.
     * After parsing, options and their argument values can be accessed
     * via <tt>.get(key)</tt> or <tt>.isGiven(key)</tt>.
     * @param args  the command line arguments, from which to parse the options
@@ -185,4 +186,4 @@ public class Options
       options.put(key,val);
    }
    
-} // end class
+}
