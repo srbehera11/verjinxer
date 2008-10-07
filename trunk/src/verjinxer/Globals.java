@@ -88,38 +88,6 @@ public class Globals {
   
   /**************************************************************************/
   
-  /** read prjfile or terminate
-   * @param filename  the complete filename of the .prj file
-   * @return the project information in a Properties object
-   */
-  public final Properties readProject(String filename) {
-    Properties prj = new Properties();
-    BufferedReader prjfile = null;
-    try {
-      prjfile = new BufferedReader(new FileReader(filename));
-      prj.load(prjfile);
-      prjfile.close();
-    } catch (Exception ex) {
-      warnmsg("%s: could not read project file [%s]%n", cmdname, ex.toString());
-      terminate(1);
-    }
-    return prj;
-  }
-  
-  /* write prj file */
-  final void writeProject(Properties prj, String filename)
-  throws IOException {
-    PrintWriter prjfile = null;
-    try {
-      prjfile = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
-      prj.store(prjfile,null);
-      prjfile.close();
-    } catch (Exception ex) {
-      warnmsg("%s: %s%n", cmdname, ex.toString());
-      throw new IOException();
-    }
-  }
-  
   /** read alphabet map file */
   final AlphabetMap readAlphabetMap(String fname) {
     AlphabetMap amap = null;

@@ -4,15 +4,26 @@
  */
 package verjinxer;
 
-import java.util.Arrays;
-import java.util.Properties;
-import static java.lang.Math.*;
+import static java.lang.Math.floor;
+import static java.lang.Math.log;
+import static verjinxer.Globals.programname;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import verjinxer.util.*;
-import verjinxer.sequenceanalysis.*;
-import static verjinxer.Globals.*;
+import java.util.Arrays;
+
+import verjinxer.sequenceanalysis.MultiQGramCoder;
+import verjinxer.sequenceanalysis.QGramCoder;
+import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.util.ArrayFile;
+import verjinxer.util.ArrayUtils;
+import verjinxer.util.BitArray;
+import verjinxer.util.IllegalOptionException;
+import verjinxer.util.Options;
+import verjinxer.util.ProjectInfo;
+import verjinxer.util.StringUtils;
+import verjinxer.util.TicToc;
 
 /**
  * This class provides a q-gram indexer.
@@ -103,38 +114,45 @@ public final class QgramIndexer implements Subcommand {
          // Read properties.
          // If we only check index integrity, do that and continue with next index.
          // Otherwise, extend the properties and go on building the index.
-         Properties prj = g.readProject(di + FileNameExtensions.prj);
+         
+         ProjectInfo project;
+         try {
+            project = ProjectInfo.createFromFile(di);
+         } catch (IOException e) {
+            g.warnmsg("qgram: cannot read project file.%n");
+            return 1;
+         }
          if (checkonly) {
-            if (docheck(di, prj) >= 0) returnvalue = 1;
+            if (docheck(di, project) >= 0) returnvalue = 1;
             continue;
          }
-         final int asize = Integer.parseInt(prj.getProperty("LargestSymbol")) + 1;
-         final int separator = Integer.parseInt(prj.getProperty("Separator"));
-         prj.setProperty("QGramAction", action);
-         prj.setProperty("LastAction", "qgram");
-         prj.setProperty("Bisulfite", Boolean.toString(bisulfite));
-         prj.setProperty("qAlphabetSize", Integer.toString(asize));
-         prj.setProperty("Stride", Integer.toString(stride));
+         final int asize = project.getIntProperty("LargestSymbol") + 1;
+         final int separator = project.getIntProperty("Separator");
+         project.setProperty("QGramAction", action);
+         project.setProperty("LastAction", "qgram");
+         project.setProperty("Bisulfite", bisulfite);
+         project.setProperty("qAlphabetSize", asize);
+         project.setProperty("Stride", stride);
 
          // determine q-gram size qq, either from given -q option, or default by length
          int qq;
          if (q > 0) qq = q;
          else {
-            double fsize = Double.parseDouble(prj.getProperty("Length"));
+            double fsize = project.getDoubleProperty("Length");
             qq = (int) (floor(log(fsize) / log(asize))) - 2;
             if (qq < 1) qq = 1;
          }
-         prj.setProperty("q", Integer.toString(qq));
+         project.setProperty("q", qq);
 
          // create the q-gram filter
          g.logmsg("qgram: processing: indexname=%s, asize=%d, q=%d%n", indexname, asize, qq);
          final int[] filterparam = QGramFilter.parseFilterParameters(opt.get("F"));
-         prj.setProperty("qFilterComplexity", String.valueOf(filterparam[0]));
-         prj.setProperty("qFilterDelta", String.valueOf(filterparam[1]));
+         project.setProperty("qFilterComplexity", filterparam[0]);
+         project.setProperty("qFilterDelta", filterparam[1]);
          final QGramFilter thefilter = new QGramFilter(qq, asize, filterparam[0], filterparam[1]);
          final int qfiltered = thefilter.cardinality();
          g.logmsg("qgram: filtering %d q-grams%n", qfiltered);
-         prj.setProperty("qFiltered", String.valueOf(qfiltered));
+         project.setProperty("qFiltered",qfiltered);
          //for (int i = thefilter.nextSetBit(0); i >= 0; i = thefilter.nextSetBit(i+1))
          //   g.logmsg("  %s%n", coder.qGramString(i,AlphabetMap.DNA()));
 
@@ -151,17 +169,17 @@ public final class QgramIndexer implements Subcommand {
             continue;
          }
          
-         prj.setProperty("qfreqMax", result[4].toString());
-         prj.setProperty("qbckMax", result[5].toString());
+         project.setProperty("qfreqMax", (Integer)result[4]);
+         project.setProperty("qbckMax", (Integer)result[5]);
          final double[] times = (double[]) (result[3]);
          g.logmsg("qgram: time for %s: %.1f sec or %.2f min%n", indexname, times[0], times[0] / 60.0);
 
          try {
-            g.writeProject(prj, di + FileNameExtensions.prj);
+            project.store();
          } catch (IOException ex) {
             g.warnmsg("qgram: could not write %s, skipping! (%s)%n", di + FileNameExtensions.prj, ex.toString());
          }
-         if (check && docheck(di, prj) >= 0) returnvalue = 1;
+         if (check && docheck(di, project) >= 0) returnvalue = 1;
          g.stopplog();
       } // end for each file
       return returnvalue; // 1 if failed on any of the indices; 0 if everything ok.
@@ -474,26 +492,26 @@ public final class QgramIndexer implements Subcommand {
    /**
     * Check a project's q-gram index.
     * @param in   base file name of the sequence file
-    * @param prj  project properties
+    * @param project  project 
     * @return     a negative value, if the index is ok; a positive r value indicates
     *   an index in qpos which seems to be wrong (ie, the the q-gram at qpos[r]
     *   in the text seems to disagree with the opinion of the index.
     */
-   public int docheck(final String in, final Properties prj) {
+   public int docheck(final String in, final ProjectInfo project) {
       g.cmdname = "qgramcheck";
       // Parse prj -> q, asize
       int asize = 0;
       int q = 0;
       try {
-         asize = Integer.parseInt(prj.getProperty("qAlphabetSize"));
-         q = Integer.parseInt(prj.getProperty("q"));
+         asize = project.getIntProperty("qAlphabetSize");
+         q = project.getIntProperty("q");
       } catch (NumberFormatException ex) {
          g.terminate("qgramcheck: q-gram index does not seem to exist (create it!)");
       }
-      final int ffc = Integer.parseInt(prj.getProperty("qFilterComplexity"));
-      final int ffm = Integer.parseInt(prj.getProperty("qFilterDelta"));
+      final int ffc = project.getIntProperty("qFilterComplexity");
+      final int ffm = project.getIntProperty("qFilterDelta");
       final QGramFilter fff = new QGramFilter(q, asize, ffc, ffm);
-      final boolean bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
+      final boolean bisulfite = project.getBooleanProperty("Bisulfite");
 
       // call checking routine
       g.logmsg("qgramcheck: checking %s... q=%d, asize=%d%n", in, q, asize);

@@ -18,13 +18,20 @@
 
 package verjinxer;
 
-import java.io.*;
-import java.util.Properties;
+import static verjinxer.Globals.programname;
 
-import verjinxer.util.*;
-import verjinxer.sequenceanalysis.*;
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import verjinxer.sequenceanalysis.QGramCoder;
-import static verjinxer.Globals.*;
+import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.util.IllegalOptionException;
+import verjinxer.util.Options;
+import verjinxer.util.ProjectInfo;
+import verjinxer.util.TicToc;
 
 
 /**
@@ -110,7 +117,13 @@ public class QgramMatcherSubcommand implements Subcommand {
      g.startplog(ds+FileNameExtensions.log);
 
      // Read project data and determine asize, q; read alphabet map
-     Properties prj = g.readProject(ds+FileNameExtensions.prj);
+     ProjectInfo project;
+     try {
+        project = ProjectInfo.createFromFile(ds);
+     } catch (IOException e) {
+        g.warnmsg("qmatch: cannot read project file.%n");
+        return 1;
+     }
      
      // TODO some ugly things because I insist that asize and q be final
      
@@ -118,8 +131,8 @@ public class QgramMatcherSubcommand implements Subcommand {
      
      // Read project data and determine asize, q; read alphabet map
      try { 
-       asizetmp = Integer.parseInt(prj.getProperty("qAlphabetSize"));
-       qtmp = Integer.parseInt(prj.getProperty("q"));
+       asizetmp = project.getIntProperty("qAlphabetSize");
+       qtmp = project.getIntProperty("q");
      } catch (NumberFormatException ex) {
        g.warnmsg("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s%n", ds, ex.toString());
        g.terminate(1);
@@ -186,30 +199,29 @@ public class QgramMatcherSubcommand implements Subcommand {
      g.logmsg("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
      
      final QGramCoder qgramcoder = new QGramCoder(q, asize);
-     final boolean bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
+     final boolean bisulfite = project.getBooleanProperty("Bisulfite");
      if (bisulfite) g.logmsg("qmatch: index is for bisulfite sequences, using bisulfite matching%n");
  
-     ProjectInfo project = new ProjectInfo(prj, ds);
      try {
-     QgramMatcher qgrammatcher = new QgramMatcher(
-           g,
-           dt, 
-           ds, 
-           toomanyhitsfilename,
-           maxseqmatches, 
-           minseqmatches, 
-           minlen,
-           qgramcoder,
-           qgramfilter,
-           out,
-           sorted, 
-           external,
-           selfcmp, 
-           bisulfite,
-           c_matches_c,
-           project);
-     qgrammatcher.match(qgramcoder, qgramfilter);
-     qgrammatcher.tooManyHits(dt+".toomanyhits-filter");
+        QgramMatcher qgrammatcher = new QgramMatcher(
+              g,
+              dt, 
+              ds, 
+              toomanyhitsfilename,
+              maxseqmatches, 
+              minseqmatches, 
+              minlen,
+              qgramcoder,
+              qgramfilter,
+              out,
+              sorted, 
+              external,
+              selfcmp, 
+              bisulfite,
+              c_matches_c,
+              project);
+        qgrammatcher.match(qgramcoder, qgramfilter);
+        qgrammatcher.tooManyHits(dt+".toomanyhits-filter");
      } catch (IOException e) {
         g.warnmsg("could not initialize qgrammatcher: "+e.getMessage());
      }

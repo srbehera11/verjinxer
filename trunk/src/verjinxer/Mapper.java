@@ -10,13 +10,28 @@
 
 package verjinxer;
 
-import java.io.*;
+import static verjinxer.Globals.programname;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Properties;
-import verjinxer.sequenceanalysis.*;
-import verjinxer.util.*;
-import static verjinxer.Globals.*;
+
+import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.QGramCoder;
+import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.util.ArrayFile;
+import verjinxer.util.ArrayUtils;
+import verjinxer.util.BitArray;
+import verjinxer.util.IllegalOptionException;
+import verjinxer.util.Options;
+import verjinxer.util.ProjectInfo;
+import verjinxer.util.StringUtils;
+import verjinxer.util.TicToc;
 
 
 /**
@@ -77,7 +92,7 @@ public class Mapper {
   boolean     qgramtabulate   = false;
   
   String      tname       = null;
-  Properties  tprj        = null;
+  ProjectInfo tproject;
   BitArray    tselect     = null;
   BitArray    trepeat     = null;
   BitArray    tmapped     = null;
@@ -166,8 +181,13 @@ public class Mapper {
     filterstring = opt.get("f"); if(filterstring==null) filterstring = "0:0";
     
     // Read sequence project
-    tprj = g.readProject(dt+FileNameExtensions.prj);
-    tm = Integer.parseInt(tprj.getProperty("NumberSequences"));
+    try {
+       tproject = ProjectInfo.createFromFile(dt);
+    } catch (IOException e) {
+       g.warnmsg("could not read project file: %s%n", e.toString());
+       return 1; // g.terminate(1);
+    }
+    tm = tproject.getIntProperty("NumberSequences");
     
     // Select sequences
     if (opt.isGiven("s")) {
@@ -232,15 +252,15 @@ public class Mapper {
     
     
     // read information about sequences
-    asize = Integer.parseInt(tprj.getProperty("LargestSymbol"))+1;
+    asize = tproject.getIntProperty("LargestSymbol")+1;
     if(revcomp && asize!=4) g.terminate("map: can only use reverse complement option with DNA sequences. Stop.");
     amap = g.readAlphabetMap(g.dir + tname + FileNameExtensions.alphabet);
     String tsspfile = dt + FileNameExtensions.ssp;
     tssp = g.slurpLongArray(tsspfile);
     assert(tm  == tssp.length);
     tdesc = g.slurpTextFile(dt+FileNameExtensions.desc, tm);
-    longestsequence  = Long.parseLong(tprj.getProperty("LongestSequence"));
-    shortestsequence = Long.parseLong(tprj.getProperty("ShortestSequence"));
+    longestsequence  = tproject.getLongProperty("LongestSequence");
+    shortestsequence = tproject.getLongProperty("ShortestSequence");
     tall = g.slurpByteArray(dt+FileNameExtensions.seq);
     
     int selected = tselect.cardinality();
@@ -291,7 +311,7 @@ public class Mapper {
 // ======================== general index data ==============================
   
   String      iname       = null;   // current index name
-  Properties  iprj        = null;   // current index project data
+  ProjectInfo  iproject;   // current index project data
   int         ilength     = 0;      // current index text length
   byte[]      itext       = null;   // current index text
   int[]       Dcol        = null;
@@ -339,11 +359,16 @@ public class Mapper {
     for(int idx=0; idx<inum; idx++) {
       // load idx-th q-gram index
       iname = indices.get(idx);
-      iprj = g.readProject(iname+FileNameExtensions.prj);
-      int iq = Integer.parseInt(iprj.getProperty("q"));
+      try {
+         iproject = ProjectInfo.createFromFile(iname);
+      } catch (IOException e) {
+         g.warnmsg("could not read project file: %s%n", e.toString());
+         g.terminate(1); // return 1; // g.terminate(1);
+      }
+      int iq = iproject.getIntProperty("q");
       g.logmsg("map: processing index '%s', q=%d, filter=%s...%n",
           iname,  iq, filterstring);
-      int as = Integer.parseInt(iprj.getProperty("qAlphabetSize"));
+      int as = iproject.getIntProperty("qAlphabetSize");
       assert(asize==as);
       if (iq!=oldq) {
         coder = new QGramCoder(iq,asize);
@@ -354,7 +379,7 @@ public class Mapper {
       iqbck = g.slurpIntArray(iname + FileNameExtensions.qbuckets, iqbck);  // overwrite if possible
       iqpos = g.slurpIntArray(iname + FileNameExtensions.qpositions, iqpos);  // overwrite
       itext = g.slurpByteArray(iname + FileNameExtensions.seq, 0, -1, itext);  // overwrite
-      ilength = Integer.parseInt(iprj.getProperty("Length"));
+      ilength = iproject.getIntProperty("Length");
       final int[] filterparam = QGramFilter.parseFilterParameters(filterstring);
       ifilter = new QGramFilter(coder.q, coder.asize, filterparam[0], filterparam[1]);
       
@@ -491,22 +516,26 @@ public class Mapper {
     java.util.Arrays.fill(seqbesterror, (int)longestsequence+2);
     
     String[] iname    = new String[inum];
-    Properties[] iprj = new Properties[inum];
+    ProjectInfo[] iprj = new ProjectInfo[inum];
     byte[][]  itext   = new byte[inum][];
     int[]    ilength  = new int[inum];
     
     for(int idx=0; idx<inum; idx++) {
-      // load idx-th q-gram index
-      iname[idx] = indices.get(idx);
-      iprj[idx] = g.readProject(iname[idx]+FileNameExtensions.prj);
-      g.logmsg("map: processing index '%s', reading .seq%n", iname[idx]);
-      int as = Integer.parseInt(iprj[idx].getProperty("LargestSymbol")) + 1;
-      assert(asize==as);
-      itext[idx] = g.slurpByteArray(iname[idx] + FileNameExtensions.seq, 0, -1, null);  // overwrite
-      ilength[idx] = Integer.parseInt(iprj[idx].getProperty("Length"));
-      assert(itext[idx].length==ilength[idx]);
+       // load idx-th q-gram index
+       iname[idx] = indices.get(idx);
+       try {
+          iprj[idx] = ProjectInfo.createFromFile(iname[idx]);
+       } catch (IOException e) {
+          g.warnmsg("could not read project file %s: %s%n", iname[idx], e.toString());
+          g.terminate(1); // g.terminate(1);
+       }     
+       g.logmsg("map: processing index '%s', reading .seq%n", iname[idx]);
+       int as = iprj[idx].getIntProperty("LargestSymbol") + 1;
+       assert asize == as;
+       itext[idx] = g.slurpByteArray(iname[idx] + FileNameExtensions.seq, 0, -1, null);  // overwrite
+       ilength[idx] = iprj[idx].getIntProperty("Length");
+       assert itext[idx].length == ilength[idx];
     }
-      
     for (int j=0; j<tm; j++) {
       if (tselect.get(j)==0 || trepeat.get(j)==1) continue;  // skip if not selected, or if repeat
       final int jstart = (j==0? 0: (int)(tssp[j-1]+1)); // first character

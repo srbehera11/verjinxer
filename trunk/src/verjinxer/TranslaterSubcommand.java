@@ -6,13 +6,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Properties;
 
 import verjinxer.sequenceanalysis.AlphabetMap;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.util.AnnotatedArrayFile;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
+import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -58,8 +58,6 @@ public class TranslaterSubcommand implements Subcommand {
    public int run(String[] args) {
       TicToc gtimer = new TicToc();
       g.cmdname = "translate";
-      Properties prj = new Properties();
-      prj.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"", args) + "\"");
 
       Options opt = new Options(
             "i=index=indexname:,t=trim,a=amap:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs");
@@ -74,11 +72,7 @@ public class TranslaterSubcommand implements Subcommand {
          g.logmsg("translate: no files given%n");
          g.terminate(0);
       }
-      prj.setProperty("NumberSourceFiles", Integer.toString(args.length));
 
-      // determine trimming
-      boolean trim = opt.isGiven("t");
-      prj.setProperty("TrimmedSequences", Boolean.toString(trim));
 
       // determine the name of the index
       String outname;
@@ -91,6 +85,14 @@ public class TranslaterSubcommand implements Subcommand {
             outname = outname.substring(0, lastdot);
       }
       outname = g.outdir + outname;
+      ProjectInfo project = new ProjectInfo(outname);
+      project.setProperty("NumberSourceFiles", args.length);
+      project.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"", args) + "\"");
+      // determine trimming
+      boolean trim = opt.isGiven("t");
+      project.setProperty("TrimmedSequences", trim);
+
+      
       g.startplog(outname + FileNameExtensions.log, true); // start new project log
 
       // determine the alphabet map(s)
@@ -200,11 +202,11 @@ public class TranslaterSubcommand implements Subcommand {
          g.warnmsg("translate: length %d exceeds 2 GB limit!!%n", totallength);
       else if (totallength >= (2L * 1024 * 1024 * 1024 * 127) / 128)
          g.warnmsg("translate: long sequence, %d is within 99% of 2GB limit!%n", totallength);
-      prj.setProperty("Length", Long.toString(totallength));
+      project.setProperty("Length", totallength);
 
       // Write the ssp array.
       g.dumpLongArray(outname + FileNameExtensions.ssp, out.getSsps());
-      prj.setProperty("NumberSequences", Integer.toString(out.getSsps().length));
+      project.setProperty("NumberSequences", out.getSsps().length);
 
       // Write sequence length statistics.
       long maxseqlen = 0;
@@ -215,8 +217,8 @@ public class TranslaterSubcommand implements Subcommand {
          if (seqlen < minseqlen)
             minseqlen = seqlen;
       }
-      prj.setProperty("LongestSequence", Long.toString(maxseqlen));
-      prj.setProperty("ShortestSequence", Long.toString(minseqlen));
+      project.setProperty("LongestSequence", maxseqlen);
+      project.setProperty("ShortestSequence", minseqlen);
 
       // Write the descriptions
       PrintWriter descfile = null;
@@ -243,13 +245,13 @@ public class TranslaterSubcommand implements Subcommand {
          g.terminate("translate: could not write alphabet: " + ex.toString());
       }
 
-      prj.setProperty("SmallestSymbol", Integer.toString(amap.smallestSymbol()));
-      prj.setProperty("LargestSymbol", Integer.toString(amap.largestSymbol()));
-      prj.setProperty("LastAction", "translate");
+      project.setProperty("SmallestSymbol", amap.smallestSymbol());
+      project.setProperty("LargestSymbol", amap.largestSymbol());
+      project.setProperty("LastAction", "translate");
       try {
-         prj.setProperty("Separator", Byte.toString(amap.codeSeparator()));
+         project.setProperty("Separator", amap.codeSeparator());
       } catch (InvalidSymbolException ex) {
-         prj.setProperty("Separator", "128"); // illegal byte code 128 -> nothing
+         project.setProperty("Separator", 128); // illegal byte code 128 -> nothing
       }
       g.logmsg("translate: finished translation after %.1f secs.%n", gtimer.tocs());
 
@@ -262,12 +264,12 @@ public class TranslaterSubcommand implements Subcommand {
          } catch (IOException ex) {
             g.terminate("translate: could not create run-related files; " + ex.toString());
          }
-         prj.setProperty("Runs", Long.toString(runs));
+         project.setProperty("Runs", runs);
       }
 
       // write project file
       try {
-         g.writeProject(prj, outname + FileNameExtensions.prj);
+         project.store();
       } catch (IOException ex) {
          g.terminate(String.format("translate: could not write project file; %s", ex.toString()));
       }
