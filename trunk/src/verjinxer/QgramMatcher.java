@@ -1,11 +1,5 @@
 package verjinxer;
 
-import static verjinxer.Globals.extalph;
-import static verjinxer.Globals.extdesc;
-import static verjinxer.Globals.extqbck;
-import static verjinxer.Globals.extqpos;
-import static verjinxer.Globals.extseq;
-import static verjinxer.Globals.extssp;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_A;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_C;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_G;
@@ -20,6 +14,7 @@ import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.BitArray;
+import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
 public class QgramMatcher {
@@ -110,7 +105,6 @@ public class QgramMatcher {
          int maxseqmatches, 
          int minseqmatches, 
          int minlen,
-         int maxactive,
          final QGramCoder qgramcoder,
          final QGramFilter qgramfilter,
          final PrintWriter out,
@@ -118,7 +112,8 @@ public class QgramMatcher {
          final boolean external,
          final boolean selfcmp, 
          final boolean bisulfite,
-         final boolean c_matches_c
+         final boolean c_matches_c,
+         ProjectInfo project
          ) 
    throws IOException
    {
@@ -130,7 +125,7 @@ public class QgramMatcher {
      this.out = out;
      this.c_matches_c = c_matches_c;
     
-    amap  = g.readAlphabetMap(ds+extalph);
+    amap  = g.readAlphabetMap(ds+FileNameExtensions.alphabet);
     
     //final BitSet thefilter = coder.createFilter(opt.get("F")); // empty filter if null
     if (minlen<q) {
@@ -175,16 +170,14 @@ public class QgramMatcher {
     // read sequence descriptions;
     // memory-map or read qpos.
     TicToc ttimer = new TicToc();
-    final String tfile    = dt+extseq;
-    final String tsspfile = dt+extssp;
-    final String seqfile  = ds+extseq;
-    final String qbckfile = ds+extqbck;
-    final String sspfile  = ds+extssp;
-    final String qposfile = ds+extqpos;
+    final String tfile    = dt+FileNameExtensions.seq;
+    final String tsspfile = dt+FileNameExtensions.ssp;
+    final String seqfile  = ds+FileNameExtensions.seq;
+    final String sspfile  = ds+FileNameExtensions.ssp;
     System.gc();
     t    = g.slurpByteArray(tfile);
     tssp = g.slurpLongArray(tsspfile);
-    tdesc= g.slurpTextFile(dt+extdesc, tssp.length);
+    tdesc= g.slurpTextFile(dt+FileNameExtensions.desc, tssp.length);
     assert(tdesc.size()==tssp.length);
 
     if (dt.equals(ds)) {
@@ -193,11 +186,11 @@ public class QgramMatcher {
       s    = g.slurpByteArray(seqfile);
       ssp  = g.slurpLongArray(sspfile);
       sm   = ssp.length;
-      sdesc= g.slurpTextFile(ds+extdesc, sm);
+      sdesc= g.slurpTextFile(ds+FileNameExtensions.desc, sm);
       assert(sdesc.size()==sm);
     }
     
-    qgramindex = new QGramIndex(g, qposfile, qbckfile, maxactive);
+    qgramindex = new QGramIndex(project);
     g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
   
     //toomanyhits = new  BitArray toomanyhits;

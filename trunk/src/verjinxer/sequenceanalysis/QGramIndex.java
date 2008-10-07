@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import verjinxer.Globals;
 import verjinxer.util.ArrayFile;
+import verjinxer.util.ProjectInfo;
 
 // TODO remove dependency on Globals
 // TODO document qgramindex file format here
@@ -16,8 +17,6 @@ import verjinxer.util.ArrayFile;
  * index is stored in a '.qpos' and in a '.qbck' file.
  */
 public class QGramIndex {
-   final Globals g;
-
    /** Bucket boundaries */
    final int[] qbck;
    
@@ -47,9 +46,8 @@ public class QGramIndex {
     * @param maxactive
     * @throws IOException
     */
-   public QGramIndex(final Globals gl, final String qposfile, final String qbckfile, int maxactive) throws IOException {
-      this.g = gl;
-      this.qbck = g.slurpIntArray(qbckfile);
+   public QGramIndex(final String qposfile, final String qbckfile, int maxactive) throws IOException {
+      this.qbck = (new Globals()).slurpIntArray(qbckfile); // TODO remove Globals
       final int buckets = qbck.length - 1;
             
       this.qpos = new int[(buckets >> BITS) + 1][];
@@ -70,6 +68,10 @@ public class QGramIndex {
       }
       af.close();
       maximumBucketSize = maxactive; // TODO //Integer.parseInt(prj.getProperty("qbckMax"));
+   }
+   
+   public QGramIndex(final ProjectInfo project) throws IOException {
+      this(project.getQPositionsFileName(), project.getQBucketsFileName(), project.getMaximumBucketSize());
    }
 
    /** @return maximum bucket size */

@@ -1,15 +1,5 @@
 package verjinxer;
 
-import static verjinxer.Globals.extalph;
-import static verjinxer.Globals.extdesc;
-import static verjinxer.Globals.extlog;
-import static verjinxer.Globals.extpos2run;
-import static verjinxer.Globals.extprj;
-import static verjinxer.Globals.extrun2pos;
-import static verjinxer.Globals.extrunlen;
-import static verjinxer.Globals.extrunseq;
-import static verjinxer.Globals.extseq;
-import static verjinxer.Globals.extssp;
 import static verjinxer.Globals.programname;
 
 import java.io.File;
@@ -39,9 +29,9 @@ public class TranslaterSubcommand implements Subcommand {
    public void help() {
       g.logmsg("Usage:%n  %s translate [options] <TextAndFastaFiles...>%n", programname);
       g.logmsg("translates one or more text or FASTA files, using an alphabet map;%n");
-      g.logmsg("creates %s, %s, %s, %s, %s;%n", extseq, extdesc, extalph, extssp, extprj);
-      g.logmsg("with option -r, also creates %s, %s, %s, %s.%n", extrunseq, extrunlen, extrun2pos,
-            extpos2run);
+      g.logmsg("creates %s, %s, %s, %s, %s;%n", FileNameExtensions.seq, FileNameExtensions.desc, FileNameExtensions.alphabet, FileNameExtensions.ssp, FileNameExtensions.prj);
+      g.logmsg("with option -r, also creates %s, %s, %s, %s.%n", FileNameExtensions.runseq, FileNameExtensions.runlen, FileNameExtensions.run2pos,
+            FileNameExtensions.pos2run);
       g.logmsg("Options:%n");
       g.logmsg("  -i, --index <name>   name of index files [first filename]%n");
       g.logmsg("  -t, --trim           trim non-symbol characters at both ends%n");
@@ -101,7 +91,7 @@ public class TranslaterSubcommand implements Subcommand {
             outname = outname.substring(0, lastdot);
       }
       outname = g.outdir + outname;
-      g.startplog(outname + extlog, true); // start new project log
+      g.startplog(outname + FileNameExtensions.log, true); // start new project log
 
       // determine the alphabet map(s)
       int givenmaps = 0;
@@ -175,12 +165,12 @@ public class TranslaterSubcommand implements Subcommand {
 
       // open the output file stream
       g.logmsg("translate: creating index '%s'...%n", outname);
-      AnnotatedArrayFile out = new AnnotatedArrayFile(outname + extseq); // use default buffer
+      AnnotatedArrayFile out = new AnnotatedArrayFile(outname + FileNameExtensions.seq); // use default buffer
       // size
       try {
          out.openW();
       } catch (IOException ex) {
-         g.warnmsg("translate: could not create output file '%s'; %s", outname + extseq,
+         g.warnmsg("translate: could not create output file '%s'; %s", outname + FileNameExtensions.seq,
                ex.toString());
       }
 
@@ -213,7 +203,7 @@ public class TranslaterSubcommand implements Subcommand {
       prj.setProperty("Length", Long.toString(totallength));
 
       // Write the ssp array.
-      g.dumpLongArray(outname + extssp, out.getSsps());
+      g.dumpLongArray(outname + FileNameExtensions.ssp, out.getSsps());
       prj.setProperty("NumberSequences", Integer.toString(out.getSsps().length));
 
       // Write sequence length statistics.
@@ -231,12 +221,12 @@ public class TranslaterSubcommand implements Subcommand {
       // Write the descriptions
       PrintWriter descfile = null;
       try {
-         descfile = new PrintWriter(outname + extdesc);
+         descfile = new PrintWriter(outname + FileNameExtensions.desc);
          for (String s : out.getDescriptions())
             descfile.println(s);
          descfile.close();
       } catch (IOException ex) {
-         g.warnmsg("translate: %s%s: %s%n", outname, extdesc, ex.toString());
+         g.warnmsg("translate: %s%s: %s%n", outname, FileNameExtensions.desc, ex.toString());
          g.terminate(1);
       }
 
@@ -246,7 +236,7 @@ public class TranslaterSubcommand implements Subcommand {
          // alfile = new PrintWriter(outname + extamap);
          // amap.showImage(alfile);
          // alfile.close();
-         alfile = new PrintWriter(outname + extalph);
+         alfile = new PrintWriter(outname + FileNameExtensions.alphabet);
          amap.showSourceStrings(alfile);
          alfile.close();
       } catch (IOException ex) {
@@ -277,7 +267,7 @@ public class TranslaterSubcommand implements Subcommand {
 
       // write project file
       try {
-         g.writeProject(prj, outname + extprj);
+         g.writeProject(prj, outname + FileNameExtensions.prj);
       } catch (IOException ex) {
          g.terminate(String.format("translate: could not write project file; %s", ex.toString()));
       }

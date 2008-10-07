@@ -107,10 +107,10 @@ public class QgramMatcherSubcommand implements Subcommand {
      }
      dt = g.dir + tname;
      ds = g.dir + sname;
-     g.startplog(ds+extlog);
+     g.startplog(ds+FileNameExtensions.log);
 
      // Read project data and determine asize, q; read alphabet map
-     Properties prj = g.readProject(ds+extprj);
+     Properties prj = g.readProject(ds+FileNameExtensions.prj);
      
      // TODO some ugly things because I insist that asize and q be final
      
@@ -185,11 +185,11 @@ public class QgramMatcherSubcommand implements Subcommand {
      }
      g.logmsg("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
      
-     final int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
      final QGramCoder qgramcoder = new QGramCoder(q, asize);
      final boolean bisulfite = Boolean.parseBoolean(prj.getProperty("Bisulfite"));
      if (bisulfite) g.logmsg("qmatch: index is for bisulfite sequences, using bisulfite matching%n");
  
+     ProjectInfo project = new ProjectInfo(prj, ds);
      try {
      QgramMatcher qgrammatcher = new QgramMatcher(
            g,
@@ -199,7 +199,6 @@ public class QgramMatcherSubcommand implements Subcommand {
            maxseqmatches, 
            minseqmatches, 
            minlen,
-           maxactive,
            qgramcoder,
            qgramfilter,
            out,
@@ -207,7 +206,8 @@ public class QgramMatcherSubcommand implements Subcommand {
            external,
            selfcmp, 
            bisulfite,
-           c_matches_c);
+           c_matches_c,
+           project);
      qgrammatcher.match(qgramcoder, qgramfilter);
      qgrammatcher.tooManyHits(dt+".toomanyhits-filter");
      } catch (IOException e) {

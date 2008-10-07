@@ -79,8 +79,8 @@ public class Cutter {
     // set sequence file name, start log, read alphabet map
     String sname = args[0];
     String ds = g.dir + sname;
-    g.startplog(ds+extlog);
-    AlphabetMap amap = g.readAlphabetMap(ds + extalph);
+    g.startplog(ds+FileNameExtensions.log);
+    AlphabetMap amap = g.readAlphabetMap(ds + FileNameExtensions.alphabet);
     
     // get patterns
     String[] pstrings = null;
@@ -122,7 +122,7 @@ public class Cutter {
 
     long[] ssp = null;
     if (!opt.isGiven("nossp") || opt.isGiven("i")) {
-      ssp = g.slurpLongArray(ds+extssp);
+      ssp = g.slurpLongArray(ds+FileNameExtensions.ssp);
     }
     if (!opt.isGiven("nossp")) {
       for (long i: ssp) { matchPositions.add((int)i); matchPositions.add((int)(i+1)); }
@@ -134,12 +134,12 @@ public class Cutter {
     // Read sequence
     ByteBuffer in = null;
     try {
-      in = new ArrayFile(ds+extseq,0).mapR();
+      in = new ArrayFile(ds+FileNameExtensions.seq,0).mapR();
     } catch (IOException ex) {
       g.terminate("map: "+ex.toString());
     }
     final int fsize = in.capacity();
-    g.logmsg("cut: sequence file '%s' has length %d%n", ds+extseq, fsize);
+    g.logmsg("cut: sequence file '%s' has length %d%n", ds+FileNameExtensions.seq, fsize);
     
     for (int p=0; p<numpat; p++) {
       int numMatches = 0;
