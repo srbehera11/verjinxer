@@ -112,7 +112,7 @@ public class Globals {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
       a = arf.setFilename(file).readArray(a);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -134,7 +134,7 @@ public class Globals {
     //logmsg("%s: reading '%s' [%d..%d] into memory...%n", cmdname, file, startindex, stopindex);
     try {
       a = arf.setFilename(file).readArray(a, 0, (int)(stopindex-startindex),  startindex);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -152,7 +152,7 @@ public class Globals {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
       a = HugeByteArray.fromFile(file);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -170,7 +170,7 @@ public class Globals {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
       a = HugeIntArray.fromFile(file);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -189,7 +189,7 @@ public class Globals {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
       a = arf.setFilename(file).readArray(a);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -207,7 +207,7 @@ public class Globals {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
       a = arf.setFilename(file).readArray(a);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -225,7 +225,7 @@ public class Globals {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
       a = arf.setFilename(file).readArray(a);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -243,7 +243,7 @@ public class Globals {
     logmsg("%s: reading '%s' into memory...%n", cmdname, file);
     try {
       a = arf.setFilename(file).readArray(a);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
       warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
       terminate(1);
@@ -303,7 +303,7 @@ public class Globals {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
       arf.setFilename(file).writeArray(a,start,len);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
       terminate(1);
     }
@@ -329,7 +329,7 @@ public class Globals {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
       arf.setFilename(file).writeArray(a,start,len);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
       terminate(1);
     }
@@ -355,7 +355,7 @@ public class Globals {
     logmsg("%s: writing '%s'...%n", cmdname, file);
     try {
       arf.setFilename(file).writeArray(a,start,len);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
       terminate(1);
     }

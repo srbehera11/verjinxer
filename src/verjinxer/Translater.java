@@ -136,10 +136,12 @@ public class Translater {
         lastbyte = out.writeBuffer(tr);
         out.addInfo(fseq.getHeader()+" /meth-bis+cbis", 2*fseq.length()+1, (int)(lastbyte-1));
       } catch (Exception e) {
-        g.warnmsg("translate: %s%n",e.toString()); break; }
+        g.warnmsg("translate: %s%n",e.toString()); 
+        break; 
+      }
     }
     // close file
-    try {  f.close(); } catch (Exception e) { g.warnmsg("translate: %s%n",e.toString()); }
+    try {  f.close(); } catch (IOException e) { g.warnmsg("translate: %s%n",e.toString()); }
   }
 
   
