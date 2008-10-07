@@ -6,14 +6,23 @@
 
 package verjinxer;
 
+import static verjinxer.Globals.programname;
+
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.LongBuffer;
-import java.util.Properties;
 import java.util.Arrays;
-import verjinxer.util.*;
-import verjinxer.sequenceanalysis.*;
-import static verjinxer.Globals.*;
+
+import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.util.ArrayFile;
+import verjinxer.util.ArrayUtils;
+import verjinxer.util.HugeByteArray;
+import verjinxer.util.HugeLongArray;
+import verjinxer.util.IllegalOptionException;
+import verjinxer.util.Options;
+import verjinxer.util.ProjectInfo;
+import verjinxer.util.StringUtils;
+import verjinxer.util.TicToc;
 
 /**
  *
@@ -109,17 +118,23 @@ public class BigSuffixTrayBuilder {
     String di        = g.dir + indexname;
     g.startplog(di+FileNameExtensions.log);
     if (args.length>1) g.warnmsg("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
-    Properties prj = g.readProject(di+FileNameExtensions.prj);
-    asize = Integer.parseInt(prj.getProperty("LargestSymbol")) + 1;
+    ProjectInfo project;
+    try {
+       project = ProjectInfo.createFromFile(di);
+    } catch (IOException e) {
+       g.warnmsg("could not read project file: %s%n", e.toString());
+       return 1; // g.terminate(1);
+    }
+    asize = project.getIntProperty("LargestSymbol") + 1;
 
     // load alphabet map and text
     amap = g.readAlphabetMap(di+FileNameExtensions.alphabet);
     s = g.slurpHugeByteArray(di+FileNameExtensions.seq);
     n = s.length;
     if (onlycheck) { returnvalue =  checkpos(di); g.stopplog(); return returnvalue; }
-    prj.setProperty("SuffixAction", action);
-    prj.setProperty("LastAction","suffixtray");
-    prj.setProperty("AlphabetSize",Integer.toString(asize));    
+    project.setProperty("SuffixAction", action);
+    project.setProperty("LastAction", "suffixtray");
+    project.setProperty("AlphabetSize", asize);    
     
     method = (opt.isGiven("m")? opt.get("m") : "L"); // default method
     g.logmsg("suffixtray: constructing pos using method '%s'...%n", method);
@@ -134,9 +149,9 @@ public class BigSuffixTrayBuilder {
     else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
     g.logmsg("suffixtray: pos completed after %.1f secs using %d steps (%.2f/char)%n",
         timer.tocs(), steps, (double)steps/n);
-    prj.setProperty("SuffixTrayMethod",method);
-    prj.setProperty("SuffixTraySteps",Long.toString(steps));    
-    prj.setProperty("SuffixTrayStepsPerChar",Double.toString((double)steps/n));    
+    project.setProperty("SuffixTrayMethod", method);
+    project.setProperty("SuffixTraySteps", steps);    
+    project.setProperty("SuffixTrayStepsPerChar", (double)steps/n);    
     
     if (check) {
       timer.tic();
@@ -176,18 +191,19 @@ public class BigSuffixTrayBuilder {
       else if (method.equals("bothLR2")) lcp_L(flcp, dolcp);
       else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
       g.logmsg("suffixtray: lcp computation and writing took %.1f secs; done.%n", timer.tocs());
-      prj.setProperty("lcp1Exceptions",Long.toString(lcp1x));
-      prj.setProperty("lcp2Exceptions",Long.toString(lcp2x));
-      prj.setProperty("lcp1Size",Long.toString(n+8*lcp1x));
-      prj.setProperty("lcp2Size",Long.toString(2*n+8*lcp2x));
-      prj.setProperty("lcp4Size",Long.toString(4*n));
-      prj.setProperty("lcpMax",Long.toString(maxlcp));     
+      project.setProperty("lcp1Exceptions", lcp1x);
+      project.setProperty("lcp2Exceptions", lcp2x);
+      project.setProperty("lcp1Size", n+8*lcp1x);
+      project.setProperty("lcp2Size", 2*n+8*lcp2x);
+      project.setProperty("lcp4Size", 4*n);
+      project.setProperty("lcpMax", maxlcp);     
     }
     
     // write project data
-    try { g.writeProject(prj, di+FileNameExtensions.prj); } 
+    try { 
+       project.store(); } 
     catch (IOException ex) { 
-      g.warnmsg("suffix: could not write %s (%s)!%n", di+FileNameExtensions.prj, ex.toString()); 
+      g.warnmsg("suffix: could not write %s (%s)!%n", project.getFilename(), ex.toString()); 
       g.terminate(1);
     }
     g.stopplog();

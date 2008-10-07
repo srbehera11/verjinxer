@@ -7,11 +7,24 @@
 
 package verjinxer;
 
-import java.io.*;
-import java.util.Properties;
-import verjinxer.sequenceanalysis.*;
-import verjinxer.util.*;
-import static verjinxer.Globals.*;
+import static verjinxer.Globals.programname;
+
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.InvalidSymbolException;
+import verjinxer.sequenceanalysis.QGramCoder;
+import verjinxer.sequenceanalysis.QGramIndex;
+import verjinxer.util.ArrayFile;
+import verjinxer.util.IllegalOptionException;
+import verjinxer.util.Options;
+import verjinxer.util.ProjectInfo;
+import verjinxer.util.StringUtils;
+import verjinxer.util.TicToc;
 
 /**
  *
@@ -112,10 +125,16 @@ public class NonUniqueProbeDesigner {
     double ufrac = ( opt.isGiven("f")? Double.parseDouble(opt.get("f")) : -1.0);
     
     // Read project data and determine asize, q; read alphabet map
-    Properties prj = g.readProject(di+FileNameExtensions.prj);
+    ProjectInfo project;
     try {
-      asize = Integer.parseInt(prj.getProperty("qAlphabetSize"));
-      q = Integer.parseInt(prj.getProperty("q"));
+       project = ProjectInfo.createFromFile(di);
+    } catch (IOException e) {
+       g.warnmsg("could not read project file: %s%n", e.toString());
+       return 1; // g.terminate(1);
+    }
+    try {
+      asize = project.getIntProperty("qAlphabetSize");
+      q = project.getIntProperty("q");
     } catch (NumberFormatException ex) {
       g.warnmsg("nonunique: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", di);
       g.terminate(1);
@@ -143,9 +162,9 @@ public class NonUniqueProbeDesigner {
           seqfile, sspfile);
       g.terminate(1);
     }
-    final int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
+    final int maxactive = project.getIntProperty("qbckMax");
     try {
-       qgramindex = new QGramIndex(new ProjectInfo(prj, di));
+       qgramindex = new QGramIndex(project);
     } catch (IOException e) {
        e.printStackTrace();
        g.warnmsg(e.getMessage());

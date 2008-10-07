@@ -7,11 +7,21 @@
 
 package verjinxer;
 
+import static verjinxer.Globals.programname;
+
+import java.io.IOException;
 import java.util.Arrays;
-import java.util.Properties;
-import verjinxer.sequenceanalysis.*;
-import verjinxer.util.*;
-import static verjinxer.Globals.*;
+
+import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.InvalidSymbolException;
+import verjinxer.sequenceanalysis.QGramCoder;
+import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.util.IllegalOptionException;
+import verjinxer.util.Options;
+import verjinxer.util.ProjectInfo;
+import verjinxer.util.Sortable;
+import verjinxer.util.Sorter;
+import verjinxer.util.TicToc;
 
 /**
  *
@@ -96,10 +106,16 @@ public class QgramFrequencer {
     String wordstring = (opt.isGiven("p")? opt.get("p") : null);
     
     // Read project data and determine asize, q; read alphabet map
-    Properties prj = g.readProject(di+FileNameExtensions.prj);
+    ProjectInfo project;
     try {
-      asize = Integer.parseInt(prj.getProperty("qAlphabetSize"));
-      q = Integer.parseInt(prj.getProperty("q"));
+       project = ProjectInfo.createFromFile(di);
+    } catch (IOException e) {
+       g.warnmsg("qfreq: cannot read project file.%n");
+       return 1;
+    }
+    try {
+      asize = project.getIntProperty("qAlphabetSize");
+      q = project.getIntProperty("q");
     } catch (NumberFormatException ex) {
       g.warnmsg("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", di);
       g.terminate(1);
