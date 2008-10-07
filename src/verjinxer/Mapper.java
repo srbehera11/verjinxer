@@ -125,21 +125,21 @@ public class Mapper {
     }
     tname = args[0];
     dt = g.dir + tname;
-    g.startplog(dt+extlog);
+    g.startplog(dt+FileNameExtensions.log);
     
     // Determine method
     method = null;
     String mext = null;
     if (opt.isGiven("m")) {
       if (opt.get("m").startsWith("q")) { 
-        method=Method.QGRAM; mext=extqpos; 
+        method=Method.QGRAM; mext=FileNameExtensions.qpositions; 
       } else if (opt.get("m").startsWith("s")) {
-        method=Method.SUFFIX; mext=extpos; 
+        method=Method.SUFFIX; mext=FileNameExtensions.pos; 
       } else if (opt.get("m").startsWith("f")) {
-        method=Method.FULL; mext=extseq; 
+        method=Method.FULL; mext=FileNameExtensions.seq; 
       }
     } else {
-      method = Method.QGRAM; mext=extqpos;
+      method = Method.QGRAM; mext=FileNameExtensions.qpositions;
     }
     if (method==null) { help(); g.warnmsg("map: Unknown method '%s'.%n",opt.get("m")); g.terminate(1); }
     
@@ -166,13 +166,13 @@ public class Mapper {
     filterstring = opt.get("f"); if(filterstring==null) filterstring = "0:0";
     
     // Read sequence project
-    tprj = g.readProject(dt+extprj);
+    tprj = g.readProject(dt+FileNameExtensions.prj);
     tm = Integer.parseInt(tprj.getProperty("NumberSequences"));
     
     // Select sequences
     if (opt.isGiven("s")) {
       if (opt.get("s").startsWith("#")) {
-        tselect = g.slurpBitArray(dt+extselect);
+        tselect = g.slurpBitArray(dt+FileNameExtensions.select);
       } else {
         tselect = g.slurpBitArray(g.dir + opt.get("s"));
       }
@@ -219,7 +219,7 @@ public class Mapper {
         g.warnmsg("map: could not open index '%s'; %s.%n", fin, ex.toString());
         g.terminate(1);
       }
-      fin = indices.get(i) + extseq;
+      fin = indices.get(i) + FileNameExtensions.seq;
       try {
         final ArrayFile fi = new ArrayFile(fin,0).openR().close();
         long filen = fi.length();
@@ -234,14 +234,14 @@ public class Mapper {
     // read information about sequences
     asize = Integer.parseInt(tprj.getProperty("LargestSymbol"))+1;
     if(revcomp && asize!=4) g.terminate("map: can only use reverse complement option with DNA sequences. Stop.");
-    amap = g.readAlphabetMap(g.dir + tname + extalph);
-    String tsspfile = dt + extssp;
+    amap = g.readAlphabetMap(g.dir + tname + FileNameExtensions.alphabet);
+    String tsspfile = dt + FileNameExtensions.ssp;
     tssp = g.slurpLongArray(tsspfile);
     assert(tm  == tssp.length);
-    tdesc = g.slurpTextFile(dt+extdesc, tm);
+    tdesc = g.slurpTextFile(dt+FileNameExtensions.desc, tm);
     longestsequence  = Long.parseLong(tprj.getProperty("LongestSequence"));
     shortestsequence = Long.parseLong(tprj.getProperty("ShortestSequence"));
-    tall = g.slurpByteArray(dt+extseq);
+    tall = g.slurpByteArray(dt+FileNameExtensions.seq);
     
     int selected = tselect.cardinality();
     g.logmsg("map: comparing %d/%d sequences against %d indices (%s) using method %s%s...%n",
@@ -280,7 +280,7 @@ public class Mapper {
     allout.flush();
     g.logmsg("map: successfully mapped %d / %d selected (%d total) sequences;%n     found %d repeats, %d sequences remain.%n",
         tmapped.cardinality(), selected, tm, trepeat.cardinality(), tselect.cardinality());
-    g.dumpBitArray(dt+extselect, tselect);
+    g.dumpBitArray(dt+FileNameExtensions.select, tselect);
     g.dumpBitArray(dt+".repeat-filter", trepeat);
     g.stopplog();
     if (closeout) allout.close();
@@ -339,7 +339,7 @@ public class Mapper {
     for(int idx=0; idx<inum; idx++) {
       // load idx-th q-gram index
       iname = indices.get(idx);
-      iprj = g.readProject(iname+extprj);
+      iprj = g.readProject(iname+FileNameExtensions.prj);
       int iq = Integer.parseInt(iprj.getProperty("q"));
       g.logmsg("map: processing index '%s', q=%d, filter=%s...%n",
           iname,  iq, filterstring);
@@ -351,9 +351,9 @@ public class Mapper {
         etable = computeEValues(longestsequence, iq, totalindexlen, blocksize, 1/(asize-1.0));
         oldq=iq;
       }
-      iqbck = g.slurpIntArray(iname + extqbck, iqbck);  // overwrite if possible
-      iqpos = g.slurpIntArray(iname + extqpos, iqpos);  // overwrite
-      itext = g.slurpByteArray(iname + extseq, 0, -1, itext);  // overwrite
+      iqbck = g.slurpIntArray(iname + FileNameExtensions.qbuckets, iqbck);  // overwrite if possible
+      iqpos = g.slurpIntArray(iname + FileNameExtensions.qpositions, iqpos);  // overwrite
+      itext = g.slurpByteArray(iname + FileNameExtensions.seq, 0, -1, itext);  // overwrite
       ilength = Integer.parseInt(iprj.getProperty("Length"));
       final int[] filterparam = QGramFilter.parseFilterParameters(filterstring);
       ifilter = new QGramFilter(coder.q, coder.asize, filterparam[0], filterparam[1]);
@@ -498,11 +498,11 @@ public class Mapper {
     for(int idx=0; idx<inum; idx++) {
       // load idx-th q-gram index
       iname[idx] = indices.get(idx);
-      iprj[idx] = g.readProject(iname[idx]+extprj);
+      iprj[idx] = g.readProject(iname[idx]+FileNameExtensions.prj);
       g.logmsg("map: processing index '%s', reading .seq%n", iname[idx]);
       int as = Integer.parseInt(iprj[idx].getProperty("LargestSymbol")) + 1;
       assert(asize==as);
-      itext[idx] = g.slurpByteArray(iname[idx] + extseq, 0, -1, null);  // overwrite
+      itext[idx] = g.slurpByteArray(iname[idx] + FileNameExtensions.seq, 0, -1, null);  // overwrite
       ilength[idx] = Integer.parseInt(iprj[idx].getProperty("Length"));
       assert(itext[idx].length==ilength[idx]);
     }

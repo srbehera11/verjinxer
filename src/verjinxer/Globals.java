@@ -19,23 +19,6 @@ public class Globals {
   
   public final static String programname = "VerJInxer";
   public final static String version     = "0.4";
-  public final static String extseq      = ".seq";
-  public final static String extprj      = ".prj";
-  public final static String extlog      = ".log";
-  public final static String extdesc     = ".desc";
-  public final static String extselect   = ".select-filter";
-  public final static String extssp      = ".ssp";
-  public final static String extalph     = ".alphabet";
-  public final static String extqbck     = ".qbck";
-  public final static String extqpos     = ".qpos";
-  public final static String extqfreq    = ".qfreq";
-  public final static String extqseqfreq = ".qsfrq";
-  public final static String extrunseq   = ".runseq";
-  public final static String extrunlen   = ".runlen";
-  public final static String extrun2pos  = ".run2pos";
-  public final static String extpos2run  = ".pos2run";
-  public final static String extpos      = ".pos";        // suffix array
-  public final static String extlcp      = ".lcp";        // lcp values
    
   private PrintStream  logger  = null;
   private PrintStream  loggerP = null;

@@ -87,7 +87,7 @@ public class QgramFrequencer {
     // Get indexname and di
     String indexname = args[0];
     String di        = g.dir + indexname;
-    g.startplog(di+extlog);
+    g.startplog(di+FileNameExtensions.log);
     if (args.length>1) g.warnmsg("qfreq: ignoring all arguments except first '%s'%n", args[0]);
     
     // Determine options values
@@ -96,7 +96,7 @@ public class QgramFrequencer {
     String wordstring = (opt.isGiven("p")? opt.get("p") : null);
     
     // Read project data and determine asize, q; read alphabet map
-    Properties prj = g.readProject(di+extprj);
+    Properties prj = g.readProject(di+FileNameExtensions.prj);
     try {
       asize = Integer.parseInt(prj.getProperty("qAlphabetSize"));
       q = Integer.parseInt(prj.getProperty("q"));
@@ -104,7 +104,7 @@ public class QgramFrequencer {
       g.warnmsg("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", di);
       g.terminate(1);
     }
-    amap = g.readAlphabetMap(di+extalph);
+    amap = g.readAlphabetMap(di+FileNameExtensions.alphabet);
     final QGramCoder coder = new QGramCoder(q,asize);
     final int aq = coder.numberOfQGrams;
     
@@ -143,8 +143,8 @@ public class QgramFrequencer {
     g.logmsg("qfreq: considering q-grams %d..%d%n", Lcode, Hcode);
     
     // Read the correct array!
-    if (countseq) f = g.slurpIntArray(di+extqseqfreq);
-    else f = g.slurpIntArray(di+extqfreq);
+    if (countseq) f = g.slurpIntArray(di+FileNameExtensions.qseqfreq);
+    else f = g.slurpIntArray(di+FileNameExtensions.qfreq);
     //TODO: read bck array if requested, also look at sequences bck-based!
     
     len = Hcode - Lcode;

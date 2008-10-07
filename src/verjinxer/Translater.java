@@ -5,12 +5,19 @@
 
 package verjinxer;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import verjinxer.sequenceanalysis.*;
-import verjinxer.util.*;
-import static verjinxer.Globals.*;
+
+import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.FastaFile;
+import verjinxer.sequenceanalysis.FastaFormatException;
+import verjinxer.sequenceanalysis.FastaSequence;
+import verjinxer.sequenceanalysis.InvalidSymbolException;
+import verjinxer.util.AnnotatedArrayFile;
+import verjinxer.util.ArrayFile;
 
 /**
  * VerJInxer Module to translate a set of text or FASTA files into a byte file.
@@ -195,11 +202,11 @@ public class Translater {
   /** compute runs using memory mapping where possible */
   private long computeRunsM(final String fname) throws IOException {
     int run = -1;
-    ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
-    ArrayFile rseq = new ArrayFile(fname+extrunseq).openW();
-    ArrayFile rlen = new ArrayFile(fname+extrunlen).openW();
-    IntBuffer  p2r = new ArrayFile(fname+extpos2run,0).mapRW().asIntBuffer();
-    ArrayFile  r2p = new ArrayFile(fname+extrun2pos).openW();
+    ByteBuffer seq = new ArrayFile(fname+FileNameExtensions.seq,0).mapR();
+    ArrayFile rseq = new ArrayFile(fname+FileNameExtensions.runseq).openW();
+    ArrayFile rlen = new ArrayFile(fname+FileNameExtensions.runlen).openW();
+    IntBuffer  p2r = new ArrayFile(fname+FileNameExtensions.pos2run,0).mapRW().asIntBuffer();
+    ArrayFile  r2p = new ArrayFile(fname+FileNameExtensions.run2pos).openW();
     final int n = seq.limit();
     
     byte next;
@@ -239,11 +246,11 @@ public class Translater {
   /** compute runs using array files for writing, mmap only for reading */
   private long computeRunsAF(final String fname) throws IOException {
     int run = -1;
-    ByteBuffer seq = new ArrayFile(fname+extseq,0).mapR();
-    ArrayFile rseq = new ArrayFile(fname+extrunseq).openW();
-    ArrayFile rlen = new ArrayFile(fname+extrunlen).openW();
-    ArrayFile  p2r = new ArrayFile(fname+extpos2run).openW();
-    ArrayFile  r2p = new ArrayFile(fname+extrun2pos).openW();
+    ByteBuffer seq = new ArrayFile(fname+FileNameExtensions.seq,0).mapR();
+    ArrayFile rseq = new ArrayFile(fname+FileNameExtensions.runseq).openW();
+    ArrayFile rlen = new ArrayFile(fname+FileNameExtensions.runlen).openW();
+    ArrayFile  p2r = new ArrayFile(fname+FileNameExtensions.pos2run).openW();
+    ArrayFile  r2p = new ArrayFile(fname+FileNameExtensions.run2pos).openW();
     final int n = seq.limit();
     byte next;
     byte prev=-1;

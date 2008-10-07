@@ -38,17 +38,17 @@ public final class QgramIndexer implements Subcommand {
    public void help() {
       g.logmsg("Usage:%n  %s qgram [options] Indexnames...%n", programname);
       g.logmsg("Builds a q-gram index of .seq files; filters out low-complexity q-grams;%n");
-      g.logmsg("writes %s, %s, %s, %s.%n", extqbck, extqpos, extqfreq, extqseqfreq);
+      g.logmsg("writes %s, %s, %s, %s.%n", FileNameExtensions.qbuckets, FileNameExtensions.qpositions, FileNameExtensions.qfreq, FileNameExtensions.qseqfreq);
       g.logmsg("Options:%n");
       g.logmsg("  -q  <q>                 q-gram length [0=reasonable]%n");
       g.logmsg("  -s, --stride <stride>   only store q-grams whose positions are divisible by stride (default: %d)%n", stride);
       g.logmsg("  -b, --bisulfite         simulate bisulfite treatment%n");
       g.logmsg("  -f, --allfreq           write (unfiltered) frequency files (--freq, --sfreq)%n");
-      g.logmsg("  --freq                  write (unfiltered) q-gram frequencies (%s)%n", extqfreq);
-      g.logmsg("  --seqfreq, --sfreq      write in how many sequences each qgram appears (%s)%n", extqseqfreq);
+      g.logmsg("  --freq                  write (unfiltered) q-gram frequencies (%s)%n", FileNameExtensions.qfreq);
+      g.logmsg("  --seqfreq, --sfreq      write in how many sequences each qgram appears (%s)%n", FileNameExtensions.qseqfreq);
       g.logmsg("  -c, --check             additionally check index integrity%n");
       g.logmsg("  -C, --onlycheck         ONLY check index integrity%n");
-      g.logmsg("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter to %s%n", extqbck);
+      g.logmsg("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter to %s%n", FileNameExtensions.qbuckets);
       g.logmsg("  -X, --notexternal       DON'T save memory at the cost of lower speed%n");
    }
 
@@ -97,13 +97,13 @@ public final class QgramIndexer implements Subcommand {
       // Loop through all files
       for (String indexname : args) {
          String di = g.dir + indexname;
-         g.startplog(di + extlog);
+         g.startplog(di + FileNameExtensions.log);
          String dout = g.outdir + indexname;
 
          // Read properties.
          // If we only check index integrity, do that and continue with next index.
          // Otherwise, extend the properties and go on building the index.
-         Properties prj = g.readProject(di + extprj);
+         Properties prj = g.readProject(di + FileNameExtensions.prj);
          if (checkonly) {
             if (docheck(di, prj) >= 0) returnvalue = 1;
             continue;
@@ -140,10 +140,10 @@ public final class QgramIndexer implements Subcommand {
 
          Object[] result = null;
          try {
-            final String freqfile = (freq ? dout + extqfreq : null);
-            final String sfreqfile = (sfreq ? dout + extqseqfreq : null);
-            result = generateQGramIndex(di + extseq, qq, asize, (byte)separator,
-                  dout + extqbck, dout + extqpos, freqfile, sfreqfile, external, thefilter, bisulfite);
+            final String freqfile = (freq ? dout + FileNameExtensions.qfreq : null);
+            final String sfreqfile = (sfreq ? dout + FileNameExtensions.qseqfreq : null);
+            result = generateQGramIndex(di + FileNameExtensions.seq, qq, asize, (byte)separator,
+                  dout + FileNameExtensions.qbuckets, dout + FileNameExtensions.qpositions, freqfile, sfreqfile, external, thefilter, bisulfite);
          } catch (Exception e) {
             e.printStackTrace();
             g.warnmsg("qgram: failed on %s: %s; continuing with remainder...%n", indexname, e.toString());
@@ -157,9 +157,9 @@ public final class QgramIndexer implements Subcommand {
          g.logmsg("qgram: time for %s: %.1f sec or %.2f min%n", indexname, times[0], times[0] / 60.0);
 
          try {
-            g.writeProject(prj, di + extprj);
+            g.writeProject(prj, di + FileNameExtensions.prj);
          } catch (IOException ex) {
-            g.warnmsg("qgram: could not write %s, skipping! (%s)%n", di + extprj, ex.toString());
+            g.warnmsg("qgram: could not write %s, skipping! (%s)%n", di + FileNameExtensions.prj, ex.toString());
          }
          if (check && docheck(di, prj) >= 0) returnvalue = 1;
          g.stopplog();
@@ -500,7 +500,7 @@ public final class QgramIndexer implements Subcommand {
       g.logmsg("qgramcheck: filter %d:%d filters %d q-grams%n", ffc, ffm, fff.cardinality());
       int result = 0;
       try {
-         result = checkQGramIndex(in + extseq, q, asize, in + extqbck, in + extqpos, fff, bisulfite);
+         result = checkQGramIndex(in + FileNameExtensions.seq, q, asize, in + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff, bisulfite);
       } catch (IOException ex) {
          g.warnmsg("qgramcheck: error on %s: %s%n", in, ex.toString());
       }

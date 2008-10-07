@@ -94,7 +94,7 @@ public class NonUniqueProbeDesigner {
       help(); g.logmsg("nonunique: no index given%n"); g.terminate(0); }
     String indexname = args[0];
     String di = g.dir+indexname;
-    g.startplog(di+extlog);
+    g.startplog(di+FileNameExtensions.log);
     if (args.length>1) {
       g.warnmsg("nonunique: ignoring all arguments except first '%s'%n", args[0]); }
         
@@ -112,7 +112,7 @@ public class NonUniqueProbeDesigner {
     double ufrac = ( opt.isGiven("f")? Double.parseDouble(opt.get("f")) : -1.0);
     
     // Read project data and determine asize, q; read alphabet map
-    Properties prj = g.readProject(di+extprj);
+    Properties prj = g.readProject(di+FileNameExtensions.prj);
     try {
       asize = Integer.parseInt(prj.getProperty("qAlphabetSize"));
       q = Integer.parseInt(prj.getProperty("q"));
@@ -126,28 +126,26 @@ public class NonUniqueProbeDesigner {
       g.terminate(1);
     }
     coder = new QGramCoder(q,asize);
-    amap = g.readAlphabetMap(di+extalph);
+    amap = g.readAlphabetMap(di+FileNameExtensions.alphabet);
     
     // Read seq, bck, ssp into arrays;  memory-map or read qpos
     TicToc timer = new TicToc();
-    String seqfile  = di+extseq;
-    String qbckfile = di+extqbck;
-    String sspfile  = di+extssp;
-    String qposfile = di+extqpos;
+    String seqfile  = di+FileNameExtensions.seq;
+    String sspfile  = di+FileNameExtensions.ssp;
     System.gc();
-    g.logmsg("nonunique: reading '%s', '%s', '%s'...%n",seqfile,qbckfile,sspfile);
+    g.logmsg("nonunique: reading '%s', '%s'...%n", seqfile, sspfile);
     try {
       final ArrayFile arf = new ArrayFile(null);
       s    = arf.setFilename(seqfile).readArray((byte[])null);
       ssp  = arf.setFilename(sspfile).readArray((long[])null);
     } catch (IOException ex) {
-      g.warnmsg("nonunique: reading '%s', '%s', '%s' failed. Stop.%n",
-          seqfile, qbckfile, sspfile);
+      g.warnmsg("nonunique: reading '%s', '%s' failed. Stop.%n",
+          seqfile, sspfile);
       g.terminate(1);
     }
     final int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
     try {
-       qgramindex = new QGramIndex(g, qposfile, qbckfile, maxactive);
+       qgramindex = new QGramIndex(new ProjectInfo(prj, di));
     } catch (IOException e) {
        e.printStackTrace();
        g.warnmsg(e.getMessage());
