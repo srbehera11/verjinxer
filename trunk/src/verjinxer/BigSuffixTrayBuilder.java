@@ -203,7 +203,7 @@ public class BigSuffixTrayBuilder {
     try { 
        project.store(); } 
     catch (IOException ex) { 
-      g.warnmsg("suffix: could not write %s (%s)!%n", project.getFilename(), ex.toString()); 
+      g.warnmsg("suffix: could not write %s (%s)!%n", project.getFileName(), ex.toString()); 
       g.terminate(1);
     }
     g.stopplog();

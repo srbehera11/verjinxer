@@ -37,3 +37,28 @@ verlängern
 - sorted rausfactorn
 
 - review von cutadapt
+
+- move q-gram stuff into its own subdirectory
+
+
+
+
+Map<String,Class<? extends Subcommand>> commands = new HashMap<String,Class<? extends Subcommand>>();
+commands.put("tr", TranslaterSubcommand.class);
+//commands.put("cut", CutterSubcommand.class);
+commands.put("ma", MapperSubcommand.class);
+commands.put("qm", QgramMatcherSubcommand.class);
+commands.put("tr", TranslaterSubcommand.class);
+commands.put("qg", QgramIndexer.class);
+
+for (String prefix : commands.keySet()) {
+   if (command.startsWith(prefix)) {
+      try {
+         commands.get(prefix).getConstructor(new Class [] { Globals.class } ).newInstance(g);
+      } catch (NoSuchMethodException e) { }
+      catch (InvocationTargetException e) { }
+      catch (IllegalAccessException e) { }
+      catch (InstantiationException e) {}
+   }
+}
+

@@ -204,7 +204,7 @@ public class SuffixTrayBuilder {
     try { 
        project.store();
     } catch (IOException ex) { 
-      g.warnmsg("suffix: could not write %s (%s)!%n", di+FileNameExtensions.prj, ex.toString()); 
+      g.warnmsg("suffix: could not write %s (%s)!%n", project.getFileName(), ex.toString()); 
       g.terminate(1);
     }
     g.stopplog();

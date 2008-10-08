@@ -124,7 +124,7 @@ public class Main {
     } else if (command.startsWith("bigsu")) {
       new BigSuffixTrayBuilder(g).run(rest);
     } else if (command.startsWith("ma")) {
-      new Mapper(g).run(rest);
+      subcommand = new Mapper(g);
     } else if (command.startsWith("nu") || command.startsWith("nonunique")) {
       new NonUniqueProbeDesigner(g).run(rest);
     } else {
@@ -170,7 +170,7 @@ public class Main {
     } else if (command.startsWith("bigsu")) {
       new BigSuffixTrayBuilder(g).help();
     } else if (command.startsWith("ma")) {
-      new Mapper(g).help();
+      subcommand = new Mapper(g);
     } else if (command.startsWith("nu") || command.startsWith("nonunique")) {
       new NonUniqueProbeDesigner(g).help();
     } else {

@@ -177,7 +177,7 @@ public final class QgramIndexer implements Subcommand {
          try {
             project.store();
          } catch (IOException ex) {
-            g.warnmsg("qgram: could not write %s, skipping! (%s)%n", di + FileNameExtensions.prj, ex.toString());
+            g.warnmsg("qgram: could not write %s, skipping! (%s)%n", project.getFileName(), ex.toString());
          }
          if (check && docheck(di, project) >= 0) returnvalue = 1;
          g.stopplog();
