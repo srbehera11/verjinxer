@@ -37,7 +37,7 @@ public class QGramIndex {
 
    /** the q of this q-gram index */
    /** TODO public */
-   final int q;
+   final public int q;
 
    /**
     * Size of a superbucket, in bits. That is, if this is 10, then each superbucket contains 2**10
