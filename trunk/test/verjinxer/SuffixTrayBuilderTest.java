@@ -9,9 +9,9 @@ package verjinxer;
 
 import java.util.Locale;
 import junit.framework.*;
+import verjinxer.Globals;
 import verjinxer.util.*;
 import verjinxer.sequenceanalysis.*;
-import static verjinxer.Globals.*;
 
 /**
  * Test cases for SuffixTrayBuilder
