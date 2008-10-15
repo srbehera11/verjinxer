@@ -143,8 +143,7 @@ public class QgramMatcherSubcommand implements Subcommand {
      final int asize=asizetmp, q=qtmp;
 
      // q-gram filter options from -F option
-     final int[] filterparam = QGramFilter.parseFilterParameters(opt.get("F"));
-     final QGramFilter qgramfilter = new QGramFilter(q, asize, filterparam[0], filterparam[1]);
+     final QGramFilter qgramfilter = new QGramFilter(q, asize, opt.get("F"));
 
      // Prepare the sequence filter
      int maxseqmatches = Integer.MAX_VALUE;

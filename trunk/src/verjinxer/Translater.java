@@ -37,13 +37,13 @@ public class Translater {
    final boolean bisulfite;
    final String dnarcstring;
 
-   public Translater(Globals g, boolean trim, Alphabet alphabet, Alphabet alphabet2,
+   public Translater(Globals g, boolean trim, Alphabet alphabet, Alphabet amap2,
          boolean separateRCByWildcard, boolean reverse, boolean addrc, boolean bisulfite,
          String dnarcstring) {
       this.g = g;
       this.trim = trim;
       this.alphabet = alphabet;
-      this.alphabet2 = alphabet2;
+      this.alphabet2 = amap2;
       this.separateRCByWildcard = separateRCByWildcard;
       this.reverse = reverse;
       this.bisulfite = bisulfite;
