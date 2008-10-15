@@ -429,8 +429,7 @@ public class Mapper implements Subcommand {
          iqpos = g.slurpIntArray(iname + FileNameExtensions.qpositions, iqpos); // overwrite
          itext = g.slurpByteArray(iname + FileNameExtensions.seq, 0, -1, itext); // overwrite
          ilength = iproject.getIntProperty("Length");
-         final int[] filterparam = QGramFilter.parseFilterParameters(filterstring);
-         ifilter = new QGramFilter(coder.q, coder.asize, filterparam[0], filterparam[1]);
+         ifilter = new QGramFilter(coder.q, coder.asize, filterstring);
 
          for (int j = 0; j < tm; j++) {
             if (tselect.get(j) == 0 || trepeat.get(j) == 1)

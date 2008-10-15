@@ -125,7 +125,7 @@ public class Main {
     } else if (command.startsWith("cut")) {
       new Cutter(g).run(rest);
     } else if (command.startsWith("qg")) {
-      subcommand = new QgramIndexer(g);
+      subcommand = new QGramIndexerSubcommand(g);
     } else if (command.startsWith("qf")) {
       new QgramFrequencer(g).run(rest);
     } else if (command.startsWith("qm")) {
@@ -171,7 +171,7 @@ public class Main {
     } else if (command.startsWith("tr")) {
       subcommand = new TranslaterSubcommand(g);
     } else if (command.startsWith("qg")) {
-      subcommand = new QgramIndexer(g);
+      subcommand = new QGramIndexerSubcommand(g);
     } else if (command.startsWith("qf")) {
       new QgramFrequencer(g).help();
     } else if (command.startsWith("qm")) {

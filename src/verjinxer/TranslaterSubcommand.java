@@ -3,13 +3,9 @@ package verjinxer;
 import static verjinxer.Globals.programname;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.sequenceanalysis.InvalidSymbolException;
-import verjinxer.util.AnnotatedArrayFile;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.ProjectInfo;
@@ -174,6 +170,7 @@ public class TranslaterSubcommand implements Subcommand {
             addrc, bisulfite, dnarcstring);
 
       translater.createProject(project, filenames);
+      
       g.logmsg("translate: finished translation after %.1f secs.%n", gtimer.tocs());
 
       // compute runs

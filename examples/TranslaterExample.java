@@ -2,7 +2,6 @@ import java.io.IOException;
 
 import verjinxer.Globals;
 import verjinxer.Translater;
-import verjinxer.TranslaterSubcommand;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ProjectInfo;
 
