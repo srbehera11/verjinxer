@@ -16,7 +16,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.IllegalOptionException;
@@ -76,7 +76,7 @@ public class SuffixTrayBuilder {
   int dolcp         = 0;
   
   int asize        = -1;
-  AlphabetMap amap = null;
+  Alphabet alphabet = null;
   byte[] s         = null;   // text
   int n            = -1;     // length of text
   int[] lexfirstpos   = null;
@@ -129,7 +129,7 @@ public class SuffixTrayBuilder {
     asize = project.getIntProperty("LargestSymbol") + 1;
 
     // load alphabet map and text
-    amap = g.readAlphabetMap(di+FileNameExtensions.alphabet);
+    alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
     s = g.slurpByteArray(di+FileNameExtensions.seq);
     n = s.length;
     if (onlycheck) { returnvalue =  checkpos(di); g.stopplog(); return returnvalue; }
@@ -139,7 +139,7 @@ public class SuffixTrayBuilder {
     
     method = (opt.isGiven("m")? opt.get("m") : "L"); // default method
     g.logmsg("suffixtray: constructing pos using method '%s'...%n", method);
-    assert(amap.isSeparator(s[n-1])) : "last character in text needs to be a separator";
+    assert(alphabet.isSeparator(s[n-1])) : "last character in text needs to be a separator";
     TicToc timer = new TicToc();
     steps = 0;
     if (method.equals("L"))            buildpos_L();
@@ -234,7 +234,7 @@ public class SuffixTrayBuilder {
       } else {                    // seeing character ch again
         assert(lexfirstpos[chi]>p);  
         assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {   // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {   // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                    // symbol character: proceed normally
@@ -276,7 +276,7 @@ public class SuffixTrayBuilder {
         steps++;
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -323,7 +323,7 @@ public class SuffixTrayBuilder {
         steps++;
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -382,7 +382,7 @@ public class SuffixTrayBuilder {
         steps++;
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -617,7 +617,7 @@ public class SuffixTrayBuilder {
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  
         assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           dll.insertasfirstx(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -643,7 +643,7 @@ public class SuffixTrayBuilder {
    */
   public final int scmp(final int i, final int j) {
     final int d = s[i]-s[j];
-    if (d!=0 || amap.isSymbol(s[i])) return d;
+    if (d!=0 || alphabet.isSymbol(s[i])) return d;
     return i-j;
   }
   

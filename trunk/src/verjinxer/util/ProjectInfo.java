@@ -69,6 +69,10 @@ public class ProjectInfo {
       return projectfilename;
    }
 
+   public String getName() {
+      return projectname;
+   }
+   
    public int getMaximumBucketSize() {
       return Integer.parseInt(properties.getProperty("qbckMax"));
    }

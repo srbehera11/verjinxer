@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
  */
 public class FastaSequence {
   
-  static final AlphabetMap DNA = AlphabetMap.DNA();
+  static final Alphabet DNA = Alphabet.DNA();
  
   private String header;
   private StringBuilder sequence;
@@ -77,13 +77,13 @@ public class FastaSequence {
    * @param buf the buffer to write to; can be null, creates a new buffer
    * @param trim  set to true if you want to trim DNA non-symbol characters at either end.
    *   TODO: trimming only applies to DNA at the moment -- this should be more general
-   * @param amap the alphabet map by which to translate
+   * @param alphabet the alphabet map by which to translate
    * @param reverse if true, translate the reverse sequence
    * @param append a flag (0: append nothing, 1: append wildcard, 2: append separator)
    * @return the ByteBuffer for convenience
    * @throws verjinxer.sequenceanalysis.InvalidSymbolException 
    */
-  public ByteBuffer translateTo(ByteBuffer buf, final boolean trim, final AlphabetMap amap, final boolean reverse, final int append) 
+  public ByteBuffer translateTo(ByteBuffer buf, final boolean trim, final Alphabet alphabet, final boolean reverse, final int append) 
   throws InvalidSymbolException {
     final int ll = sequence.length();
     int first=0, last=ll-1;
@@ -96,12 +96,12 @@ public class FastaSequence {
     buf.position(0);
     buf.limit(buf.capacity());
     if (!reverse) {
-      for (int i=first; i<=last; i++) buf.put(amap.code((byte)sequence.charAt(i)));
+      for (int i=first; i<=last; i++) buf.put(alphabet.code((byte)sequence.charAt(i)));
     } else { // reverse
-      for (int i=last; i>=first; i--) buf.put(amap.code((byte)sequence.charAt(i)));
+      for (int i=last; i>=first; i--) buf.put(alphabet.code((byte)sequence.charAt(i)));
     }
-    if (append==1) buf.put(amap.codeWildcard());
-    else if (append==2) buf.put(amap.codeSeparator());
+    if (append==1) buf.put(alphabet.codeWildcard());
+    else if (append==2) buf.put(alphabet.codeSeparator());
     assert(buf.position()==req) : Integer.toString(buf.position())+" / "+Integer.toString(req);
     buf.flip(); // prepare for writing
     return buf;

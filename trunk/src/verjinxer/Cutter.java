@@ -80,7 +80,7 @@ public class Cutter {
     String sname = args[0];
     String ds = g.dir + sname;
     g.startplog(ds+FileNameExtensions.log);
-    AlphabetMap amap = g.readAlphabetMap(ds + FileNameExtensions.alphabet);
+    Alphabet alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
     
     // get patterns
     String[] pstrings = null;
@@ -97,7 +97,7 @@ public class Cutter {
     for (int p=0; p<numpat; p++) {
       String[] cutpattern = pstrings[p].split(":");
       try {
-        pattern[p] = amap.applyTo(cutpattern[0], false);
+        pattern[p] = alphabet.applyTo(cutpattern[0], false);
       } catch (InvalidSymbolException ex) {
         g.warnmsg("cut: pattern '%s' does not map to alphabet%n", pstrings[p]);
         g.terminate(1);
@@ -244,7 +244,7 @@ public class Cutter {
       in.position(lastcp);
       in.get(fragment,0,len);
       try {
-        final String fstring = amap.preimage(fragment,0,len);
+        final String fstring = alphabet.preimage(fragment,0,len);
         ffile.writeString(fstring, String.format("Fragment OK SRC=%s NUM=%d BEG=%d LEN=%d", sname, fcount, lastcp, len));
       } catch (InvalidSymbolException ex) {
         ffile.writeString("", String.format("Fragment !INVALID! SRC=%s NUM=%d BEG=%d LEN=%d", sname, -1, lastcp, len));

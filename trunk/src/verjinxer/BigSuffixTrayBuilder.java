@@ -13,7 +13,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.LongBuffer;
 import java.util.Arrays;
 
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.HugeByteArray;
@@ -75,7 +75,7 @@ public class BigSuffixTrayBuilder {
   int dolcp         = 0;
   
   int asize         = -1;
-  AlphabetMap amap  = null;
+  Alphabet alphabet  = null;
   HugeByteArray s   = null;   // text
   long n            = -1;     // length of text
   long[] lexfirstpos= null;   // indexed by character
@@ -128,7 +128,7 @@ public class BigSuffixTrayBuilder {
     asize = project.getIntProperty("LargestSymbol") + 1;
 
     // load alphabet map and text
-    amap = g.readAlphabetMap(di+FileNameExtensions.alphabet);
+    alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
     s = g.slurpHugeByteArray(di+FileNameExtensions.seq);
     n = s.length;
     if (onlycheck) { returnvalue =  checkpos(di); g.stopplog(); return returnvalue; }
@@ -138,7 +138,7 @@ public class BigSuffixTrayBuilder {
     
     method = (opt.isGiven("m")? opt.get("m") : "L"); // default method
     g.logmsg("suffixtray: constructing pos using method '%s'...%n", method);
-    assert(amap.isSeparator(s.get(n-1))) : "last character in text needs to be a separator";
+    assert(alphabet.isSeparator(s.get(n-1))) : "last character in text needs to be a separator";
     TicToc timer = new TicToc();
     steps = 0;
     if (method.equals("L"))            buildpos_L();
@@ -233,7 +233,7 @@ public class BigSuffixTrayBuilder {
       } else {                    // seeing character ch again
         assert(lexfirstpos[chi]>p);  
         assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {   // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {   // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                    // symbol character: proceed normally
@@ -275,7 +275,7 @@ public class BigSuffixTrayBuilder {
         steps++;
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -322,7 +322,7 @@ public class BigSuffixTrayBuilder {
         steps++;
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -387,7 +387,7 @@ public class BigSuffixTrayBuilder {
         steps++;
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           insertasfirst(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -625,7 +625,7 @@ public class BigSuffixTrayBuilder {
       } else {                  // seeing character ch again
         assert(lexfirstpos[chi]>p);  
         assert(lexlastpos[chi]>p);
-        if (amap.isSpecial(ch)) {    // special character: always inserted first
+        if (alphabet.isSpecial(ch)) {    // special character: always inserted first
           dll.insertasfirstx(chi,p);
           steps++;
         } else {                     // symbol character: proceed normally
@@ -652,7 +652,7 @@ public class BigSuffixTrayBuilder {
   public final long scmp(final long i, final long j) {
     final byte si = s.get(i);
     final int d = si - s.get(j);
-    if (d!=0 || amap.isSymbol(si)) return d;
+    if (d!=0 || alphabet.isSymbol(si)) return d;
     return i-j;
   }
   

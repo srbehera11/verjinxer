@@ -17,7 +17,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.util.ArrayFile;
@@ -106,7 +106,7 @@ public class Mapper implements Subcommand {
    long longestsequence = 0;
    long shortestsequence = 0;
    int asize = 0; // alphabet size
-   AlphabetMap amap = null; // the alphabet map
+   Alphabet alphabet = null; // the alphabet map
 
    ArrayList<String> indices = null;
    long longestindexlen = 0; // length of longest index text
@@ -284,7 +284,7 @@ public class Mapper implements Subcommand {
       asize = tproject.getIntProperty("LargestSymbol") + 1;
       if (revcomp && asize != 4)
          g.terminate("map: can only use reverse complement option with DNA sequences. Stop.");
-      amap = g.readAlphabetMap(g.dir + tname + FileNameExtensions.alphabet);
+      alphabet = g.readAlphabet(g.dir + tname + FileNameExtensions.alphabet);
       String tsspfile = dt + FileNameExtensions.ssp;
       tssp = g.slurpLongArray(tsspfile);
       assert (tm == tssp.length);

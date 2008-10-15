@@ -40,7 +40,7 @@ verlängern
 
 - move q-gram stuff into its own subdirectory
 
-
+- use log4j
 
 
 Map<String,Class<? extends Subcommand>> commands = new HashMap<String,Class<? extends Subcommand>>();

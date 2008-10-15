@@ -7,7 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.util.AnnotatedArrayFile;
 import verjinxer.util.IllegalOptionException;
@@ -19,7 +19,8 @@ import verjinxer.util.TicToc;
 public class TranslaterSubcommand implements Subcommand {
    final Globals g;
 
-   TranslaterSubcommand(Globals g) {
+   // TODO should not be public
+   public TranslaterSubcommand(Globals g) {
       this.g = g;
    }
 
@@ -29,13 +30,14 @@ public class TranslaterSubcommand implements Subcommand {
    public void help() {
       g.logmsg("Usage:%n  %s translate [options] <TextAndFastaFiles...>%n", programname);
       g.logmsg("translates one or more text or FASTA files, using an alphabet map;%n");
-      g.logmsg("creates %s, %s, %s, %s, %s;%n", FileNameExtensions.seq, FileNameExtensions.desc, FileNameExtensions.alphabet, FileNameExtensions.ssp, FileNameExtensions.prj);
-      g.logmsg("with option -r, also creates %s, %s, %s, %s.%n", FileNameExtensions.runseq, FileNameExtensions.runlen, FileNameExtensions.run2pos,
-            FileNameExtensions.pos2run);
+      g.logmsg("creates %s, %s, %s, %s, %s;%n", FileNameExtensions.seq, FileNameExtensions.desc,
+            FileNameExtensions.alphabet, FileNameExtensions.ssp, FileNameExtensions.prj);
+      g.logmsg("with option -r, also creates %s, %s, %s, %s.%n", FileNameExtensions.runseq,
+            FileNameExtensions.runlen, FileNameExtensions.run2pos, FileNameExtensions.pos2run);
       g.logmsg("Options:%n");
       g.logmsg("  -i, --index <name>   name of index files [first filename]%n");
       g.logmsg("  -t, --trim           trim non-symbol characters at both ends%n");
-      g.logmsg("  -a, --amap  <file>   filename of alphabet map%n");
+      g.logmsg("  -a, --alphabet <file>   filename of alphabet%n");
       g.logmsg("  --dna                use standard DNA alphabet%n");
       g.logmsg("  --rconly             translate to reverse DNA complement%n");
       g.logmsg("  --dnarc     <desc>   combines --dna and --rconly;%n");
@@ -48,52 +50,67 @@ public class TranslaterSubcommand implements Subcommand {
    }
 
    /**
-    * @param args the command line arguments
+    * @param args
+    *           the command line arguments
     */
    public static void main(String[] args) {
-     new TranslaterSubcommand(new Globals()).run(args);
+      new TranslaterSubcommand(new Globals()).run(args);
+   }
+
+   /**
+    * Removes a file name extension from a string. If no extension is found, the name is returned
+    * unchanged.
+    * 
+    * @param name
+    *           file name. For example, "hello.fa"
+    * @return file name without extension. For example, "hello"
+    */
+   public static String extensionRemoved(String name) {
+      name = new File(name).getName(); // TODO is this necessary?
+      int lastdot = name.lastIndexOf('.');
+      if (lastdot >= 0) {
+         return name.substring(0, lastdot);
+      } else {
+         return name;
+      }
    }
 
    @Override
-   public int run(String[] args) {
+   public int run(final String[] args) {
       TicToc gtimer = new TicToc();
       g.cmdname = "translate";
 
+      String filenames[];
       Options opt = new Options(
-            "i=index=indexname:,t=trim,a=amap:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs");
+            "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs");
+      
       try {
-         args = opt.parse(args);
-      } catch (IllegalOptionException e) {
-         g.terminate(e.toString());
+         filenames = opt.parse(args);
+      } catch (IllegalOptionException ex) {
+         g.warnmsg("%s%n",ex);
+         return 1;
       }
 
-      if (args.length == 0) {
+      if (filenames.length == 0) {
          help();
          g.logmsg("translate: no files given%n");
          g.terminate(0);
       }
 
-
       // determine the name of the index
-      String outname;
+      String projectname;
       if (opt.isGiven("i"))
-         outname = opt.get("i");
+         projectname = opt.get("i");
       else { // take base name of first FASTA file
-         outname = new File(args[0]).getName();
-         int lastdot = outname.lastIndexOf('.');
-         if (lastdot >= 0)
-            outname = outname.substring(0, lastdot);
+         projectname = extensionRemoved(filenames[0]);
       }
-      outname = g.outdir + outname;
-      ProjectInfo project = new ProjectInfo(outname);
-      project.setProperty("NumberSourceFiles", args.length);
-      project.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"", args) + "\"");
-      // determine trimming
-      boolean trim = opt.isGiven("t");
-      project.setProperty("TrimmedSequences", trim);
+      projectname = g.outdir + projectname;
+      ProjectInfo project = new ProjectInfo(projectname);
 
-      
-      g.startplog(outname + FileNameExtensions.log, true); // start new project log
+      project.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"", args)
+            + "\"");
+
+      boolean trim = opt.isGiven("t");
 
       // determine the alphabet map(s)
       int givenmaps = 0;
@@ -116,23 +133,23 @@ public class TranslaterSubcommand implements Subcommand {
             && !(opt.isGiven("dna") || opt.isGiven("rc") || opt.isGiven("dnarc")))
          g.terminate("translate: --masked can be used only in combination with one of {--dna, --rconly, --dnarc}.");
 
-      AlphabetMap amap = null;
+      Alphabet alphabet = null;
       if (opt.isGiven("a"))
-         amap = g.readAlphabetMap(g.dir + opt.get("a"));
+         alphabet = g.readAlphabet(g.dir + opt.get("a"));
       if (opt.isGiven("dna") || opt.isGiven("dnarc"))
-         amap = opt.isGiven("masked") ? AlphabetMap.maskedDNA() : AlphabetMap.DNA();
+         alphabet = opt.isGiven("masked") ? Alphabet.maskedDNA() : Alphabet.DNA();
 
       boolean reverse = false;
       if (opt.isGiven("rc")) {
          reverse = true;
-         amap = opt.isGiven("masked") ? AlphabetMap.maskedcDNA() : AlphabetMap.cDNA();
+         alphabet = opt.isGiven("masked") ? Alphabet.maskedcDNA() : Alphabet.cDNA();
       }
-      AlphabetMap amap2 = null;
+      Alphabet alphabet2 = null;
       boolean addrc = false;
       String dnarcstring = null;
       boolean separateRCByWildcard = false;
       if (opt.isGiven("dnarc")) {
-         amap2 = opt.isGiven("masked") ? AlphabetMap.maskedcDNA() : AlphabetMap.cDNA();
+         alphabet2 = opt.isGiven("masked") ? Alphabet.maskedcDNA() : Alphabet.cDNA();
          addrc = true;
          dnarcstring = opt.get("dnarc");
          if (dnarcstring.equals(""))
@@ -143,116 +160,20 @@ public class TranslaterSubcommand implements Subcommand {
       boolean bisulfite = false;
       if (opt.isGiven("dnabi")) {
          bisulfite = true;
-         amap = AlphabetMap.DNA(); // do translation on-line
+         alphabet = Alphabet.DNA(); // do translation on-line
       }
       if (opt.isGiven("protein"))
-         amap = AlphabetMap.Protein();
+         alphabet = Alphabet.Protein();
 
-      if (amap == null)
+      if (alphabet == null)
          g.terminate("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --protein}.");
 
-      
-      // determine the file types: FASTA or TEXT
-      // FASTA 'f': First non-whitespace character is a '>''
-      // TEXT 't': all others
-      FileType[] filetype = new FileType[args.length];
-      for (int i = 0; i < args.length; i++) {
-         String filename = g.dir + args[i];
-         try {
-            filetype[i] = determineFileType(filename);
-         } catch (IOException e) {
-            g.terminate("translate: could not open sequence file '" + filename + "'; " + e.toString());
-         }
-      }
+      g.startplog(project.getName() + FileNameExtensions.log, true); // start new project log
 
-      // open the output file stream
-      g.logmsg("translate: creating index '%s'...%n", outname);
-      AnnotatedArrayFile out = new AnnotatedArrayFile(outname + FileNameExtensions.seq); // use default buffer
-      // size
-      try {
-         out.openW();
-      } catch (IOException ex) {
-         g.warnmsg("translate: could not create output file '%s'; %s", outname + FileNameExtensions.seq,
-               ex.toString());
-      }
+      Translater translater = new Translater(g, trim, alphabet, alphabet2, separateRCByWildcard, reverse,
+            addrc, bisulfite, dnarcstring);
 
-      Translater translater = new Translater(g, trim, amap, amap2, separateRCByWildcard,
-            reverse, addrc, bisulfite, dnarcstring);
-      // process each file according to type
-      for (int i = 0; i < args.length; i++) {
-         String fname = g.dir + args[i];
-         g.logmsg("  processing '%s' (%s)...%n", fname, filetype[i].toString());
-         if (filetype[i] == FileType.FASTA)
-            translater.processFasta(fname, out);
-         else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
-            translater.processFastaB(fname, out);
-         else if (filetype[i] == FileType.TEXT)
-            translater.processText(fname, out);
-         else
-            g.terminate("translate: unsupported file type for file " + args[i]);
-      }
-      // DONE processing all files.
-      try {
-         out.close();
-      } catch (IOException ex) {
-      }
-      long totallength = out.length();
-      g.logmsg("translate: translated sequence length: %d%n", totallength);
-      if (totallength >= (2L * 1024 * 1024 * 1024))
-         g.warnmsg("translate: length %d exceeds 2 GB limit!!%n", totallength);
-      else if (totallength >= (2L * 1024 * 1024 * 1024 * 127) / 128)
-         g.warnmsg("translate: long sequence, %d is within 99% of 2GB limit!%n", totallength);
-      project.setProperty("Length", totallength);
-
-      // Write the ssp array.
-      g.dumpLongArray(outname + FileNameExtensions.ssp, out.getSsps());
-      project.setProperty("NumberSequences", out.getSsps().length);
-
-      // Write sequence length statistics.
-      long maxseqlen = 0;
-      long minseqlen = Long.MAX_VALUE;
-      for (long seqlen : out.getLengths()) {
-         if (seqlen > maxseqlen)
-            maxseqlen = seqlen;
-         if (seqlen < minseqlen)
-            minseqlen = seqlen;
-      }
-      project.setProperty("LongestSequence", maxseqlen);
-      project.setProperty("ShortestSequence", minseqlen);
-
-      // Write the descriptions
-      PrintWriter descfile = null;
-      try {
-         descfile = new PrintWriter(outname + FileNameExtensions.desc);
-         for (String s : out.getDescriptions())
-            descfile.println(s);
-         descfile.close();
-      } catch (IOException ex) {
-         g.warnmsg("translate: %s%s: %s%n", outname, FileNameExtensions.desc, ex.toString());
-         g.terminate(1);
-      }
-
-      // Write the alphabet and project file
-      PrintWriter alfile = null;
-      try {
-         // alfile = new PrintWriter(outname + extamap);
-         // amap.showImage(alfile);
-         // alfile.close();
-         alfile = new PrintWriter(outname + FileNameExtensions.alphabet);
-         amap.showSourceStrings(alfile);
-         alfile.close();
-      } catch (IOException ex) {
-         g.terminate("translate: could not write alphabet: " + ex.toString());
-      }
-
-      project.setProperty("SmallestSymbol", amap.smallestSymbol());
-      project.setProperty("LargestSymbol", amap.largestSymbol());
-      project.setProperty("LastAction", "translate");
-      try {
-         project.setProperty("Separator", amap.codeSeparator());
-      } catch (InvalidSymbolException ex) {
-         project.setProperty("Separator", 128); // illegal byte code 128 -> nothing
-      }
+      translater.createProject(project, filenames);
       g.logmsg("translate: finished translation after %.1f secs.%n", gtimer.tocs());
 
       // compute runs
@@ -260,7 +181,7 @@ public class TranslaterSubcommand implements Subcommand {
          g.logmsg("translate: computing runs...%n");
          long runs = 0;
          try {
-            runs = translater.computeRuns(outname);
+            runs = translater.computeRuns(project.getName());
          } catch (IOException ex) {
             g.terminate("translate: could not create run-related files; " + ex.toString());
          }
@@ -279,20 +200,4 @@ public class TranslaterSubcommand implements Subcommand {
       return 0;
    }
 
-   private FileType determineFileType(String filename) throws IOException {
-      int ch = ' ';
-   
-      FileReader reader = new FileReader(filename);
-      for (ch = reader.read(); ch != -1 && Character.isWhitespace(ch); ch = reader.read()) {
-      }
-      reader.close();
-      if (ch == '>')
-         return FileType.FASTA;
-      else
-         return FileType.TEXT;
-   }
-   
-   private enum FileType {
-      FASTA, TEXT
-   }
 }

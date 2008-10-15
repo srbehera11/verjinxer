@@ -12,7 +12,7 @@ import static verjinxer.Globals.programname;
 import java.io.IOException;
 import java.util.Arrays;
 
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
@@ -66,7 +66,7 @@ public class QgramFrequencer {
   boolean rev      = false;
   int asize;
   int q;
-  AlphabetMap amap  = null;  // the alphabet map
+  Alphabet alphabet  = null;
   
   int Lcode = 0;
   int Hcode = 0;
@@ -120,7 +120,7 @@ public class QgramFrequencer {
       g.warnmsg("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", di);
       g.terminate(1);
     }
-    amap = g.readAlphabetMap(di+FileNameExtensions.alphabet);
+    alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
     final QGramCoder coder = new QGramCoder(q,asize);
     final int aq = coder.numberOfQGrams;
     
@@ -145,7 +145,7 @@ public class QgramFrequencer {
         g.warnmsg("%s%n", wordstring);
       }
       try {
-        qgram = amap.applyTo(wordstring, false);
+        qgram = alphabet.applyTo(wordstring, false);
       } catch (InvalidSymbolException ex) {
         g.terminate("qfreq: given prefix is not a string over the alphabet.");
       }
@@ -192,7 +192,7 @@ public class QgramFrequencer {
     else       {for (num=0; f[num+Lcode]<=limitf && num<NUM; num++) {}}
     g.logmsg("qfreq: showing top %d %d-grams:::%n", num,q);
     for (int i=0; i<num; i++) {
-      System.out.printf("%s %9d%n", coder.qGramString(p[i],amap), f[i+Lcode]);
+      System.out.printf("%s %9d%n", coder.qGramString(p[i],alphabet), f[i+Lcode]);
     }
     
     g.stopplog();
