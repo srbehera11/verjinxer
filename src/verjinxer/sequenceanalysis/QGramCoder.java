@@ -149,16 +149,16 @@ public final class QGramCoder
 
    /** return the given q-gram code as a String via alphabet map translation
     * @param qcode  the q-gram code
-    * @param amap  the alphabet map for translation
+    * @param alphabet  the alphabet map for translation
     * @return  a new string of length q containing the q-gram text;
     *  null if invalid symbols are encountered
     */
-  public String qGramString(final int qcode, final AlphabetMap amap) {
+  public String qGramString(final int qcode, final Alphabet alphabet) {
      if(qcode<0 || qcode>=numberOfQGrams) return null;
     try {
       byte[] qgram = qGram(qcode);
       StringBuilder s = new StringBuilder(q);
-      for (int i=0; i<q; i++) s.append(amap.preimage(qgram[i]));
+      for (int i=0; i<q; i++) s.append(alphabet.preimage(qgram[i]));
       return s.toString();
     } catch (InvalidSymbolException ex) {
     }

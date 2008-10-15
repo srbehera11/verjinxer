@@ -53,7 +53,7 @@ public class SuffixTrayBuilderTest extends TestCase {
     t[L]=-1;
     
     final SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
-    stb.amap = AlphabetMap.NUMERIC();
+    stb.alphabet = Alphabet.NUMERIC();
     stb.s = t;
     stb.n = L+1;
     stb.steps = 0;
@@ -69,7 +69,7 @@ public class SuffixTrayBuilderTest extends TestCase {
     Globals g = new Globals();
     g.quiet = true;
     SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
-    stb.amap = AlphabetMap.NUMERIC();
+    stb.alphabet = Alphabet.NUMERIC();
     byte[] t = null;
     int L, stp;
     boolean appendleft = false;
@@ -119,7 +119,7 @@ public class SuffixTrayBuilderTest extends TestCase {
     Globals g = new Globals();
     g.quiet = true;
     SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
-    stb.amap = AlphabetMap.NUMERIC();
+    stb.alphabet = Alphabet.NUMERIC();
 
     int result;
     long[] maxsteps = new long[maxL+1];
@@ -174,7 +174,7 @@ public void doAAA() {
     Globals g = new Globals();
     g.quiet = true;
     SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
-    stb.amap = AlphabetMap.NUMERIC();
+    stb.alphabet = Alphabet.NUMERIC();
     
     for (int L=minL; L<=maxL; L++) {
       System.out.printf("Length %d:%n", L);

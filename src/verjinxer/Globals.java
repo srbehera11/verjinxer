@@ -9,7 +9,7 @@ import java.util.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import verjinxer.util.*;
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 
 /**
  *
@@ -89,15 +89,15 @@ public class Globals {
   /**************************************************************************/
   
   /** read alphabet map file */
-  final AlphabetMap readAlphabetMap(String fname) {
-    AlphabetMap amap = null;
+  final Alphabet readAlphabet(String fname) {
+    Alphabet alphabet = null;
     try {
-      amap = AlphabetMap.fromFile(fname);
+      alphabet = Alphabet.fromFile(fname);
     } catch (IOException ex) {
-      warnmsg("%s: could not read alphabet map '%s'. Stop.%n", cmdname, fname);
+      warnmsg("%s: could not read alphabet '%s'. Stop.%n", cmdname, fname);
       terminate(1);
     }
-    return amap;
+    return alphabet;
   }
   
 // ======================= slurp methods with diagnostics ==================

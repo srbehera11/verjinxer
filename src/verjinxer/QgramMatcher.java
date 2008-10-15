@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
@@ -38,7 +38,7 @@ public class QgramMatcher {
    final int asize;
   
   /** the alphabet map */
-   final AlphabetMap amap;
+   final Alphabet alphabet;
   
   /** the query sequence text (coded) */
    final byte[] t;
@@ -125,7 +125,7 @@ public class QgramMatcher {
      this.out = out;
      this.c_matches_c = c_matches_c;
     
-    amap  = g.readAlphabetMap(ds+FileNameExtensions.alphabet);
+    alphabet  = g.readAlphabet(ds+FileNameExtensions.alphabet);
     
     //final BitSet thefilter = coder.createFilter(opt.get("F")); // empty filter if null
     if (minlen<q) {
@@ -251,8 +251,8 @@ public class QgramMatcher {
       if (symremaining<minlen) {   // next invalid is possibly at tp+symremaining
         tp += symremaining;
         symremaining = 0;
-        for ( ; tp<tn && (!amap.isSymbol(t[tp])); tp++) {
-          if (amap.isSeparator(t[tp])) {
+        for ( ; tp<tn && (!alphabet.isSymbol(t[tp])); tp++) {
+          if (alphabet.isSeparator(t[tp])) {
             assert(tp==tssp[seqnum]);
             if (sorted) writeMatches();
             else writeGlobalMatches();
@@ -268,11 +268,11 @@ public class QgramMatcher {
           continue;
         }
         int i; // next valid symbol is now at p, count number of valid symbols
-        for (i=tp; i<tn && amap.isSymbol(t[i]); i++) {}
+        for (i=tp; i<tn && alphabet.isSymbol(t[i]); i++) {}
         symremaining = i-tp;
         if (symremaining < minlen) continue;
       }
-      assert(amap.isSymbol(t[tp]));
+      assert(alphabet.isSymbol(t[tp]));
       assert(symremaining >= minlen);
       // g.logmsg("  position %d (in seq. %d, starting at %d): %d symbols%n", p, seqnum, seqstart, symremaining);
       
@@ -328,7 +328,7 @@ public class QgramMatcher {
      
      int offset = 0;
      while (true) {
-        if (!amap.isSymbol(s[sp+offset])) break;
+        if (!alphabet.isSymbol(s[sp+offset])) break;
         
         // What follows is some ugly logic to find out what type
         // of match this is. That is, whether we should allow C -> T or
@@ -382,7 +382,7 @@ public class QgramMatcher {
   private int bisulfiteMatchLengthCmC(int sp, int tp) {
      int offset = 0;
      
-     while (amap.isSymbol(s[sp+offset]) && s[sp+offset] == t[tp+offset]) 
+     while (alphabet.isSymbol(s[sp+offset]) && s[sp+offset] == t[tp+offset]) 
         offset++;
      
      // the first mismatch tells us what type of match this is
@@ -391,13 +391,13 @@ public class QgramMatcher {
      if (s_char == NUCLEOTIDE_C && t_char == NUCLEOTIDE_T) {
         // we have C -> T replacements
         offset++;
-        while (amap.isSymbol(s[sp+offset]) && (s[sp+offset] == t[tp+offset] || s[sp+offset] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T)) 
+        while (alphabet.isSymbol(s[sp+offset]) && (s[sp+offset] == t[tp+offset] || s[sp+offset] == NUCLEOTIDE_C && t[tp+offset] == NUCLEOTIDE_T)) 
            offset++;
      }
      else if (s_char == NUCLEOTIDE_G && t_char == NUCLEOTIDE_A) {
         // we have G -> A replacements
         offset++;
-        while (amap.isSymbol(s[sp+offset]) && (s[sp+offset] == t[tp+offset] || s[sp+offset] == NUCLEOTIDE_G && t[tp+offset] == NUCLEOTIDE_A)) 
+        while (alphabet.isSymbol(s[sp+offset]) && (s[sp+offset] == t[tp+offset] || s[sp+offset] == NUCLEOTIDE_G && t[tp+offset] == NUCLEOTIDE_A)) 
            offset++;
      }
      assert offset >= q;
@@ -475,7 +475,7 @@ public class QgramMatcher {
         if (!bisulfite) {
           sp = newpos[ni] + q;
           offset = q;
-          while (s[sp]==t[tp+offset] && amap.isSymbol(s[sp])) {
+          while (s[sp]==t[tp+offset] && alphabet.isSymbol(s[sp])) {
             sp++;
             offset++;
           }

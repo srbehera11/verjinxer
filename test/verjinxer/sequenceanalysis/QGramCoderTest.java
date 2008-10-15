@@ -106,7 +106,7 @@ public class QGramCoderTest extends TestCase {
    }
    
    public void testMulti() {
-      final AlphabetMap DNA = AlphabetMap.DNA();
+      final Alphabet DNA = Alphabet.DNA();
       final MultiQGramCoder coder = new MultiQGramCoder(q, 4, true);
       for(long pc: coder.sparseQGrams(text, (byte)-1)) {
          final int p = (int)(pc>>32);

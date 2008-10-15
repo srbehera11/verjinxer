@@ -15,7 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import verjinxer.sequenceanalysis.AlphabetMap;
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramIndex;
@@ -80,7 +80,7 @@ public class NonUniqueProbeDesigner {
   int         q     = 0;     // q-gram length
   int         asize = 0;     // alphabet size
   QGramCoder  coder = null;  // the q-gram coder
-  AlphabetMap amap  = null;  // the alphabet map
+  Alphabet alphabet  = null;  // the alphabet map
   byte[]      s     = null;  // the text (coded)
   int         n     = 0;     // length of s
   long[]      ssp   = null;  // sequence separator positions
@@ -145,7 +145,7 @@ public class NonUniqueProbeDesigner {
       g.terminate(1);
     }
     coder = new QGramCoder(q,asize);
-    amap = g.readAlphabetMap(di+FileNameExtensions.alphabet);
+    alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
     
     // Read seq, bck, ssp into arrays;  memory-map or read qpos
     TicToc timer = new TicToc();
@@ -209,7 +209,7 @@ public class NonUniqueProbeDesigner {
     if (dontdorc) {
       middle = (ssp[seqnum]-1)/2;
       //g.logmsg("ssp-1=%d,  %%2=%d,  middle=%d,  s[middle]=%d,  isWildcard=%b%n", ssp[seqnum]-1, (ssp[seqnum]-1)%2, middle, s[middle], amap.isWildcard(s[middle]));
-      assert((ssp[seqnum]-1)%2==0 && amap.isWildcard(s[(int)middle])) :
+      assert((ssp[seqnum]-1)%2==0 && alphabet.isWildcard(s[(int)middle])) :
         "nonunique: index does not contain reverse complements; use --noskip option";
     }
     
@@ -218,14 +218,14 @@ public class NonUniqueProbeDesigner {
       // (1) Determine next valid position p such that there exists a potential oligo at p
       if (symremaining<pl) {   // next invalid is at p+symremaining
         p += symremaining; symremaining=0;
-        for (; p<n && (!amap.isSymbol(s[p]));  p++) {
-          if (amap.isSeparator(s[p])) {
+        for (; p<n && (!alphabet.isSymbol(s[p]));  p++) {
+          if (alphabet.isSeparator(s[p])) {
             assert(p==ssp[seqnum]);
             if(p>=n-1) { p=n; break; }
             seqnum++; /*seqstart=p+1;*/
             if (dontdorc) {
               middle = (ssp[seqnum-1] + ssp[seqnum])/2; //ok
-              assert((ssp[seqnum]-1)%2==0 && amap.isWildcard(s[(int)middle])) :
+              assert((ssp[seqnum]-1)%2==0 && alphabet.isWildcard(s[(int)middle])) :
                 "nonunique: index does not contain reverse complements; use --noskip option";
             }           
           } else if (p==middle && dontdorc) {
@@ -235,11 +235,11 @@ public class NonUniqueProbeDesigner {
         }
         if (p>=n) break;
         int i; // next valid symbol is now at p, count number of valid symbols
-        for (i=p; i<n && amap.isSymbol(s[i]); i++) {}
+        for (i=p; i<n && alphabet.isSymbol(s[i]); i++) {}
         symremaining = i-p;
         if (symremaining < pl) continue;
       }
-      assert(amap.isSymbol(s[p]));
+      assert(alphabet.isSymbol(s[p]));
       assert(symremaining >= pl);
       // g.logmsg("  position %d (in seq. %d, starting at %d): %d symbols%n", p, seqnum, seqstart, symremaining);
       
@@ -369,7 +369,7 @@ public class NonUniqueProbeDesigner {
         int p = newpos[ni] + q;
         int offset;
         for (offset = q;  ; p++, offset++) {
-          if ( !(s[p]==s[sp+offset] && amap.isSymbol(s[p])) ) break;
+          if ( !(s[p]==s[sp+offset] && alphabet.isSymbol(s[p])) ) break;
         }
         lenfornew[ni] = offset;
         int i = seqindex(newpos[ni]);
@@ -410,7 +410,7 @@ public class NonUniqueProbeDesigner {
     out.printf("%d @ seq=%d[%d..%d];  pos=%d..%d%n",
         le, si, first-ss, last-ss, first, last);
     try {
-      out.printf("%s%n", amap.preimage(s,first,pl+le-1));
+      out.printf("%s%n", alphabet.preimage(s,first,pl+le-1));
     } catch (InvalidSymbolException ex) {
       ex.printStackTrace();
       g.terminate("Error printing oligo");
