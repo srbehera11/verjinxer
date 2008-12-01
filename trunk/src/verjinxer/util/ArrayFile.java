@@ -41,7 +41,7 @@ public class ArrayFile {
                                                      // buffer #i gets (BUFBLOCKS - i % BUFCYCLES) blocks,
                                                      // so each buffer has a slightly different size
   
-   private enum Mode { READ, WRITE };
+   private enum Mode { READ, WRITE }
    
    /**
     * Creates a new instance of ArrayFile with the given filename and buffer size.
@@ -274,7 +274,7 @@ public class ArrayFile {
       final int factor = Integer.SIZE/8; // !!! factor depends on 'a'
       final boolean openclose = (channel==null);
       if (openclose) openW(); else flush(); // clear buffer!
-      if (mode!=Mode.WRITE) throw new IOException("non-writable ArrayFile "+mode.toString());
+      if (mode!=Mode.WRITE) throw new IOException("non-writable ArrayFile "+mode);
       // internal buffer is now clear to write
       final int bufitems = bufsize / factor;
       final IntBuffer ib = internalBuffer.asIntBuffer(); // !!! type depends on 'a'
@@ -320,7 +320,7 @@ public class ArrayFile {
       final int factor = Long.SIZE/8; // !!! factor depends on 'a'
       final boolean openclose = (channel==null);
       if (openclose) openW(); else flush(); // clear buffer!
-      if (mode!=Mode.WRITE) throw new IOException("non-writable ArrayFile "+mode.toString());
+      if (mode!=Mode.WRITE) throw new IOException("non-writable ArrayFile "+mode);
       // internal buffer is now clear to write
       final int bufitems = bufsize / factor;
       final LongBuffer ib = internalBuffer.asLongBuffer(); // !!! type depends on 'a'

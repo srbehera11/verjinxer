@@ -39,6 +39,9 @@ public class QGramIndex {
    /** TODO public */
    final public int q;
 
+   /** Maximum size of a bucket */
+   final int maximumBucketSize;
+
    /**
     * Size of a superbucket, in bits. That is, if this is 10, then each superbucket contains 2**10
     * buckets
@@ -50,9 +53,6 @@ public class QGramIndex {
 
    /** Bitwise-AND this mask with a bucket index to get its index within the superbucket */
    final private static int BITMASK_LOW = ~BITMASK_HIGH;
-
-   /** Maximum size of a bucket */
-   final int maximumBucketSize;
 
    /**
     * Initializes a q-gram index by reading it from the qpositions and qbuckets files (.qpos,
@@ -96,6 +96,49 @@ public class QGramIndex {
       this.maximumBucketSize = maximumBucketSize;
       this.q = q;
    }
+
+  // TODO
+//   static private int[][] convertFromRegularBucketsToSuperbuckets(int[] qbck, int[] qpos) {
+//      final int buckets = qbck.length - 1;
+//      assert (buckets & BITMASK_LOW) == 0;
+//
+//      int[][] superqpos = new int[(buckets >> BITS) + 1][];
+//      
+//      int start = 0;
+//      int end = qbck[1 >> BITS];
+//
+//      // read a superbucket (consisting of 2**BITS buckets) at a time
+//      for (int i = 0; i < (buckets >> BITS); ++i) {
+//         start = qbck[i << BITS];
+//         assert ((i + 1) << BITS) < qbck.length;
+//         end = qbck[(i + 1) << BITS];
+//         qpos[i] = new int[end - start];
+//         af.readArray(qpos[i], 0, end - start, start);
+//      }
+//
+//      // copy given qpos to our qpos
+//      
+//      
+//      
+//      // read a superbucket (consisting of 2**BITS buckets) at a time
+//      for (int i = 0; i < (buckets >> BITS); ++i) {
+//         start = qbck[i << BITS];
+//         assert ((i + 1) << BITS) < qbck.length;
+//         end = qbck[(i + 1) << BITS];
+//         qpos[i] = new int[end - start];
+//         af.readArray(qpos[i], 0, end - start, start);
+//      }
+//      
+//      
+//      this.qpos = qpos;
+//   }
+   
+//   QGramIndex(int[] qbck, int[] qpos, int q, int maximumBucketSize) {
+//      this.q = q;
+//      this.qbck = qbck;
+//      this.maximumBucketSize = maximumBucketSize;
+//      this.qpos = convertFromRegularBucketsToSuperbuckets(qbck, qpos);
+//   }
 
    /**
     * Reads a q-gram index stored on disk. The getQPositionsFileName() and getQBucketsFileName()

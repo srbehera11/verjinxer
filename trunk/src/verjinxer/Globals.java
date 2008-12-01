@@ -61,7 +61,7 @@ public class Globals {
     if(!plog) return;
     try {
       setloggerP(new PrintStream(new FileOutputStream(fname,!startnew), true));
-      loggerP.printf("%n# %s%n", new Date().toString());
+      loggerP.printf("%n# %s%n", new Date());
       loggerP.printf("# \"%s\"%n", StringUtils.join("\" \"",action));
     } catch (FileNotFoundException ex) {
       warnmsg("%s: could not open project log '%s'; continuing...", programname, fname);
@@ -263,7 +263,7 @@ public class Globals {
     try {
       b = new ArrayFile(file,0).mapR();
     } catch (IOException ex) {
-      warnmsg("%s: could not map '%s'; %s. Stop.%n", cmdname, file, ex.toString());
+      warnmsg("%s: could not map '%s'; %s. Stop.%n", cmdname, file, ex);
       terminate(1);
     }
     return b;
@@ -284,7 +284,7 @@ public class Globals {
       br.close();
     } catch (IOException ex) {
       try { if(br!=null) br.close();} catch(IOException exx) {}
-      warnmsg("%s: could not read '%s'; %s%n", cmdname, file, ex.toString());
+      warnmsg("%s: could not read '%s'; %s%n", cmdname, file, ex);
       terminate(1);
     }
     return lines;
@@ -304,7 +304,7 @@ public class Globals {
     try {
       arf.setFilename(file).writeArray(a,start,len);
     } catch (IOException ex) {
-      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex);
       terminate(1);
     }
   }
@@ -330,7 +330,7 @@ public class Globals {
     try {
       arf.setFilename(file).writeArray(a,start,len);
     } catch (IOException ex) {
-      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex);
       terminate(1);
     }
   }
@@ -356,7 +356,7 @@ public class Globals {
     try {
       arf.setFilename(file).writeArray(a,start,len);
     } catch (IOException ex) {
-      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex);
       terminate(1);
     }
   }
@@ -380,7 +380,7 @@ public class Globals {
     try {
       ba.writeTo(arf.setFilename(filename));
     } catch (IOException ex) {
-      warnmsg("%s: could not write '%s'; %s%n",cmdname, filename, ex.toString());
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, filename, ex);
       terminate(1);
     }
   }
@@ -396,7 +396,7 @@ public class Globals {
      try {
         ba = BitArray.readFrom(arf.setFilename(filename));
      } catch (IOException ex) {
-        warnmsg("%s: could not read '%s'; %s%n",cmdname, filename, ex.toString());
+        warnmsg("%s: could not read '%s'; %s%n",cmdname, filename, ex);
         terminate(1);
      }
      return ba;

@@ -88,7 +88,7 @@ public class QgramMatcherSubcommand implements Subcommand {
      try {
        args = opt.parse(args);
      } catch (IllegalOptionException ex) {
-       g.terminate("qmatch: "+ex.toString());
+       g.terminate("qmatch: "+ex);
      }
 
      boolean selfcmp = opt.isGiven("self");

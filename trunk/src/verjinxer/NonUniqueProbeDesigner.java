@@ -102,7 +102,7 @@ public class NonUniqueProbeDesigner {
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
-      g.terminate("nonuique: "+ex.toString()); }
+      g.terminate("nonuique: "+ex); }
     if (args.length==0) {
       help(); g.logmsg("nonunique: no index given%n"); g.terminate(0); }
     String indexname = args[0];

@@ -1,5 +1,9 @@
 To Do
 
+- Index uber die Reads
+
+- Shape eines q-Gramms
+
 steps for making the q-gram index cope with long sequences
 
 - allow each bucket to have a size of 2 GB
@@ -9,15 +13,15 @@ steps for making the q-gram index cope with long sequences
 - use exceptions instead of terminating the program
 (remove g.terminate() method)
 
-- the indexed text can be longer if stride > 1: for example, if stride == 8, store q-gram position << 3 in the index 
+- the indexed text can be longer if stride > 1: for example, if stride == 8, store q-gram position << 3 in the index
 
 - split up q-gram index into three separate indices: one for unmodified, one for C->T, one for G->A.
 Or somehow remember, for each q-gram, from which replacement type it originates.
-This could speed up the matching since it is know what type of match is found and it's 
+This could speed up the matching since it is know what type of match is found and it's
 then not necessary anymore to iterate over the sequence to know which match type it is.
 
 
-- bisulfiteMatchLength nicht sofort aufrufen. besser: liste der aktiven intervalle speichern und 
+- bisulfiteMatchLength nicht sofort aufrufen. besser: liste der aktiven intervalle speichern und
 ein intervall verlängern, wenn ein neues q-gramm ankommt, das dieses verlängert. mit obiger änderung
 hat man dann gleich den typ des matches (ct/ga) und kann dann den match (bei stride>1) nach li. verlängern.
 wenn cmatchesc, kann man ihn auch nach rechts verlängern (und evtl. noch weiter nach links)
@@ -26,12 +30,12 @@ verlängern
 
 - neugefundene Matches müssen sofort aktiv gemacht werden bzw. es muss dafür gesorgt werden, dass sich q-gramme,
  die sich innerhalb eines buckets überlagern, rausgefiltert werden
- 
+
  - problem: a q-gram matches and its first character comes from a c/t substitution. the match is extended,
  using c/t substitutions. then, at the next position, on the same diagonal, the q-gram matches again,
  but this time we throw the match away and do not see that using g/a substitutions would lead to a longer match
-    
-    
+
+
 - make qmatch accept fasta files
 
 - sorted rausfactorn

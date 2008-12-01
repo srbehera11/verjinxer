@@ -139,7 +139,7 @@ public class Translater {
          descfile.close();
       } catch (IOException ex) {
          g.warnmsg("translate: %s%s: %s%n", project.getName(), FileNameExtensions.desc,
-               ex.toString());
+               ex);
          g.terminate(1);
       }
 
@@ -175,8 +175,8 @@ public class Translater {
 
       try {
          f.open();
-      } catch (IOException e) {
-         g.warnmsg("translate: skipping '%s': %s%n", fname, e.toString());
+      } catch (IOException ex) {
+         g.warnmsg("translate: skipping '%s': %s%n", fname, ex);
          return;
       }
       while (true) {
@@ -233,8 +233,8 @@ public class Translater {
 
       try {
          f.open();
-      } catch (IOException e) {
-         g.warnmsg("translate: skipping '%s': %s%n", fname, e.toString());
+      } catch (IOException ex) {
+         g.warnmsg("translate: skipping '%s': %s%n", fname, ex);
          return;
       }
       while (true) {
@@ -298,7 +298,7 @@ public class Translater {
          lastbyte = out.writeBuffer(tr);
          out.addInfo(fname, len, (int) (lastbyte - 1));
       } catch (IOException ex) {
-         g.warnmsg("translate: error translating '%s': %s%n", fname, ex.toString());
+         g.warnmsg("translate: error translating '%s': %s%n", fname, ex);
          g.terminate(1);
       } finally {
          try {

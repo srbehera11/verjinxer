@@ -71,7 +71,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
-         g.terminate("qgram: " + ex.toString());
+         g.terminate("qgram: " + ex);
       }
       if (args.length == 0) {
          help();
@@ -119,11 +119,10 @@ public final class QGramIndexerSubcommand implements Subcommand {
          project.setProperty("QGramAction", action);
 
 
-         Object[] result = null;
          try {
             final String freqfile = (freq ? dout + FileNameExtensions.qfreq : null);
             final String sfreqfile = (sfreq ? dout + FileNameExtensions.qseqfreq : null);
-            result = qgramindexer.generateQGramIndex(di + FileNameExtensions.seq, 
+            qgramindexer.generateAndWriteIndex(di + FileNameExtensions.seq, 
                   dout + FileNameExtensions.qbuckets, dout + FileNameExtensions.qpositions, freqfile, sfreqfile);
          } catch (IOException e) {
             e.printStackTrace();
@@ -132,10 +131,10 @@ public final class QGramIndexerSubcommand implements Subcommand {
             continue;
          }
          
-         project.setProperty("qfreqMax", (Integer)result[4]);
-         project.setProperty("qbckMax", (Integer)result[5]);
+         project.setProperty("qfreqMax", qgramindexer.getMaximumFrequency());
+         project.setProperty("qbckMax", qgramindexer.getMaximumBucketSize());
          
-         final double[] times = (double[]) (result[3]);
+         final double[] times = qgramindexer.getLastTimes();
          g.logmsg("qgram: time for %s: %.1f sec or %.2f min%n", indexname, times[0], times[0] / 60.0);
 
          try {

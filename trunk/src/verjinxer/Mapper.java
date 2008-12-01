@@ -137,7 +137,7 @@ public class Mapper implements Subcommand {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
          help();
-         g.terminate("map: " + ex.toString());
+         g.terminate("map: " + ex);
       }
 
       if (args.length < 2) {
@@ -207,8 +207,8 @@ public class Mapper implements Subcommand {
       // Read sequence project
       try {
          tproject = ProjectInfo.createFromFile(dt);
-      } catch (IOException e) {
-         g.warnmsg("could not read project file: %s%n", e.toString());
+      } catch (IOException ex) {
+         g.warnmsg("could not read project file: %s%n", ex);
          return 1; // g.terminate(1);
       }
       tm = tproject.getIntProperty("NumberSequences");
@@ -409,8 +409,8 @@ public class Mapper implements Subcommand {
          iname = indices.get(idx);
          try {
             iproject = ProjectInfo.createFromFile(iname);
-         } catch (IOException e) {
-            g.warnmsg("could not read project file: %s%n", e.toString());
+         } catch (IOException ex) {
+            g.warnmsg("could not read project file: %s%n", ex);
             g.terminate(1); // return 1; // g.terminate(1);
          }
          int iq = iproject.getIntProperty("q");
@@ -594,8 +594,8 @@ public class Mapper implements Subcommand {
          iname[idx] = indices.get(idx);
          try {
             iprj[idx] = ProjectInfo.createFromFile(iname[idx]);
-         } catch (IOException e) {
-            g.warnmsg("could not read project file %s: %s%n", iname[idx], e.toString());
+         } catch (IOException ex) {
+            g.warnmsg("could not read project file %s: %s%n", iname[idx], ex);
             g.terminate(1); // g.terminate(1);
          }
          g.logmsg("map: processing index '%s', reading .seq%n", iname[idx]);
@@ -812,7 +812,7 @@ public class Mapper implements Subcommand {
          try {
             out = new PrintWriter(String.format("%s%s.%d.qcomplexity", g.outdir, tname, qq));
          } catch (FileNotFoundException ex) {
-            g.terminate("map: could not tabulate q-gram complexities; " + ex.toString());
+            g.terminate("map: could not tabulate q-gram complexities; " + ex);
          }
       }
 
