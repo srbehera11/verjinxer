@@ -8,19 +8,22 @@
 // TODO: mirgrate to Java.util.logging instead of my own logger!
 
 package verjinxer;
-import java.io.*;
+import static verjinxer.Globals.programname;
+import static verjinxer.Globals.version;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.Arrays;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 
-import com.spinn3r.log5j.Logger;
-
-
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import static verjinxer.Globals.*;
+
+import com.spinn3r.log5j.Logger;
 
 /**
  *
@@ -75,8 +78,8 @@ public class Main {
     Options opt = new Options("Q=quiet,D=dir:,O=outdir=outputdir:,L=log=logfile:,P=noplog=noprojectlog,h=help");
     try {
       args = opt.parse(args);
-    } catch (IllegalOptionException e) {
-      log.warn("%s%n", e.toString());
+    } catch (IllegalOptionException ex) {
+      log.warn("%s%n", ex);
       System.exit(1);
     }
 
@@ -103,7 +106,7 @@ public class Main {
     try {
       if (opt.isGiven("L")) g.setlogger(new PrintStream(g.dir+opt.get("L")));
     } catch (FileNotFoundException ex) {
-      log.warn("%s%n", ex.toString());
+      log.warn("%s%n", ex);
     }
     
     title();

@@ -101,7 +101,7 @@ public class SuffixTrayBuilder {
     Options opt = new Options("c=check,C=onlycheck,X=notexternal=nox=noexternal,m=method:,l=lcp=lcp4,lcp1,lcp2");
     try {
       args = opt.parse(args);
-    } catch (IllegalOptionException ex) { g.terminate("suffixtray: "+ex.toString()); }
+    } catch (IllegalOptionException ex) { g.terminate("suffixtray: "+ex); }
     if (args.length==0) { help(); g.logmsg("suffixtray: no index given%n"); g.terminate(0); }
     
     // Determine external?, check?, onlycheck? options
@@ -766,7 +766,7 @@ public class SuffixTrayBuilder {
       fpos = new ArrayFile(di+FileNameExtensions.pos,0);
       pos = fpos.mapR().asIntBuffer();
     } catch (IOException ex) {
-      g.terminate("suffixcheck: could not read .pos file; " + ex.toString());
+      g.terminate("suffixcheck: could not read .pos file; " + ex);
     }
     int p = pos.get();
     int nextp, comp;
@@ -809,7 +809,7 @@ public class SuffixTrayBuilder {
         f.writeInt(p);
       f.close();
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex.toString());
+      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex);
       g.terminate(1);
     }
   }
@@ -831,7 +831,7 @@ public class SuffixTrayBuilder {
       }
       f.close();
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex.toString());
+      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex);
       g.terminate(1);
     }
   }
@@ -902,7 +902,7 @@ public class SuffixTrayBuilder {
       if ((dolcp&2)!=0) { f2.close(); f2x.close(); }
       if ((dolcp&1)!=0) { f1.close(); f1x.close(); }
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing lcp file(s): %s%n", ex.toString());
+      g.warnmsg("suffixtray: error writing lcp file(s): %s%n", ex);
       g.terminate(1);
     }
   }

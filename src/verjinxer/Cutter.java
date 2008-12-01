@@ -66,7 +66,7 @@ public class Cutter {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
       help();
-      g.terminate("cut: "+ex.toString());
+      g.terminate("cut: "+ex);
     }
     
     if (opt.isGiven("r")) throw new UnsupportedOperationException();

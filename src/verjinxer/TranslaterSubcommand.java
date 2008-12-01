@@ -180,7 +180,7 @@ public class TranslaterSubcommand implements Subcommand {
          try {
             runs = translater.computeRuns(project.getName());
          } catch (IOException ex) {
-            g.terminate("translate: could not create run-related files; " + ex.toString());
+            g.terminate("translate: could not create run-related files; " + ex);
          }
          project.setProperty("Runs", runs);
       }

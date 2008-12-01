@@ -88,7 +88,7 @@ public class QgramFrequencer {
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
-      g.terminate("qfreq: "+ex.toString());
+      g.terminate("qfreq: "+ex);
     }
     if (args.length==0) {
       help(); g.logmsg("qfreq: no index given%n"); g.terminate(0);

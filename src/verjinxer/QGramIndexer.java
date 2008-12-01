@@ -11,6 +11,7 @@ import java.util.Arrays;
 import verjinxer.sequenceanalysis.MultiQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
@@ -30,6 +31,10 @@ public class QGramIndexer {
    final byte separator;
    final QGramFilter thefilter;
    final String projectname;
+   
+   private int maximumFrequency = 0;
+   private int maximumBucketSize = 0;
+   private double[] times;
 
    public QGramIndexer(Globals g, ProjectInfo project, int q) {
       this(g, project, q, false, false, 1, null);
@@ -55,8 +60,8 @@ public class QGramIndexer {
       if (q > 0)
          qq = q;
       else {
-         long fsize = project.getLongProperty("Length");
-         qq = computeSensibleQ(fsize);
+         long filesize = project.getLongProperty("Length");
+         qq = computeSensibleQ(filesize);
       }
       project.setProperty("q", qq);
       this.q = qq;
@@ -97,8 +102,10 @@ public class QGramIndexer {
     *           a sequence separator, only used when qseqfreqfile != null.
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n
     *         times.
+    *         
+    * TODO not only computes frequencies but also writes sequence frequencies
     */
-   public int[] computeFrequencies(final ByteBuffer in, final MultiQGramCoder coder,
+   private int[] computeFrequencies(final ByteBuffer in, final MultiQGramCoder coder,
          final String qseqfreqfile, final byte separator) {
 
       final TicToc timer = new TicToc();
@@ -123,11 +130,11 @@ public class QGramIndexer {
          final int pos = (int) (pc >> 32); // pos only necessary for assert statement, otherwise
          // unused!
          if (qcode < 0) {
-            assert (doseqfreq);
+            assert doseqfreq;
             seqnum++;
             continue;
          }
-         assert (qcode >= 0 && qcode < frq.length) : String.format(
+         assert qcode >= 0 && qcode < frq.length : String.format(
                "Error: qcode=%d at pos %d (%s)%n", qcode, pos, StringUtils.join("",
                      coder.qcoder.qGram(qcode), 0, coder.q)); // DEBUG
          if (pos % stride == 0)
@@ -142,6 +149,7 @@ public class QGramIndexer {
       g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
       if (doseqfreq)
          g.dumpIntArray(qseqfreqfile, sfrq);
+      
       return frq;
    }
 
@@ -160,7 +168,7 @@ public class QGramIndexer {
     *         starts are in bck[0..bck.length-2]. The element bck[bck.length-1] is the sum over all
     *         buckets (that is, the number of q-grams in the index).
     */
-   public Object[] computeBuckets(final int[] frq, final boolean overwrite) {
+   private Object[] computeBuckets(final int[] frq, final boolean overwrite) {
       final int[] bck = (overwrite) ? frq : Arrays.copyOf(frq, frq.length);
       // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
       final int aq = bck.length - 1; // subtract sentinel space
@@ -183,21 +191,22 @@ public class QGramIndexer {
       }
       bck[aq] = sum; // last entry (sentinel) shows how many entries in index
       final Object[] result = { bck, maxbcksize };
+      
       return result;
    }
 
-   public Object[] generateQGramIndex(final String seqfile, final String bucketfile,
+   public void generateAndWriteIndex(final String seqfile, final String bucketfile,
          final String qposfile) throws IOException {
-      return generateQGramIndex(seqfile, bucketfile, qposfile, null, null);
+      generateAndWriteIndex(seqfile, bucketfile, qposfile, null, null);
    }
 
-   public Object[] generateQGramIndex() throws IOException {
+   public void generateAndWriteIndex() throws IOException {
 
       final String seqfile = projectname + FileNameExtensions.seq;
       final String qbucketsfile = projectname + FileNameExtensions.qbuckets;
       final String qpositionsfile = projectname + FileNameExtensions.qpositions;
 
-      return generateQGramIndex(seqfile, qbucketsfile, qpositionsfile, null, null);
+      generateAndWriteIndex(seqfile, qbucketsfile, qpositionsfile, null, null);
    }
 
    /**
@@ -205,12 +214,6 @@ public class QGramIndexer {
     * 
     * @param seqfile
     *           name of the sequence file (i.e., of the translated text)
-    * @param q
-    *           q-gram length
-    * @param asize
-    *           alphabet size; q-grams with characters outside 0..asize-1 are not indexed.
-    * @param separator
-    *           the alphabet code of the sequence separator (only for seqfreq)
     * @param bucketfile
     *           filename of the q-bucket file (can be null)
     * @param qposfile
@@ -220,14 +223,10 @@ public class QGramIndexer {
     * @param qseqfreqfile
     *           filename for q-gram sequence frequencies, i.e., in how many different sequences does
     *           the q-gram appear?
-    * @param external
-    *           if true, keep as few arrays in memory at the same time as possible. In particular,
-    *           do not return bck, qpos, qfreq.
-    * @param thefilter
-    *           a QGramFilter; filtered q-grams are not considered for indexing.
-    * @param bisulfite
-    *           whether to create an index that additionally includes bisulfite treated q-grams.
-    * @return array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where int[] bck: array
+    * @return 
+    *         the QGramIndex unless external and unless not enough memory. 
+    *         note that the index is both written to disk and returned.
+    * @return array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where in.t[] bck: array
     *         of q-bucket starts in qpos (null if external); int[] qpos: array of starting positions
     *         of q-grams in the text (null if external); int[] qfreq: array of q-gram frequencies
     *         (null if external); double[] times: contains the times taken to compute the q-gram
@@ -237,18 +236,13 @@ public class QGramIndexer {
     * @throws java.lang.IllegalArgumentException
     *            if bisulfite is set, but asize is not 4
     */
-   public Object[] generateQGramIndex(
+   public void generateAndWriteIndex(
          final String seqfile,
-         // final int q,
-         // final int asize,
-         // final byte separator,
-         final String bucketfile, final String qposfile, final String qfreqfile,
+         final String bucketfile, 
+         final String qposfile, 
+         final String qfreqfile,
          final String qseqfreqfile
-   // final boolean external,
-   // final QGramFilter thefilter,
-   // boolean bisulfite
    ) throws IOException {
-
       final TicToc totalTimer = new TicToc();
       final ByteBuffer in = readSequenceFile(seqfile, external);
       final long ll = in.limit();
@@ -263,7 +257,7 @@ public class QGramIndexer {
       // This holds before applying a filter.
       final TicToc timer = new TicToc();
       int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
-      int maxfreq = ArrayUtils.maximumElement(frq);
+      maximumFrequency = ArrayUtils.maximumElement(frq);
       if (qfreqfile != null)
          g.dumpIntArray(qfreqfile, frq, 0, aq);
       final double timeFreqCounting = timer.tocs();
@@ -273,7 +267,7 @@ public class QGramIndexer {
       timer.tic();
       final Object[] r = computeBuckets(frq, external);
       final int[] bck = (int[]) r[0];
-      final int maxbck = (Integer) r[1]; // only needed to return to caller
+      maximumBucketSize = (Integer) r[1]; // only needed to return to caller
       if (external)
          frq = null; // in this case, frq has been overwritten with bck anyway
       final int sum = bck[aq];
@@ -335,10 +329,25 @@ public class QGramIndexer {
       final double timeTotal = totalTimer.tocs();
       final int[] qpos = (slicesize == sum && !external) ? qposslice : null;
 
-      double times[] = { timeTotal, timeFreqCounting, timeBckGeneration, timeQpos };
-      return new Object[] { (external ? null : bck), qpos, frq, times, maxfreq, maxbck };
+      times = new double[] { timeTotal, timeFreqCounting, timeBckGeneration, timeQpos };
+ 
+      //return new QGramIndex(bck, qpos, q, maxbck); 
+      //Object[] { (external ? null : bck), qpos, frq, times, maxfreq, maxbck };
    }
 
+   // TODO remove this (?)
+   public int getMaximumFrequency() {
+      return maximumFrequency; 
+   }
+   
+   public int getMaximumBucketSize() {
+      return maximumBucketSize;
+   }
+ 
+   public double[] getLastTimes() {
+      return times;
+   }
+   
    /**
     * Checks the q-gram index of the given files for correctness.
     * 
@@ -481,7 +490,7 @@ public class QGramIndexer {
          result = checkQGramIndex(in + FileNameExtensions.seq, q, asize, in
                + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff, bisulfite);
       } catch (IOException ex) {
-         g.warnmsg("qgramcheck: error on %s: %s%n", in, ex.toString());
+         g.warnmsg("qgramcheck: error on %s: %s%n", in, ex);
       }
 
       // log result and return the result

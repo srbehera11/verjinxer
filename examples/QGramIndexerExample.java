@@ -19,6 +19,6 @@ public class QGramIndexerExample {
       ProjectInfo project = ProjectInfo.createFromFile(projectname);
       int q = 0; // q=0 means that a good value for q is chosen automatically
       QGramIndexer qgramindexer = new QGramIndexer(new Globals(), project, q);
-      qgramindexer.generateQGramIndex();
+      qgramindexer.generateAndWriteIndex();
    }
 }
