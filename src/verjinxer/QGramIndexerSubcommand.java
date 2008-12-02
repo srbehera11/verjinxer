@@ -136,17 +136,9 @@ public final class QGramIndexerSubcommand implements Subcommand {
             continue;
          }
          
-         project.setProperty("qfreqMax", qgramindexer.getMaximumFrequency());
-         project.setProperty("qbckMax", qgramindexer.getMaximumBucketSize());
-         
          final double[] times = qgramindexer.getLastTimes();
          log.info("qgram: time for %s: %.1f sec or %.2f min", indexname, times[0], times[0] / 60.0);
 
-         try {
-            project.store();
-         } catch (IOException ex) {
-            log.error("qgram: could not write %s, skipping! (%s)", project.getFileName(), ex);
-         }
          if (check && qgramindexer.docheck(di, project) >= 0) returnvalue = 1;
          g.stopplog();
       } // end for each file
