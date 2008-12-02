@@ -114,16 +114,16 @@ public class QgramMatcherSubcommand implements Subcommand {
      }
      dt = g.dir + tname;
      ds = g.dir + sname;
-     g.startplog(ds+FileNameExtensions.log);
 
      // Read project data and determine asize, q; read alphabet map
      ProjectInfo project;
      try {
         project = ProjectInfo.createFromFile(ds);
-     } catch (IOException e) {
+     } catch (IOException ex) {
         g.warnmsg("qmatch: cannot read project file.%n");
         return 1;
      }
+     g.startProjectLogging(project);
      
      // TODO some ugly things because I insist that asize and q be final
      
@@ -134,7 +134,7 @@ public class QgramMatcherSubcommand implements Subcommand {
        asizetmp = project.getIntProperty("qAlphabetSize");
        qtmp = project.getIntProperty("q");
      } catch (NumberFormatException ex) {
-       g.warnmsg("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s%n", ds, ex.toString());
+       g.warnmsg("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s%n", ds, ex);
        g.terminate(1);
        
        // TODO the compiler does not know that g.terminate terminates the program
@@ -221,8 +221,8 @@ public class QgramMatcherSubcommand implements Subcommand {
               project);
         qgrammatcher.match(qgramcoder, qgramfilter);
         qgrammatcher.tooManyHits(dt+".toomanyhits-filter");
-     } catch (IOException e) {
-        g.warnmsg("could not initialize qgrammatcher: "+e.getMessage());
+     } catch (IOException ex) {
+        g.warnmsg("could not initialize qgrammatcher: "+ex.getMessage());
      }
      out.close();
      g.logmsg("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());

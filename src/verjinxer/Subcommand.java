@@ -18,6 +18,6 @@ public interface Subcommand {
     */
    int run(String[] args);
 
-   /** Prints help for this Subcommand */
+   /** Prints help for this Subcommand. Return value is the exit code for the application */
    void help();
 }

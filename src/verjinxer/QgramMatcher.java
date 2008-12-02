@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import com.spinn3r.log5j.Logger;
+
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
@@ -18,6 +20,7 @@ import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
 public class QgramMatcher {
+   private static final Logger log = Globals.log;
    final Globals g;
       
   boolean     sorted      = false;
@@ -129,13 +132,13 @@ public class QgramMatcher {
     
     //final BitSet thefilter = coder.createFilter(opt.get("F")); // empty filter if null
     if (minlen<q) {
-      g.warnmsg("qmatch: increasing minimum match length to q=%d!%n",q);
+      log.warn("qmatch: increasing minimum match length to q=%d!",q);
       minlen=q;
     }
      this.minlen = minlen;
      
     if (minseqmatches<1) {
-      g.warnmsg("qmatch: increasing minimum match number to 1!%n");
+      log.warn("qmatch: increasing minimum match number to 1!");
       minseqmatches=1;
     }  
      this.minseqmatches = minseqmatches;
@@ -148,8 +151,8 @@ public class QgramMatcher {
         matches = null;
     }
 
-    if (c_matches_c) g.logmsg("qmatch: C matches C, even if no G follows%n");
-    else g.logmsg("qmatch: C matches C only before G%n");
+    if (c_matches_c) log.info("qmatch: C matches C, even if no G follows");
+    else log.info("qmatch: C matches C only before G");
 
   /**
       * variables written to in the following
@@ -191,7 +194,7 @@ public class QgramMatcher {
     }
     
     qgramindex = new QGramIndex(project);
-    g.logmsg("qmatch: mapping and reading files took %.1f sec%n", ttimer.tocs());
+    log.info("qmatch: mapping and reading files took %.1f sec", ttimer.tocs());
   
     //toomanyhits = new  BitArray toomanyhits;
      if (toomanyhitsfilename != null) {
@@ -202,7 +205,7 @@ public class QgramMatcher {
     }
    
    public void tooManyHits(String filename) {
-      g.logmsg("qmatch: too many hits for %d/%d sequences (%.2f%%)%n", 
+      log.info("qmatch: too many hits for %d/%d sequences (%.2f%%)", 
             toomanyhits.cardinality(), tssp.length, toomanyhits.cardinality()*100.0/tssp.length);
         g.dumpBitArray(filename, toomanyhits);
   }
@@ -272,9 +275,9 @@ public class QgramMatcher {
         symremaining = i-tp;
         if (symremaining < minlen) continue;
       }
-      assert(alphabet.isSymbol(t[tp]));
-      assert(symremaining >= minlen);
-      // g.logmsg("  position %d (in seq. %d, starting at %d): %d symbols%n", p, seqnum, seqstart, symremaining);
+      assert alphabet.isSymbol(t[tp]);
+      assert symremaining >= minlen;
+      log.debug("  position %d (in seq. %d, starting at %d): %d symbols", tp, seqnum, seqstart, symremaining);
       
       // (2) initialize qcode and active q-grams
       active = 0;  // number of active q-grams
@@ -292,7 +295,7 @@ public class QgramMatcher {
       while (symremaining >=minlen) {
         // (3a) Status
         while(tp>=nextslice) {
-          g.logmsg("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d%n",  percentdone, timer.tocs(), tp, tn-1, seqnum, tssp.length-1);
+          log.info("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d",  percentdone, timer.tocs(), tp, tn-1, seqnum, tssp.length-1);
           percentdone += slicefreq;
           nextslice += slicesize;
         }
@@ -419,8 +422,6 @@ public class QgramMatcher {
    */
   private final void findactive(final int tp, final int qcode, final boolean filtered) 
   throws TooManyHitsException {
-    //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
-    
     // decrease length of active matches, as long as they stay >= q TODO >= minlen?
     int ai;
     for (ai=0; ai<active; ai++) { 
@@ -443,7 +444,7 @@ public class QgramMatcher {
       active=ni;
       return;
     }
-    //if (tp % 1000 == 0) g.logmsg("  findactive. tp=%d, newactive=%d%n", tp, newactive /*coder.qGramString(qcode,amap), lrmmrow, r*/);
+    //if (tp % 1000 == 0) g.logmsg("  findactive. tp=%d, newactive=%d", tp, newactive /*coder.qGramString(qcode,amap), lrmmrow, r*/);
 
     // this q-gram is not filtered!
 
@@ -561,7 +562,7 @@ public class QgramMatcher {
     if (globalmatches.size()==0) return;
     if (globalmatches.size()<minseqmatches) { globalmatches.clear(); return; }
     if (globalmatches.size()>maxseqmatches) {
-      //g.logmsg("qmatch: Sequence %d has too many (>=%d/%d) matches, skipping output%n", seqnum, globalmatches.size(), maxseqmatches);
+      log.debug("qmatch: Sequence %d has too many (>=%d/%d) matches, skipping output", seqnum, globalmatches.size(), maxseqmatches);
       globalmatches.clear();
       return;
     }    
