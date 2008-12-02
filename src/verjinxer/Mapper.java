@@ -17,6 +17,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import com.spinn3r.log5j.Logger;
+
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
@@ -36,7 +38,7 @@ import verjinxer.util.TicToc;
  * @author Sven Rahmann
  */
 public class Mapper implements Subcommand {
-
+   private static final Logger log = Globals.log;
    private Globals g;
 
    /**
@@ -53,24 +55,25 @@ public class Mapper implements Subcommand {
     * print help on usage
     */
    public void help() {
-      g.logmsg("Usage:%n  %s map  [options]  <sequences>  <[@]index...> %n", programname);
-      g.logmsg("Reports all occurrences of the sequences in the indices%n");
-      g.logmsg("in human-readable output format. One or more indices can be given%n");
-      g.logmsg("either by filename or in a file of filenames when preceded by @.%n");
-      g.logmsg("Writes .mapped and .nonmappable.%n");
-      g.logmsg("Options:%n");
-      g.logmsg("  -r, --rc                also map reverse complements (DNA only!)%n");
-      g.logmsg("  -e, --errorlevel <e>    error level for mapping [0.03]%n");
-      g.logmsg("  -c, --clip <num>        clip num characters at each end [0]%n");
-      g.logmsg("  -R, --repeat <T>        specify #blocks repeat threshold T [+inf]%n");
-      g.logmsg("  -Q, --qcomplexity #|<T> pre-filter sequences by q-vocabulary [0.0]%n");
-      g.logmsg("  -s, --select #|<file>   select previously unmapped (#) or specified sequences%n");
-      g.logmsg("  -o, --out <filename>    specify output file (use # for stdout)%n");
-      g.logmsg("  -m, --method <method>   one of 'qgram' (default), 'suffix', 'full'%n");
-      g.logmsg("  --atonce                match against all indices at once (high memory!)%n");
-      g.logmsg("QGRAM method options:%n");
-      g.logmsg("  -b, --blocksize <b>     blocksize for q-gram mapping [1024]%n");
-      g.logmsg("  -f, --filter <c:d>      apply q-gram filter <complexity:delta>%n");
+      log.info("Usage:");
+      log.info("%n  %s map  [options]  <sequences>  <[@]index...> %n", programname);
+      log.info("Reports all occurrences of the sequences in the indices%n");
+      log.info("in human-readable output format. One or more indices can be given%n");
+      log.info("either by filename or in a file of filenames when preceded by @.%n");
+      log.info("Writes .mapped and .nonmappable.%n");
+      log.info("Options:%n");
+      log.info("  -r, --rc                also map reverse complements (DNA only!)%n");
+      log.info("  -e, --errorlevel <e>    error level for mapping [0.03]%n");
+      log.info("  -c, --clip <num>        clip num characters at each end [0]%n");
+      log.info("  -R, --repeat <T>        specify #blocks repeat threshold T [+inf]%n");
+      log.info("  -Q, --qcomplexity #|<T> pre-filter sequences by q-vocabulary [0.0]%n");
+      log.info("  -s, --select #|<file>   select previously unmapped (#) or specified sequences%n");
+      log.info("  -o, --out <filename>    specify output file (use # for stdout)%n");
+      log.info("  -m, --method <method>   one of 'qgram' (default), 'suffix', 'full'%n");
+      log.info("  --atonce                match against all indices at once (high memory!)%n");
+      log.info("QGRAM method options:%n");
+      log.info("  -b, --blocksize <b>     blocksize for q-gram mapping [1024]%n");
+      log.info("  -f, --filter <c:d>      apply q-gram filter <complexity:delta>%n");
    }
 
    /**
@@ -137,12 +140,12 @@ public class Mapper implements Subcommand {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
          help();
-         g.terminate("map: " + ex);
+         log.error("map: " + ex); return 1;
       }
 
       if (args.length < 2) {
          help();
-         g.terminate("map: both a sequence file and an index must be specified.");
+         log.error("map: both a sequence file and an index must be specified."); return 1;
       }
       tname = args[0];
       dt = g.dir + tname;
@@ -163,8 +166,8 @@ public class Mapper implements Subcommand {
             mext = FileNameExtensions.seq;
          } else {
             help();
-            g.warnmsg("map: Unknown method '%s'.%n", opt.get("m"));
-            g.terminate(1);
+            log.error("map: Unknown method '%s'.%n", opt.get("m"));
+            return 1;
          }
       } else {
          method = Method.QGRAM;
@@ -175,29 +178,29 @@ public class Mapper implements Subcommand {
       int blocksize = 1024;
       if (opt.isGiven("e"))
          errorlevel = Double.parseDouble(opt.get("e"));
-      if (errorlevel < 0.0 || errorlevel > 1.0)
-         g.terminate("map: Illegal error level specified.");
+      if (errorlevel < 0.0 || errorlevel > 1.0) {
+         log.error("map: Illegal error level specified."); return 1; }
       if (opt.isGiven("c"))
          clip = Integer.parseInt(opt.get("c"));
-      if (clip < 0)
-         g.terminate("map: Illegal number of characters to clip specified.");
+      if (clip < 0) {
+         log.error("map: Illegal number of characters to clip specified."); return 1; }
       if (opt.isGiven("b")) {
          blocksize = Integer.parseInt(opt.get("b"));
-         if (blocksize < 1)
-            g.terminate("map: Illegal blocksize specified.");
+         if (blocksize < 1) {
+            log.error("map: Illegal blocksize specified."); return 1; }
       }
       if (opt.isGiven("R"))
          repeatthreshold = Integer.parseInt(opt.get("R"));
-      if (repeatthreshold < 0)
-         g.terminate("map: Illegal repeat threshold specified.");
+      if (repeatthreshold < 0) {
+         log.error("map: Illegal repeat threshold specified."); return 1; }
       if (opt.isGiven("Q")) {
          if (opt.get("Q").startsWith("#"))
             qgramtabulate = true;
          else
             qgramthreshold = Double.parseDouble(opt.get("Q"));
       }
-      if (qgramthreshold < 0 || qgramthreshold > 1)
-         g.terminate("map: Illegal q-gram complexity threshold, must be in [0..1].");
+      if (qgramthreshold < 0 || qgramthreshold > 1) {
+         log.error("map: Illegal q-gram complexity threshold, must be in [0..1]."); return 1; }
       revcomp = opt.isGiven("r");
       atonce = opt.isGiven("atonce");
       filterstring = opt.get("f");
@@ -208,8 +211,8 @@ public class Mapper implements Subcommand {
       try {
          tproject = ProjectInfo.createFromFile(dt);
       } catch (IOException ex) {
-         g.warnmsg("could not read project file: %s%n", ex);
-         return 1; // g.terminate(1);
+         log.error("could not read project file: %s%n", ex);
+         return 1;
       }
       tm = tproject.getIntProperty("NumberSequences");
 
@@ -252,7 +255,7 @@ public class Mapper implements Subcommand {
             }
          }
       } catch (IOException ex) {
-         g.terminate("map: could not read indices; " + ex);
+         log.error("map: could not read indices; " + ex); return 1;
       }
       inum = indices.size();
       for (int i = 0; i < inum; i++) {
@@ -265,8 +268,8 @@ public class Mapper implements Subcommand {
                   longestpos = filen / 4;
             }
          } catch (IOException ex) {
-            g.warnmsg("map: could not open index '%s'; %s.%n", fin, ex);
-            g.terminate(1);
+            log.error("map: could not open index '%s'; %s.%n", fin, ex);
+            return 1;
          }
          fin = indices.get(i) + FileNameExtensions.seq;
          try {
@@ -276,14 +279,14 @@ public class Mapper implements Subcommand {
             if (filen > longestindexlen)
                longestindexlen = filen;
          } catch (IOException ex) {
-            g.terminate(String.format("map: could not open index '%s'; %s.%n", fin, ex));
+            log.error(String.format("map: could not open index '%s'; %s.%n", fin, ex)); return 1;
          }
       } // end for index i
 
       // read information about sequences
       asize = tproject.getIntProperty("LargestSymbol") + 1;
-      if (revcomp && asize != 4)
-         g.terminate("map: can only use reverse complement option with DNA sequences. Stop.");
+      if (revcomp && asize != 4) {
+         log.error("map: can only use reverse complement option with DNA sequences. Stop."); return 1;}
       alphabet = g.readAlphabet(g.dir + tname + FileNameExtensions.alphabet);
       String tsspfile = dt + FileNameExtensions.ssp;
       tssp = g.slurpLongArray(tsspfile);
@@ -294,13 +297,13 @@ public class Mapper implements Subcommand {
       tall = g.slurpByteArray(dt + FileNameExtensions.seq);
 
       int selected = tselect.cardinality();
-      g.logmsg("map: comparing %d/%d sequences against %d indices (%s) using method %s%s...%n",
+      log.info("map: comparing %d/%d sequences against %d indices (%s) using method %s%s...%n",
             selected, tm, inum, StringUtils.join(", ", indices.toArray(new String[0])),
             method.toString(), (atonce ? " (at-once)" : ""));
-      // g.logmsg("map: shortest=%d, longest=%d%n", shortestsequence, longestsequence);
+      // log.info("map: shortest=%d, longest=%d%n", shortestsequence, longestsequence);
 
       if (selected == 0) {
-         g.logmsg("map: no sequences selected; nothing to do; stop.%n");
+         log.error("map: no sequences selected; nothing to do; stop.%n");
          return 0;
       }
 
@@ -320,7 +323,7 @@ public class Mapper implements Subcommand {
          } else
             allout = new PrintWriter(g.outdir + tname + ".allmapped");
       } catch (IOException ex) {
-         g.terminate("map: could not create output file; " + ex.toString());
+         log.error("map: could not create output file; %s", ex); return 1;
       }
 
       // run chosen method
@@ -334,7 +337,7 @@ public class Mapper implements Subcommand {
 
       // clean up and report
       allout.flush();
-      g.logmsg(
+      log.info(
             "map: successfully mapped %d / %d selected (%d total) sequences;%n     found %d repeats, %d sequences remain.%n",
             tmapped.cardinality(), selected, tm, trepeat.cardinality(), tselect.cardinality());
       g.dumpBitArray(dt + FileNameExtensions.select, tselect);
@@ -385,7 +388,7 @@ public class Mapper implements Subcommand {
     */
    void mapByQGram(final int blocksize) {
       int oldq = -1;
-      g.logmsg("map: allocating memory%n");
+      log.info("map: allocating memory%n");
       rcj = new byte[(int) longestsequence + 1]; // +1 for separator
       Dcol = new int[(int) longestsequence + 1]; // +1 for separator
       int inum = indices.size();
@@ -400,7 +403,7 @@ public class Mapper implements Subcommand {
       seqbesthits = new int[tm]; // number of hits with best error
       seqallhits = new int[tm]; // number of all hits
       java.util.Arrays.fill(seqbesterror, (int) longestsequence + 2);
-      g.logmsg("map: allocating %d parallelogram counters, width=%d%n", bhi - blow + 1, blocksize);
+      log.info("map: allocating %d parallelogram counters, width=%d%n", bhi - blow + 1, blocksize);
       final int[] bcounter = new int[bhi - blow + 1];
       QGramCoder coder = null;
 
@@ -410,11 +413,11 @@ public class Mapper implements Subcommand {
          try {
             iproject = ProjectInfo.createFromFile(iname);
          } catch (IOException ex) {
-            g.warnmsg("could not read project file: %s%n", ex);
-            g.terminate(1); // return 1; // g.terminate(1);
+            log.error("could not read project file: %s%n", ex);
+            g.terminate(1);
          }
          int iq = iproject.getIntProperty("q");
-         g.logmsg("map: processing index '%s', q=%d, filter=%s...%n", iname, iq, filterstring);
+         log.info("map: processing index '%s', q=%d, filter=%s...%n", iname, iq, filterstring);
          int as = iproject.getIntProperty("qAlphabetSize");
          assert (asize == as);
          if (iq != oldq) {
@@ -442,8 +445,8 @@ public class Mapper implements Subcommand {
             if (revcomp && trepeat.get(j) == 0) {
                ArrayUtils.revcompArray(tall, jstart, jstop - 1, (byte) 4, rcj);
                rcj[jlength - 1] = -1;
-               // g.logmsg("+: %s%n",Strings.join("",tall,jstart,jlength));
-               // g.logmsg("-: %s%n",Strings.join("",rcj,0,jlength));
+               // log.info("+: %s%n",Strings.join("",tall,jstart,jlength));
+               // log.info("-: %s%n",Strings.join("",rcj,0,jlength));
                processQGramBlocks(idx, coder, rcj, 0, jlength, j, -1, clip, bcounter, blocksize,
                      blow);
             }
@@ -512,7 +515,7 @@ public class Mapper implements Subcommand {
          if (bcounter[b] >= bthresh)
             blockhits++;
       if (blockhits >= repeatthreshold) { // many block hits, this IS a repeat, probably
-         g.logmsg("map: sequence %d hits %d blocks, probably a repeat%n", currentj, blockhits);
+         log.info("map: sequence %d hits %d blocks, probably a repeat%n", currentj, blockhits);
          trepeat.set(currentj, true);
       } else { // this IS NOT a repeat, probably
          for (int b = 0; b < bcounter.length; b++) {
@@ -535,12 +538,12 @@ public class Mapper implements Subcommand {
                   } else if (enddelta == seqbesterror[currentj]) {
                      seqbesthits[currentj]++;
                   }
-                  // g.logmsg("%d%+d: [%s] %d %d%n", currentj, currentdir,
+                  // log.info("%d%+d: [%s] %d %d%n", currentj, currentdir,
                   // Strings.join("",itext,endpos+1-enddelta-jlength+1, jlength-1+enddelta), endpos,
                   // enddelta);
-                  // g.logmsg("%d%+d: [%s] %d %d%n", currentj, currentdir,
+                  // log.info("%d%+d: [%s] %d %d%n", currentj, currentdir,
                   // Strings.join("",itext,endpos+1-jlength+1, jlength-1), endpos, enddelta);
-                  // g.logmsg(" > [%s]%n", Strings.join("",txt,jstart,jlength));
+                  // log.info(" > [%s]%n", Strings.join("",txt,jstart,jlength));
                   allout.printf("%d %d  %d %d %d   %d %d %d%n", currentj, currentdir, currenti,
                         endpos, enddelta, bthresh, bcounter[b], maxqgrams);
                }
@@ -549,7 +552,7 @@ public class Mapper implements Subcommand {
       } // end else (this is not a repeat)
       java.util.Arrays.fill(bcounter, 0);
       if (blockhits > 0)
-         g.logmsg(
+         log.info(
                " seq %d%c: %d/%d hits/blocks this time; besterror=%d w. %d best (%d total) hits%n",
                currentj, currentdir > 0 ? '+' : '-', currenthits, blockhits,
                seqbesterror[currentj], seqbesthits[currentj], seqallhits[currentj]);
@@ -573,7 +576,7 @@ public class Mapper implements Subcommand {
 
    final void mapByAlignmentAtOnce() {
       this.iname = null;
-      g.logmsg("map: allocating memory for full alignment%n");
+      log.info("map: allocating memory for full alignment%n");
       rcj = new byte[(int) longestsequence + 1]; // +1 for separator
       Dcol = new int[(int) longestsequence + 1]; // +1 for separator
       int inum = indices.size();
@@ -595,10 +598,10 @@ public class Mapper implements Subcommand {
          try {
             iprj[idx] = ProjectInfo.createFromFile(iname[idx]);
          } catch (IOException ex) {
-            g.warnmsg("could not read project file %s: %s%n", iname[idx], ex);
-            g.terminate(1); // g.terminate(1);
+            log.error("could not read project file %s: %s%n", iname[idx], ex);
+            g.terminate(1);
          }
-         g.logmsg("map: processing index '%s', reading .seq%n", iname[idx]);
+         log.info("map: processing index '%s', reading .seq%n", iname[idx]);
          int as = iprj[idx].getIntProperty("LargestSymbol") + 1;
          assert asize == as;
          itext[idx] = g.slurpByteArray(iname[idx] + FileNameExtensions.seq, 0, -1, null); // overwrite
@@ -612,7 +615,7 @@ public class Mapper implements Subcommand {
          final int jstop = (int) (tssp[j] + 1); // one behind last character = [separatorpos. +1]
          final int jlength = jstop - jstart; // length including separator
          for (int idx = 0; idx < inum; idx++) {
-            g.logmsg("  aligning seq %d against idx %d %s%n", j, idx, iname[idx]);
+            log.info("  aligning seq %d against idx %d %s%n", j, idx, iname[idx]);
             doTheAlignment(idx, itext[idx], tall, jstart, jlength - 1, j, 1, clip);
             if (revcomp && trepeat.get(j) == 0) {
                ArrayUtils.revcompArray(tall, jstart, jstop - 1, (byte) 4, rcj);
@@ -635,7 +638,7 @@ public class Mapper implements Subcommand {
          final int trim) {
       final int len = jlength - 2 * trim;
       final int tol = (int) java.lang.Math.ceil(jlength * errorlevel);
-      // g.logmsg(" tol=%d%n",tol);
+      log.debug(" tol=%d%n",tol);
       int endpos = align(txt, jstart + trim, len, itext, 0, itext.length, tol, Dcol); // also have
       // enddelta!
       if (endpos >= 0) {
@@ -795,9 +798,9 @@ public class Mapper implements Subcommand {
       int qq = 4 + (int) (java.lang.Math.ceil(java.lang.Math.log(longestsequence)
             / java.lang.Math.log(asize - 1)));
       if (qgramtabulate)
-         g.logmsg("map: tabulating %d-gram complexity of all reads%n", qq);
+         log.info("map: tabulating %d-gram complexity of all reads%n", qq);
       else
-         g.logmsg("map: pre-filtering reads with %d-gram complexity < %f%n", qq, qgramthreshold);
+         log.info("map: pre-filtering reads with %d-gram complexity < %f%n", qq, qgramthreshold);
       QGramCoder coder = new QGramCoder(qq, as);
       qgram = new byte[qq];
       int qcode;
@@ -812,7 +815,8 @@ public class Mapper implements Subcommand {
          try {
             out = new PrintWriter(String.format("%s%s.%d.qcomplexity", g.outdir, tname, qq));
          } catch (FileNotFoundException ex) {
-            g.terminate("map: could not tabulate q-gram complexities; " + ex);
+            log.error("map: could not tabulate q-gram complexities; " + ex);
+            g.terminate(1);
          }
       }
 
@@ -873,11 +877,11 @@ public class Mapper implements Subcommand {
       } // end for j
       if (qgramtabulate) {
          out.close();
-         g.logmsg("map: pre-filtered %d/%d reads due to length in %.2f sec%n",
+         log.info("map: pre-filtered %d/%d reads due to length in %.2f sec%n",
                trepeat.cardinality(), tm, timer.tocs());
          g.terminate(0);
       }
-      g.logmsg("map: pre-filtered %d/%d reads due to low %d-gram complexity in %.2f sec%n",
+      log.info("map: pre-filtered %d/%d reads due to low %d-gram complexity in %.2f sec%n",
             trepeat.cardinality(), tm, qq, timer.tocs());
 
    }
