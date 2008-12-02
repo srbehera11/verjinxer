@@ -27,11 +27,11 @@ public class QGramIndexer {
    final int stride;
    Globals g;
 
+   final ProjectInfo project;
    final int q;
    final int asize;
    final byte separator;
    final QGramFilter thefilter;
-   final String projectname;
    
    private int maximumFrequency = 0;
    private int maximumBucketSize = 0;
@@ -47,7 +47,7 @@ public class QGramIndexer {
       this.external = external;
       this.stride = stride;
       this.bisulfite = bisulfite;
-      this.projectname = project.getName();
+      this.project = project;
 
       asize = project.getIntProperty("LargestSymbol") + 1;
       separator = (byte) project.getIntProperty("Separator");
@@ -203,9 +203,9 @@ public class QGramIndexer {
 
    public void generateAndWriteIndex() throws IOException {
 
-      final String seqfile = projectname + FileNameExtensions.seq;
-      final String qbucketsfile = projectname + FileNameExtensions.qbuckets;
-      final String qpositionsfile = projectname + FileNameExtensions.qpositions;
+      final String seqfile = project.getName() + FileNameExtensions.seq;
+      final String qbucketsfile = project.getName() + FileNameExtensions.qbuckets;
+      final String qpositionsfile = project.getName() + FileNameExtensions.qpositions;
 
       generateAndWriteIndex(seqfile, qbucketsfile, qpositionsfile, null, null);
    }
@@ -323,6 +323,17 @@ public class QGramIndexer {
          log.info("    writing slice took %.2f sec", wtimer.tocs());
          bckstart = bckend;
       }
+
+      project.setProperty("qfreqMax", maximumFrequency);
+      project.setProperty("qbckMax", maximumBucketSize);
+      project.store();
+//      try {
+//         project.store();
+//      } catch (IOException ex) {
+      // TODO the following message
+//         log.error("qgram: could not write %s, skipping! (%s)", project.getFileName(), ex);
+//      }
+      
 
       // clean up, return arrays only if not external and they fit in memory
       outfile.close();
