@@ -8,10 +8,10 @@
 package verjinxer;
 
 import java.util.Locale;
-import junit.framework.*;
-import verjinxer.Globals;
-import verjinxer.util.*;
-import verjinxer.sequenceanalysis.*;
+
+import junit.framework.TestCase;
+import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.util.StringUtils;
 
 /**
  * Test cases for SuffixTrayBuilder
@@ -45,7 +45,7 @@ public class SuffixTrayBuilderTest extends TestCase {
   
   public void doOneString(String text) {
     final Globals g = new Globals();
-    g.quiet = true;
+    g.setQuiet(true);
     final int L = text.length();
     text = text + "$";
     final byte[] t = text.getBytes();
@@ -67,7 +67,7 @@ public class SuffixTrayBuilderTest extends TestCase {
   public void doKlausStrings() {
     final int MAXONES = 25;
     Globals g = new Globals();
-    g.quiet = true;
+    g.setQuiet(true);
     SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
     stb.alphabet = Alphabet.NUMERIC();
     byte[] t = null;
@@ -117,11 +117,10 @@ public class SuffixTrayBuilderTest extends TestCase {
     final int maxL  = 23;
     
     Globals g = new Globals();
-    g.quiet = true;
+    g.setQuiet(true);
     SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
     stb.alphabet = Alphabet.NUMERIC();
 
-    int result;
     long[] maxsteps = new long[maxL+1];
     long[] totalsteps = new long[maxL+1];
     String[] maxt  = new String[maxL+1];
@@ -172,7 +171,7 @@ public void doAAA() {
     int result;
     
     Globals g = new Globals();
-    g.quiet = true;
+    g.setQuiet(true);
     SuffixTrayBuilder stb = new SuffixTrayBuilder(g);
     stb.alphabet = Alphabet.NUMERIC();
     

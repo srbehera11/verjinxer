@@ -8,10 +8,11 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
+import com.spinn3r.log5j.Logger;
+
 import verjinxer.sequenceanalysis.MultiQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
-import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
@@ -20,7 +21,7 @@ import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
 public class QGramIndexer {
-
+   private static final Logger log = Globals.log;
    final boolean external;
    final boolean bisulfite;
    final int stride;
@@ -67,15 +68,15 @@ public class QGramIndexer {
       this.q = qq;
 
       // create the q-gram filter
-      g.logmsg("qgram: processing: project=%s, asize=%d, q=%d%n", project.getName(), asize, qq);
+      log.info("qgram: processing: project=%s, asize=%d, q=%d", project.getName(), asize, qq);
       thefilter = new QGramFilter(qq, asize, filterparam);
       project.setProperty("qFilterComplexity", thefilter.getComplexity());
       project.setProperty("qFilterDelta", thefilter.getDelta());
       final int qfiltered = thefilter.cardinality();
-      g.logmsg("qgram: filtering %d q-grams%n", qfiltered);
+      log.info("qgram: filtering %d q-grams", qfiltered);
       project.setProperty("qFiltered", qfiltered);
       // for (int i = thefilter.nextSetBit(0); i >= 0; i = thefilter.nextSetBit(i+1))
-      // g.logmsg(" %s%n", coder.qGramString(i,AlphabetMap.DNA()));
+      // log.info(" %s", coder.qGramString(i,AlphabetMap.DNA()));
    }
 
    private int computeSensibleQ(long fsize) {
@@ -123,7 +124,7 @@ public class QGramIndexer {
          sfrq = new int[aq];
       }
 
-      // g.logmsg("doseqfreq = %s, separator = %d%n", doseqfreq, separator); // DEBUG
+      log.debug("doseqfreq = %s, separator = %d", doseqfreq, separator);
       int seqnum = 0;
       for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
          final int qcode = (int) pc;
@@ -135,7 +136,7 @@ public class QGramIndexer {
             continue;
          }
          assert qcode >= 0 && qcode < frq.length : String.format(
-               "Error: qcode=%d at pos %d (%s)%n", qcode, pos, StringUtils.join("",
+               "Error: qcode=%d at pos %d (%s)", qcode, pos, StringUtils.join("",
                      coder.qcoder.qGram(qcode), 0, coder.q)); // DEBUG
          if (pos % stride == 0)
             frq[qcode]++;
@@ -146,7 +147,7 @@ public class QGramIndexer {
          }
       }
       in.rewind();
-      g.logmsg("  time for word counting: %.2f sec%n", timer.tocs());
+      log.info("  time for word counting: %.2f sec", timer.tocs());
       if (doseqfreq)
          g.dumpIntArray(qseqfreqfile, sfrq);
       
@@ -249,7 +250,7 @@ public class QGramIndexer {
 
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
       final int aq = coder.numberOfQGrams;
-      g.logmsg("  counting %d different %d-grams...%n", aq, q);
+      log.info("  counting %d different %d-grams...", aq, q);
 
       // Scan file once and count qgrams.
       // One file may contain multiple sequences, separated by the separator.
@@ -274,10 +275,10 @@ public class QGramIndexer {
       if (bucketfile != null)
          g.dumpIntArray(bucketfile, bck);
       final double timeBckGeneration = timer.tocs();
-      g.logmsg("  time for reading, word counting, and writing buckets: %.2f sec%n",
+      log.info("  time for reading, word counting, and writing buckets: %.2f sec",
             totalTimer.tocs());
-      g.logmsg("  input file size: %d;  (filtered) qgrams in qbck: %d%n", ll, sum);
-      g.logmsg("  average number of q-grams per sequence position is %.2f%n", ((double) sum) / ll);
+      log.info("  input file size: %d;  (filtered) qgrams in qbck: %d", ll, sum);
+      log.info("  average number of q-grams per sequence position is %.2f", ((double) sum) / ll);
 
       // if (sum==0) { Object[] ret = {bck, null, frq, times, maxfreq, maxqbck}; return ret; }
 
@@ -300,7 +301,7 @@ public class QGramIndexer {
          final int qpossize = qposend - qposstart;
          final double percentdone = (sum == 0) ? 100.0 : 100.0 * (double) qposend
                / ((double) sum + 0);
-         g.logmsg("  collecting qcodes [%d..%d] = qpos[%d..%d] --> %.1f%%%n", bckstart, bckend - 1,
+         log.info("  collecting qcodes [%d..%d] = qpos[%d..%d] --> %.1f%%", bckstart, bckend - 1,
                qposstart, qposend - 1, percentdone);
          assert ((qpossize <= slicesize && qpossize > 0) || sum == 0) : "qgram: internal consistency error";
 
@@ -313,13 +314,13 @@ public class QGramIndexer {
             if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode) == 0)
                qposslice[(bck[qcode]++) - qposstart] = pos;
          }
-         g.logmsg("    collecting slice took %.2f sec%n", wtimer.tocs());
+         log.info("    collecting slice took %.2f sec", wtimer.tocs());
 
          // write slice to file
-         g.logmsg("    writing slice to %s%n", qposfile);
+         log.info("    writing slice to %s", qposfile);
          wtimer.tic();
          outfile.writeArray(qposslice, 0, qpossize);
-         g.logmsg("    writing slice took %.2f sec%n", wtimer.tocs());
+         log.info("    writing slice took %.2f sec", wtimer.tocs());
          bckstart = bckend;
       }
 
@@ -335,7 +336,7 @@ public class QGramIndexer {
       //Object[] { (external ? null : bck), qpos, frq, times, maxfreq, maxbck };
    }
 
-   // TODO remove this (?)
+   // TODO remove this (?) should be in QGramIndex
    public int getMaximumFrequency() {
       return maximumFrequency; 
    }
@@ -375,15 +376,15 @@ public class QGramIndexer {
       // Read sequence and bucketfile into arrays
       System.gc();
       TicToc timer = new TicToc();
-      g.logmsg("  reading %s and %s%n", seqfile, bucketfile);
+      log.info("  reading %s and %s", seqfile, bucketfile);
       final ArrayFile arf = new ArrayFile(null);
       byte[] s = arf.setFilename(seqfile).readArray((byte[]) null);
       int[] bck = arf.setFilename(bucketfile).readArray((int[]) null);
-      g.logmsg("  reading finished after %.2f sec%n", timer.tocs());
+      log.info("  reading finished after %.2f sec", timer.tocs());
 
       final int n = s.length;
       final BitArray sok = new BitArray(n - q + 1); // TODO what is sok?
-      g.logmsg("  %s has length %d, contains %d %d-grams%n", seqfile, n, n - q + 1, q);
+      log.info("  %s has length %d, contains %d %d-grams", seqfile, n, n - q + 1, q);
 
       // Initialize q-gram storage
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
@@ -395,7 +396,7 @@ public class QGramIndexer {
       int b = -1; // current bucket
       int bold;
       int i = -1;
-      g.logmsg("  scanning %s, memory-mapped...%n", qposfile);
+      log.info("  scanning %s, memory-mapped...", qposfile);
       int r; // can't declare r in 'for' statement, because we need it as return value!
       final int rend = qpos.capacity();
       for (r = 0; r < rend; r++) {
@@ -408,7 +409,7 @@ public class QGramIndexer {
             qgram = qcoder.qGram(b, qgram);
          // TODO: check whether qgram (in index) is bis-compatible to s[i...i+q-1] (text q-gram).
          if (!coder.areCompatible(qgram, 0, s, i)) {
-            g.logmsg("r=%d, i=%d, expected: %s, observed: %s.%n", r, i, StringUtils.join("", qgram,
+            log.info("r=%d, i=%d, expected: %s, observed: %s.", r, i, StringUtils.join("", qgram,
                   0, q), StringUtils.join("", s, i, q));
             return r;
          }
@@ -417,20 +418,20 @@ public class QGramIndexer {
       }
 
       // now check that all untouched text positions in fact contain filtered or invalid q-grams
-      g.logmsg("  checking %d remaining text positions...%n", n - q + 1 - sok.cardinality());
+      log.info("  checking %d remaining text positions...", n - q + 1 - sok.cardinality());
       for (int ii = 0; ii < n - q + 1; ii++) {
          if (sok.get(ii) == 1)
             continue;
          final int cd = qcoder.code(s, ii);
          if (cd < 0 || thefilter.get(cd) == 1)
             continue;
-         g.logmsg(
-               "  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and not filtered!%n",
+         log.info(
+               "  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and not filtered!",
                ii, cd, StringUtils.join("", qcoder.qGram(cd, qgram), 0, q));
          return n; // error: return length of the text ( > number of q-positions)
       }
 
-      g.logmsg("  checking finished after (total) %.2f sec%n", timer.tocs());
+      log.info("  checking finished after (total) %.2f sec", timer.tocs());
       return (-r - 1);
    }
 
@@ -448,10 +449,10 @@ public class QGramIndexer {
       if (memoryMapped)
          return g.mapR(seqfile);
       // not external: read bytes into array-backed buffer
-      g.logmsg("  reading sequence file '%s'...%n", seqfile);
+      log.info("  reading sequence file '%s'...", seqfile);
       TicToc timer = new TicToc();
       ByteBuffer in = new ArrayFile(seqfile, 0).readArrayIntoNewBuffer();
-      g.logmsg("  ...read %d bytes; this took %.1f sec%n", in.capacity(), timer.tocs());
+      log.info("  ...read %d bytes; this took %.1f sec", in.capacity(), timer.tocs());
       return in;
    }
 
@@ -475,7 +476,8 @@ public class QGramIndexer {
          asize = project.getIntProperty("qAlphabetSize");
          q = project.getIntProperty("q");
       } catch (NumberFormatException ex) {
-         g.terminate("qgramcheck: q-gram index does not seem to exist (create it!)");
+         log.error("qgramcheck: q-gram index does not seem to exist (create it!)");
+         g.terminate(1);
       }
       final int ffc = project.getIntProperty("qFilterComplexity");
       final int ffm = project.getIntProperty("qFilterDelta");
@@ -483,21 +485,21 @@ public class QGramIndexer {
       final boolean bisulfite = project.getBooleanProperty("Bisulfite");
 
       // call checking routine
-      g.logmsg("qgramcheck: checking %s... q=%d, asize=%d%n", in, q, asize);
-      g.logmsg("qgramcheck: filter %d:%d filters %d q-grams%n", ffc, ffm, fff.cardinality());
+      log.info("qgramcheck: checking %s... q=%d, asize=%d", in, q, asize);
+      log.info("qgramcheck: filter %d:%d filters %d q-grams", ffc, ffm, fff.cardinality());
       int result = 0;
       try {
          result = checkQGramIndex(in + FileNameExtensions.seq, q, asize, in
                + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff, bisulfite);
       } catch (IOException ex) {
-         g.warnmsg("qgramcheck: error on %s: %s%n", in, ex);
+         log.warn("qgramcheck: error on %s: %s", in, ex);
       }
 
       // log result and return the result
       if (result < 0)
-         g.logmsg("qgramcheck: %s is OK%n", in);
+         log.info("qgramcheck: %s is OK", in);
       else
-         g.logmsg("qgramcheck: %s has an error at qpos[%d]%n", in, result);
+         log.info("qgramcheck: %s has an error at qpos[%d]", in, result);
       return result;
    }
 }

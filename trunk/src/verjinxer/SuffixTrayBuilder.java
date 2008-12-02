@@ -115,24 +115,24 @@ public class SuffixTrayBuilder {
     
     // Get indexname and di
     String indexname = args[0];
-    String di        = g.dir + indexname;
-    g.startplog(di+FileNameExtensions.log);
+    String projectname = g.dir + indexname;
+    g.startProjectLogging(projectname);
     if (args.length>1) g.warnmsg("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
     
     ProjectInfo project;
     try {
-       project = ProjectInfo.createFromFile(di);
-    } catch (IOException e) {
+       project = ProjectInfo.createFromFile(projectname);
+    } catch (IOException ex) {
        g.warnmsg("cannot read project file.%n");
        return 1;
     }
     asize = project.getIntProperty("LargestSymbol") + 1;
 
     // load alphabet map and text
-    alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
-    s = g.slurpByteArray(di+FileNameExtensions.seq);
+    alphabet = g.readAlphabet(projectname+FileNameExtensions.alphabet);
+    s = g.slurpByteArray(projectname+FileNameExtensions.seq);
     n = s.length;
-    if (onlycheck) { returnvalue =  checkpos(di); g.stopplog(); return returnvalue; }
+    if (onlycheck) { returnvalue =  checkpos(projectname); g.stopplog(); return returnvalue; }
     project.setProperty("SuffixAction", action);
     project.setProperty("LastAction","suffixtray");
     project.setProperty("AlphabetSize",asize);    
@@ -169,7 +169,7 @@ public class SuffixTrayBuilder {
     
     if (returnvalue==0) {
       timer.tic();
-      String fpos = di+FileNameExtensions.pos;
+      String fpos = projectname+FileNameExtensions.pos;
       g.logmsg("suffixtray: writing '%s'...%n",fpos);
       if (method.equals("L"))            writepos_R(fpos);
       else if (method.equals("R"))       writepos_R(fpos);
@@ -183,7 +183,7 @@ public class SuffixTrayBuilder {
     // do lcp if desired
     if (dolcp>0 && returnvalue==0) {
       timer.tic();
-      String flcp = di+FileNameExtensions.lcp;
+      String flcp = projectname+FileNameExtensions.lcp;
       g.logmsg("suffixtray: computing lcp array...%n");
       if (method.equals("L"))            lcp_L(flcp, dolcp);
       else if (method.equals("R"))       lcp_L(flcp, dolcp);
@@ -204,7 +204,7 @@ public class SuffixTrayBuilder {
     try { 
        project.store();
     } catch (IOException ex) { 
-      g.warnmsg("suffix: could not write %s (%s)!%n", project.getFileName(), ex.toString()); 
+      g.warnmsg("suffix: could not write %s (%s)!%n", project.getFileName(), ex); 
       g.terminate(1);
     }
     g.stopplog();

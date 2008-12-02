@@ -20,15 +20,16 @@ import verjinxer.util.AnnotatedArrayFile;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ProjectInfo;
 
+import com.spinn3r.log5j.Logger;
+
 /**
  * translates a set of text or FASTA files into a byte file.
  * 
  * @author Sven Rahmann
  */
 public class Translater {
-
+   private final static Logger log = Globals.log;
    final Globals g;
-
    final boolean trim;
    final Alphabet alphabet, alphabet2;
    final boolean separateRCByWildcard;
@@ -40,6 +41,9 @@ public class Translater {
    public Translater(Globals g, boolean trim, Alphabet alphabet, Alphabet amap2,
          boolean separateRCByWildcard, boolean reverse, boolean addrc, boolean bisulfite,
          String dnarcstring) {
+
+      // for now, only print the message itself (%m), nothing else
+
       this.g = g;
       this.trim = trim;
       this.alphabet = alphabet;
@@ -57,8 +61,7 @@ public class Translater {
 
    /**
     * Translates all the given files. Writes .seq .alphabet and .desc. Essentially, this initializes
-    * a new project.
-    * TODO should this method be really here? should it be called differently?
+    * a new project. TODO should this method be really here? should it be called differently?
     */
    public void createProject(ProjectInfo project, String[] filenames) {
       project.setProperty("NumberSourceFiles", filenames.length);
@@ -73,25 +76,26 @@ public class Translater {
          try {
             filetype[i] = determineFileType(filename);
          } catch (IOException ex) {
-            g.terminate("translate: could not open sequence file '" + filename + "'; " + ex);
+            log.error("translate: could not open sequence file '%s'; %s", filename, ex);
+            g.terminate(1);
          }
       }
 
       // open the output file stream
-      g.logmsg("translate: creating index '%s'...%n", project.getName());
+      log.info("translate: creating index '%s'...", project.getName());
       // use default buffer size
       AnnotatedArrayFile out = new AnnotatedArrayFile(project.getName() + FileNameExtensions.seq);
       try {
          out.openW();
       } catch (IOException ex) {
-         g.warnmsg("translate: could not create output file '%s'; %s", project.getName()
+         log.warn("translate: could not create output file '%s'; %s", project.getName()
                + FileNameExtensions.seq, ex);
       }
 
       // process each file according to type
       for (int i = 0; i < filenames.length; i++) {
          String fname = g.dir + filenames[i];
-         g.logmsg("  processing '%s' (%s)...%n", fname, filetype[i]);
+         log.info("  processing '%s' (%s)...", fname, filetype[i]);
          if (filetype[i] == FileType.FASTA)
             translateFasta(fname, out);
          else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
@@ -107,11 +111,11 @@ public class Translater {
       } catch (IOException ex) {
       }
       long totallength = out.length();
-      g.logmsg("translate: translated sequence length: %d%n", totallength);
+      log.info("translate: translated sequence length: %d", totallength);
       if (totallength >= (2L * 1024 * 1024 * 1024))
-         g.warnmsg("translate: length %d exceeds 2 GB limit!!%n", totallength);
+         log.warn("translate: length %d exceeds 2 GB limit!!", totallength);
       else if (totallength >= (2L * 1024 * 1024 * 1024 * 127) / 128)
-         g.warnmsg("translate: long sequence, %d is within 99% of 2GB limit!%n", totallength);
+         log.warn("translate: long sequence, %d is within 99% of 2GB limit!", totallength);
       project.setProperty("Length", totallength);
 
       // Write the ssp array.
@@ -138,8 +142,7 @@ public class Translater {
             descfile.println(s);
          descfile.close();
       } catch (IOException ex) {
-         g.warnmsg("translate: %s%s: %s%n", project.getName(), FileNameExtensions.desc,
-               ex);
+         log.error("translate: %s%s: %s", project.getName(), FileNameExtensions.desc, ex);
          g.terminate(1);
       }
 
@@ -150,7 +153,7 @@ public class Translater {
          alphabet.showSourceStrings(alphabetfile);
          alphabetfile.close();
       } catch (IOException ex) {
-         g.terminate("translate: could not write alphabet: " + ex.toString());
+         g.terminate("translate: could not write alphabet: " + ex);
       }
       project.setProperty("SmallestSymbol", alphabet.smallestSymbol());
       project.setProperty("LargestSymbol", alphabet.largestSymbol());
@@ -176,7 +179,7 @@ public class Translater {
       try {
          f.open();
       } catch (IOException ex) {
-         g.warnmsg("translate: skipping '%s': %s%n", fname, ex);
+         log.warn("translate: skipping '%s': %s", fname, ex);
          return;
       }
       while (true) {
@@ -199,22 +202,22 @@ public class Translater {
             } else { // no reverse complement
                out.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
             }
-         } catch (InvalidSymbolException e) {
-            g.warnmsg("translate: %s%n", e.toString());
+         } catch (InvalidSymbolException ex) {
+            log.error("translate: %s", ex);
             break;
-         } catch (IOException e) {
-            g.warnmsg("translate: %s%n", e.toString());
+         } catch (IOException ex) {
+            log.error("translate: %s", ex);
             break;
-         } catch (FastaFormatException e) {
-            g.warnmsg("translate: %s%n", e.toString());
+         } catch (FastaFormatException ex) {
+            log.error("translate: %s", ex);
             break;
          }
       }
       // close file
       try {
          f.close();
-      } catch (IOException e) {
-         g.warnmsg("translate: %s%n", e.toString());
+      } catch (IOException ex) {
+         log.error("translate: %s", ex);
       }
    }
 
@@ -234,7 +237,7 @@ public class Translater {
       try {
          f.open();
       } catch (IOException ex) {
-         g.warnmsg("translate: skipping '%s': %s%n", fname, ex);
+         log.warn("translate: skipping '%s': %s", fname, ex);
          return;
       }
       while (true) {
@@ -254,16 +257,16 @@ public class Translater {
             lastbyte = out.writeBuffer(tr);
             out.addInfo(fseq.getHeader() + " /meth-bis+cbis", 2 * fseq.length() + 1,
                   (int) (lastbyte - 1));
-         } catch (Exception e) {
-            g.warnmsg("translate: %s%n", e.toString());
+         } catch (Exception ex) {
+            log.error("translate: %s", ex);
             break;
          }
       }
       // close file
       try {
          f.close();
-      } catch (IOException e) {
-         g.warnmsg("translate: %s%n", e.toString());
+      } catch (IOException ex) {
+         log.error("translate: %s", ex);
       }
    }
 
@@ -298,14 +301,14 @@ public class Translater {
          lastbyte = out.writeBuffer(tr);
          out.addInfo(fname, len, (int) (lastbyte - 1));
       } catch (IOException ex) {
-         g.warnmsg("translate: error translating '%s': %s%n", fname, ex);
+         log.error("translate: error translating '%s': %s", fname, ex);
          g.terminate(1);
       } finally {
          try {
             if (br != null) {
                br.close();
             }
-         } catch (IOException e) {
+         } catch (IOException ex) {
          }
       }
    }

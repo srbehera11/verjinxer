@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+
+import com.spinn3r.log5j.Logger;
+
 import verjinxer.sequenceanalysis.*;
 import verjinxer.util.*;
 import static verjinxer.Globals.*;
@@ -21,6 +24,7 @@ import static verjinxer.Globals.*;
  */
 public class Cutter {
   
+   private static final Logger log = Globals.log;
   private Globals g;
   
   /** Creates a new instance of Cutter
@@ -34,15 +38,16 @@ public class Cutter {
    * print help on usage
    */
   public void help() {
-    g.logmsg("Usage:%n  %s map  [options]  <sequencefile>%n", programname);
-    g.logmsg("Cuts a .seq file at specific matching patterns,%n");
-    g.logmsg("reports all cut points in increasing order in a .cut file.%n");
-    g.logmsg("Options:%n");
-    g.logmsg("  -p, --patterns <plist>  list of patterns where to cut%n");
-    g.logmsg("  -i, --ignore   <dist>   ignore occurrences ending or starting within dist of ssp%n");
-    g.logmsg("  -f <name>,<lmin>,<lmax> write fragments with length in [lmin,lmax] as FASTA%n");
-    g.logmsg("  -r, --rc                also cut if reverse complement matches (DNA only!)%n");
-    g.logmsg("  --nossp                 don't cut at sequence separarots%n");
+    log.info("Usage:");
+    log.info("%s map  [options]  <sequencefile>", programname);
+    log.info("Cuts a .seq file at specific matching patterns,");
+    log.info("reports all cut points in increasing order in a .cut file.");
+    log.info("Options:");
+    log.info("  -p, --patterns <plist>  list of patterns where to cut");
+    log.info("  -i, --ignore   <dist>   ignore occurrences ending or starting within dist of ssp");
+    log.info("  -f <name>,<lmin>,<lmax> write fragments with length in [lmin,lmax] as FASTA");
+    log.info("  -r, --rc                also cut if reverse complement matches (DNA only!)");
+    log.info("  --nossp                 don't cut at sequence separarots");
   }
   
   
@@ -66,21 +71,23 @@ public class Cutter {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
       help();
-      g.terminate("cut: "+ex);
+      log.error("cut: %s", ex);
+      return 1;
     }
     
     if (opt.isGiven("r")) throw new UnsupportedOperationException();
     
     if (args.length<1) {
       help();
-      g.terminate("cut: a sequence file must be specified.");
+      log.error("cut: a sequence file must be specified.");
+      return 1;
     }
     
     // set sequence file name, start log, read alphabet map
     String sname = args[0];
-    String ds = g.dir + sname;
-    g.startplog(ds+FileNameExtensions.log);
-    Alphabet alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
+    String projectname = g.dir + sname;
+    g.startProjectLogging(projectname);
+    Alphabet alphabet = g.readAlphabet(projectname + FileNameExtensions.alphabet);
     
     // get patterns
     String[] pstrings = null;
@@ -99,11 +106,11 @@ public class Cutter {
       try {
         pattern[p] = alphabet.applyTo(cutpattern[0], false);
       } catch (InvalidSymbolException ex) {
-        g.warnmsg("cut: pattern '%s' does not map to alphabet%n", pstrings[p]);
-        g.terminate(1);
+        log.error("cut: pattern '%s' does not map to alphabet%n", pstrings[p]);
+        return 1;
       }
       cutpoint[p] = Integer.parseInt(cutpattern[1]);
-      // g.logmsg("Pattern %d has length %d [0..%d], cuts before %d%n", p,pattern[p].length,pattern[p].length-1,cutpoint[p]);
+      // log.info("Pattern %d has length %d [0..%d], cuts before %d%n", p,pattern[p].length,pattern[p].length-1,cutpoint[p]);
     }
     
     // get option i
@@ -122,11 +129,11 @@ public class Cutter {
 
     long[] ssp = null;
     if (!opt.isGiven("nossp") || opt.isGiven("i")) {
-      ssp = g.slurpLongArray(ds+FileNameExtensions.ssp);
+      ssp = g.slurpLongArray(projectname+FileNameExtensions.ssp);
     }
     if (!opt.isGiven("nossp")) {
       for (long i: ssp) { matchPositions.add((int)i); matchPositions.add((int)(i+1)); }
-      g.logmsg("cut: sequence separators cut 2*%d = %d times%n", ssp.length, 2*ssp.length);
+      log.info("cut: sequence separators cut 2*%d = %d times%n", ssp.length, 2*ssp.length);
       totalMatches += 2*ssp.length;
     }
 
@@ -134,12 +141,13 @@ public class Cutter {
     // Read sequence
     ByteBuffer in = null;
     try {
-      in = new ArrayFile(ds+FileNameExtensions.seq,0).mapR();
+      in = new ArrayFile(projectname+FileNameExtensions.seq,0).mapR();
     } catch (IOException ex) {
-      g.terminate("map: "+ex.toString());
+      log.error("map: "+ex);
+      return 1;
     }
     final int fsize = in.capacity();
-    g.logmsg("cut: sequence file '%s' has length %d%n", ds+FileNameExtensions.seq, fsize);
+    log.info("cut: sequence file '%s' has length %d%n", projectname+FileNameExtensions.seq, fsize);
     
     for (int p=0; p<numpat; p++) {
       int numMatches = 0;
@@ -169,7 +177,7 @@ public class Cutter {
         matchPositions.add(i+cutpoint[p]);
         numMatches++;
       }
-      g.logmsg("cut: pattern '%s' cuts %d times (1 : %.2f)%n", pstrings[p], numMatches, (double)fsize/numMatches);
+      log.info("cut: pattern '%s' cuts %d times (1 : %.2f)%n", pstrings[p], numMatches, (double)fsize/numMatches);
       totalMatches += numMatches;
     } // end for p
     
@@ -199,9 +207,9 @@ public class Cutter {
       mpout[written++]=recent;
     }
     assert(written==towrite);
-    final String outfile = ds + ".cut";
+    final String outfile = projectname + ".cut";
     g.dumpIntArray(outfile, mpout);
-    g.logmsg("cut: wrote %d cutpoints, %d less than expected.%n", written, totalMatches-written);
+    log.info("cut: wrote %d cutpoints, %d less than expected.%n", written, totalMatches-written);
   
     
     // write FASTA if desired
@@ -220,7 +228,7 @@ public class Cutter {
     } catch (NumberFormatException ex) {
       fmaxlen = Integer.MAX_VALUE;
     }
-    g.logmsg("cut: writing fragments with length in [%d,%d] to '%s'%n", fminlen, fmaxlen, fname);
+    log.info("cut: writing fragments with length in [%d,%d] to '%s'%n", fminlen, fmaxlen, fname);
     
     int fcount=0;
     long flen=0;
@@ -231,7 +239,8 @@ public class Cutter {
       cutpoints = new ArrayFile(outfile,0).mapR().asIntBuffer();
       ffile = new FastaFile(fname).open(FastaFile.FastaMode.WRITE);
     } catch (IOException ex) {
-      g.terminate(String.format("cut: %s", ex.toString()));
+      log.error("cut: %s", ex);
+      return 1;
     }
     byte[] fragment = new byte[fmaxlen];
     int lastcp = 0;
@@ -254,8 +263,8 @@ public class Cutter {
       lastcp = cp;
     }
     try { ffile.close(); } catch (IOException ex) { }
-    g.logmsg("cut: wrote %d fragments, total length %d%n", fcount, flen);
-    if (errors) { g.warnmsg("cut: could not back-translate some fragments"); returnvalue = 1; }
+    log.info("cut: wrote %d fragments, total length %d%n", fcount, flen);
+    if (errors) { log.warn("cut: could not back-translate some fragments"); return 1; }
     in = null;
     cutpoints = null;
     return returnvalue;

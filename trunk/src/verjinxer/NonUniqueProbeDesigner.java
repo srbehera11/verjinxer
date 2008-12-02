@@ -26,13 +26,15 @@ import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
+import com.spinn3r.log5j.Logger;
+
 /**
  *
  * @author Sven Rahmann
  */
 public class NonUniqueProbeDesigner {
   
-  
+  private final static Logger log = Globals.log;
   private Globals g;
   
   /** Creates a new instance of NonUniqueProbeDesigner
@@ -46,19 +48,19 @@ public class NonUniqueProbeDesigner {
    * print help on usage
    */
   public void help() {
-    g.logmsg("Usage:%n  %s nonunique  [options] Indexname%n", programname);
-    g.logmsg("Finds non unique, but specific, probes within an index,%n");
-    g.logmsg("writes output to .<zero>-<one>-<length>.nuprobes file.%n");
-    g.logmsg("Options:%n");
-    g.logmsg("  -l, --length   <length>    length of probes to be computed [70]%n");
-    g.logmsg("  -0, --zero     <cutoff>    highest lcf for which a probe is absent [14]%n");
-    g.logmsg("  -1, --one      <cutoff>    lowest lcf for which a probe is present [probelength]%n");
-    g.logmsg("  -d, --details              output detailed probe statistics (HUGE output!)%n");
-    g.logmsg("  -u, --unique   <number>    report only probes in <= number of seqs [all - 1]%n");
-    g.logmsg("  -f, --ufrac    <fraction>  report only probes in <= fraction of seqs%n");
-    g.logmsg("  -o, --output   <filename>  output file name (.nuprobes/.nustats is appended)%n");
-    g.logmsg("  --noskip                   output (don't skip) reverse complementary probes%n");
-    g.logmsg("  -x, --external             save memory at the cost of lower speed%n");
+    log.info("Usage:  %s nonunique  [options] Indexname", programname);
+    log.info("Finds non unique, but specific, probes within an index,");
+    log.info("writes output to .<zero>-<one>-<length>.nuprobes file.");
+    log.info("Options:");
+    log.info("  -l, --length   <length>    length of probes to be computed [70]");
+    log.info("  -0, --zero     <cutoff>    highest lcf for which a probe is absent [14]");
+    log.info("  -1, --one      <cutoff>    lowest lcf for which a probe is present [probelength]");
+    log.info("  -d, --details              output detailed probe statistics (HUGE output!)");
+    log.info("  -u, --unique   <number>    report only probes in <= number of seqs [all - 1]");
+    log.info("  -f, --ufrac    <fraction>  report only probes in <= fraction of seqs");
+    log.info("  -o, --output   <filename>  output file name (.nuprobes/.nustats is appended)");
+    log.info("  --noskip                   output (don't skip) reverse complementary probes");
+//    log.info("  -x, --external             save memory at the cost of lower speed");
   }
   
   /** if run independently, call main
@@ -71,7 +73,6 @@ public class NonUniqueProbeDesigner {
   
   
   /* Variables */
-//  boolean     external = false;
   boolean     dontdorc = false;
   boolean outputdetails= false;
   int         pl    = 0;     // probe length
@@ -95,24 +96,23 @@ public class NonUniqueProbeDesigner {
   public int run(String[] args) {
     TicToc gtimer = new TicToc();
     g.cmdname = "nonunique";
-    // g.logmsg("Largest allocatable array: %.0fM%n", Arrays.largestAllocatable()/1E6);
     int returnvalue = 0;
     Options opt = new Options
-        ("l=length=probelength=pl:,0=zero:,1=one:,o=output:,x=external,u=unique=uniqueness:,f=ufrac=frac:,noskip,d=details");
+        ("l=length=probelength=pl:,0=zero:,1=one:,o=output:,u=unique=uniqueness:,f=ufrac=frac:,noskip,d=details");
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
-      g.terminate("nonuique: "+ex); }
+      log.error("nonuique: "+ex);
+      return 1;
+      }
     if (args.length==0) {
-      help(); g.logmsg("nonunique: no index given%n"); g.terminate(0); }
+      help(); log.error("nonunique: no index given"); return 0; }
     String indexname = args[0];
-    String di = g.dir+indexname;
-    g.startplog(di+FileNameExtensions.log);
+    String projectname = g.dir+indexname;
     if (args.length>1) {
-      g.warnmsg("nonunique: ignoring all arguments except first '%s'%n", args[0]); }
+      log.warn("nonunique: ignoring all arguments except first '%s'", args[0]); }
         
     // Determine options values
-    boolean external = (opt.isGiven("x"));
     dontdorc = !(opt.isGiven("noskip"));
     outputdetails = (opt.isGiven("details"));
     pl = (opt.isGiven("l")? Integer.parseInt(opt.get("l")) : 70);  // ell
@@ -127,51 +127,52 @@ public class NonUniqueProbeDesigner {
     // Read project data and determine asize, q; read alphabet map
     ProjectInfo project;
     try {
-       project = ProjectInfo.createFromFile(di);
-    } catch (IOException e) {
-       g.warnmsg("could not read project file: %s%n", e.toString());
-       return 1; // g.terminate(1);
+       project = ProjectInfo.createFromFile(projectname);
+    } catch (IOException ex) {
+       log.error("could not read project file: %s", ex);
+       return 1;
     }
+    g.startProjectLogging(project);
     try {
       asize = project.getIntProperty("qAlphabetSize");
       q = project.getIntProperty("q");
     } catch (NumberFormatException ex) {
-      g.warnmsg("nonunique: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", di);
-      g.terminate(1);
+      log.error("nonunique: q-grams for index '%s' not found. (Re-create the q-gram index!)", projectname);
+      return 1;
     }
     if (!( (q-1)<=c0 && c0<c1 && c1<=pl )) {
-      g.warnmsg("nonunique: need qGramLength-1 <= zeroCutoff < oneCutoff <= ProbeLength; is (%d-1, %d, %d, %d)%n",
+      log.error("nonunique: need qGramLength-1 <= zeroCutoff < oneCutoff <= ProbeLength; is (%d-1, %d, %d, %d)",
           q, c0, c1, pl);
-      g.terminate(1);
+      return 1;
     }
     coder = new QGramCoder(q,asize);
-    alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
+    alphabet = g.readAlphabet(projectname+FileNameExtensions.alphabet);
     
     // Read seq, bck, ssp into arrays;  memory-map or read qpos
     TicToc timer = new TicToc();
-    String seqfile  = di+FileNameExtensions.seq;
-    String sspfile  = di+FileNameExtensions.ssp;
+    String seqfile  = projectname+FileNameExtensions.seq;
+    String sspfile  = projectname+FileNameExtensions.ssp;
     System.gc();
-    g.logmsg("nonunique: reading '%s', '%s'...%n", seqfile, sspfile);
+    log.info("nonunique: reading '%s', '%s'...", seqfile, sspfile);
     try {
       final ArrayFile arf = new ArrayFile(null);
       s    = arf.setFilename(seqfile).readArray((byte[])null);
       ssp  = arf.setFilename(sspfile).readArray((long[])null);
     } catch (IOException ex) {
-      g.warnmsg("nonunique: reading '%s', '%s' failed. Stop.%n",
+      log.error("nonunique: reading '%s', '%s' failed. Stop.",
           seqfile, sspfile);
-      g.terminate(1);
+      return 1;
     }
     final int maxactive = project.getIntProperty("qbckMax");
     try {
        qgramindex = new QGramIndex(project);
-    } catch (IOException e) {
-       e.printStackTrace();
-       g.warnmsg(e.getMessage());
-       g.terminate(1);
+    } catch (IOException ex) {
+       ex.printStackTrace();
+       log.error(ex.getMessage());
+       return 1;
     }
-    g.logmsg("  reading finished after %.1f sec%n", timer.tocs());
-    g.logmsg("nonunique: starting probe selection...%n");
+    log.info("  reading finished after %.1f sec", timer.tocs());
+    log.info("nonunique: starting probe selection...");
     n = s.length;
     m = ssp.length;
         
@@ -203,12 +204,13 @@ public class NonUniqueProbeDesigner {
     try {
       out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outfile),32*1024), false);
     } catch (FileNotFoundException ex) {
-      g.terminate("nonunique: could not create output file. Stop.");
+      log.error("nonunique: could not create output file. Stop.");
+      return 1;
     }
     long middle = -1;
     if (dontdorc) {
       middle = (ssp[seqnum]-1)/2;
-      //g.logmsg("ssp-1=%d,  %%2=%d,  middle=%d,  s[middle]=%d,  isWildcard=%b%n", ssp[seqnum]-1, (ssp[seqnum]-1)%2, middle, s[middle], amap.isWildcard(s[middle]));
+      //log.debug("ssp-1=%d,  %%2=%d,  middle=%d,  s[middle]=%d,  isWildcard=%b", ssp[seqnum]-1, (ssp[seqnum]-1)%2, middle, s[middle], amap.isWildcard(s[middle]));
       assert((ssp[seqnum]-1)%2==0 && alphabet.isWildcard(s[(int)middle])) :
         "nonunique: index does not contain reverse complements; use --noskip option";
     }
@@ -230,7 +232,7 @@ public class NonUniqueProbeDesigner {
             }           
           } else if (p==middle && dontdorc) {
             p = (int)(ssp[seqnum]-1); // -1 because of p++
-            g.logmsg("  skipping reverse complement to ssp at %d%n",p+1);
+            log.info("  skipping reverse complement to ssp at %d",p+1);
           }
         }
         if (p>=n) break;
@@ -239,9 +241,8 @@ public class NonUniqueProbeDesigner {
         symremaining = i-p;
         if (symremaining < pl) continue;
       }
-      assert(alphabet.isSymbol(s[p]));
-      assert(symremaining >= pl);
-      // g.logmsg("  position %d (in seq. %d, starting at %d): %d symbols%n", p, seqnum, seqstart, symremaining);
+      assert alphabet.isSymbol(s[p]);
+      assert symremaining >= pl;
       
       // (2) initialize LRMM matrix and thislcf
       active = 0;  // number of active q-grams
@@ -257,7 +258,7 @@ public class NonUniqueProbeDesigner {
       while (symremaining >=pl) {
         // (3x) Status
         while(p>=nextslice) {
-          g.logmsg("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d%n",
+          log.info("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d",
               percentdone, timer.tocs(), p, n-1, seqnum, m-1);
           percentdone += 1;  nextslice += slicesize;
         }
@@ -303,15 +304,15 @@ public class NonUniqueProbeDesigner {
     }
     outputRange(firstgood, lastgood);
     out.close();
-    g.logmsg("nonunique: probe selection took %.1f sec%n", timer.tocs());
+    log.info("nonunique: probe selection took %.1f sec", timer.tocs());
     
     // Finally, write statistics
-    g.logmsg("nonunique: writing statistics to '%s'%n",statfile);
+    log.info("nonunique: writing statistics to '%s'",statfile);
     PrintWriter stw = null;
     try {
       stw = new PrintWriter(statfile);
     } catch (FileNotFoundException ex) {
-      g.warnmsg("nonunique: could not create statistics file. Skipping.");
+      log.warn("nonunique: could not create statistics file. Skipping.");
       returnvalue = 2;
     }
     if (stw!=null) {
@@ -328,7 +329,7 @@ public class NonUniqueProbeDesigner {
     }
     
     // that's all
-    g.logmsg("nonunique: total time was %.1f sec%n", gtimer.tocs());
+    log.info("nonunique: total time was %.1f sec", gtimer.tocs());
     return returnvalue;
   }
   
@@ -348,7 +349,7 @@ public class NonUniqueProbeDesigner {
   private final void findlrmm(final int qcode, final int sp, final int lrmmrow) {
     int ai, ni;
     
-    //g.logmsg("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d%n", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
+    //log.info("  spos=%d, qcode=%d (%s),  row=%d.  rank=%d", sp, qcode, coder.qGramString(qcode,amap), lrmmrow, r);
     for(ai=0; ai<active; ai++) { activepos[ai]++;  if (lenforact[ai]>q) lenforact[ai]--; else lenforact[ai]=0; }
     if(lrmmrow>0)
       for(int i=0; i<m; i++) LRMM[lrmmrow][i] = (LRMM[lrmmrow-1][i]-1>q? LRMM[lrmmrow-1][i]-1 : 0);
@@ -358,7 +359,7 @@ public class NonUniqueProbeDesigner {
     qgramindex.getQGramPositions(qcode, newpos);
     final int newactive = qgramindex.getBucketSize(qcode); // number of new active q-grams
     
-    //g.logmsg("    qpos = [%s]%n", Strings.join(" ",newpos, 0, newactive));
+    //log.info("    qpos = [%s]", Strings.join(" ",newpos, 0, newactive));
     for(ni=0, ai=0; ni<newactive; ni++) {
       while(ai<active && lenforact[ai]<q) ai++;
       assert(ai==active || newpos[ni]<=activepos[ai])
@@ -405,15 +406,16 @@ public class NonUniqueProbeDesigner {
     int si = seqindex(first);
     int ss = si==0? 0 : (int)(ssp[si-1]+1);
     int le = last-first+1;
-    assert(le>=1);
-    // g.logmsg("%d %d-mers: seq %d [%d..%d];  pos %d..%d%n", le, pl, si, first-ss, last-ss, first, last);
+    assert le >= 1;
+    log.debug("%d %d-mers: seq %d [%d..%d];  pos %d..%d", le, pl, si, first-ss, last-ss, first, last);
     out.printf("%d @ seq=%d[%d..%d];  pos=%d..%d%n",
         le, si, first-ss, last-ss, first, last);
     try {
       out.printf("%s%n", alphabet.preimage(s,first,pl+le-1));
     } catch (InvalidSymbolException ex) {
       ex.printStackTrace();
-      g.terminate("Error printing oligo");
+      log.error("Error printing oligo");
+      g.terminate(1);
     }
     out.printf("%s%n%n", StringUtils.join(" ",incidence,0,m));
     out.flush();

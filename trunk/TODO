@@ -46,6 +46,7 @@ verlängern
 
 - use log4j
 
+- when multiple project files are given, logging does not work correctly
 
 Map<String,Class<? extends Subcommand>> commands = new HashMap<String,Class<? extends Subcommand>>();
 commands.put("tr", TranslaterSubcommand.class);

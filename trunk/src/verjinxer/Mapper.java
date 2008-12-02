@@ -146,7 +146,7 @@ public class Mapper implements Subcommand {
       }
       tname = args[0];
       dt = g.dir + tname;
-      g.startplog(dt + FileNameExtensions.log);
+      g.startProjectLogging(dt);
 
       // Determine method
       method = null;
@@ -252,7 +252,7 @@ public class Mapper implements Subcommand {
             }
          }
       } catch (IOException ex) {
-         g.terminate("map: could not read indices; " + ex.toString());
+         g.terminate("map: could not read indices; " + ex);
       }
       inum = indices.size();
       for (int i = 0; i < inum; i++) {
@@ -265,7 +265,7 @@ public class Mapper implements Subcommand {
                   longestpos = filen / 4;
             }
          } catch (IOException ex) {
-            g.warnmsg("map: could not open index '%s'; %s.%n", fin, ex.toString());
+            g.warnmsg("map: could not open index '%s'; %s.%n", fin, ex);
             g.terminate(1);
          }
          fin = indices.get(i) + FileNameExtensions.seq;
@@ -276,7 +276,7 @@ public class Mapper implements Subcommand {
             if (filen > longestindexlen)
                longestindexlen = filen;
          } catch (IOException ex) {
-            g.terminate(String.format("map: could not open index '%s'; %s.%n", fin, ex.toString()));
+            g.terminate(String.format("map: could not open index '%s'; %s.%n", fin, ex));
          }
       } // end for index i
 

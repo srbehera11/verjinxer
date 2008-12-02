@@ -30,7 +30,7 @@ public class ArrayUtils {
          try {
             int[] slice = new int[attempt];  
             return slice; // in iteration t, it has 1/t times requested size
-         } catch (OutOfMemoryError e) {
+         } catch (OutOfMemoryError ex) {
            attempt = (int) Math.ceil((double)attempt * t/(t+1.0) * 1.01);
          }
       }
@@ -86,7 +86,7 @@ public class ArrayUtils {
       byte[] test = new byte[size];
       test = null;
       return true; 
-    } catch (OutOfMemoryError e) {}
+    } catch (OutOfMemoryError ex) {}
     return false;
   }
   

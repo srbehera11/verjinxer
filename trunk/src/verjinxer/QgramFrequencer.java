@@ -12,6 +12,8 @@ import static verjinxer.Globals.programname;
 import java.io.IOException;
 import java.util.Arrays;
 
+import com.spinn3r.log5j.Logger;
+
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.QGramCoder;
@@ -28,7 +30,7 @@ import verjinxer.util.TicToc;
  * @author Sven Rahmann
  */
 public class QgramFrequencer {
-  
+  private static final Logger log = Globals.log;
   private Globals g;
   
   /** creates a new instance of QgramFrequencer
@@ -49,15 +51,15 @@ public class QgramFrequencer {
    * print help on usage
    */
   public void help() {
-    g.logmsg("Usage:%n  %s qfreq  [options]  indexname%n", programname);
-    g.logmsg("Finds the most frequent q-grams in a q-gram index%n");
-    g.logmsg("Options:%n");
-    g.logmsg("  -s, --sequences     base counts on number of sequences, not words%n");
-    g.logmsg("  -n  <n>|<'all'>     output at least the top n most frequent q-grams [30]%n");
-    g.logmsg("  -N  <N>             output at most N q-grams [all]%n");
-    g.logmsg("  -r, --reverse       output the LEAST instead of most frequent q-grams%n");
-    g.logmsg("  -p, --prefix  <p>   report only words starting with p, where |p|<=q%n");
-    g.logmsg("  -F, --filter  <c:d> filter q-grams by complexity <c> and delta <d>%n");
+    log.info("Usage:  %s qfreq  [options]  indexname", programname);
+    log.info("Finds the most frequent q-grams in a q-gram index");
+    log.info("Options:");
+    log.info("  -s, --sequences     base counts on number of sequences, not words");
+    log.info("  -n  <n>|<'all'>     output at least the top n most frequent q-grams [30]");
+    log.info("  -N  <N>             output at most N q-grams [all]");
+    log.info("  -r, --reverse       output the LEAST instead of most frequent q-grams");
+    log.info("  -p, --prefix  <p>   report only words starting with p, where |p|<=q");
+    log.info("  -F, --filter  <c:d> filter q-grams by complexity <c> and delta <d>");
   }
   
   /* Variables */
@@ -88,17 +90,17 @@ public class QgramFrequencer {
     try {
       args = opt.parse(args);
     } catch (IllegalOptionException ex) {
-      g.terminate("qfreq: "+ex);
+      log.error("qfreq: "+ex); return 1;
     }
     if (args.length==0) {
-      help(); g.logmsg("qfreq: no index given%n"); g.terminate(0);
+      help(); log.error("qfreq: no index given"); return 0;
     }
     
     // Get indexname and di
     String indexname = args[0];
     String di        = g.dir + indexname;
-    g.startplog(di+FileNameExtensions.log);
-    if (args.length>1) g.warnmsg("qfreq: ignoring all arguments except first '%s'%n", args[0]);
+    g.startProjectLogging(di);
+    if (args.length>1) log.warn("qfreq: ignoring all arguments except first '%s'", args[0]);
     
     // Determine options values
     rev      = (opt.isGiven("r"));
@@ -109,16 +111,16 @@ public class QgramFrequencer {
     ProjectInfo project;
     try {
        project = ProjectInfo.createFromFile(di);
-    } catch (IOException e) {
-       g.warnmsg("qfreq: cannot read project file.%n");
+    } catch (IOException ex) {
+       log.error("qfreq: cannot read project file.");
        return 1;
     }
     try {
       asize = project.getIntProperty("qAlphabetSize");
       q = project.getIntProperty("q");
     } catch (NumberFormatException ex) {
-      g.warnmsg("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)%n", di);
-      g.terminate(1);
+      log.error("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)", di);
+      return 1;
     }
     alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
     final QGramCoder coder = new QGramCoder(q,asize);
@@ -140,14 +142,15 @@ public class QgramFrequencer {
     byte[] qgram = null;
     if (wordstring!=null) {
       if (wordstring.length()>q) {
-        g.warnmsg("qfreq: only considering first %d characters of '%s': ", q, wordstring);
+        log.warn("qfreq: only considering first %d characters of '%s': ", q, wordstring);
         wordstring = wordstring.substring(0,q);
-        g.warnmsg("%s%n", wordstring);
+        log.warn("%s", wordstring);
       }
       try {
         qgram = alphabet.applyTo(wordstring, false);
       } catch (InvalidSymbolException ex) {
-        g.terminate("qfreq: given prefix is not a string over the alphabet.");
+        log.error("qfreq: given prefix is not a string over the alphabet.");
+        return 1;
       }
       assert (qgram.length<=q) : "qgram array too big";
       if (qgram.length<q) qgram = Arrays.copyOf(qgram,q);
@@ -156,7 +159,7 @@ public class QgramFrequencer {
       for (int i=wordstring.length(); i<q; i++) qgram[i]=(byte)(asize-1);
       Hcode = coder.code(qgram) + 1;
     }
-    g.logmsg("qfreq: considering q-grams %d..%d%n", Lcode, Hcode);
+    log.info("qfreq: considering q-grams %d..%d", Lcode, Hcode);
     
     // Read the correct array!
     if (countseq) f = g.slurpIntArray(di+FileNameExtensions.qseqfreq);
@@ -164,24 +167,24 @@ public class QgramFrequencer {
     //TODO: read bck array if requested, also look at sequences bck-based!
     
     len = Hcode - Lcode;
-    g.logmsg("qfreq: all files read after %.1f sec; now sorting %d q-grams...%n", gtimer.tocs(),len);
+    log.info("qfreq: all files read after %.1f sec; now sorting %d q-grams...", gtimer.tocs(),len);
 
     final QGramFilter filter = new QGramFilter(q, asize, opt.get("F"));
-    g.logmsg("qfreq: filtering out %d / %d q-grams%n", filter.cardinality(), aq);
+    log.info("qfreq: filtering out %d / %d q-grams", filter.cardinality(), aq);
     for (int i=0; i<aq; i++) if (filter.isFiltered(i)) f[i]=0;
     //for (int i = filter.nextSetBit(0); i >= 0; i = filter.nextSetBit(i+1)) f[i]=0;
     
     // sort frequencies, generate soring permutation
-    g.logmsg("qfreq: considering q-grams %d..%d%n", Lcode, Hcode);
+    log.info("qfreq: considering q-grams %d..%d", Lcode, Hcode);
     p = new int[len];
     for(int i=0; i<len; i++) p[i]=i+Lcode;
     
     TicToc timer = new TicToc();
     //new Sorter( rev? new ByReverseFrequency() : new ByFrequency() ).heapsort();
-    //g.logmsg("qfreq: heapsorting took %.1f sec%n", timer.tocs());
+    //log.info("qfreq: heapsorting took %.1f sec", timer.tocs());
     //timer.tic();
     new Sorter( rev? new ByReverseFrequency() : new ByFrequency() ).quicksort();
-    g.logmsg("qfreq: quicksorting took %.1f sec%n", timer.tocs());
+    log.info("qfreq: quicksorting took %.1f sec", timer.tocs());
     
     // Output...
     if(num>len) num = len;
@@ -189,7 +192,7 @@ public class QgramFrequencer {
     int limitf = f[num+Lcode-1];
     if (!rev)  {for (num=0; f[num+Lcode]>=limitf && num<NUM; num++) {}}
     else       {for (num=0; f[num+Lcode]<=limitf && num<NUM; num++) {}}
-    g.logmsg("qfreq: showing top %d %d-grams:::%n", num,q);
+    log.info("qfreq: showing top %d %d-grams:::", num,q);
     for (int i=0; i<num; i++) {
       System.out.printf("%s %9d%n", coder.qGramString(p[i],alphabet), f[i+Lcode]);
     }

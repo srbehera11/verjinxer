@@ -13,6 +13,8 @@ import java.nio.BufferUnderflowException;
 import java.nio.LongBuffer;
 import java.util.Arrays;
 
+import com.spinn3r.log5j.Logger;
+
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
@@ -29,7 +31,7 @@ import verjinxer.util.TicToc;
  * @author Sven Rahmann
  */
 public class BigSuffixTrayBuilder {
-  
+  private static final Logger log = Globals.log;
   private Globals g;
   
   /** Creates a new instance of SuffixTrayBuilder
@@ -43,21 +45,21 @@ public class BigSuffixTrayBuilder {
    * print help on usage
    */
   public void help() {
-    g.logmsg("Usage:%n  %s bigsuffix [options] Indexnames...%n", programname);
-    g.logmsg("Builds the 64-bit suffix tray of a .seq file;%n");
-    g.logmsg("writes %s, %s (incl. variants 1,1x,2,2x).%n", FileNameExtensions.pos, FileNameExtensions.lcp);
-    g.logmsg("Options:%n");
-    g.logmsg("  -m, --method  <id>    select construction method, where <id> is one of:%n");
-    g.logmsg("      L%n" +
+    log.info("Usage:%n  %s bigsuffix [options] Indexnames...%n", programname);
+    log.info("Builds the 64-bit suffix tray of a .seq file;%n");
+    log.info("writes %s, %s (incl. variants 1,1x,2,2x).%n", FileNameExtensions.pos, FileNameExtensions.lcp);
+    log.info("Options:%n");
+    log.info("  -m, --method  <id>    select construction method, where <id> is one of:%n");
+    log.info("      L%n" +
         "      R%n" +
         "      minLR%n" +
         "      bothLR%n" +
         "      bothLR2%n"
         );
-    g.logmsg("  -l, --lcp[2|1]        build lcp array using int|short|byte%n");
-    g.logmsg("  -c, --check           additionally check index integrity%n");
-    g.logmsg("  -C, --onlycheck       ONLY check index integrity%n");
-    g.logmsg("  -X, --notexternal     DON'T save memory at the cost of lower speed%n");
+    log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte%n");
+    log.info("  -c, --check           additionally check index integrity%n");
+    log.info("  -C, --onlycheck       ONLY check index integrity%n");
+    log.info("  -X, --notexternal     DON'T save memory at the cost of lower speed%n");
   }
   
   /** if run independently, call main
@@ -101,8 +103,8 @@ public class BigSuffixTrayBuilder {
     Options opt = new Options("c=check,C=onlycheck,X=notexternal=nox=noexternal,m=method:,l=lcp=lcp4,lcp1,lcp2");
     try {
       args = opt.parse(args);
-    } catch (IllegalOptionException ex) { g.terminate("suffixtray: "+ex); }
-    if (args.length==0) { help(); g.logmsg("suffixtray: no index given%n"); g.terminate(0); }
+    } catch (IllegalOptionException ex) { log.error("suffixtray: "+ex); g.terminate(1); }
+    if (args.length==0) { help(); log.error("suffixtray: no index given%n"); g.terminate(0); }
     
     // Determine external?, check?, onlycheck? options
     external = !(opt.isGiven("X"));
@@ -115,29 +117,29 @@ public class BigSuffixTrayBuilder {
     
     // Get indexname and di
     String indexname = args[0];
-    String di        = g.dir + indexname;
-    g.startplog(di+FileNameExtensions.log);
-    if (args.length>1) g.warnmsg("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
+    if (args.length > 1) log.warn("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
     ProjectInfo project;
+    String projectname = g.dir + indexname;
     try {
-       project = ProjectInfo.createFromFile(di);
-    } catch (IOException e) {
-       g.warnmsg("could not read project file: %s%n", e.toString());
-       return 1; // g.terminate(1);
+       project = ProjectInfo.createFromFile(projectname);
+    } catch (IOException ex) {
+       log.error("could not read project file: %s%n", ex);
+       return 1;
     }
+    g.startProjectLogging(project);
     asize = project.getIntProperty("LargestSymbol") + 1;
 
     // load alphabet map and text
-    alphabet = g.readAlphabet(di+FileNameExtensions.alphabet);
-    s = g.slurpHugeByteArray(di+FileNameExtensions.seq);
+    alphabet = g.readAlphabet(projectname+FileNameExtensions.alphabet);
+    s = g.slurpHugeByteArray(projectname+FileNameExtensions.seq);
     n = s.length;
-    if (onlycheck) { returnvalue =  checkpos(di); g.stopplog(); return returnvalue; }
+    if (onlycheck) { returnvalue =  checkpos(projectname); g.stopplog(); return returnvalue; }
     project.setProperty("SuffixAction", action);
     project.setProperty("LastAction", "suffixtray");
     project.setProperty("AlphabetSize", asize);    
     
     method = (opt.isGiven("m")? opt.get("m") : "L"); // default method
-    g.logmsg("suffixtray: constructing pos using method '%s'...%n", method);
+    log.info("suffixtray: constructing pos using method '%s'...%n", method);
     assert(alphabet.isSeparator(s.get(n-1))) : "last character in text needs to be a separator";
     TicToc timer = new TicToc();
     steps = 0;
@@ -146,8 +148,8 @@ public class BigSuffixTrayBuilder {
     else if (method.equals("minLR"))   buildpos_minLR(false);
     else if (method.equals("bothLR"))  buildpos_bothLR();
     else if (method.equals("bothLR2")) buildpos_bothLR2();
-    else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
-    g.logmsg("suffixtray: pos completed after %.1f secs using %d steps (%.2f/char)%n",
+    else { log.error("suffixtray: Unsupported construction method '"+method+"'!"); return 1; }
+    log.info("suffixtray: pos completed after %.1f secs using %d steps (%.2f/char)%n",
         timer.tocs(), steps, (double)steps/n);
     project.setProperty("SuffixTrayMethod", method);
     project.setProperty("SuffixTraySteps", steps);    
@@ -155,42 +157,42 @@ public class BigSuffixTrayBuilder {
     
     if (check) {
       timer.tic();
-      g.logmsg("suffixcheck: checking pos...%n");
+      log.info("suffixcheck: checking pos...%n");
       if (method.equals("L"))            returnvalue=checkpos_R();
       else if (method.equals("R"))       returnvalue=checkpos_R();
       else if (method.equals("minLR"))   returnvalue=checkpos_R();
       else if (method.equals("bothLR"))  returnvalue=checkpos_bothLR();
       else if (method.equals("bothLR2")) returnvalue=checkpos_R();
-      else g.terminate("suffixcheck: Unsupported construction method '"+method+"'!");
-      if(returnvalue==0) g.logmsg("suffixcheck: pos looks OK!%n");
-      g.logmsg("suffixcheck: done after %.1f secs%n", timer.tocs());
+      else { log.error("suffixcheck: Unsupported construction method '"+method+"'!"); return 1; }
+      if(returnvalue==0) log.info("suffixcheck: pos looks OK!%n");
+      log.info("suffixcheck: done after %.1f secs%n", timer.tocs());
     }
     
     if (returnvalue==0) {
       timer.tic();
-      String fpos = di+FileNameExtensions.pos;
-      g.logmsg("suffixtray: writing '%s'...%n",fpos);
+      String fpos = projectname+FileNameExtensions.pos;
+      log.info("suffixtray: writing '%s'...%n",fpos);
       if (method.equals("L"))            writepos_R(fpos);
       else if (method.equals("R"))       writepos_R(fpos);
       else if (method.equals("minLR"))   writepos_R(fpos);
       else if (method.equals("bothLR"))  writepos_bothLR(fpos);
       else if (method.equals("bothLR2")) writepos_R(fpos);
-      else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
-      g.logmsg("suffixtray: writing took %.1f secs; done.%n", timer.tocs());
+      else { log.error("suffixtray: Unsupported construction method '"+method+"'!"); return 1; }
+      log.info("suffixtray: writing took %.1f secs; done.%n", timer.tocs());
     }
     
     // do lcp if desired
     if (dolcp>0 && returnvalue==0) {
       timer.tic();
-      String flcp = di+FileNameExtensions.lcp;
-      g.logmsg("suffixtray: computing lcp array...%n");
+      String flcp = projectname+FileNameExtensions.lcp;
+      log.info("suffixtray: computing lcp array...%n");
       if (method.equals("L"))            lcp_L(flcp, dolcp);
       else if (method.equals("R"))       lcp_L(flcp, dolcp);
       else if (method.equals("minLR"))   lcp_L(flcp, dolcp);
       else if (method.equals("bothLR"))  lcp_bothLR(flcp, dolcp);
       else if (method.equals("bothLR2")) lcp_L(flcp, dolcp);
-      else g.terminate("suffixtray: Unsupported construction method '"+method+"'!");
-      g.logmsg("suffixtray: lcp computation and writing took %.1f secs; done.%n", timer.tocs());
+      else { log.error("suffixtray: Unsupported construction method '"+method+"'!"); return 1;}
+      log.info("suffixtray: lcp computation and writing took %.1f secs; done.%n", timer.tocs());
       project.setProperty("lcp1Exceptions", lcp1x);
       project.setProperty("lcp2Exceptions", lcp2x);
       project.setProperty("lcp1Size", n+8*lcp1x);
@@ -203,7 +205,7 @@ public class BigSuffixTrayBuilder {
     try { 
        project.store(); } 
     catch (IOException ex) { 
-      g.warnmsg("suffix: could not write %s (%s)!%n", project.getFileName(), ex.toString()); 
+      log.error("suffix: could not write %s (%s)!%n", project.getFileName(), ex); 
       g.terminate(1);
     }
     g.stopplog();
@@ -349,7 +351,7 @@ public class BigSuffixTrayBuilder {
             case 4: insertbetween(lexprevpos.get(pdown),pdown,p); 
                     if (lexfirstpos[chi]==pdown) lexfirstpos[chi]=p; 
                     break;
-            default: g.terminate("suffixtray: internal error");
+            default: log.error("suffixtray: internal error"); g.terminate(1);
           } // end switch
         } // end symbol character
       } // end seeing character ch again
@@ -700,7 +702,7 @@ public class BigSuffixTrayBuilder {
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     if (chi>=256) {
       if(n==0) return 0;
-      g.warnmsg("suffixcheck: no first character found, but |s|!=0.%n");
+      log.error("suffixcheck: no first character found, but |s|!=0.%n");
       return 2;
     }
     p = lexfirstpos[chi]; assert(p!=-1);
@@ -708,7 +710,7 @@ public class BigSuffixTrayBuilder {
     while (nextp!=-1) {
       //g.logmsg("  pos %d vs %d; text %d vs %d%n", p, nextp, s[p], s[nextp]);
       if (!((comp=suffixcmp(p,nextp))<0)) {
-        g.warnmsg("suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
+        log.error("suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
             nn-1,nn, p,nextp, s.get(p), s.get(nextp), comp);
         returnvalue=1;
       }
@@ -717,7 +719,7 @@ public class BigSuffixTrayBuilder {
       nn++;
     }
     if (nn!=n) {
-      g.warnmsg("suffixcheck: missing some suffixes; have %d / %d.%n",nn,n);
+      log.error("suffixcheck: missing some suffixes; have %d / %d.%n",nn,n);
       returnvalue += 2;
     }
     return returnvalue;
@@ -736,7 +738,7 @@ public class BigSuffixTrayBuilder {
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     if (chi>=256) {
       if(n==0) return 0;
-      g.warnmsg("suffixcheck: no first character found, but |s|!=0.%n");
+      log.error("suffixcheck: no first character found, but |s|!=0.%n");
       return 2;
     }
     nn=1;
@@ -746,7 +748,7 @@ public class BigSuffixTrayBuilder {
     while (nextp!=-1) {
       //g.logmsg("  pos %d vs %d; text %d vs %d%n", p, nextp, s[p], s[nextp]);
       if (!((comp=suffixcmp(p,nextp))<0)) {
-        g.warnmsg("suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
+        log.error("suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
             nn-1,nn, p,nextp, s.get(p), s.get(nextp), comp);
         returnvalue=1;
       }
@@ -756,7 +758,7 @@ public class BigSuffixTrayBuilder {
       nn++;
     }
     if (nn!=n) {
-      g.warnmsg("suffixcheck: missing some suffixes; have %d / %d.%n",nn,n);
+      log.error("suffixcheck: missing some suffixes; have %d / %d.%n",nn,n);
       returnvalue += 2;
     }
     return returnvalue;
@@ -770,14 +772,15 @@ public class BigSuffixTrayBuilder {
   public int checkpos(String di) {
     int returnvalue = 0;
     TicToc ctimer = new TicToc();
-    g.logmsg("suffixcheck: checking pos...%n");
+    log.info("suffixcheck: checking pos...%n");
     ArrayFile fpos = null; 
     LongBuffer pos = null;
     try {
       fpos = new ArrayFile(di+FileNameExtensions.pos,0);
       pos = fpos.mapR().asLongBuffer();
     } catch (IOException ex) {
-      g.terminate("suffixcheck: could not read .pos file; " + ex);
+      log.error("suffixcheck: could not read .pos file; " + ex);
+      g.terminate(1);
     }
     long p = pos.get();
     long nextp, comp;
@@ -789,18 +792,18 @@ public class BigSuffixTrayBuilder {
         break;
       }
       if (!((comp=suffixcmp(p,nextp))<0)) {
-        g.warnmsg("suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
+        log.error("suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
             nn-1,nn, p,nextp, s.get(p), s.get(nextp), comp);
         returnvalue=1;
       }
       nn++; p=nextp;
     }
     if (nn!=n) {
-      g.warnmsg("suffixcheck: missing some suffixes; have %d / %d.%n",nn,n);
+      log.error("suffixcheck: missing some suffixes; have %d / %d.%n",nn,n);
       returnvalue += 2;
     }
-    if (returnvalue==0) g.logmsg("suffixcheck: pos seems OK!%n");
-    g.logmsg("suffixcheck: checking took %.2f secs.%n", ctimer.tocs());
+    if (returnvalue==0) log.info("suffixcheck: pos seems OK!%n");
+    log.info("suffixcheck: checking took %.2f secs.%n", ctimer.tocs());
     return returnvalue;      
   }  
   
@@ -821,7 +824,7 @@ public class BigSuffixTrayBuilder {
         f.writeLong(p);
       f.close();
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex);
+      log.error("suffixtray: error writing '%s': %s%n", fname, ex);
       g.terminate(1);
     }
   }
@@ -844,7 +847,7 @@ public class BigSuffixTrayBuilder {
       }
       f.close();
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing '%s': %s%n",fname, ex);
+      log.error("suffixtray: error writing '%s': %s%n",fname, ex);
       g.terminate(1);
     }
   }
@@ -890,7 +893,7 @@ public class BigSuffixTrayBuilder {
       if (h>=(1L<<32)-1) lcp4x++;
       if (h>0) h--;
     }
-    g.logmsg("suffixtray: lcp computation took %.2f secs; writing...%n",timer.tocs());
+    log.info("suffixtray: lcp computation took %.2f secs; writing...%n",timer.tocs());
 
     int chi;
     long r;
@@ -924,7 +927,7 @@ public class BigSuffixTrayBuilder {
       if ((dolcp&2)!=0) { f2.close(); f2x.close(); }
       if ((dolcp&1)!=0) { f1.close(); f1x.close(); }
     } catch (IOException ex) {
-      g.warnmsg("suffixtray: error writing lcp file(s): %s%n", ex);
+      log.error("suffixtray: error writing lcp file(s): %s", ex);
       g.terminate(1);
     }
   }
