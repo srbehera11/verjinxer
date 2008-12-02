@@ -51,20 +51,20 @@ public class QgramMatcherSubcommand implements Subcommand {
    */
   public void help() {
     log.info("Usage:");
-    log.info("  %s qmatch  [options]  [<sequences>]  <index>%n", programname);
-    log.info("Reports all maximal matches at least as long as a given length >=q,%n");
-    log.info("in human-readable output format. Writes .matches or .sorted-matches.%n");
-    log.info("Options:%n");
-    log.info("  -l, --length <len>   minimum match length [q of q-gram-index]%n");
-    log.info("  -s, --sort           write matches sorted per index sequence%n");
-    log.info("  -m, --min    <min>   show matches only if >=min (per index seq if sorted)%n");
-    log.info("  -M, --max    <max>   stop considering sequences at max+1 matches%n");
-    log.info("  -F, --filter <c:d>   apply q-gram filter <complexity:delta>%n");
-    log.info("  --self               compare index against itself%n");
-    log.info("  -t, --tmh <filename> name of too-many-hits-filter file (use #)%n");
-    log.info("  -o, --out <filename> specify output file (use # for stdout)%n");
-    log.info("  -x, --external       save memory at the cost of lower speed%n");
-    log.info("  -c, --cmatchesc      C matches C, even if not before G%n");
+    log.info("  %s qmatch  [options]  [<sequences>]  <index>", programname);
+    log.info("Reports all maximal matches at least as long as a given length >=q,");
+    log.info("in human-readable output format. Writes .matches or .sorted-matches.");
+    log.info("Options:");
+    log.info("  -l, --length <len>   minimum match length [q of q-gram-index]");
+    log.info("  -s, --sort           write matches sorted per index sequence");
+    log.info("  -m, --min    <min>   show matches only if >=min (per index seq if sorted)");
+    log.info("  -M, --max    <max>   stop considering sequences at max+1 matches");
+    log.info("  -F, --filter <c:d>   apply q-gram filter <complexity:delta>");
+    log.info("  --self               compare index against itself");
+    log.info("  -t, --tmh <filename> name of too-many-hits-filter file (use #)");
+    log.info("  -o, --out <filename> specify output file (use # for stdout)");
+    log.info("  -x, --external       save memory at the cost of lower speed");
+    log.info("  -c, --cmatchesc      C matches C, even if not before G");
   }
   
   /** if run independently, call main
@@ -112,10 +112,10 @@ public class QgramMatcherSubcommand implements Subcommand {
        sname = tname;
      } else {
        assert args.length>=2;
-       if (selfcmp) log.info("qmatch: using --self with indices will suppress symmetric matches%n");
+       if (selfcmp) log.info("qmatch: using --self with indices will suppress symmetric matches");
        tname = args[0];
        sname = args[1];
-       if (selfcmp && !tname.equals(sname)) log.warn("qmatch: using --self, but %s != %s%n", tname,sname);
+       if (selfcmp && !tname.equals(sname)) log.warn("qmatch: using --self, but %s != %s", tname,sname);
      }
      dt = g.dir + tname;
      ds = g.dir + sname;
@@ -125,7 +125,7 @@ public class QgramMatcherSubcommand implements Subcommand {
      try {
         project = ProjectInfo.createFromFile(ds);
      } catch (IOException ex) {
-        log.error("qmatch: cannot read project file.%n");
+        log.error("qmatch: cannot read project file.");
         return 1;
      }
      g.startProjectLogging(project);
@@ -139,7 +139,7 @@ public class QgramMatcherSubcommand implements Subcommand {
        asizetmp = project.getIntProperty("qAlphabetSize");
        qtmp = project.getIntProperty("q");
      } catch (NumberFormatException ex) {
-       log.error("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s%n", ds, ex);
+       log.error("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s", ds, ex);
        return 1;
      } 
      final int asize=asizetmp, q=qtmp;
@@ -165,12 +165,12 @@ public class QgramMatcherSubcommand implements Subcommand {
      boolean sorted = opt.isGiven("s");
      int minlen = (opt.isGiven("l")? Integer.parseInt(opt.get("l")) : q);
      if (minlen<q) {
-       log.warn("qmatch: increasing minimum match length to q=%d!%n",q);
+       log.warn("qmatch: increasing minimum match length to q=%d!",q);
        minlen=q;
      }
      int minseqmatches = (opt.isGiven("m")? Integer.parseInt(opt.get("m")) : 1);
      if (minseqmatches<1) {
-       log.warn("qmatch: increasing minimum match number to 1!%n");
+       log.warn("qmatch: increasing minimum match number to 1!");
        minseqmatches=1;
      }
 
@@ -183,8 +183,8 @@ public class QgramMatcherSubcommand implements Subcommand {
 
      boolean c_matches_c = opt.isGiven("c");
 
-     if (c_matches_c) log.info("qmatch: C matches C, even if no G follows%n");
-     else log.info("qmatch: C matches C only before G%n");
+     if (c_matches_c) log.info("qmatch: C matches C, even if no G follows");
+     else log.info("qmatch: C matches C only before G");
 
      // end of option parsing
 
@@ -197,11 +197,11 @@ public class QgramMatcherSubcommand implements Subcommand {
          log.error("qmatch: could not create output file. Stop."); return 1;
        }
      }
-     log.info("qmatch: will write results to %s%n", (outname!=null? "'"+outname+"'" : "stdout"));
+     log.info("qmatch: will write results to %s", (outname!=null? "'"+outname+"'" : "stdout"));
      
      final QGramCoder qgramcoder = new QGramCoder(q, asize);
      final boolean bisulfite = project.getBooleanProperty("Bisulfite");
-     if (bisulfite) log.info("qmatch: index is for bisulfite sequences, using bisulfite matching%n");
+     if (bisulfite) log.info("qmatch: index is for bisulfite sequences, using bisulfite matching");
  
      try {
         QgramMatcher qgrammatcher = new QgramMatcher(
@@ -227,7 +227,7 @@ public class QgramMatcherSubcommand implements Subcommand {
         log.error("could not initialize qgrammatcher: "+ex.getMessage());
      }
      out.close();
-     log.info("qmatch: done; total time was %.1f sec%n", totalTimer.tocs());
+     log.info("qmatch: done; total time was %.1f sec", totalTimer.tocs());
      g.stopplog();
      
      return 0;
