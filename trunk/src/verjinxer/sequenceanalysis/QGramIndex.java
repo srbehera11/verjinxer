@@ -71,6 +71,7 @@ public class QGramIndex {
     */
    public QGramIndex(final String qposfile, final String qbckfile, int maximumBucketSize, int q)
          throws IOException {
+      assert q >= 5 : "Sorry, cannot work with a q<5 for now";
       ArrayFile af = new ArrayFile(qbckfile);
       this.qbck = af.readArray(this.qbck);
       final int buckets = qbck.length - 1;
@@ -79,8 +80,7 @@ public class QGramIndex {
       this.qpos = new int[(buckets >> BITS) + 1][];
 
       // piecewise read of the qpos file into qposa
-      int start = 0;
-      int end = qbck[1 >> BITS];
+      int start, end;
 
       af.setFilename(qposfile);
 
