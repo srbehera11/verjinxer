@@ -82,8 +82,9 @@ public class QGramIndexer {
    private int computeSensibleQ(long fsize) {
       int qq;
       qq = (int) (floor(log(fsize) / log(asize))) - 2;
-      if (qq < 1)
-         qq = 1;
+      // TODO this should be set to 1 as soon as the QGramIndex can handle that
+      if (qq < 5)
+         qq = 5;
       return qq;
    }
 
