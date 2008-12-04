@@ -166,6 +166,7 @@ public class NonUniqueProbeDesigner {
     final int maxactive = project.getIntProperty("qbckMax");
     try {
        qgramindex = new QGramIndex(project);
+       assert qgramindex.getStride() == 1 : "Stride is not equal to 1. We don't know, yet, whether this works here!";
     } catch (IOException ex) {
        ex.printStackTrace();
        log.error(ex.getMessage());

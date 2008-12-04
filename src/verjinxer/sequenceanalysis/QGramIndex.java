@@ -41,7 +41,10 @@ public class QGramIndex {
 
    /** Maximum size of a bucket */
    final int maximumBucketSize;
-
+   
+   /** Stride length of this index (only q-grams whose positions are divisible by stride are indexed) */
+   final int stride;
+ 
    /**
     * Size of a superbucket, in bits. That is, if this is 10, then each superbucket contains 2**10
     * buckets
@@ -69,11 +72,12 @@ public class QGramIndex {
     *           q
     * @throws IOException
     */
-   public QGramIndex(final String qposfile, final String qbckfile, int maximumBucketSize, int q)
+   public QGramIndex(final String qposfile, final String qbckfile, int maximumBucketSize, int q, int stride)
          throws IOException {
       assert q >= 5 : "Sorry, cannot work with a q<5 for now";
       ArrayFile af = new ArrayFile(qbckfile);
       this.qbck = af.readArray(this.qbck);
+      this.stride = stride;
       final int buckets = qbck.length - 1;
       assert (buckets & BITMASK_LOW) == 0;
 
@@ -151,14 +155,22 @@ public class QGramIndex {
     */
    public QGramIndex(final ProjectInfo project) throws IOException {
       this(project.getQPositionsFileName(), project.getQBucketsFileName(),
-            project.getMaximumBucketSize(), project.getIntProperty("q"));
+            project.getMaximumBucketSize(), project.getIntProperty("q"),
+            project.getIntProperty("Stride"));
    }
 
    /** @return maximum bucket size */
    public int getMaximumBucketSize() {
       return maximumBucketSize;
    }
-
+       
+   /** TODO where should meta information about the index go? into this class?
+    * @return stride width of this index
+    */
+   public int getStride() {
+      return stride;
+   }
+         
    /**
     * @return size of a q-gram bucket, that is, the number of positions stored for the given q-code.
     */

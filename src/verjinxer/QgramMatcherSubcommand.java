@@ -202,7 +202,9 @@ public class QgramMatcherSubcommand implements Subcommand {
      final QGramCoder qgramcoder = new QGramCoder(q, asize);
      final boolean bisulfite = project.getBooleanProperty("Bisulfite");
      if (bisulfite) log.info("qmatch: index is for bisulfite sequences, using bisulfite matching");
- 
+     final int stride = project.getIntProperty("Stride");
+     log.info("qmatch: stride of index is %d", stride);
+     
      try {
         QgramMatcher qgrammatcher = new QgramMatcher(
               g,
@@ -220,6 +222,7 @@ public class QgramMatcherSubcommand implements Subcommand {
               selfcmp, 
               bisulfite,
               c_matches_c,
+              stride,
               project);
         qgrammatcher.match(qgramcoder, qgramfilter);
         qgrammatcher.tooManyHits(dt+".toomanyhits-filter");
