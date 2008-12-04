@@ -225,6 +225,7 @@ public class QgramMatcher {
                   matchReporter.clear();
                   seqnum++;
                   seqstart = tp + 1;
+                  matchReporter.setSequenceStart(seqstart);
                   seqmatches = 0;
                }
             }
