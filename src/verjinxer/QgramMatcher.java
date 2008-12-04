@@ -23,22 +23,11 @@ public class QgramMatcher {
    private static final Logger log = Globals.log;
    final Globals g;
 
-   final boolean sorted;
-
-   /** minimum number of matches for output */
-   final int minseqmatches;
-
-   /** comparing text against itself? */
-   final boolean selfcmp;
-
    /** min. match length */
    final int minlen;
 
    /** q-gram length */
    final int q;
-
-   /** alphabet size */
-   final int asize;
 
    /** the alphabet map */
    final Alphabet alphabet;
@@ -47,15 +36,10 @@ public class QgramMatcher {
    final byte[] t;
 
    /** sequence separator positions in text t */
-   final long[] tssp;
-
-   /** sequence descriptions of t (queries) */
-   final ArrayList<String> tdesc;
+   final private long[] tssp;
 
    /** Positions of all q-grams */
    final QGramIndex qgramindex;
-
-   final PrintWriter out;
 
    /** the indexed text (coded) */
    final byte[] s;
@@ -69,17 +53,10 @@ public class QgramMatcher {
    /** stride width of the q-gram index */
    final int stride;
 
-   /** description of sequences in indexed sequence s */
-   final ArrayList<String> sdesc;
-
    /** maximum number of allowed matches */
    final int maxseqmatches;
 
-   /** list of sorted matches */
-   final ArrayList<ArrayList<Match>> matches;
-
-   /** list of unsorted matches */
-   final ArrayList<GlobalMatch> globalmatches;
+   final MatchReporter matchReporter;
 
    final BitArray toomanyhits;
    
@@ -122,14 +99,10 @@ public class QgramMatcher {
          final boolean c_matches_c, int stride, // TODO
          ProjectInfo project) throws IOException {
       this.g = g;
-      this.selfcmp = selfcmp;
       this.bisulfite = bisulfite;
-      this.asize = qgramcoder.asize;
       this.q = qgramcoder.q;
-      this.out = out;
       this.c_matches_c = c_matches_c;
       this.stride = stride;
-      this.sorted = sorted;
 
       alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
 
@@ -144,16 +117,8 @@ public class QgramMatcher {
          log.warn("qmatch: increasing minimum match number to 1!");
          minseqmatches = 1;
       }
-      this.minseqmatches = minseqmatches;
       this.maxseqmatches = maxseqmatches;
-      if (sorted) {
-         matches = new ArrayList<ArrayList<Match>>();
-         globalmatches = null;
-      } else {
-         globalmatches = new ArrayList<GlobalMatch>(maxseqmatches < 127 ? maxseqmatches + 1 : 128);
-         matches = null;
-      }
-
+      
       if (c_matches_c)
          log.info("qmatch: C matches C, even if no G follows");
       else
@@ -173,9 +138,11 @@ public class QgramMatcher {
       System.gc();
       t = g.slurpByteArray(tfile);
       tssp = g.slurpLongArray(tsspfile);
-      tdesc = g.slurpTextFile(dt + FileNameExtensions.desc, tssp.length);
+      final ArrayList<String> tdesc = g.slurpTextFile(dt + FileNameExtensions.desc, tssp.length);
       assert tdesc.size() == tssp.length;
 
+      final ArrayList<String> sdesc;
+      
       if (dt.equals(ds)) {
          s = t;
          ssp = tssp;
@@ -189,10 +156,16 @@ public class QgramMatcher {
          assert sdesc.size() == sm;
       }
 
+      if (sorted) {
+         matchReporter = new SortedMatchReporter(ssp, minseqmatches, minlen, tdesc, sdesc, out);
+      } else {
+         matchReporter = new GlobalMatchReporter(ssp, minseqmatches, maxseqmatches, selfcmp, out);
+      }
+      
+      
       qgramindex = new QGramIndex(project);
       log.info("qmatch: mapping and reading files took %.1f sec", ttimer.tocs());
 
-      // toomanyhits = new BitArray toomanyhits;
       if (toomanyhitsfilename != null) {
          toomanyhits = g.slurpBitArray(toomanyhitsfilename);
       } else {
@@ -224,13 +197,7 @@ public class QgramMatcher {
       newlen = new int[maxactive];
       // / newdiag = new int[maxactive];
       // / currentpos = new int[maxactive];
-      if (sorted) {
-         matches.ensureCapacity(sm);
-         for (int i = 0; i < sm; i++)
-            matches.add(i, new ArrayList<Match>(32));
-      } else {
-         globalmatches.ensureCapacity(maxseqmatches < 127 ? maxseqmatches + 1 : 128);
-      }
+
 
       // (B) Walking ...
       final int tn = t.length;
@@ -254,10 +221,8 @@ public class QgramMatcher {
             for (; tp < tn && (!alphabet.isSymbol(t[tp])); tp++) {
                if (alphabet.isSeparator(t[tp])) {
                   assert tp == tssp[seqnum];
-                  if (sorted)
-                     writeAndClearMatches(seqnum);
-                  else
-                     writeAndClearGlobalMatches(seqnum);
+                  matchReporter.write(seqnum);
+                  matchReporter.clear();
                   seqnum++;
                   seqstart = tp + 1;
                   seqmatches = 0;
@@ -508,7 +473,7 @@ public class QgramMatcher {
 
             // maximal match (tp, sp, offset), i.e. ((seqnum,tp-seqstart), (i,sss), offset)
             if (offset >= minlen) {
-               reportMatch(sp, tp, offset);
+               matchReporter.add(sp, tp, offset);
                ++matches;
                if (matches > maxmatches)
                   break;
@@ -784,7 +749,7 @@ public class QgramMatcher {
 
 //            System.out.printf("matchleng: sstart=%d tstart=%d len=%d%n", sstart, tstart, len);
             if (len >= minlen) {
-               reportMatch(sstart, tstart, len);
+               matchReporter.add(sstart, tstart, len);
                ++matches;
                // reportMatch(currentpos[ci], tp, len - (currentpos[ci] - sstart));
                if (matches > maxmatches)
@@ -870,113 +835,5 @@ public class QgramMatcher {
       active = ni;
       return matches; // if (seqmatches > maxseqmatches) throw new TooManyHitsException();
    }
-
-   
-   
-   /**
-    * Reports a match by adding it to the matches or globalmatches list.
-    * 
-    * @param sstart
-    *           start of match in s
-    * @param tstart
-    *           start of match in t
-    * @param matchlength
-    *           length of match
-    */
-   private void reportMatch(int sstart, final int tstart, int matchlength) {
-      int i = seqindex(sstart);
-      int ttt = tstart - seqstart;
-      int sss = sstart - (i == 0 ? 0 : (int) ssp[i - 1] + 1);
-      if (sorted) {
-         matches.get(i).add(new Match(ttt, sss, matchlength));
-      } else {
-         if (!selfcmp || sstart > tstart)
-            globalmatches.add(new GlobalMatch(ttt, i, sss, matchlength));
-      }
-      // System.out.format("reportMatch. i: %d. sss: %d. ttt: %d. matchlen: %d%n", i, sss, ttt,
-      // matchlength);
-   }
-
-   private int seqindex(final int p) {
-      int si = java.util.Arrays.binarySearch(ssp, p);
-      if (si >= 0)
-         return si; // return the index of the ssp position
-      return (-si - 1); // we are in a sequence, return the index of the following ssp position
-   }
-
-   private void writeAndClearMatches(int seqnum) {
-      ArrayList<Match> mi = null;
-      long total = 0;
-      int mseq = 0;
-      int ms;
-      out.printf(">%d:'''%s'''%n", seqnum, tdesc.get(seqnum));
-      for (int i = 0; i < sm; i++) { // sm is global := number of sequences in index!
-         mi = matches.get(i);
-         if (mi.size() == 0)
-            continue;
-         ms = 0;
-         for (Match mm : mi)
-            ms += mm.len;
-         if (ms >= minseqmatches * minlen) {
-            total += mi.size();
-            mseq++;
-            out.printf("@%d:'''%s'''%n", i, sdesc.get(i));
-            for (Match mm : mi)
-               out.printf(". %d %d %d %d%n", mm.tpos, mm.spos, mm.len, (long) mm.spos - mm.tpos);
-         }
-         mi.clear(); // clear match list
-      }
-      out.printf("<%d: %d %d%n%n", seqnum, mseq, total);
-   }
-
-   /** write the list of matches in current target sequence against whole index */
-   private void writeAndClearGlobalMatches(int seqnum) {
-      if (globalmatches.size() == 0)
-         return;
-      if (globalmatches.size() < minseqmatches) {
-         globalmatches.clear();
-         return;
-      }
-      if (globalmatches.size() > maxseqmatches) {
-         log.debug("qmatch: Sequence %d has too many (>=%d/%d) matches, skipping output", seqnum,
-               globalmatches.size(), maxseqmatches);
-         globalmatches.clear();
-         return;
-      }
-      for (GlobalMatch gm : globalmatches) {
-         out.printf("%d %d %d %d %d %d%n", seqnum, gm.tpos, gm.sseqnum, gm.spos, gm.len,
-               (long) gm.spos - gm.tpos);
-         // (sequence number, sequence position, index sequence number, index sequence position,
-         // length, diagonal)
-      }
-      globalmatches.clear();
-   }
-
-   /** simple structure for sorted matches, per index sequence */
-   private class Match {
-      final int tpos;
-      final int spos;
-      final int len;
-
-      public Match(final int tpos, final int spos, final int len) {
-         this.tpos = tpos;
-         this.spos = spos;
-         this.len = len;
-      }
-   }
-
-   /** simple structure for unsorted (global) matches */
-   private class GlobalMatch {
-      final int tpos;
-      final int sseqnum;
-      final int spos;
-      final int len;
-
-      public GlobalMatch(final int tpos, final int sseqnum, final int spos, final int len) {
-         this.tpos = tpos;
-         this.sseqnum = sseqnum;
-         this.spos = spos;
-         this.len = len;
-      }
-   }
 }
+
