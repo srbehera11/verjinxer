@@ -26,8 +26,11 @@ public class ProjectInfo {
 
    public ProjectInfo(String projectname) {
       this.projectname = projectname;
-      this.properties = new Properties();
       this.projectfilename = projectname + FileNameExtensions.prj;
+
+      Properties defaults = new Properties();
+      defaults.setProperty("BisulfiteIndex", "false");
+      this.properties = new Properties(defaults);
    }
 
    /**
@@ -85,6 +88,22 @@ public class ProjectInfo {
       return projectname + FileNameExtensions.qbuckets;
    }
 
+   public boolean isBisulfiteIndex() {
+      return getBooleanProperty("Bisulfite");
+   }
+   
+   public void setBisulfiteIndex(boolean value) {
+      setProperty("Bisulfite", value);
+   }
+   
+   public int getStride() {
+      return getIntProperty("Stride");
+   }
+   
+   public void setStride(int stride) {
+      setProperty("Stride", stride);
+   }
+   
    // TODO throws NumberFormatException?
    public int getIntProperty(final String name) {
       return Integer.parseInt(properties.getProperty(name));

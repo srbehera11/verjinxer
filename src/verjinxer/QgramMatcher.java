@@ -57,11 +57,12 @@ public class QgramMatcher {
    final int maxseqmatches;
 
    final MatchReporter matchReporter;
-
+   final QGramCoder qgramcoder;
    final BitArray toomanyhits;
+   final QGramFilter qgramfilter;
    
    /** whether the index is for bisulfite sequences */
-   final boolean bisulfite;
+   final boolean bisulfiteIndex;
    
    /** whether C matches C, even if not before G */
    final boolean c_matches_c; //
@@ -95,14 +96,16 @@ public class QgramMatcher {
    public QgramMatcher(Globals g, String dt, String ds, String toomanyhitsfilename,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
-         final boolean external, final boolean selfcmp, final boolean bisulfite,
-         final boolean c_matches_c, int stride, // TODO
+         final boolean external, final boolean selfcmp,
+         final boolean c_matches_c, 
          ProjectInfo project) throws IOException {
       this.g = g;
-      this.bisulfite = bisulfite;
+      this.bisulfiteIndex = project.isBisulfiteIndex();
+      this.qgramfilter = qgramfilter;
+      this.qgramcoder = qgramcoder;
       this.q = qgramcoder.q;
       this.c_matches_c = c_matches_c;
-      this.stride = stride;
+      this.stride = project.getStride();
 
       alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
 
@@ -119,11 +122,6 @@ public class QgramMatcher {
       }
       this.maxseqmatches = maxseqmatches;
       
-      if (c_matches_c)
-         log.info("qmatch: C matches C, even if no G follows");
-      else
-         log.info("qmatch: C matches C only before G");
-
       // variables written to in the following t tn tssp tm tdesc s ssp sm sdesc
 
       /* private void openFiles(String dt, String ds, String outname, boolean external) { */
@@ -162,7 +160,6 @@ public class QgramMatcher {
          matchReporter = new GlobalMatchReporter(ssp, minseqmatches, maxseqmatches, selfcmp, out);
       }
       
-      
       qgramindex = new QGramIndex(project);
       log.info("qmatch: mapping and reading files took %.1f sec", ttimer.tocs());
 
@@ -183,7 +180,7 @@ public class QgramMatcher {
     * 
     * @param thefilter
     */
-   public void match(QGramCoder coder, final QGramFilter thefilter) {
+   public void match() {
       // Walk through t:
       // (A) Initialization
       TicToc timer = new TicToc();
@@ -250,10 +247,10 @@ public class QgramMatcher {
 
          // (2) initialize qcode and active q-grams
          active = 0; // number of active q-grams
-         int qcode = coder.code(t, tp);
+         int qcode = qgramcoder.code(t, tp);
          assert qcode >= 0;
          seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
-               thefilter.isFiltered(qcode));
+               qgramfilter.isFiltered(qcode));
          if (seqmatches > maxseqmatches) {
             symremaining = 0;
             tp = (int) tssp[seqnum];
@@ -273,10 +270,10 @@ public class QgramMatcher {
             tp++;
             symremaining--;
             if (symremaining >= minlen) {
-               qcode = coder.codeUpdate(qcode, t[tp + q - 1]);
+               qcode = qgramcoder.codeUpdate(qcode, t[tp + q - 1]);
                assert qcode >= 0;
                seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
-                     thefilter.isFiltered(qcode));
+                     qgramfilter.isFiltered(qcode));
                if (seqmatches > maxseqmatches) {
                   symremaining = 0;
                   tp = (int) tssp[seqnum];
@@ -457,7 +454,7 @@ public class QgramMatcher {
             // determine newlen[ni] by comparing s[sp...] with t[tp...]
             int sp;
             int offset;
-            if (!bisulfite) {
+            if (!bisulfiteIndex) {
                sp = newpos[ni] + q;
                offset = q;
                while (s[sp] == t[tp + offset] && alphabet.isSymbol(s[sp])) {
@@ -738,7 +735,7 @@ public class QgramMatcher {
          if (ai == active || (ci < currentactive && currentpos[ci] - tp < activediag[ai])) {
             assert ci < currentactive;
             // new match, determine its length
-            if (bisulfite) {
+            if (bisulfiteIndex) {
                // FIXME cmc is ignored
                bisulfiteMatchLengthCmC(currentpos[ci], tp, match);
             } else {
