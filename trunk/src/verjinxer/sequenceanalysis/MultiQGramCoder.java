@@ -188,10 +188,12 @@ public class MultiQGramCoder {
          return ((t instanceof byte[]) ? ((byte[]) t)[p] : ((ByteBuffer) t).get(p));
       }
       
+      @Override
       public boolean hasNext() {
          return bisFwdRemaining>0 || bisRevRemaining>0 || it.hasNext();
       }
 
+      @Override
       public Long next() {
          if(bisFwdRemaining>0) {
             final long pc = (pos<<32) + bisFwdCodes[--bisFwdRemaining];
@@ -213,21 +215,18 @@ public class MultiQGramCoder {
          bisRevRemaining = bisRevCodes.length;
          //System.out.printf("   [pos=%d, fwd=%d, rev=%d]%n", pos, bisFwdRemaining, bisRevRemaining);
          
-//         callcount++;
-//         if (callcount % 100000 == 0)
-//            System.out.printf("%d %f%n", callcount, bicoder.getCacheFill());
          return pc;
       }
 
+      @Override
       public void remove() {
          throw new UnsupportedOperationException("remove not supported.");
       }
-   } // end iterator class
+   }
    // --------------------------------------------------------------------------
    
    
    // =================== end iterator methods ==================================
-   // ===========================================================================
    
    
    /**
