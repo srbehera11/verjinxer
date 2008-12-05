@@ -13,17 +13,18 @@ import java.util.Iterator;
 public class MultiQGramCoder {
 
    /** the underlying q-gram coder */
-   public final QGramCoder qcoder;
+   private final QGramCoder qcoder;
+   
    /** the underlying bisulfite coder */
-   public final BisulfiteQGramCoder bicoder;
+   private final BisulfiteQGramCoder bicoder;
+   
    /** the q-gram length */
-   public final int q;
-   /** the alphabet size */
-   public final int asize;
-   /** number of q-grams, equals asize^q */
-   public final int numberOfQGrams;
+   private final int q;
+
    /** using bisulfite? */
    public final boolean bisulfite;
+
+   private final int numberOfQGrams;
 
    /**
     * Creata a new MultiQGramcoder for the given q-gram length and alphabet size.
@@ -42,9 +43,16 @@ public class MultiQGramCoder {
          qcoder = new QGramCoder(q, asize);
       }
       this.bisulfite = bisulfite;
-      this.asize = asize;
       this.q = q;
       this.numberOfQGrams = qcoder.numberOfQGrams;
+   }
+   
+   public QGramCoder getQCoder() {
+      return qcoder;
+   }
+
+   public int getNumberOfQGrams() {
+      return numberOfQGrams;
    }
    
    
