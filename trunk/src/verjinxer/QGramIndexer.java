@@ -23,7 +23,7 @@ import verjinxer.util.TicToc;
 public class QGramIndexer {
    private static final Logger log = Globals.log;
    final boolean external;
-   final boolean bisulfite;
+   final boolean bisulfiteIndex;
    final int stride;
    Globals g;
 
@@ -41,20 +41,20 @@ public class QGramIndexer {
       this(g, project, q, false, false, 1, null);
    }
    
-   public QGramIndexer(Globals g, ProjectInfo project, int q, boolean external, boolean bisulfite,
+   public QGramIndexer(Globals g, ProjectInfo project, int q, boolean external, boolean bisulfiteIndex,
          int stride, String filterparam) {
       this.g = g;
       this.external = external;
       this.stride = stride;
-      this.bisulfite = bisulfite;
+      this.bisulfiteIndex = bisulfiteIndex;
       this.project = project;
 
       asize = project.getIntProperty("LargestSymbol") + 1;
       separator = (byte) project.getIntProperty("Separator");
       project.setProperty("LastAction", "qgram");
-      project.setProperty("Bisulfite", bisulfite);
+      project.setBisulfiteIndex(bisulfiteIndex);
       project.setProperty("qAlphabetSize", asize);
-      project.setProperty("Stride", stride);
+      project.setStride(stride);
 
       // determine q-gram size qq, either from given -q option, or default by length
       int qq;
@@ -236,7 +236,7 @@ public class QGramIndexer {
     *         q-bucket size.
     * @throws java.io.IOException
     * @throws java.lang.IllegalArgumentException
-    *            if bisulfite is set, but asize is not 4
+    *            if bisulfiteIndex is set, but asize is not 4
     */
    public void generateAndWriteIndex(
          final String seqfile,
@@ -249,7 +249,7 @@ public class QGramIndexer {
       final ByteBuffer in = readSequenceFile(seqfile, external);
       final long ll = in.limit();
 
-      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
+      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfiteIndex);
       final int aq = coder.numberOfQGrams;
       log.info("  counting %d different %d-grams...", aq, q);
 
@@ -376,7 +376,7 @@ public class QGramIndexer {
     *           filename of the q-gram index
     * @param thefilter
     *           a QGramFilter, filtered q-grams should not appear in the index
-    * @param bisulfite
+    * @param bisulfiteIndex
     *           whether the index also contains bisulfite-treated q-grams
     * @return an index &gt;=0 where the first error in qpos is found, or -N-1&lt;0, where N is the
     *         number of q-grams in the index.
@@ -384,7 +384,7 @@ public class QGramIndexer {
     */
    public int checkQGramIndex(final String seqfile, final int q, final int asize,
          final String bucketfile, final String qposfile, final QGramFilter thefilter,
-         final boolean bisulfite) throws IOException {
+         final boolean bisulfiteIndex) throws IOException {
       // Read sequence and bucketfile into arrays
       System.gc();
       TicToc timer = new TicToc();
@@ -399,7 +399,7 @@ public class QGramIndexer {
       log.info("  %s has length %d, contains %d %d-grams", seqfile, n, n - q + 1, q);
 
       // Initialize q-gram storage
-      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfite);
+      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfiteIndex);
       final QGramCoder qcoder = coder.qcoder;
       byte[] qgram = new byte[q];
 
@@ -494,7 +494,7 @@ public class QGramIndexer {
       final int ffc = project.getIntProperty("qFilterComplexity");
       final int ffm = project.getIntProperty("qFilterDelta");
       final QGramFilter fff = new QGramFilter(q, asize, ffc, ffm);
-      final boolean bisulfite = project.getBooleanProperty("Bisulfite");
+      final boolean bisulfiteIndex = project.isBisulfiteIndex();
 
       // call checking routine
       log.info("qgramcheck: checking %s... q=%d, asize=%d", in, q, asize);
@@ -502,7 +502,7 @@ public class QGramIndexer {
       int result = 0;
       try {
          result = checkQGramIndex(in + FileNameExtensions.seq, q, asize, in
-               + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff, bisulfite);
+               + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff, bisulfiteIndex);
       } catch (IOException ex) {
          log.warn("qgramcheck: error on %s: %s", in, ex);
       }

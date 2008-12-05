@@ -50,21 +50,19 @@ public final class QGramCoder
    }
    
    /** the q-gram length */
-   public final int q;              // intentionally public; final cannot be changed!
+   public final int q;     
+   
    /** alphabet size; the alphabet is {0,1, ..., asize-1} */
-   public final int asize;          // intentionally public; final cannot be changed!
+   public final int asize;    
+   
    /** the number of different q-grams, equals asize^q */
-   public final int numberOfQGrams; // intentionally public; final cannot be changed!
+   public final int numberOfQGrams; 
 
-   private final int mod;       // equals asize^(q-1):  q-1 q-2 ... 1 0
+   /** equals asize^(q-1):  q-1 q-2 ... 1 0 */
+   private final int mod;       
    
-   ///** @return the q-value of this coder */
-   //public int getq() { return q; }
-   
-   ///** @return the alphabet size of this coder */
-   //public int getAsize() { return asize; }
-  
-   /** compute the q-gram code (at position zero) of a byte array.
+ 
+   /** computes the q-gram code (at position zero) of a byte array.
     * @param qgram a byte array with the numbers to be interpreted as base-asize number
     * @return the qgram code &gt;=0 if there is a valid q-gram;
     *   but if an illegal character appears at position i, return -i-1 &lt; 0.
@@ -74,7 +72,7 @@ public final class QGramCoder
       return code(qgram, 0);
    }
    
-   /** compute the q-gram code at a given position of a byte array.
+   /** computes the q-gram code at a given position of a byte array.
     * @param qgram  a byte array for which to compute a q-gram code
     * @param offset position in the array at which to compute the q-gram code
     * @return the qgram code &gt;=0 if there is a valid q-gram;
@@ -528,9 +526,4 @@ public final class QGramCoder
 
       public final void remove()     { throw new UnsupportedOperationException();  }
    }
-   
-   
-   
-   // ================== end iterator classes ===========================
-   
-} // end class
+}

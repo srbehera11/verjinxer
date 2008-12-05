@@ -80,7 +80,7 @@ verlängern
 - sorted rausfactorn
 
 
-
+- log.info within the help() method does not write anything when --quiet is selected
 
 
 

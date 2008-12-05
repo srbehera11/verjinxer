@@ -65,10 +65,12 @@ public class QgramMatcherSubcommand implements Subcommand {
     log.info("  -o, --out <filename> specify output file (use # for stdout)");
     log.info("  -x, --external       save memory at the cost of lower speed");
     log.info("  -c, --cmatchesc      C matches C, even if not before G");
+    log.info("  -b, --bisulfite      index is over bisulfite-modified DNA reads.");
+    log.info("                       simulates bisulfite modification for the queries");
   }
   
   /** if run independently, call main
-   *@param args (ignored)
+   *
    */
   public static void main(String[] args) {
     new QgramMatcherSubcommand(new Globals()).run(args);
@@ -76,7 +78,6 @@ public class QgramMatcherSubcommand implements Subcommand {
  
   /** 
    * @param gl the Globals structure
-   * @param args the command line arguments
    */
   public QgramMatcherSubcommand(Globals gl) {
      g = gl;
@@ -130,20 +131,18 @@ public class QgramMatcherSubcommand implements Subcommand {
      }
      g.startProjectLogging(project);
      
-     // TODO some ugly things because I insist that asize and q be final
-     
-     int asizetmp, qtmp;
-     
+     final int asize, q;
+
      // Read project data and determine asize, q; read alphabet map
      try { 
-       asizetmp = project.getIntProperty("qAlphabetSize");
-       qtmp = project.getIntProperty("q");
+       asize = project.getIntProperty("qAlphabetSize");
+       q = project.getIntProperty("q");
      } catch (NumberFormatException ex) {
        log.error("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s", ds, ex);
        return 1;
      } 
-     final int asize=asizetmp, q=qtmp;
 
+     
      // q-gram filter options from -F option
      final QGramFilter qgramfilter = new QGramFilter(q, asize, opt.get("F"));
 
@@ -180,13 +179,26 @@ public class QgramMatcherSubcommand implements Subcommand {
        else outname=opt.get("o");
      }
      if (outname!=null)  outname = g.outdir + outname + (sorted? ".sorted-matches" : ".matches");
+     log.info("qmatch: will write results to %s", (outname!=null? "'"+outname+"'" : "stdout"));
 
+     final boolean bisulfiteQueries = opt.isGiven("b");
+     final boolean bisulfiteIndex = project.isBisulfiteIndex();
+     if (bisulfiteIndex) log.info("qmatch: index is for bisulfite sequences, using bisulfite matching");
+     
+     if (bisulfiteQueries) {
+        log.info("qmatch: will simulate bisulfite treatment for query sequences");
+     }
+     if (bisulfiteIndex && bisulfiteQueries) {
+        log.error("qmatch: sorry, index contains bisulfite-simulated sequences and you also requested\n"+
+              "bisulfite simulation of the query sequences. This does not work.");
+        return 1;
+     }
      boolean c_matches_c = opt.isGiven("c");
-
      if (c_matches_c) log.info("qmatch: C matches C, even if no G follows");
      else log.info("qmatch: C matches C only before G");
-
-     // end of option parsing
+     
+     final int stride = project.getStride();
+     log.info("qmatch: stride of index is %d", stride);
 
      // start output
      PrintWriter out = new PrintWriter(System.out);
@@ -197,13 +209,9 @@ public class QgramMatcherSubcommand implements Subcommand {
          log.error("qmatch: could not create output file. Stop."); return 1;
        }
      }
-     log.info("qmatch: will write results to %s", (outname!=null? "'"+outname+"'" : "stdout"));
+     
      
      final QGramCoder qgramcoder = new QGramCoder(q, asize);
-     final boolean bisulfite = project.getBooleanProperty("Bisulfite");
-     if (bisulfite) log.info("qmatch: index is for bisulfite sequences, using bisulfite matching");
-     final int stride = project.getIntProperty("Stride");
-     log.info("qmatch: stride of index is %d", stride);
      
      try {
         QgramMatcher qgrammatcher = new QgramMatcher(
@@ -219,12 +227,10 @@ public class QgramMatcherSubcommand implements Subcommand {
               out,
               sorted, 
               external,
-              selfcmp, 
-              bisulfite,
+              selfcmp,
               c_matches_c,
-              stride,
               project);
-        qgrammatcher.match(qgramcoder, qgramfilter);
+        qgrammatcher.match();
         qgrammatcher.tooManyHits(dt+".toomanyhits-filter");
      } catch (IOException ex) {
         log.error("could not initialize qgrammatcher: "+ex.getMessage());

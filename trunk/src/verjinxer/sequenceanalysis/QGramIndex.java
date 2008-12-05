@@ -156,7 +156,7 @@ public class QGramIndex {
    public QGramIndex(final ProjectInfo project) throws IOException {
       this(project.getQPositionsFileName(), project.getQBucketsFileName(),
             project.getMaximumBucketSize(), project.getIntProperty("q"),
-            project.getIntProperty("Stride"));
+            project.getStride());
    }
 
    /** @return maximum bucket size */
