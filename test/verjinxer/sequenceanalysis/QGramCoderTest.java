@@ -111,7 +111,7 @@ public class QGramCoderTest extends TestCase {
       for(long pc: coder.sparseQGrams(text, (byte)-1)) {
          final int p = (int)(pc>>32);
          final int c = (int)pc;
-         System.out.printf("pos=%d:  code=%d  (%s)%n", p, c, coder.qcoder.qGramString(c, DNA));
+         System.out.printf("pos=%d:  code=%d  (%s)%n", p, c, coder.getQCoder().qGramString(c, DNA));
       }
       System.out.println();
    }

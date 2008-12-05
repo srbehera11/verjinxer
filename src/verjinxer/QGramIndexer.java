@@ -111,7 +111,7 @@ public class QGramIndexer {
          final String qseqfreqfile, final byte separator) {
 
       final TicToc timer = new TicToc();
-      final int aq = coder.numberOfQGrams;
+      final int aq = coder.getNumberOfQGrams();
       int[] lastseq = null; // lastseq[i] == k := q-gram i was last seen in sequence k
       int[] sfrq = null; // sfrq[i] == n := q-gram i appears in n distinct sequences.
       final int[] frq = new int[aq + 1]; // frq[i] == n := q-gram i appears n times; space for
@@ -136,9 +136,10 @@ public class QGramIndexer {
             seqnum++;
             continue;
          }
+
          assert qcode >= 0 && qcode < frq.length : String.format(
                "Error: qcode=%d at pos %d (%s)", qcode, pos, StringUtils.join("",
-                     coder.qcoder.qGram(qcode), 0, coder.q)); // DEBUG
+                     coder.getQCoder().qGram(qcode), 0, coder.getQCoder().q)); // DEBUG
          if (pos % stride == 0)
             frq[qcode]++;
          if (doseqfreq && lastseq[qcode] < seqnum) {
@@ -250,7 +251,7 @@ public class QGramIndexer {
       final long ll = in.limit();
 
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfiteIndex);
-      final int aq = coder.numberOfQGrams;
+      final int aq = coder.getNumberOfQGrams();
       log.info("  counting %d different %d-grams...", aq, q);
 
       // Scan file once and count qgrams.
@@ -400,7 +401,7 @@ public class QGramIndexer {
 
       // Initialize q-gram storage
       final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfiteIndex);
-      final QGramCoder qcoder = coder.qcoder;
+      final QGramCoder qcoder = coder.getQCoder();
       byte[] qgram = new byte[q];
 
       // Read the q-position array.
