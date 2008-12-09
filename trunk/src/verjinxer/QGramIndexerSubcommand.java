@@ -96,7 +96,6 @@ public final class QGramIndexerSubcommand implements Subcommand {
       final int q = (opt.isGiven("q"))? Integer.parseInt(opt.get("q")) : 0;
 
       stride = opt.isGiven("s") ? Integer.parseInt(opt.get("s")) : 1;
-      
       log.info("qgram: stride width is %d", stride);
       
       // Loop through all files
