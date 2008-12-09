@@ -94,7 +94,7 @@ public class QGramCoderTest extends TestCase {
       
       final int[] qcodes  = new int[correct.length];
       Arrays.fill(qcodes, SKIP);
-      for (long pc: coder.sparseQGrams(text, -1)) {
+      for (long pc: coder.sparseQGrams(text, (byte)-1)) {
          final int p = (int)(pc>>32);
          qcodes[p] = (int)pc;
       }
@@ -107,11 +107,11 @@ public class QGramCoderTest extends TestCase {
    
    public void testMulti() {
       final Alphabet DNA = Alphabet.DNA();
-      final MultiQGramCoder coder = new MultiQGramCoder(q, 4, true);
+      final BisulfiteQGramCoder coder = new BisulfiteQGramCoder(q);
       for(long pc: coder.sparseQGrams(text, (byte)-1)) {
          final int p = (int)(pc>>32);
          final int c = (int)pc;
-         System.out.printf("pos=%d:  code=%d  (%s)%n", p, c, coder.getQCoder().qGramString(c, DNA));
+         System.out.printf("pos=%d:  code=%d  (%s)%n", p, c, coder.qGramString(c, DNA));
       }
       System.out.println();
    }

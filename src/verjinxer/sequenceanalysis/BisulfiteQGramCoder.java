@@ -1,6 +1,8 @@
 package verjinxer.sequenceanalysis;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * This class is a special QGramCoder that simulates bisulfite treatment on its input sequence.
@@ -11,11 +13,8 @@ import java.util.ArrayList;
  * @author Marcel Martin
  * @author Sven Rahmann
  */
-public final class BisulfiteQGramCoder {
-   
-   public final QGramCoder coder; // underlying q-gram coder
-   public final int q;            // q-gram length
-   
+public final class BisulfiteQGramCoder extends QGramCoder {
+
    /**
     * A cache for the results of the bisulfite treatment. Note that the indexing is special:
     * To get the actual index into the cache, use qCodeToIndex.
@@ -24,49 +23,28 @@ public final class BisulfiteQGramCoder {
    private final boolean[] cached;
    private final ArrayList<Integer> tmpQCodes;
    private final byte[] tmpQGram;
-   private final int[] empty;
-   
-   /**
-    * Creates a new BisulfiteQGramCoder. The alphabet size is fixed to 4 (A, C, G, T).
-    * @param q length of the q-grams coded by this instance
-    */
-   public BisulfiteQGramCoder(int q) {
-      coder = new QGramCoder(q, ASIZE);
-      this.q = q;
-      empty = new int[0];
-      cache = new int[coder.numberOfQGrams * 4][];
-      cached = new boolean[coder.numberOfQGrams];
-      for (int i = 0; i < cached.length; ++i) 
-         cached[i] = false;
-      tmpQGram = new byte[q];
-      final int zweiHochQHalbe = (1<<((q+1)/2)) + 2; // 2^ceil(q/2) plus some extra space
-      tmpQCodes = new ArrayList<Integer>(zweiHochQHalbe);
-   }
-
-   /* TODO delete this comment 
-    * For each q-code, computes the q-codes that are
-    * compatible under bisulfite treatment rules.
-    * For each q-code, there are four different possible
-    * sets of compatible q-codes, depending on whether
-    * the corresponding q-gram is preceded by a C or
-    * followed by a G. The four different combinations are
-    * numbered as follows:
-    * 0: no C | qgram | no G
-    * 1: no C | qgram | G
-    * 2: C    | qgram | no G
-    * 3: C    | qgram | G
-    * 
-    * compatibleQCodes accordingly contains, at each position, a four-element
-    * array of int arrays.
-    */
-
+   private final int[] empty = new int[0];
 
    // (hardcoded) encoding for nucleotides
    public static final byte NUCLEOTIDE_A = 0;
    public static final byte NUCLEOTIDE_C = 1;
    public static final byte NUCLEOTIDE_G = 2;
    public static final byte NUCLEOTIDE_T = 3;
-   private static final int ASIZE = 4; // alphabet size
+
+   /**
+    * Creates a new BisulfiteQGramCoder. The alphabet size is fixed to 4 (A, C, G, T).
+    * @param q length of the q-grams coded by this instance
+    */
+   public BisulfiteQGramCoder(int q) {
+      super(q, 4);
+      cache = new int[numberOfQGrams * 4][];
+      cached = new boolean[numberOfQGrams];
+      for (int i = 0; i < cached.length; ++i) 
+         cached[i] = false;
+      tmpQGram = new byte[q];
+      final int zweiHochQHalbe = (1<<((q+1)/2)) + 2; // 2^ceil(q/2) plus some extra space
+      tmpQCodes = new ArrayList<Integer>(zweiHochQHalbe);
+   }
 
    /** Converts a qcode to an index usable for the cache array */
    private int qCodeToIndex(int qcode, boolean reverse, boolean specialBorder) {
@@ -75,7 +53,7 @@ public final class BisulfiteQGramCoder {
       if (specialBorder) i |= 1;
       return i;
    }
-   
+
    /**
     * Checks whether a given q-gram matches another given q-gram, 
     * under bisulfite replacement rules.
@@ -85,21 +63,22 @@ public final class BisulfiteQGramCoder {
     * @param p     starting position within s
     * @return true iff qgram[i..i+q-1] can be derived from s[p..p+q-1] under bisulfite rules.
     */   
+   @Override
    public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
-      int biCode = coder.code(qgram, i);
+      int biCode = code(qgram, i);
       boolean CBefore = (p > 0 && s[p-1] == NUCLEOTIDE_C);
-      boolean GFollows = (p+coder.q < s.length && s[p+coder.q] == NUCLEOTIDE_G);
-      
-      int origCode = coder.code(s, p);
+      boolean GFollows = (p+q < s.length && s[p+q] == NUCLEOTIDE_G);
+
+      int origCode = code(s, p);
       if (!cached[origCode]) {
          computeCompatibleQCodes(origCode);
       }
-      
+
       // forward
       for (int code : cache[qCodeToIndex(origCode, false, GFollows)]) {
          if (code == biCode) return true;
       }
-      
+
       // reverse
       for (int code : cache[qCodeToIndex(origCode, true, CBefore)]) {
          if (code == biCode) return true;
@@ -107,13 +86,13 @@ public final class BisulfiteQGramCoder {
 
       return false; 
    }
-   
+
    /** adds bisulfite qcodes of qcode to the cache. qcode must be >= 0 */
    private void computeCompatibleQCodes(int qcode) {
-      coder.qGram(qcode, tmpQGram); // get the q-gram into tmpQGram (which is pre-allocated)
- 
+      qGram(qcode, tmpQGram); // get the q-gram into tmpQGram (which is pre-allocated)
+
       ArrayList<Integer> result = tmpQCodes;
-      
+
       // t is encoded as follows:
       // bit 0: specialBorder
       // bit 1: reverse
@@ -158,9 +137,9 @@ public final class BisulfiteQGramCoder {
          if (loneReactions==0) { 
             // no lone reactions: we have re-generated the original q-code, too.
             // the original q-code must be the last one in the list -> remove it.
-           final int last = result.size()-1;
-           assert result.get(last) == qcode; // last inserted must be equal to original
-           result.remove(last);
+            final int last = result.size()-1;
+            assert result.get(last) == qcode; // last inserted must be equal to original
+            result.remove(last);
          }
          // add to cache 
          // TODO can this be done more efficiently?
@@ -170,7 +149,7 @@ public final class BisulfiteQGramCoder {
       }
       cached[qcode] = true;
    }
-   
+
    /**
     * Returns 
     * @param s
@@ -180,7 +159,7 @@ public final class BisulfiteQGramCoder {
    /*public ArrayList<byte[]> compatibleQGrams(final byte[] s, final int p) {
       throw new UnsupportedOperationException("Not yet implemented");
    }*/
-   
+
    /**
     * For a given q-gram code (with alphabet size 4),
     * returns all q-gram codes that can arise from it by bisulfite treatment.
@@ -207,8 +186,8 @@ public final class BisulfiteQGramCoder {
       }
       return cache[qCodeToIndex(qcode, reverse, specialBorder)];
    }
-   
-   /** @return the cache fill ratio (between 1 and 0) */
+
+   /** @return the cache fill ratio (between 0 and 1) */
    public double getCacheFill() {
       int c = 0;
       for (int i = 0; i < cached.length; ++i) {
@@ -216,4 +195,137 @@ public final class BisulfiteQGramCoder {
       }
       return (double)c/cached.length;
    }
+
+   /**
+    * Produces a q-gram iterator over a byte source.
+    * 
+    * @param t
+    *           the text
+    * @return an iterator that iterates over valid q-grams in t, not over invald q-grams or
+    *         separators.
+    */
+   @Override
+   protected Iterator<Long> sparseQGramIterator(final ByteBuffer t) {
+      return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
+   }
+
+   /**
+    * Produces a q-gram iterator over a byte source.
+    * 
+    * @param t
+    *           the text
+    * @return an iterator that iterates over valid q-grams in t, not over invald q-grams or
+    *         separators.
+    */
+   @Override
+   protected Iterator<Long> sparseQGramIterator(final byte[] t) {
+      return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
+   }
+
+   /**
+    * Produces a q-gram iterator over a byte source.
+    * 
+    * @param t
+    *           the text
+    * @param separator
+    *           specifies the code of the separator in t.
+    * @return an iterator that iterates over valid q-grams in t, and over separators.
+    */
+   @Override
+   protected Iterator<Long> sparseQGramIterator(final byte[] t, final byte separator) {
+      return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
+   }
+
+   /**
+    * Produces a q-gram iterator over a byte source.
+    * 
+    * @param t
+    *           the text
+    * @param separator
+    *           specifies the code of the separator in t.
+    * @return an iterator that iterates over valid q-grams in t, and over separators.
+    */
+   @Override
+   protected Iterator<Long> sparseQGramIterator(final ByteBuffer t, final byte separator) {
+      return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
+   }
+
+
+   /**
+    * sparse iterator class for both standard and bisulfite q-grams
+    * (if bisulfite == false in the enclosing instance,
+    * the iterator is deferred to the QGramCoder class.)
+    * 
+    */
+   class BisulfiteSparseQGramIterator implements Iterator<Long> {
+      private final Iterator<Long> it; // iterator of the underlying QGramCoder
+      private int bisFwdRemaining = 0; // number of remaining forward bisulfite codes
+      private int bisRevRemaining = 0; // number of ramaining reverse bisulfite codes
+      private int[] bisFwdCodes = null; // remaining forward bisulfite codes
+      private int[] bisRevCodes = null; // remaining reverse bisulfite codes
+      private long pos = -1;
+
+      /** sequence over which to iterate */
+      private final Object t;
+      private final int tLength;
+
+      BisulfiteSparseQGramIterator(final ByteBuffer t, Iterator<Long> it) {
+         System.err.printf("hmmm");
+         this.t = t;
+         tLength = t.limit();
+         this.it = it;
+      }
+
+      BisulfiteSparseQGramIterator(final byte[] t, Iterator<Long> it) {
+         System.err.printf("hmmm");
+         this.t = t;
+         tLength = t.length;
+         this.it = it;
+      }
+
+      public byte charAt(final int p) {
+         if (p < 0 || p >= tLength)
+            return ((byte) -1);
+         return ((t instanceof byte[]) ? ((byte[]) t)[p] : ((ByteBuffer) t).get(p));
+      }
+
+      @Override
+      public boolean hasNext() {
+         return bisFwdRemaining > 0 || bisRevRemaining > 0 || it.hasNext();
+      }
+
+      @Override
+      public Long next() {
+         if (bisFwdRemaining > 0) {
+            final long pc = (pos << 32) + bisFwdCodes[--bisFwdRemaining];
+            return pc;
+         }
+         if (bisRevRemaining > 0) {
+            final long pc = (pos << 32) + bisRevCodes[--bisRevRemaining];
+            return pc;
+         }
+         // get standard q-code first (no bisulfite replacement)
+         final long pc = it.next();
+         pos = (pc >>> 32);
+         final int qcode = (int) pc;
+            
+         // get forward bisulfite q-codes. If original q-code is invalid, get empty list.
+         bisFwdCodes = bisulfiteQCodes(qcode, false,
+               charAt((int) (pos + q)) == BisulfiteQGramCoder.NUCLEOTIDE_G);
+         bisFwdRemaining = bisFwdCodes.length;
+         // get reverse bisulfite q-codes. If original q-code is invalid, get empty list.
+         bisRevCodes = bisulfiteQCodes(qcode, true,
+               charAt((int) (pos - 1)) == BisulfiteQGramCoder.NUCLEOTIDE_C);
+         bisRevRemaining = bisRevCodes.length;
+         // System.out.printf("   [pos=%d, fwd=%d, rev=%d]%n", pos, bisFwdRemaining, bisRevRemaining);
+
+         return pc;
+      }
+
+      @Override
+      public void remove() {
+         throw new UnsupportedOperationException("remove not supported.");
+      }
+   }
+
 }

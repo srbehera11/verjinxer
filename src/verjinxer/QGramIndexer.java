@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import com.spinn3r.log5j.Logger;
 
+import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.MultiQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
@@ -107,7 +108,7 @@ public class QGramIndexer {
     *         
     * TODO not only computes frequencies but also writes sequence frequencies
     */
-   private int[] computeFrequencies(final ByteBuffer in, final MultiQGramCoder coder,
+   private int[] computeFrequencies(final ByteBuffer in, final QGramCoder coder,
          final String qseqfreqfile, final byte separator) {
 
       final TicToc timer = new TicToc();
@@ -129,17 +130,18 @@ public class QGramIndexer {
       int seqnum = 0;
       for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
          final int qcode = (int) pc;
-         final int pos = (int) (pc >> 32); // pos only necessary for assert statement, otherwise
-         // unused!
+         // pos only necessary for assert statement, otherwise unused!
+         final int pos = (int) (pc >> 32); 
          if (qcode < 0) {
             assert doseqfreq;
             seqnum++;
             continue;
          }
 
-         assert qcode >= 0 && qcode < frq.length : String.format(
-               "Error: qcode=%d at pos %d (%s)", qcode, pos, StringUtils.join("",
-                     coder.getQCoder().qGram(qcode), 0, coder.getQCoder().q)); // DEBUG
+         // TODO make this work again
+//         assert qcode >= 0 && qcode < frq.length : String.format(
+//               "Error: qcode=%d at pos %d (%s)", qcode, pos, StringUtils.join("",
+//                     coder.getQCoder().qGram(qcode), 0, coder.getQCoder().q)); // DEBUG
          if (pos % stride == 0)
             frq[qcode]++;
          if (doseqfreq && lastseq[qcode] < seqnum) {
@@ -250,7 +252,12 @@ public class QGramIndexer {
       final ByteBuffer in = readSequenceFile(seqfile, external);
       final long ll = in.limit();
 
-      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfiteIndex);
+      final QGramCoder coder;
+      if (bisulfiteIndex) {
+         coder = new BisulfiteQGramCoder(q);
+      } else {
+         coder = new QGramCoder(q, asize);
+      }
       final int aq = coder.getNumberOfQGrams();
       log.info("  counting %d different %d-grams...", aq, q);
 
@@ -332,10 +339,9 @@ public class QGramIndexer {
 //      try {
 //         project.store();
 //      } catch (IOException ex) {
-      // TODO the following message
+////       TODO the following message
 //         log.error("qgram: could not write %s, skipping! (%s)", project.getFileName(), ex);
 //      }
-      
 
       // clean up, return arrays only if not external and they fit in memory
       outfile.close();
