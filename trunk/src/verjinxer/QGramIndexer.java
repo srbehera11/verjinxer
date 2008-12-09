@@ -11,7 +11,6 @@ import java.util.Arrays;
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
-import verjinxer.sequenceanalysis.MultiQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.util.ArrayFile;
@@ -406,8 +405,12 @@ public class QGramIndexer {
       log.info("  %s has length %d, contains %d %d-grams", seqfile, n, n - q + 1, q);
 
       // Initialize q-gram storage
-      final MultiQGramCoder coder = new MultiQGramCoder(q, asize, bisulfiteIndex);
-      final QGramCoder qcoder = coder.getQCoder();
+      final QGramCoder coder;
+      if (bisulfiteIndex) {
+         coder = new BisulfiteQGramCoder(q);
+      } else {
+         coder = new QGramCoder(q, asize);
+      }
       byte[] qgram = new byte[q];
 
       // Read the q-position array.
@@ -425,7 +428,7 @@ public class QGramIndexer {
          while (r == bck[b + 1])
             b++;
          if (bold != b)
-            qgram = qcoder.qGram(b, qgram);
+            qgram = coder.qGram(b, qgram);
          // TODO: check whether qgram (in index) is bis-compatible to s[i...i+q-1] (text q-gram).
          if (!coder.areCompatible(qgram, 0, s, i)) {
             log.info("r=%d, i=%d, expected: %s, observed: %s.", r, i, StringUtils.join("", qgram,
@@ -441,12 +444,12 @@ public class QGramIndexer {
       for (int ii = 0; ii < n - q + 1; ii++) {
          if (sok.get(ii) == 1)
             continue;
-         final int cd = qcoder.code(s, ii);
+         final int cd = coder.code(s, ii);
          if (cd < 0 || thefilter.get(cd) == 1)
             continue;
          log.info(
                "  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and not filtered!",
-               ii, cd, StringUtils.join("", qcoder.qGram(cd, qgram), 0, q));
+               ii, cd, StringUtils.join("", coder.qGram(cd, qgram), 0, q));
          return n; // error: return length of the text ( > number of q-positions)
       }
 

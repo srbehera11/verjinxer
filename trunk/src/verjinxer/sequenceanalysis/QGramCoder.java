@@ -207,7 +207,7 @@ public class QGramCoder {
     *           starting position within s
     * @return true iff qgram[i..i+q-1] equals s[p..p+q-1].
     */
-   boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
+   public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
       for (int j = 0; j < q; j++)
          if (qgram[i + j] != s[p + j])
             return false;
