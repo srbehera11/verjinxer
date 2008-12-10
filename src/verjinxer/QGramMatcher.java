@@ -19,7 +19,7 @@ import verjinxer.util.BitArray;
 import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
-public class QgramMatcher {
+public class QGramMatcher {
    private static final Logger log = Globals.log;
    final Globals g;
 
@@ -93,7 +93,7 @@ public class QgramMatcher {
     * @param toomanyhits
     *           may be null
     */
-   public QgramMatcher(Globals g, String dt, String ds, String toomanyhitsfilename,
+   public QGramMatcher(Globals g, String dt, String ds, String toomanyhitsfilename,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
          final boolean external, final boolean selfcmp,
@@ -122,8 +122,6 @@ public class QgramMatcher {
       }
       this.maxseqmatches = maxseqmatches;
       
-      // variables written to in the following t tn tssp tm tdesc s ssp sm sdesc
-
       /* private void openFiles(String dt, String ds, String outname, boolean external) { */
       // Read text, text-ssp, seq, qbck, ssp into arrays;
       // read sequence descriptions;
