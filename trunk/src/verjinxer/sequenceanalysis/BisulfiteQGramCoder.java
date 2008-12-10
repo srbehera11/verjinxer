@@ -270,14 +270,12 @@ public final class BisulfiteQGramCoder extends QGramCoder {
       private final int tLength;
 
       BisulfiteSparseQGramIterator(final ByteBuffer t, Iterator<Long> it) {
-         System.err.printf("hmmm");
          this.t = t;
          tLength = t.limit();
          this.it = it;
       }
 
       BisulfiteSparseQGramIterator(final byte[] t, Iterator<Long> it) {
-         System.err.printf("hmmm");
          this.t = t;
          tLength = t.length;
          this.it = it;

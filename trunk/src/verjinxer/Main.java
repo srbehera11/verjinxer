@@ -145,7 +145,7 @@ public class Main {
       } else if (command.startsWith("qf")) {
          new QgramFrequencer(g).run(rest);
       } else if (command.startsWith("qm")) {
-         subcommand = new QgramMatcherSubcommand(g);
+         subcommand = new QGramMatcherSubcommand(g);
       } else if (command.startsWith("su")) {
          new SuffixTrayBuilder(g).run(rest);
       } else if (command.startsWith("bigsu")) {
@@ -193,7 +193,7 @@ public class Main {
       } else if (command.startsWith("qf")) {
          new QgramFrequencer(g).help();
       } else if (command.startsWith("qm")) {
-         subcommand = new QgramMatcherSubcommand(g);
+         subcommand = new QGramMatcherSubcommand(g);
       } else if (command.startsWith("su")) {
          new SuffixTrayBuilder(g).help();
       } else if (command.startsWith("bigsu")) {
