@@ -187,6 +187,19 @@ public final class BisulfiteQGramCoder extends QGramCoder {
       return cache[qCodeToIndex(qcode, reverse, specialBorder)];
    }
 
+   /**
+    * Returns an array of all bisulfite qcodes of the q-gram at t[start..start+q-1]
+    * @param t
+    * @param reverse
+    * @return
+    */
+   public int[] bisulfiteQCodes(byte[] t, int start, final boolean reverse) {
+      int qcode = code(t, start);
+      boolean specialBorder = reverse && start > 0 && t[start-1] == NUCLEOTIDE_G ||
+            !reverse && start+q < t.length && t[start+q] == NUCLEOTIDE_C;
+      return bisulfiteQCodes(qcode, reverse, specialBorder);
+   }
+
    /** @return the cache fill ratio (between 0 and 1) */
    public double getCacheFill() {
       int c = 0;

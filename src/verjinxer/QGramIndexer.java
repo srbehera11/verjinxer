@@ -32,7 +32,7 @@ public class QGramIndexer {
    final int asize;
    final byte separator;
    final QGramFilter thefilter;
-   
+
    private int maximumFrequency = 0;
    private int maximumBucketSize = 0;
    private double[] times;
@@ -40,9 +40,9 @@ public class QGramIndexer {
    public QGramIndexer(Globals g, ProjectInfo project, int q) {
       this(g, project, q, false, false, 1, null);
    }
-   
-   public QGramIndexer(Globals g, ProjectInfo project, int q, boolean external, boolean bisulfiteIndex,
-         int stride, String filterparam) {
+
+   public QGramIndexer(Globals g, ProjectInfo project, int q, boolean external,
+         boolean bisulfiteIndex, int stride, String filterparam) {
       this.g = g;
       this.external = external;
       this.stride = stride;
@@ -90,7 +90,7 @@ public class QGramIndexer {
 
    /**
     * Reads the given ByteBuffer and computes q-gram frequencies. At this stage, filters are
-    * ignored: The frequencies are the orignial frequencies in the byte file, before applying a
+    * ignored: The frequencies are the original frequencies in the byte file, before applying a
     * filter. This implementation uses a sparse q-gram iterator.
     * 
     * @param in
@@ -98,14 +98,14 @@ public class QGramIndexer {
     * @param coder
     *           the q-gram coder.
     * @param qseqfreqfile
-    *           If this is not null, an array sfrq will be written to this file. sfrq[i] == n means:
-    *           q-gram i appears in n different sequences.
+    *           If this is not null, an array sfrq will be written to this file. 
+    *           sfrq[i] == n means: q-gram i appears in n different sequences.
     * @param separator
     *           a sequence separator, only used when qseqfreqfile != null.
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n
     *         times.
-    *         
-    * TODO not only computes frequencies but also writes sequence frequencies
+    * 
+    *         TODO not only computes frequencies but also writes sequence frequencies
     */
    private int[] computeFrequencies(final ByteBuffer in, final QGramCoder coder,
          final String qseqfreqfile, final byte separator) {
@@ -129,8 +129,7 @@ public class QGramIndexer {
       int seqnum = 0;
       for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
          final int qcode = (int) pc;
-         // pos only necessary for assert statement, otherwise unused!
-         final int pos = (int) (pc >> 32); 
+         final int pos = (int) (pc >> 32);
          if (qcode < 0) {
             assert doseqfreq;
             seqnum++;
@@ -138,9 +137,9 @@ public class QGramIndexer {
          }
 
          // TODO make this work again
-//         assert qcode >= 0 && qcode < frq.length : String.format(
-//               "Error: qcode=%d at pos %d (%s)", qcode, pos, StringUtils.join("",
-//                     coder.getQCoder().qGram(qcode), 0, coder.getQCoder().q)); // DEBUG
+         // assert qcode >= 0 && qcode < frq.length : String.format(
+         // "Error: qcode=%d at pos %d (%s)", qcode, pos, StringUtils.join("",
+         // coder.getQCoder().qGram(qcode), 0, coder.getQCoder().q)); // DEBUG
          if (pos % stride == 0)
             frq[qcode]++;
          if (doseqfreq && lastseq[qcode] < seqnum) {
@@ -153,7 +152,7 @@ public class QGramIndexer {
       log.info("  time for word counting: %.2f sec", timer.tocs());
       if (doseqfreq)
          g.dumpIntArray(qseqfreqfile, sfrq);
-      
+
       return frq;
    }
 
@@ -195,7 +194,7 @@ public class QGramIndexer {
       }
       bck[aq] = sum; // last entry (sentinel) shows how many entries in index
       final Object[] result = { bck, maxbcksize };
-      
+
       return result;
    }
 
@@ -227,26 +226,21 @@ public class QGramIndexer {
     * @param qseqfreqfile
     *           filename for q-gram sequence frequencies, i.e., in how many different sequences does
     *           the q-gram appear?
-    * @return 
-    *         the QGramIndex unless external and unless not enough memory. 
-    *         note that the index is both written to disk and returned.
-    * @return array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where in.t[] bck: array
-    *         of q-bucket starts in qpos (null if external); int[] qpos: array of starting positions
-    *         of q-grams in the text (null if external); int[] qfreq: array of q-gram frequencies
-    *         (null if external); double[] times: contains the times taken to compute the q-gram
-    *         index in seconds; Integer maxfreq: largest frequency; Integer maxqbck: largest
-    *         q-bucket size.
+    * @return the QGramIndex unless external and unless not enough memory. note that the index is
+    *         both written to disk and returned.
+    * @return array of size 6: { bck, qpos, qfreq, times, maxfreq, maxqbck }, where in.t[] bck:
+    *         array of q-bucket starts in qpos (null if external); int[] qpos: array of starting
+    *         positions of q-grams in the text (null if external); int[] qfreq: array of q-gram
+    *         frequencies (null if external); double[] times: contains the times taken to compute
+    *         the q-gram index in seconds; Integer maxfreq: largest frequency; Integer maxqbck:
+    *         largest q-bucket size.
     * @throws java.io.IOException
     * @throws java.lang.IllegalArgumentException
     *            if bisulfiteIndex is set, but asize is not 4
     */
-   public void generateAndWriteIndex(
-         final String seqfile,
-         final String bucketfile, 
-         final String qposfile, 
-         final String qfreqfile,
-         final String qseqfreqfile
-   ) throws IOException {
+   public void generateAndWriteIndex(final String seqfile, final String bucketfile,
+         final String qposfile, final String qfreqfile, final String qseqfreqfile)
+         throws IOException {
       final TicToc totalTimer = new TicToc();
       final ByteBuffer in = readSequenceFile(seqfile, external);
       final long ll = in.limit();
@@ -335,12 +329,12 @@ public class QGramIndexer {
       project.setProperty("qfreqMax", maximumFrequency);
       project.setProperty("qbckMax", maximumBucketSize);
       project.store();
-//      try {
-//         project.store();
-//      } catch (IOException ex) {
-////       TODO the following message
-//         log.error("qgram: could not write %s, skipping! (%s)", project.getFileName(), ex);
-//      }
+      // try {
+      // project.store();
+      // } catch (IOException ex) {
+      // // TODO the following message
+      // log.error("qgram: could not write %s, skipping! (%s)", project.getFileName(), ex);
+      // }
 
       // clean up, return arrays only if not external and they fit in memory
       outfile.close();
@@ -349,24 +343,24 @@ public class QGramIndexer {
       final int[] qpos = (slicesize == sum && !external) ? qposslice : null;
 
       times = new double[] { timeTotal, timeFreqCounting, timeBckGeneration, timeQpos };
- 
-      //return new QGramIndex(bck, qpos, q, maxbck); 
-      //Object[] { (external ? null : bck), qpos, frq, times, maxfreq, maxbck };
+
+      // return new QGramIndex(bck, qpos, q, maxbck);
+      // Object[] { (external ? null : bck), qpos, frq, times, maxfreq, maxbck };
    }
 
    // TODO remove this (?) should be in QGramIndex
    public int getMaximumFrequency() {
-      return maximumFrequency; 
+      return maximumFrequency;
    }
-   
+
    public int getMaximumBucketSize() {
       return maximumBucketSize;
    }
- 
+
    public double[] getLastTimes() {
       return times;
    }
-   
+
    /**
     * Checks the q-gram index of the given files for correctness.
     * 
@@ -447,8 +441,7 @@ public class QGramIndexer {
          final int cd = coder.code(s, ii);
          if (cd < 0 || thefilter.get(cd) == 1)
             continue;
-         log.info(
-               "  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and not filtered!",
+         log.info("  ERROR: qgram at pos %d has code %d [%s], not seen in qpos and not filtered!",
                ii, cd, StringUtils.join("", coder.qGram(cd, qgram), 0, q));
          return n; // error: return length of the text ( > number of q-positions)
       }
@@ -512,7 +505,8 @@ public class QGramIndexer {
       int result = 0;
       try {
          result = checkQGramIndex(in + FileNameExtensions.seq, q, asize, in
-               + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff, bisulfiteIndex);
+               + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff,
+               bisulfiteIndex);
       } catch (IOException ex) {
          log.warn("qgramcheck: error on %s: %s", in, ex);
       }

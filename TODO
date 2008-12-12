@@ -83,7 +83,7 @@ verlängern
 - log.info within the help() method does not write anything when --quiet is selected
 
 
-
+- why is the separator in the prj file? it should already be in the alphabet file
 
 
 

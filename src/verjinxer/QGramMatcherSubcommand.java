@@ -1,11 +1,16 @@
-/*
- * QgramMatcherSubcommand.java Created on 25. April 2007, 12:32 TODO: adapt to 64-bit files Sample
- * usage: To map a 454 sequencing run ('run1') against human chromosome 1: ... qmatch -l 25 -M 15 -F
- * 2:0 -t # run1 c01 We expect a perfect read of length 100. This should give rise to at least one
- * perfect match of length >= 25. We expect a unique location on the genome. This should give rise
- * to at most 15 hits of length >= 25. We do not allow hits to start a degenerate q-grams that
- * consist of only 2 different nucleotides. Running hits can extend beyond these, however. We keep
- * track of the sequences that have already been identified as repeats (ie, have too many hits).
+/**
+ * QgramMatcherSubcommand.java Created on 25. April 2007, 12:32
+ * 
+ * TODO: adapt to 64-bit files
+ * 
+ * Sample usage: To map a 454 sequencing run ('run1') against human chromosome 1: <br>
+ * ... qmatch -l 25 -M 15 -F 2:0 -t # run1 c01
+ * 
+ * We expect a perfect read of length 100. This should give rise to at least one perfect match of
+ * length >= 25. We expect a unique location on the genome. This should give rise to at most 15 hits
+ * of length >= 25. We do not allow hits to start a degenerate q-grams that consist of only 2
+ * different nucleotides. Running hits can extend beyond these, however. We keep track of the
+ * sequences that have already been identified as repeats (ie, have too many hits).
  */
 
 package verjinxer;
@@ -38,7 +43,7 @@ public class QGramMatcherSubcommand implements Subcommand {
    private Globals g;
 
    /**
-    * print help on usage TODO use
+    * prints help on usage
     */
    public void help() {
       log.info("Usage:");
@@ -61,7 +66,6 @@ public class QGramMatcherSubcommand implements Subcommand {
    }
 
    /**
-    * if run independently, call main
     * 
     */
    public static void main(String[] args) {
@@ -229,7 +233,7 @@ public class QGramMatcherSubcommand implements Subcommand {
       try {
          QGramMatcher qgrammatcher = new QGramMatcher(g, dt, ds, toomanyhitsfilename,
                maxseqmatches, minseqmatches, minlen, qgramcoder, qgramfilter, out, sorted,
-               external, selfcmp, c_matches_c, project);
+               external, selfcmp, c_matches_c, bisulfiteQueries, project);
          qgrammatcher.match();
          qgrammatcher.tooManyHits(dt + ".toomanyhits-filter");
       } catch (IOException ex) {
