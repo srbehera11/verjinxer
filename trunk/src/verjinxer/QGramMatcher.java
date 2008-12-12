@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
@@ -82,6 +83,8 @@ public class QGramMatcher {
    int[] newlen; // match lengths for new matches
    // int[] newdiag;
    int seqstart = 0; // starting pos of current sequence in t
+   
+   private boolean bisulfiteQueries;
 
    /**
     * Creates a new instance of QgramMatcher
@@ -97,10 +100,11 @@ public class QGramMatcher {
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
          final boolean external, final boolean selfcmp,
-         final boolean c_matches_c, 
+         final boolean c_matches_c, final boolean bisulfiteQueries,
          ProjectInfo project) throws IOException {
       this.g = g;
       this.bisulfiteIndex = project.isBisulfiteIndex();
+      this.bisulfiteQueries = bisulfiteQueries;
       this.qgramfilter = qgramfilter;
       this.qgramcoder = qgramcoder;
       this.q = qgramcoder.q;
@@ -284,6 +288,118 @@ public class QGramMatcher {
       }
       assert seqnum == tssp.length && tp == tn;
    }
+
+   /** 
+    * Same as match(), except that all bisulfite-simulated q-grams of the query are
+    * searched in the q-gram index.
+    */
+   public void bisulfiteMatch() {
+      // Walk through t:
+      // (A) Initialization
+      TicToc timer = new TicToc();
+
+      BisulfiteQGramCoder bicoder = (BisulfiteQGramCoder) qgramcoder;
+      final int maxactive = qgramindex.getMaximumBucketSize();
+      activepos = new int[maxactive];
+      activelen = new int[maxactive];
+
+      newpos = new int[maxactive];
+      newlen = new int[maxactive];
+
+      // (B) Walking ...
+      final int tn = t.length;
+      final int slicefreq = 5;
+      final int slicesize = 1 + (slicefreq * tn / 100);
+      int nextslice = 0;
+      int percentdone = 0;
+      int symremaining = 0;
+
+      seqstart = 0;
+      int seqnum = 0; // number of current sequence in t
+      int tp = 0; // current position in t
+      int seqmatches = 0; // number of matches in current target sequence
+      while (tp < tn) {
+
+         // (1) Determine next valid position p in t with potential match
+         if (symremaining < minlen) { // next invalid is possibly at tp+symremaining
+            // TODO < q
+            tp += symremaining;
+            symremaining = 0;
+            for (; tp < tn && (!alphabet.isSymbol(t[tp])); tp++) {
+               if (alphabet.isSeparator(t[tp])) {
+                  assert tp == tssp[seqnum];
+                  matchReporter.write(seqnum);
+                  matchReporter.clear();
+                  seqnum++;
+                  seqstart = tp + 1;
+                  matchReporter.setSequenceStart(seqstart);
+                  seqmatches = 0;
+               }
+            }
+            if (tp >= tn)
+               break;
+            if (toomanyhits.get(seqnum) == 1) {
+               symremaining = 0;
+               tp = (int) tssp[seqnum];
+               continue;
+            }
+            int i; // next valid symbol is now at tp, count number of valid symbols
+            for (i = tp; i < tn && alphabet.isSymbol(t[i]); i++) {
+            }
+            symremaining = i - tp;
+            if (symremaining < minlen)
+               continue; // / < q
+         }
+         assert alphabet.isSymbol(t[tp]);
+         assert symremaining >= minlen; // TODO >= q
+         log.debug("  position %d (in seq. %d, starting at %d): %d symbols", tp, seqnum, seqstart,
+               symremaining);
+
+         // (2) initialize qcode and active q-grams
+         active = 0; // number of active q-grams
+         int[] qcodesFw = bicoder.bisulfiteQCodes(t, tp, true);
+         
+         // TODO WORKING HERE do this for qcodesRev
+         
+         ///////////assert qcode >= 0;
+         ////////seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
+         /////////      qgramfilter.isFiltered(qcode));
+         if (seqmatches > maxseqmatches) {
+            symremaining = 0;
+            tp = (int) tssp[seqnum];
+            toomanyhits.set(seqnum, true);
+         }
+
+         // (3) repeatedly process current position p
+         while (symremaining >= minlen) { // / >= q
+            // (3a) Status
+            while (tp >= nextslice) {
+               log.info("  %2d%% done, %.1f sec, pos %d/%d, seq %d/%d", percentdone, timer.tocs(),
+                     tp, tn - 1, seqnum, tssp.length - 1);
+               percentdone += slicefreq;
+               nextslice += slicesize;
+            }
+            // (3b) update q-gram
+            tp++;
+            symremaining--;
+            if (symremaining >= minlen) {
+           /////////    qcode = bicoder.codeUpdate(qcode, t[tp + q - 1]);
+        ///////////       assert qcode >= 0;
+       //////////        seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
+        //////////             qgramfilter.isFiltered(qcode));
+               if (seqmatches > maxseqmatches) {
+                  symremaining = 0;
+                  tp = (int) tssp[seqnum];
+                  toomanyhits.set(seqnum, true);
+               }
+            }
+         } // end (3) while loop
+
+         // (4) done with this block of positions. Go to next.
+      }
+      assert seqnum == tssp.length && tp == tn;
+   }
+
 
    /**
     * Compares sequences s and t, allowing bisulfite replacements.
@@ -522,6 +638,8 @@ public class QGramMatcher {
     * 
     * 
     * TODO this function is only used within updateActiveIntervals_strided
+    * 
+    * TODO seqstart should not be needed here
     */
    private int bisulfiteMatchLengthCmC(int sstart, int tstart, int[] ret) {
       assert ret.length == 3;
@@ -832,4 +950,3 @@ public class QGramMatcher {
       return matches; // if (seqmatches > maxseqmatches) throw new TooManyHitsException();
    }
 }
-
