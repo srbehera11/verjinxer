@@ -8,11 +8,13 @@ import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_T;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
+import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
@@ -24,7 +26,7 @@ public class QGramMatcher {
    private static final Logger log = Globals.log;
    final Globals g;
 
-   /** min. match length */
+   /** minimum match length; guaranteed to be at least q */
    final int minlen;
 
    /** q-gram length */
@@ -61,30 +63,28 @@ public class QGramMatcher {
    final QGramCoder qgramcoder;
    final BitArray toomanyhits;
    final QGramFilter qgramfilter;
-   
+
    /** whether the index is for bisulfite sequences */
    final boolean bisulfiteIndex;
-   
+
    /** whether C matches C, even if not before G */
    final boolean c_matches_c; //
-   
+
    // TODO make some of these final
    /** number of active matches */
    int active;
-   
+
    /** starting positions of active matches in s */
    int[] activepos;
-   
+
    /** match lengths for active matches */
    int[] activelen;
 
-   /// int[] activediag;
+   // / int[] activediag;
    int[] newpos; // starting positions of new matches in s // TODO rename to currentpos
    int[] newlen; // match lengths for new matches
    // int[] newdiag;
    int seqstart = 0; // starting pos of current sequence in t
-   
-   private boolean bisulfiteQueries;
 
    /**
     * Creates a new instance of QgramMatcher
@@ -99,12 +99,10 @@ public class QGramMatcher {
    public QGramMatcher(Globals g, String dt, String ds, String toomanyhitsfilename,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
-         final boolean external, final boolean selfcmp,
-         final boolean c_matches_c, final boolean bisulfiteQueries,
+         final boolean selfcmp, final boolean c_matches_c,
          ProjectInfo project) throws IOException {
       this.g = g;
       this.bisulfiteIndex = project.isBisulfiteIndex();
-      this.bisulfiteQueries = bisulfiteQueries;
       this.qgramfilter = qgramfilter;
       this.qgramcoder = qgramcoder;
       this.q = qgramcoder.q;
@@ -125,7 +123,7 @@ public class QGramMatcher {
          minseqmatches = 1;
       }
       this.maxseqmatches = maxseqmatches;
-      
+
       /* private void openFiles(String dt, String ds, String outname, boolean external) { */
       // Read text, text-ssp, seq, qbck, ssp into arrays;
       // read sequence descriptions;
@@ -142,7 +140,7 @@ public class QGramMatcher {
       assert tdesc.size() == tssp.length;
 
       final ArrayList<String> sdesc;
-      
+
       if (dt.equals(ds)) {
          s = t;
          ssp = tssp;
@@ -161,7 +159,7 @@ public class QGramMatcher {
       } else {
          matchReporter = new GlobalMatchReporter(ssp, minseqmatches, maxseqmatches, selfcmp, out);
       }
-      
+
       qgramindex = new QGramIndex(project);
       log.info("qmatch: mapping and reading files took %.1f sec", ttimer.tocs());
 
@@ -196,7 +194,6 @@ public class QGramMatcher {
       newlen = new int[maxactive];
       // / newdiag = new int[maxactive];
       // / currentpos = new int[maxactive];
-
 
       // (B) Walking ...
       final int tn = t.length;
@@ -289,11 +286,13 @@ public class QGramMatcher {
       assert seqnum == tssp.length && tp == tn;
    }
 
-   /** 
-    * Same as match(), except that all bisulfite-simulated q-grams of the query are
-    * searched in the q-gram index.
+   /**
+    * Same as match(), except that all bisulfite-simulated q-grams of the query are searched in the
+    * q-gram index.
     */
    public void bisulfiteMatch() {
+      assert !bisulfiteIndex;
+//      log.info("bisulfiteMatch");
       // Walk through t:
       // (A) Initialization
       TicToc timer = new TicToc();
@@ -318,10 +317,11 @@ public class QGramMatcher {
       int seqnum = 0; // number of current sequence in t
       int tp = 0; // current position in t
       int seqmatches = 0; // number of matches in current target sequence
-      while (tp < tn) {
+
+      outer: while (tp < tn) {
 
          // (1) Determine next valid position p in t with potential match
-         if (symremaining < minlen) { // next invalid is possibly at tp+symremaining
+         while (symremaining < minlen) { // next invalid is possibly at tp+symremaining
             // TODO < q
             tp += symremaining;
             symremaining = 0;
@@ -337,18 +337,17 @@ public class QGramMatcher {
                }
             }
             if (tp >= tn)
-               break;
+               break outer;
             if (toomanyhits.get(seqnum) == 1) {
                symremaining = 0;
                tp = (int) tssp[seqnum];
                continue;
             }
-            int i; // next valid symbol is now at tp, count number of valid symbols
+            // next valid symbol is now at tp, count number of remaining valid symbols
+            int i;
             for (i = tp; i < tn && alphabet.isSymbol(t[i]); i++) {
             }
             symremaining = i - tp;
-            if (symremaining < minlen)
-               continue; // / < q
          }
          assert alphabet.isSymbol(t[tp]);
          assert symremaining >= minlen; // TODO >= q
@@ -357,13 +356,19 @@ public class QGramMatcher {
 
          // (2) initialize qcode and active q-grams
          active = 0; // number of active q-grams
-         int[] qcodesFw = bicoder.bisulfiteQCodes(t, tp, true);
-         
-         // TODO WORKING HERE do this for qcodesRev
-         
-         ///////////assert qcode >= 0;
-         ////////seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
-         /////////      qgramfilter.isFiltered(qcode));
+         int[] qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
+         int[] qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
+
+         // TODO copying the arrays is totally unnecessary
+         int[] qcodes = new int[qcodesForward.length + qcodesReverse.length];
+         System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
+         System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
+
+         seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
+
+         // /////////assert qcode >= 0;
+         // //////seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
+         // /////// qgramfilter.isFiltered(qcode));
          if (seqmatches > maxseqmatches) {
             symremaining = 0;
             tp = (int) tssp[seqnum];
@@ -383,10 +388,20 @@ public class QGramMatcher {
             tp++;
             symremaining--;
             if (symremaining >= minlen) {
-           /////////    qcode = bicoder.codeUpdate(qcode, t[tp + q - 1]);
-        ///////////       assert qcode >= 0;
-       //////////        seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
-        //////////             qgramfilter.isFiltered(qcode));
+               qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
+               qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
+
+               // TODO copying the arrays is totally unnecessary
+               qcodes = new int[qcodesForward.length + qcodesReverse.length];
+               System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
+               System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
+
+               seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
+               // /////// qcode = bicoder.codeUpdate(qcode, t[tp + q - 1]);
+               // ///////// assert qcode >= 0;
+               // //////// seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches -
+               // seqmatches,
+               // //////// qgramfilter.isFiltered(qcode));
                if (seqmatches > maxseqmatches) {
                   symremaining = 0;
                   tp = (int) tssp[seqnum];
@@ -400,7 +415,6 @@ public class QGramMatcher {
       assert seqnum == tssp.length && tp == tn;
    }
 
-
    /**
     * Compares sequences s and t, allowing bisulfite replacements.
     * 
@@ -410,7 +424,7 @@ public class QGramMatcher {
     *           start index in t
     * @return length of match
     */
-   private int bisulfiteMatchLength(int sp, int tp) {
+   private int bisulfiteMatchLength(byte[] s, int sp, byte[] t, int tp) {
       int ga = 2; // 0: false, 1: true, 2: maybe/unknown
       int ct = 2;
 
@@ -474,7 +488,16 @@ public class QGramMatcher {
     *           start index in t
     * @return length of match
     */
-   private int bisulfiteMatchLengthCmC(int sp, int tp) {
+   private int bisulfiteMatchLengthCmC(byte[] s, int sp, byte[] t, int tp) {
+//      if (sp > 242) {
+//         System.out.println("bisulfiteMatchLengthCmC. tp=" + tp + ". sp="+sp);
+//         try {
+//            System.out.println("s[sp..sp+q]="+alphabet.preimage(s, sp, q));
+//            System.out.println("t[tp..tp+q]="+alphabet.preimage(t, tp, q));
+//         } catch (InvalidSymbolException e) {
+//            e.printStackTrace();
+//         }
+//      }
       int offset = 0;
 
       while (alphabet.isSymbol(s[sp + offset]) && s[sp + offset] == t[tp + offset])
@@ -505,7 +528,135 @@ public class QGramMatcher {
    /**
     * @param tp
     * @param qcode
-    * @param maxmatches stop reporting new matches if this limit is reached
+    * @param maxmatches
+    *           stop reporting new matches if this limit is reached
+    * @param filtered
+    * @return number of matches reported
+    */
+   private int updateActiveIntervalsBisulfite(final int tp, final int[] qcodes, final int maxmatches) {
+//      System.out.println("updateActiveIntervalsBisulfite. tp = "+tp);
+      int matches = 0;
+      // decrease length of active matches, as long as they stay >= q TODO >= minlen?
+      int ai; // index into the array of active matches
+      for (ai = 0; ai < active; ai++) {
+         activepos[ai]++;
+         if (activelen[ai] > q)
+            activelen[ai]--;
+         else
+            activelen[ai] = 0;
+      }
+
+      // collect all qgram positions of all unfiltered qcodes into newpos, reallocating
+      // newpos if necessary
+      int newactive = 0;
+      for (int qcode : qcodes) {
+         if (!qgramfilter.isFiltered(qcode)) {
+            newactive += qgramindex.getBucketSize(qcode);
+         }
+      }
+      if (newpos.length < newactive) {
+         int newSize = Math.max(newactive, Math.max(10000, newpos.length * 2));
+         newpos = new int[newSize];
+         newlen = new int[newSize];
+      }
+      assert newpos.length >= newactive;
+      int pos = 0;
+      for (int qcode : qcodes) {
+         if (qgramfilter.isFiltered(qcode)) {
+            continue;
+         }
+         qgramindex.getQGramPositions(qcode, newpos, pos);
+         pos += qgramindex.getBucketSize(qcode);
+      }
+
+      // TODO n-way merge would be more efficient
+      Arrays.sort(newpos, 0, newactive);
+
+      // iterate over all new matches
+      ai = 0;
+      for (int ni = 0; ni < newactive; ni++) {
+         while (ai < active && activelen[ai] < q)
+            ai++;
+
+         if (c_matches_c) {
+            // we must skip those matches that are only active because
+            // of the 'C matches C' rule. They don't have q-grams
+            // in common with the query anymore
+            while (ai < active && newpos[ni] > activepos[ai])
+               ai++;
+         }
+         // make sure that newly found q-grams overlap the old ones (unless c_matches_c)
+         assert ai == active || newpos[ni] <= activepos[ai] : String.format(
+               "tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d", tp, ai,
+               active, ni, newpos[ni], activepos[ai], activelen[ai]);
+         assert ai <= active;
+         if (ai == active || newpos[ni] < activepos[ai]) {
+            // this is a new match:
+            // determine newlen[ni] by comparing s[sp...] with t[tp...]
+            int sp;
+            int offset;
+            /*if (!bisulfiteQueries) {
+               sp = newpos[ni] + q;
+               offset = q;
+               while (s[sp] == t[tp + offset] && alphabet.isSymbol(s[sp])) {
+                  sp++;
+                  offset++;
+               }
+               sp -= offset; // go back to start of match
+            } else {*/
+            sp = newpos[ni];
+            offset = c_matches_c ? bisulfiteMatchLengthCmC(t, tp, s, sp)
+                  : bisulfiteMatchLength(t, tp, s, sp);
+//            }
+            newlen[ni] = offset;
+
+            // maximal match (tp, sp, offset), i.e. ((seqnum,tp-seqstart), (i,sss), offset)
+            if (offset >= minlen) {
+               matchReporter.add(sp, tp, offset);
+               ++matches;
+               if (matches > maxmatches)
+                  break;
+            }
+         } else { // this is an old (continuing) match
+            newlen[ni] = activelen[ai];
+            ai++;
+         }
+      }
+
+      // TODO put this note somewhere else
+
+      // There are always two buffers for match positions:
+      // - activepos contains the currently active matches.
+      // - newpos contains the matches of the next round.
+      //
+      // One buffer is not enough since the computation needs to be able to look at both.
+      // When newpos has been updated after a round and contains the now active
+      // positions, references are simply swapped: activepos becomes newpos and vice-versa.
+      // In this way, newpos and activepos never have to be re-allocated.
+      //
+      // The same holds for the match length arrays activelen and newlen.
+
+      // swap activepos <-> newpos and activelen <-> newlen
+      int[] tmp;
+
+      tmp = activepos;
+      activepos = newpos;
+      newpos = tmp;
+
+      tmp = activelen;
+      activelen = newlen;
+      newlen = tmp;
+
+      active = 15; // FIXME newactive;
+      return matches;
+
+   }
+
+   /**
+    * @param tp
+    * @param qcode
+    * @param maxmatches
+    *           stop reporting new matches if this limit is reached
     * @param filtered
     * @return number of matches reported
     */
@@ -578,8 +729,8 @@ public class QGramMatcher {
                sp -= offset; // go back to start of match
             } else {
                sp = newpos[ni];
-               offset = c_matches_c ? bisulfiteMatchLengthCmC(sp, tp)
-                     : bisulfiteMatchLength(sp, tp);
+               offset = c_matches_c ? bisulfiteMatchLengthCmC(s, sp, t, tp)
+                     : bisulfiteMatchLength(s, sp, t, tp);
             }
             newlen[ni] = offset;
 
@@ -611,15 +762,15 @@ public class QGramMatcher {
 
       // swap activepos <-> newpos and activelen <-> newlen
       int[] tmp;
-      
+
       tmp = activepos;
       activepos = newpos;
       newpos = tmp;
-      
+
       tmp = activelen;
       activelen = newlen;
       newlen = tmp;
-      
+
       active = newactive;
       return matches;
    }
@@ -627,7 +778,7 @@ public class QGramMatcher {
    /**
     * Compares sequences s and t, allowing bisulfite replacements. Allows that a C matches a C, even
     * if not before G (and that a G matches G even if not after C).
-    *
+    * 
     * @param sp
     *           start index in s
     * @param tp
@@ -637,9 +788,9 @@ public class QGramMatcher {
     * @return length of match
     * 
     * 
-    * TODO this function is only used within updateActiveIntervals_strided
+    *         TODO this function is only used within updateActiveIntervals_strided
     * 
-    * TODO seqstart should not be needed here
+    *         TODO seqstart should not be needed here
     */
    private int bisulfiteMatchLengthCmC(int sstart, int tstart, int[] ret) {
       assert ret.length == 3;
@@ -762,7 +913,7 @@ public class QGramMatcher {
     * @param sp
     * @param tp
     * @param ret
-    * TODO only used within updateActiveIntervals_strided
+    *           TODO only used within updateActiveIntervals_strided
     */
    private void regularMatchLength(int sp, int tp, int[] ret) {
       int len = q;
@@ -778,17 +929,17 @@ public class QGramMatcher {
       ret[2] = len;
    }
 
-   /** 
-    * New method for updating the active intervals when the index is strided. 
-    * Uses a slightly different algorithm. Don't use, yet.
+   /**
+    * New method for updating the active intervals when the index is strided. Uses a slightly
+    * different algorithm. Don't use, yet.
     * 
     * Given the next q-code of the query sequence, this function updates the currently active
     * intervals (activepos, activelen, activediag).
-    *
-    *
+    * 
+    * 
     * writes to: activepos, activelen, active newpos, newlen TODO if stride=1 then currentpos and
     * newpos could be the same
-    *
+    * 
     * @param tp
     * @param qcode
     * @param maxmatches
@@ -796,18 +947,18 @@ public class QGramMatcher {
     * @param filtered
     * @return number of matches reported
     */
-   private final int updateActiveIntervals_strided(final int tp, final int qcode, final int maxmatches,
-         final boolean filtered) {
+   private final int updateActiveIntervals_strided(final int tp, final int qcode,
+         final int maxmatches, final boolean filtered) {
 
       // TODO FIXME XXX
       // Note
       // If you really want to use this, you must declare the following three variables
       // not within this method, but as object variables
-      
+
       int[] currentpos = new int[0];
       int[] newdiag = new int[0];
       int[] activediag = new int[0];
-      
+
       if (filtered)
          return 0;
 
@@ -861,7 +1012,7 @@ public class QGramMatcher {
             final int tstart = match[1];
             final int len = match[2];
 
-//            System.out.printf("matchleng: sstart=%d tstart=%d len=%d%n", sstart, tstart, len);
+            // System.out.printf("matchleng: sstart=%d tstart=%d len=%d%n", sstart, tstart, len);
             if (len >= minlen) {
                matchReporter.add(sstart, tstart, len);
                ++matches;
@@ -915,12 +1066,12 @@ public class QGramMatcher {
          }
       }
 
-//      System.out.printf("active at tp=%d --- ", tp);
-//      for (int m = 0; m < ni; ++m) {
-//         System.out.format("len=%d %d %d (dg %d) ", newlen[m], newpos[m], newpos[m] - newdiag[m],
-//               newdiag[m]);
-//      }
-//      System.out.println();
+      // System.out.printf("active at tp=%d --- ", tp);
+      // for (int m = 0; m < ni; ++m) {
+      // System.out.format("len=%d %d %d (dg %d) ", newlen[m], newpos[m], newpos[m] - newdiag[m],
+      // newdiag[m]);
+      // }
+      // System.out.println();
 
       // TODO put this note somewhere else
 

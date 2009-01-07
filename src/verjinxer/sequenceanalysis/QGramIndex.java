@@ -9,9 +9,9 @@ import verjinxer.util.ArrayFile;
 import verjinxer.util.ProjectInfo;
 
 /**
- * The q-gram index. Currently, this class can only be used to <em>read</em> an index from disk.
- * The entire index is kept in memory. On disk, the index must be stored in two files, the
- * qpositions file and the qbuckets file (extensions .qpos and .qbck).
+ * The q-gram index. Currently, this class can only be used to <em>read</em> an index from disk. The
+ * entire index is kept in memory. On disk, the index must be stored in two files, the qpositions
+ * file and the qbuckets file (extensions .qpos and .qbck).
  * 
  * Conceptually, a q-gram index maps every q-code to a list of positions. This list of positions is
  * called a bucket. All positions of all buckets are concatenated (in q-code order) and stored in
@@ -41,10 +41,12 @@ public class QGramIndex {
 
    /** Maximum size of a bucket */
    final int maximumBucketSize;
-   
-   /** Stride length of this index (only q-grams whose positions are divisible by stride are indexed) */
+
+   /**
+    * Stride length of this index (only q-grams whose positions are divisible by stride are indexed)
+    */
    final int stride;
- 
+
    /**
     * Size of a superbucket, in bits. That is, if this is 10, then each superbucket contains 2**10
     * buckets
@@ -72,8 +74,8 @@ public class QGramIndex {
     *           q
     * @throws IOException
     */
-   public QGramIndex(final String qposfile, final String qbckfile, int maximumBucketSize, int q, int stride)
-         throws IOException {
+   public QGramIndex(final String qposfile, final String qbckfile, int maximumBucketSize, int q,
+         int stride) throws IOException {
       assert q >= 5 : "Sorry, cannot work with a q<5 for now";
       ArrayFile af = new ArrayFile(qbckfile);
       this.qbck = af.readArray(this.qbck);
@@ -101,48 +103,48 @@ public class QGramIndex {
       this.q = q;
    }
 
-  // TODO
-//   static private int[][] convertFromRegularBucketsToSuperbuckets(int[] qbck, int[] qpos) {
-//      final int buckets = qbck.length - 1;
-//      assert (buckets & BITMASK_LOW) == 0;
-//
-//      int[][] superqpos = new int[(buckets >> BITS) + 1][];
-//      
-//      int start = 0;
-//      int end = qbck[1 >> BITS];
-//
-//      // read a superbucket (consisting of 2**BITS buckets) at a time
-//      for (int i = 0; i < (buckets >> BITS); ++i) {
-//         start = qbck[i << BITS];
-//         assert ((i + 1) << BITS) < qbck.length;
-//         end = qbck[(i + 1) << BITS];
-//         qpos[i] = new int[end - start];
-//         af.readArray(qpos[i], 0, end - start, start);
-//      }
-//
-//      // copy given qpos to our qpos
-//      
-//      
-//      
-//      // read a superbucket (consisting of 2**BITS buckets) at a time
-//      for (int i = 0; i < (buckets >> BITS); ++i) {
-//         start = qbck[i << BITS];
-//         assert ((i + 1) << BITS) < qbck.length;
-//         end = qbck[(i + 1) << BITS];
-//         qpos[i] = new int[end - start];
-//         af.readArray(qpos[i], 0, end - start, start);
-//      }
-//      
-//      
-//      this.qpos = qpos;
-//   }
-   
-//   QGramIndex(int[] qbck, int[] qpos, int q, int maximumBucketSize) {
-//      this.q = q;
-//      this.qbck = qbck;
-//      this.maximumBucketSize = maximumBucketSize;
-//      this.qpos = convertFromRegularBucketsToSuperbuckets(qbck, qpos);
-//   }
+   // TODO
+   // static private int[][] convertFromRegularBucketsToSuperbuckets(int[] qbck, int[] qpos) {
+   // final int buckets = qbck.length - 1;
+   // assert (buckets & BITMASK_LOW) == 0;
+   //
+   // int[][] superqpos = new int[(buckets >> BITS) + 1][];
+   //      
+   // int start = 0;
+   // int end = qbck[1 >> BITS];
+   //
+   // // read a superbucket (consisting of 2**BITS buckets) at a time
+   // for (int i = 0; i < (buckets >> BITS); ++i) {
+   // start = qbck[i << BITS];
+   // assert ((i + 1) << BITS) < qbck.length;
+   // end = qbck[(i + 1) << BITS];
+   // qpos[i] = new int[end - start];
+   // af.readArray(qpos[i], 0, end - start, start);
+   // }
+   //
+   // // copy given qpos to our qpos
+   //      
+   //      
+   //      
+   // // read a superbucket (consisting of 2**BITS buckets) at a time
+   // for (int i = 0; i < (buckets >> BITS); ++i) {
+   // start = qbck[i << BITS];
+   // assert ((i + 1) << BITS) < qbck.length;
+   // end = qbck[(i + 1) << BITS];
+   // qpos[i] = new int[end - start];
+   // af.readArray(qpos[i], 0, end - start, start);
+   // }
+   //      
+   //      
+   // this.qpos = qpos;
+   // }
+
+   // QGramIndex(int[] qbck, int[] qpos, int q, int maximumBucketSize) {
+   // this.q = q;
+   // this.qbck = qbck;
+   // this.maximumBucketSize = maximumBucketSize;
+   // this.qpos = convertFromRegularBucketsToSuperbuckets(qbck, qpos);
+   // }
 
    /**
     * Reads a q-gram index stored on disk. The getQPositionsFileName() and getQBucketsFileName()
@@ -155,22 +157,23 @@ public class QGramIndex {
     */
    public QGramIndex(final ProjectInfo project) throws IOException {
       this(project.getQPositionsFileName(), project.getQBucketsFileName(),
-            project.getMaximumBucketSize(), project.getIntProperty("q"),
-            project.getStride());
+            project.getMaximumBucketSize(), project.getIntProperty("q"), project.getStride());
    }
 
    /** @return maximum bucket size */
    public int getMaximumBucketSize() {
       return maximumBucketSize;
    }
-       
-   /** TODO where should meta information about the index go? into this class?
+
+   /**
+    * TODO where should meta information about the index go? into this class?
+    * 
     * @return stride width of this index
     */
    public int getStride() {
       return stride;
    }
-         
+
    /**
     * @return size of a q-gram bucket, that is, the number of positions stored for the given q-code.
     */
@@ -186,12 +189,51 @@ public class QGramIndex {
    }
 
    /**
+    * Gets the positions of the given q-grams (represented by their q-code). The q-gram positions
+    * will be copied into dest, starting from index 0. If dest is not large enough or null, it will
+    * be reallocated at twice the original size, but at least 10000 elements and at least
+    * dest.length. It is recommended to reuse dest in subsequent invocations of this method.
+    * 
+    * @param qcode
+    *           the q-codes corresponding to the desired q-grams
+    * @param dest
+    *           the destination array, will be reallocated if not large enough. 
+    *           dest[dest.length-1] contains the number of entries copied into dest.
+    *           TODO this is quite ugly.
+    */
+//   public int[] getQGramPositions(int[] qcodes, int[] dest) {
+//      int size = 1; // one element extra for the length entry
+//      for (int i = 0; i < qcodes.length; ++i) {
+//         size += getBucketSize(qcodes[i]);
+//      }
+//      if (dest == null || dest.length < size) {
+//         // reallocate
+//         int newlength = Math.max(10000, size);
+//         if (dest != null) {
+//            newlength = Math.max(dest.length * 2, newlength);
+//         }
+//         dest = new int[newlength];
+//      }
+//      int pos = 1;
+//      for (int qcode : qcodes) {
+//         int i = qcode >> BITS;
+//         int x = qcode & BITMASK_HIGH;
+//         int from = qbck[qcode] - qbck[x];
+//         // final int to = qbck[qcode+1] - qbck[x];
+//         int len = getBucketSize(qcode);
+//         System.arraycopy(qpos[i], from, dest, pos, len);
+//         pos += len;
+//      }
+//      dest[dest.length-1] = size;
+//      return dest;
+//   }
+   
+   /**
     * Gets the positions of the given q-gram (represented by its q-code). To avoid reallocations,
     * this method does not allocate an array, but instead requires that the dest array has already
-    * been allocated and that it is large enough. The q-gram positions will be copied
-    * into dest, starting from index 0. The length of dest will not be changed. It is
-    * recommended to allocate an array of size getMaximumBucketSize() and reuse that for all
-    * invocations of this method.
+    * been allocated and that it is large enough. The q-gram positions will be copied into dest,
+    * starting from index 0. The length of dest will not be changed. It is recommended to allocate
+    * an array of size getMaximumBucketSize() and reuse that for all invocations of this method.
     * 
     * @param qcode
     *           the q-code corresponding to the desired q-gram
@@ -200,17 +242,31 @@ public class QGramIndex {
     *           bucketSize(qcode).
     */
    public void getQGramPositions(int qcode, int[] dest) {
+      getQGramPositions(qcode, dest, 0);
+   }
+   
+   /**
+    * Gets the positions of the given q-gram (represented by its q-code). To avoid reallocations,
+    * this method does not allocate an array, but instead requires that the dest array has already
+    * been allocated and that it is large enough. The q-gram positions will be copied into dest,
+    * starting from index pos. The length of dest will not be changed.
+    * 
+    * @param qcode
+    *           the q-code corresponding to the desired q-gram
+    * @param dest
+    *           the destination array. It must already be allocated and have a length of at least
+    *           bucketSize(qcode) + pos.
+    */
+   public void getQGramPositions(int qcode, int[] dest, int pos) {
       final int i = qcode >> BITS;
       final int x = qcode & BITMASK_HIGH;
       final int from = qbck[qcode] - qbck[x];
       // final int to = qbck[qcode+1] - qbck[x];
-      System.arraycopy(qpos[i], from, dest, 0, getBucketSize(qcode));
+      System.arraycopy(qpos[i], from, dest, pos, getBucketSize(qcode));
 
       /*
-       * TODO document the experiments below a bit better
-       * 
-       *  some possibilities to make this method nicer or faster or perhaps both.
-       *  
+       * TODO document the experiments below a bit better some possibilities to make this method
+       * nicer or faster or perhaps both.
        */
 
       // int [] result = Arrays.copyOfRange(qposa[i], from, to);
@@ -218,7 +274,6 @@ public class QGramIndex {
       // for (int j = 0; j< getBucketSize(qcode); ++j)
       // assert oldresult[j] == dest[j];
       // return qpos.copyRangeToInt(qbck[qcode], qbck[qcode+1]);
-
       // Variante 1: 5s
       // return Arrays.copyOfRange(qposa, qbck[qcode], qbck[qcode+1]);
       // Variante 2: auch 5s
@@ -236,7 +291,6 @@ public class QGramIndex {
       // l.size()=%d%n", qposa.length, qcode, qbck[qcode], qbck[qcode+1], l.size());
       // }
       // return Arrays.asList(qposa).subList(qbck[qcode], qbck[qcode+1]);
-
       // Variante x: mit IntBuffer
       // if (external) {
       // qpos.position(qbck[qcode]);
