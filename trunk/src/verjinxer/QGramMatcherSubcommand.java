@@ -223,7 +223,7 @@ public class QGramMatcherSubcommand implements Subcommand {
          }
       }
 
-      final QGramCoder qgramcoder;
+      final QGramCoder qgramcoder; // computes qcodes of the queries
       if (bisulfiteQueries) {
          qgramcoder = new BisulfiteQGramCoder(q);
       } else {
@@ -232,9 +232,13 @@ public class QGramMatcherSubcommand implements Subcommand {
 
       try {
          QGramMatcher qgrammatcher = new QGramMatcher(g, dt, ds, toomanyhitsfilename,
-               maxseqmatches, minseqmatches, minlen, qgramcoder, qgramfilter, out, sorted,
-               external, selfcmp, c_matches_c, bisulfiteQueries, project);
-         qgrammatcher.match();
+               maxseqmatches, minseqmatches, minlen, qgramcoder, qgramfilter, out, sorted, selfcmp,
+               c_matches_c, project);
+         if (bisulfiteQueries) {
+            qgrammatcher.bisulfiteMatch();
+         } else {
+            qgrammatcher.match();
+         }
          qgrammatcher.tooManyHits(dt + ".toomanyhits-filter");
       } catch (IOException ex) {
          log.error("could not initialize qgrammatcher: " + ex.getMessage());

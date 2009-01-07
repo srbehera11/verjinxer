@@ -43,9 +43,11 @@ public class TranslaterSubcommand implements Subcommand {
       log.info("  --dnarc     <desc>   combines --dna and --rconly;");
       log.info("     if <desc> is empty or '#', concatenate rc with dna; otherwise,");
       log.info("     generate new rc sequences and add <desc> to their headers.");
+//      log.info("  -b, --bisulfite      translates DNA to a three-letter alphabet"); // FIXME only for C->T currently
       log.info("  --dnabi              translate to bisulfite-treated DNA");
       log.info("  --protein            use standard protein alphabet");
-      log.info("  --masked             lowercase bases are replaced with wildcards (only for DNA alphabets)");
+      log.info("  --masked             lowercase bases are translated to wildcards (only for DNA alphabets)");
+      log.info("  --reverse            reverse sequence before applying alphabet (use with -a)");
       log.info("  -r, --runs           additionally create run-related files");
    }
 
@@ -82,7 +84,7 @@ public class TranslaterSubcommand implements Subcommand {
 
       String filenames[];
       Options opt = new Options(
-            "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs");
+            "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs,reverse");
 
       try {
          filenames = opt.parse(args);
@@ -112,6 +114,10 @@ public class TranslaterSubcommand implements Subcommand {
 
       boolean trim = opt.isGiven("t");
 
+      if (opt.isGiven("reverse") && !opt.isGiven("a")) {
+         log.error("translate: option --reverse can only be used with custom alphabets");
+         return 1;
+      }
       // determine the alphabet map(s)
       int givenmaps = 0;
       if (opt.isGiven("a"))
@@ -125,6 +131,8 @@ public class TranslaterSubcommand implements Subcommand {
       if (opt.isGiven("dnabi"))
          givenmaps++;
       if (opt.isGiven("protein"))
+         givenmaps++;
+      if (opt.isGiven("bisulfite"))
          givenmaps++;
       if (givenmaps > 1) {
          log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein}.");
@@ -146,6 +154,10 @@ public class TranslaterSubcommand implements Subcommand {
       if (opt.isGiven("rc")) {
          reverse = true;
          alphabet = opt.isGiven("masked") ? Alphabet.maskedcDNA() : Alphabet.cDNA();
+      }
+      if (opt.isGiven("reverse")) {
+         log.info("translate: reversing string before applying alphabet");
+         reverse = true;
       }
       Alphabet alphabet2 = null;
       boolean addrc = false;
@@ -172,7 +184,7 @@ public class TranslaterSubcommand implements Subcommand {
          log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --protein}.");
          return 1;
       }
-      g.startProjectLogging(project, true); // start new project log
+      g.startProjectLogging(project, true);
 
       Translater translater = new Translater(g, trim, alphabet, alphabet2, separateRCByWildcard,
             reverse, addrc, bisulfite, dnarcstring);
