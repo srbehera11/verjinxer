@@ -429,7 +429,7 @@ public class BigSuffixTrayBuilder {
   //===================== insertion methods =================================
   
   
-  /** insert i between p1 and p2 (they must be neighbors with p1<p2)
+  /** insert i between p1 and p2 (they must be neighbors with p1 &lt; p2)
    *@param p1  position after which to insert
    *@param p2  position before which to insert
    *@param i  what to insert
@@ -514,7 +514,7 @@ public class BigSuffixTrayBuilder {
       pup=pdn=ppred=psucc=-1L;
     }
     
-    /** insert i between p1 and p2 (they must be neighbors with p1<p2)
+    /** insert i between p1 and p2 (they must be neighbors with p1 &lt; p2)
      *@param p1  position after which to insert
      *@param p2  position before which to insert
      *@param i  what to insert
