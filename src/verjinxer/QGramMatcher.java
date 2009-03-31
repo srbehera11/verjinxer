@@ -109,6 +109,7 @@ public class QGramMatcher {
       this.c_matches_c = c_matches_c;
       this.stride = project.getStride();
 
+      if (c_matches_c && !bisulfiteIndex) throw new UnsupportedOperationException("c_matches_c for non-bisulfite index not supported");
       alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
 
       // final BitSet thefilter = coder.createFilter(opt.get("F")); // empty filter if null
@@ -415,6 +416,9 @@ public class QGramMatcher {
       assert seqnum == tssp.length && tp == tn;
    }
 
+
+   enum BisulfiteState { GA, CT, UNKNOWN }
+
    /**
     * Compares sequences s and t, allowing bisulfite replacements.
     * 
@@ -425,9 +429,7 @@ public class QGramMatcher {
     * @return length of match
     */
    private int bisulfiteMatchLength(byte[] s, int sp, byte[] t, int tp) {
-      int ga = 2; // 0: false, 1: true, 2: maybe/unknown
-      int ct = 2;
-
+      BisulfiteState state = BisulfiteState.UNKNOWN;
       int offset = 0;
       while (true) {
          if (!alphabet.isSymbol(s[sp + offset]))
@@ -442,32 +444,27 @@ public class QGramMatcher {
          // by a T, then we must not allow C->T replacements.
 
          if (s[sp + offset] == NUCLEOTIDE_G && t[tp + offset] == NUCLEOTIDE_A) {
-            if (ct == 1 || ga == 0)
+            if (state == BisulfiteState.CT)
                break;
-            else
-               ga = 1; // must have G->A
+            state = BisulfiteState.GA;
          } else if (offset > 0 && s[sp + offset - 1] != NUCLEOTIDE_C
                && t[tp + offset - 1] != NUCLEOTIDE_C && s[sp + offset] == NUCLEOTIDE_G
                && t[tp + offset] == NUCLEOTIDE_G) {
-            if (ga == 1)
+            // G on both without preceding C
+            if (state == BisulfiteState.GA)
                break;
-            else
-               ga = 0; // not G->A
-         }
-
-         else if (s[sp + offset] == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_T) {
-            if (ct == 0 || ga == 1)
+            state = BisulfiteState.CT;
+         } else if (s[sp + offset] == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_T) {
+            if (state == BisulfiteState.GA)
                break;
-            else
-               ct = 1; // must have C->T
+            state = BisulfiteState.CT;
          } else if (sp + offset + 1 < s.length && tp + offset + 1 < t.length
                && s[sp + offset + 1] != NUCLEOTIDE_G &&
                /* t[tp+offset+1] != NUCLEOTIDE_G && */
                s[sp + offset] == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_C) {
-            if (ct == 1)
+            if (state == BisulfiteState.CT)
                break;
-            else
-               ct = 0; // not C->T
+            state = BisulfiteState.GA;
          } else {
             if (s[sp + offset] != t[tp + offset])
                break;
@@ -489,15 +486,13 @@ public class QGramMatcher {
     * @return length of match
     */
    private int bisulfiteMatchLengthCmC(byte[] s, int sp, byte[] t, int tp) {
-//      if (sp > 242) {
-//         System.out.println("bisulfiteMatchLengthCmC. tp=" + tp + ". sp="+sp);
-//         try {
-//            System.out.println("s[sp..sp+q]="+alphabet.preimage(s, sp, q));
-//            System.out.println("t[tp..tp+q]="+alphabet.preimage(t, tp, q));
-//         } catch (InvalidSymbolException e) {
-//            e.printStackTrace();
-//         }
-//      }
+         System.out.println("bisulfiteMatchLengthCmC. tp=" + tp + ". sp="+sp);
+         try {
+            System.out.println("s[sp..sp+q]="+alphabet.preimage(s, sp, q));
+            System.out.println("t[tp..tp+q]="+alphabet.preimage(t, tp, q));
+         } catch (InvalidSymbolException e) {
+            e.printStackTrace();
+         }
       int offset = 0;
 
       while (alphabet.isSymbol(s[sp + offset]) && s[sp + offset] == t[tp + offset])
@@ -647,7 +642,7 @@ public class QGramMatcher {
       activelen = newlen;
       newlen = tmp;
 
-      active = 15; // FIXME newactive;
+      active = newactive;
       return matches;
 
    }
@@ -953,7 +948,7 @@ public class QGramMatcher {
       // TODO FIXME XXX
       // Note
       // If you really want to use this, you must declare the following three variables
-      // not within this method, but as object variables
+      // not within this method, but as object variables. they are just here to make the code compile.
 
       int[] currentpos = new int[0];
       int[] newdiag = new int[0];
