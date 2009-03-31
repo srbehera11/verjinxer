@@ -203,11 +203,12 @@ public class QGramMatcherSubcommand implements Subcommand {
          return 1;
       }
       boolean c_matches_c = opt.isGiven("c");
-      if (c_matches_c)
-         log.info("qmatch: C matches C, even if no G follows");
-      else
-         log.info("qmatch: C matches C only before G");
-
+      if (bisulfiteIndex || bisulfiteQueries) {
+         if (c_matches_c)
+            log.info("qmatch: C matches C, even if no G follows");
+         else
+            log.info("qmatch: C matches C only before G");
+      }
       final int stride = project.getStride();
       log.info("qmatch: stride of index is %d", stride);
 
