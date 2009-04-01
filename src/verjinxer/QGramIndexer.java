@@ -171,7 +171,7 @@ public class QGramIndexer {
     *         starts are in bck[0..bck.length-2]. The element bck[bck.length-1] is the sum over all
     *         buckets (that is, the number of q-grams in the index).
     */
-   private Object[] computeBuckets(final int[] frq, final boolean overwrite) {
+   private Object[] computeBucketStartPositions(final int[] frq, final boolean overwrite) {
       final int[] bck = (overwrite) ? frq : Arrays.copyOf(frq, frq.length);
       // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
       final int aq = bck.length - 1; // subtract sentinel space
@@ -263,12 +263,12 @@ public class QGramIndexer {
       maximumFrequency = ArrayUtils.maximumElement(frq);
       if (qfreqfile != null)
          g.dumpIntArray(qfreqfile, frq, 0, aq);
-      final double timeFreqCounting = timer.tocs();
+      final double timeFrequencyCounting = timer.tocs();
 
       // Compute and write bucket array bck
       // bck[i] == r means: positions of q-grams with code i start at index r within qpos
       timer.tic();
-      final Object[] r = computeBuckets(frq, external);
+      final Object[] r = computeBucketStartPositions(frq, external);
       final int[] bck = (int[]) r[0];
       maximumBucketSize = (Integer) r[1]; // only needed to return to caller
       if (external)
@@ -276,7 +276,7 @@ public class QGramIndexer {
       final int sum = bck[aq];
       if (bucketfile != null)
          g.dumpIntArray(bucketfile, bck);
-      final double timeBckGeneration = timer.tocs();
+      final double timeBucketsGeneration = timer.tocs();
       log.info("  time for reading, word counting, and writing buckets: %.2f sec",
             totalTimer.tocs());
       log.info("  input file size: %d;  (filtered) qgrams in qbck: %d", ll, sum);
@@ -342,7 +342,7 @@ public class QGramIndexer {
       final double timeTotal = totalTimer.tocs();
       final int[] qpos = (slicesize == sum && !external) ? qposslice : null;
 
-      times = new double[] { timeTotal, timeFreqCounting, timeBckGeneration, timeQpos };
+      times = new double[] { timeTotal, timeFrequencyCounting, timeBucketsGeneration, timeQpos };
 
       // return new QGramIndex(bck, qpos, q, maxbck);
       // Object[] { (external ? null : bck), qpos, frq, times, maxfreq, maxbck };
