@@ -278,6 +278,11 @@ public class QGramIndexer {
       return result;
    }
 
+   public void generateAndWriteIndex(final String seqfile, final String bucketfile,
+		   final String qposfile) throws IOException {
+	   generateAndWriteIndex(seqfile, bucketfile, qposfile, null, null);
+   }
+   
    public void generateAndWriteIndex() throws IOException {
 
       final String seqfile = project.getName() + FileNameExtensions.seq;
