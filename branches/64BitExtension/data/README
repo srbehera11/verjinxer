@@ -1,0 +1,14 @@
+This directory contains some example data. The idea is to use this as a test case for the
+matching and indexing algorithms.
+
+Please keep the files small, not only to save bandwidth, but to make debugging easier.
+
+
+cpgislands.fa:
+200 randomly chosen CpG islands (plus some context before and after) of the human genome.
+Nucleotides written in lowercase denote repeats.
+
+read120636.fa, cgi1.fa:
+cgi1.fa contains a single CpG island. Starting from index 0, it contains
+the read from read120636.fa, without any errors. (Only C->T replacements since
+it is a bisulfite-modified read.)

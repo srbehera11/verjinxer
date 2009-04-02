@@ -1,0 +1,44 @@
+alias vji='java -ea -d64 -Xmx8G -cp /home/martin/workspace/verjinxer/log5j-1.2.jar:/usr/share/java/log4j-1.2.jar:/home/martin/workspace/verjinxer/bin/ verjinxer.Main'
+
+To work with sequence data, it must first be translated from FASTA
+format.
+
+	vji tr --dna refseq.fa
+	vji tr --dna queries.fa
+
+This creates projects 'refseq' and 'queries'. All further commands use
+these names as parameter.
+
+Create a q-gram index of a reference sequence
+
+	vji qg refseq
+
+Create a bisulfite q-gram index of a reference sequence
+
+	vji qg --bisulfite refseq
+
+Match queries against a q-gram index. Also works for a bisulfite q-gram index.
+
+	vji qm queries refseq
+
+Same with minimum match length of 25 and a filter:
+
+	vji qm -l 25 -F 2:1 queries refseq
+
+The filter is specified as "2:1", which means that all q-grams
+are ignored for matching that consist of only two alphabet characters.
+The one means that one additional character is allowed that is different.
+
+Create a q-gram index of a query sequence
+
+	vji qg queries
+
+Match a reference sequence against a q-gram index of queries
+
+	vji qm refseq queries
+
+If the index contains bisulfite-treated sequences, then simulation of
+bisulfite treatment of the reference sequence should be requested:
+
+	vji qm --bisulfite refseq queries
+
