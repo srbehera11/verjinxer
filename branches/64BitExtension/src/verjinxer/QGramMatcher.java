@@ -36,6 +36,7 @@ public class QGramMatcher {
    final Alphabet alphabet;
 
    /** the query sequence text (coded) */
+   //TODO change to HugeByteArray
    final byte[] t;
 
    /** sequence separator positions in text t */
@@ -43,6 +44,7 @@ public class QGramMatcher {
 
    /** Positions of all q-grams */
    final QGramIndex qgramindex;
+   
 
    /** the indexed text (coded) */
    final byte[] s;

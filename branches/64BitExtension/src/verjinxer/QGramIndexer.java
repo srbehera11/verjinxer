@@ -480,7 +480,7 @@ public double[] getLastTimes() {
     * @throws java.io.IOException
     * TODO 64Bit
     */
-   public int checkQGramIndex(final String seqfile, final int q, final int asize,
+   public static int checkQGramIndex(final String seqfile, final int q, final int asize,
          final String bucketfile, final String qposfile, final QGramFilter thefilter,
          final boolean bisulfiteIndex) throws IOException {
       // Read sequence and bucketfile into arrays
@@ -511,7 +511,7 @@ public double[] getLastTimes() {
 
       // Read the q-position array.
       //TODO 64Bit long wrong datatype??? capacity is int
-      IntBuffer qpos = g.mapR(qposfile).asIntBuffer();
+      IntBuffer qpos = Globals.mapR(qposfile).asIntBuffer(); //to q-gram index ; change whole method
       int b = -1; // current bucket
       int bold;
       int i = -1;
