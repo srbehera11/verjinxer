@@ -46,17 +46,17 @@ public class SuffixTrayBuilder {
     * print help on usage
     */
    public void help() {
-      log.info("Usage:%n  %s suffix [options] Indexnames...%n", programname);
-      log.info("Builds the suffix tray (tree plus array) of a .seq file;%n");
-      log.info("writes %s, %s (incl. variants 1,1x,2,2x).%n", FileNameExtensions.pos,
+      log.info("Usage:%n  %s suffix [options] Indexnames...", programname);
+      log.info("Builds the suffix tray (tree plus array) of a .seq file;");
+      log.info("writes %s, %s (incl. variants 1,1x,2,2x).", FileNameExtensions.pos,
             FileNameExtensions.lcp);
-      log.info("Options:%n");
-      log.info("  -m, --method  <id>    select construction method, where <id> is one of:%n");
-      log.info("      L%n" + "      R%n" + "      minLR%n" + "      bothLR%n" + "      bothLR2%n");
-      log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte%n");
-      log.info("  -c, --check           additionally check index integrity%n");
-      log.info("  -C, --onlycheck       ONLY check index integrity%n");
-      log.info("  -X, --notexternal     DON'T save memory at the cost of lower speed%n");
+      log.info("Options:");
+      log.info("  -m, --method  <id>    select construction method, where <id> is one of:");
+      log.info("      L%n" + "      R%n" + "      minLR%n" + "      bothLR%n" + "      bothLR2");
+      log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte");
+      log.info("  -c, --check           additionally check index integrity");
+      log.info("  -C, --onlycheck       ONLY check index integrity");
+      log.info("  -X, --notexternal     DON'T save memory at the cost of lower speed");
    }
 
    /**
@@ -108,7 +108,7 @@ public class SuffixTrayBuilder {
       }
       if (args.length == 0) {
          help();
-         log.info("suffixtray: no index given%n");
+         log.info("suffixtray: no index given");
          return 1;
       }
 
@@ -129,13 +129,13 @@ public class SuffixTrayBuilder {
       String projectname = g.dir + indexname;
       g.startProjectLogging(projectname);
       if (args.length > 1)
-         log.warn("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
+         log.warn("suffixtray: ignoring all arguments except first '%s'", args[0]);
 
       ProjectInfo project;
       try {
          project = ProjectInfo.createFromFile(projectname);
       } catch (IOException ex) {
-         log.warn("cannot read project file.%n");
+         log.warn("cannot read project file.");
          return 1;
       }
       asize = project.getIntProperty("LargestSymbol") + 1;
@@ -154,7 +154,7 @@ public class SuffixTrayBuilder {
       project.setProperty("AlphabetSize", asize);
 
       method = (opt.isGiven("m") ? opt.get("m") : "L"); // default method
-      log.info("suffixtray: constructing pos using method '%s'...%n", method);
+      log.info("suffixtray: constructing pos using method '%s'...", method);
       assert (alphabet.isSeparator(s[n - 1])) : "last character in text needs to be a separator";
       TicToc timer = new TicToc();
       steps = 0;
@@ -172,7 +172,7 @@ public class SuffixTrayBuilder {
          log.error("suffixtray: Unsupported construction method '" + method + "'!");
          return 1;
       }
-      log.info("suffixtray: pos completed after %.1f secs using %d steps (%.2f/char)%n",
+      log.info("suffixtray: pos completed after %.1f secs using %d steps (%.2f/char)",
             timer.tocs(), steps, (double) steps / n);
       project.setProperty("SuffixTrayMethod", method);
       project.setProperty("SuffixTraySteps", steps);
@@ -180,7 +180,7 @@ public class SuffixTrayBuilder {
 
       if (check) {
          timer.tic();
-         log.info("suffixcheck: checking pos...%n");
+         log.info("suffixcheck: checking pos...");
          if (method.equals("L"))
             returnvalue = checkpos_R();
          else if (method.equals("R"))
@@ -194,14 +194,14 @@ public class SuffixTrayBuilder {
          else
             g.terminate("suffixcheck: Unsupported construction method '" + method + "'!");
          if (returnvalue == 0)
-            log.info("suffixcheck: pos looks OK!%n");
-         log.info("suffixcheck: done after %.1f secs%n", timer.tocs());
+            log.info("suffixcheck: pos looks OK!");
+         log.info("suffixcheck: done after %.1f secs", timer.tocs());
       }
 
       if (returnvalue == 0) {
          timer.tic();
          String fpos = projectname + FileNameExtensions.pos;
-         log.info("suffixtray: writing '%s'...%n", fpos);
+         log.info("suffixtray: writing '%s'...", fpos);
          if (method.equals("L"))
             writepos_R(fpos);
          else if (method.equals("R"))
@@ -214,14 +214,14 @@ public class SuffixTrayBuilder {
             writepos_R(fpos);
          else
             g.terminate("suffixtray: Unsupported construction method '" + method + "'!");
-         log.info("suffixtray: writing took %.1f secs; done.%n", timer.tocs());
+         log.info("suffixtray: writing took %.1f secs; done.", timer.tocs());
       }
 
       // do lcp if desired
       if (dolcp > 0 && returnvalue == 0) {
          timer.tic();
          String flcp = projectname + FileNameExtensions.lcp;
-         log.info("suffixtray: computing lcp array...%n");
+         log.info("suffixtray: computing lcp array...");
          if (method.equals("L"))
             lcp_L(flcp, dolcp);
          else if (method.equals("R"))
@@ -234,7 +234,7 @@ public class SuffixTrayBuilder {
             lcp_L(flcp, dolcp);
          else
             g.terminate("suffixtray: Unsupported construction method '" + method + "'!");
-         log.info("suffixtray: lcp computation and writing took %.1f secs; done.%n", timer.tocs());
+         log.info("suffixtray: lcp computation and writing took %.1f secs; done.", timer.tocs());
          project.setProperty("lcp1Exceptions", lcp1x);
          project.setProperty("lcp2Exceptions", lcp2x);
          project.setProperty("lcp1Size", n + 8 * lcp1x);
@@ -247,7 +247,7 @@ public class SuffixTrayBuilder {
       try {
          project.store();
       } catch (IOException ex) {
-         log.warn("suffix: could not write %s (%s)!%n", project.getFileName(), ex);
+         log.warn("suffix: could not write %s (%s)!", project.getFileName(), ex);
          g.terminate(1);
       }
       g.stopplog();
@@ -846,7 +846,7 @@ public class SuffixTrayBuilder {
       if (chi >= 256) {
          if (n == 0)
             return 0;
-         log.warn("suffixcheck: no first character found, but |s|!=0.%n");
+         log.warn("suffixcheck: no first character found, but |s|!=0.");
          return 2;
       }
       p = lexfirstpos[chi];
@@ -854,10 +854,10 @@ public class SuffixTrayBuilder {
       nextp = lexnextpos[p];
       nn = 1;
       while (nextp != -1) {
-         // log.info("  pos %d vs %d; text %d vs %d%n", p, nextp, s[p], s[nextp]);
+         // log.info("  pos %d vs %d; text %d vs %d", p, nextp, s[p], s[nextp]);
          if (!((comp = suffixcmp(p, nextp)) < 0)) {
             log.warn(
-                  "suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
+                  "suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d",
                   nn - 1, nn, p, nextp, s[p], s[nextp], comp);
             returnvalue = 1;
          }
@@ -866,7 +866,7 @@ public class SuffixTrayBuilder {
          nn++;
       }
       if (nn != n) {
-         log.warn("suffixcheck: missing some suffixes; have %d / %d.%n", nn, n);
+         log.warn("suffixcheck: missing some suffixes; have %d / %d.", nn, n);
          returnvalue += 2;
       }
       return returnvalue;
@@ -887,7 +887,7 @@ public class SuffixTrayBuilder {
       if (chi >= 256) {
          if (n == 0)
             return 0;
-         log.warn("suffixcheck: no first character found, but |s|!=0.%n");
+         log.warn("suffixcheck: no first character found, but |s|!=0.");
          return 2;
       }
       nn = 1;
@@ -895,10 +895,10 @@ public class SuffixTrayBuilder {
       assert (p != -1);
       nextp = lexps[p] ^ -1;
       while (nextp != -1) {
-         // log.info("  pos %d vs %d; text %d vs %d%n", p, nextp, s[p], s[nextp]);
+         // log.info("  pos %d vs %d; text %d vs %d", p, nextp, s[p], s[nextp]);
          if (!((comp = suffixcmp(p, nextp)) < 0)) {
             log.warn(
-                  "suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
+                  "suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d",
                   nn - 1, nn, p, nextp, s[p], s[nextp], comp);
             returnvalue = 1;
          }
@@ -908,7 +908,7 @@ public class SuffixTrayBuilder {
          nn++;
       }
       if (nn != n) {
-         log.warn("suffixcheck: missing some suffixes; have %d / %d.%n", nn, n);
+         log.warn("suffixcheck: missing some suffixes; have %d / %d.", nn, n);
          returnvalue += 2;
       }
       return returnvalue;
@@ -924,7 +924,7 @@ public class SuffixTrayBuilder {
    public int checkpos(String di) {
       int returnvalue = 0;
       TicToc ctimer = new TicToc();
-      log.info("suffixcheck: checking pos...%n");
+      log.info("suffixcheck: checking pos...");
       ArrayFile fpos = null;
       IntBuffer pos = null;
       try {
@@ -944,7 +944,7 @@ public class SuffixTrayBuilder {
          }
          if (!((comp = suffixcmp(p, nextp)) < 0)) {
             log.warn(
-                  "suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d%n",
+                  "suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d",
                   nn - 1, nn, p, nextp, s[p], s[nextp], comp);
             returnvalue = 1;
          }
@@ -952,12 +952,12 @@ public class SuffixTrayBuilder {
          p = nextp;
       }
       if (nn != n) {
-         log.warn("suffixcheck: missing some suffixes; have %d / %d.%n", nn, n);
+         log.warn("suffixcheck: missing some suffixes; have %d / %d.", nn, n);
          returnvalue += 2;
       }
       if (returnvalue == 0)
-         log.info("suffixcheck: pos seems OK!%n");
-      log.info("suffixcheck: checking took %.2f secs.%n", ctimer.tocs());
+         log.info("suffixcheck: pos seems OK!");
+      log.info("suffixcheck: checking took %.2f secs.", ctimer.tocs());
       return returnvalue;
    }
 
@@ -979,7 +979,7 @@ public class SuffixTrayBuilder {
             f.writeInt(p);
          f.close();
       } catch (IOException ex) {
-         log.error("suffixtray: error writing '%s': %s%n", fname, ex);
+         log.error("suffixtray: error writing '%s': %s", fname, ex);
          g.terminate(1);
       }
    }
@@ -1005,7 +1005,7 @@ public class SuffixTrayBuilder {
          }
          f.close();
       } catch (IOException ex) {
-         g.warnmsg("suffixtray: error writing '%s': %s%n", fname, ex);
+         log.warn("suffixtray: error writing '%s': %s", fname, ex);
          g.terminate(1);
       }
    }
@@ -1064,7 +1064,7 @@ public class SuffixTrayBuilder {
          if (h > 0)
             h--;
       }
-      log.info("suffixtray: lcp computation took %.2f secs; writing...%n", timer.tocs());
+      log.info("suffixtray: lcp computation took %.2f secs; writing...", timer.tocs());
 
       int chi, r;
       for (chi = 0; chi < 256 && lexfirstpos[chi] == -1; chi++) {
@@ -1116,7 +1116,7 @@ public class SuffixTrayBuilder {
             f1x.close();
          }
       } catch (IOException ex) {
-         g.warnmsg("suffixtray: error writing lcp file(s): %s%n", ex);
+         log.warn("suffixtray: error writing lcp file(s): %s", ex);
          g.terminate(1);
       }
    }

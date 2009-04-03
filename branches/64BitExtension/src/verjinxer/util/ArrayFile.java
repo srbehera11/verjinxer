@@ -27,7 +27,8 @@ import static java.nio.channels.FileChannel.*;
  */
 public class ArrayFile {
    
-   private String name = null;                   // file name on disk
+   /** file name on disk */
+   private String name = null;       
    private File file = null;                     // Java.io.File for this file
    private FileChannel channel = null;           // channel, null if not open
    private Mode mode = null;   
