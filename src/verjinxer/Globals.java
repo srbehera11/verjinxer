@@ -45,7 +45,7 @@ public class Globals {
 
    private final ArrayFile arf;
 
-   String cmdname = programname; // prefix to diagnostic messages
+   static String cmdname = programname; // prefix to diagnostic messages
    String[] action = null; // all arguments to Main for logfile
    boolean plog = true; // write to project log?
    String dir = ""; // project (working) dir
@@ -330,8 +330,9 @@ public class Globals {
     * @param file
     *           the name of the file to be read
     * @return the ByteBuffer with the mapped file's contents
+    * TODO outsourcing in other class
     */
-   public ByteBuffer mapR(final String file) {
+   public static ByteBuffer mapR(final String file) {
       ByteBuffer b = null;
       logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
       try {
