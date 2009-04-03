@@ -19,6 +19,7 @@ import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.BitArray;
+import verjinxer.util.HugeByteArray;
 import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
@@ -37,7 +38,7 @@ public class QGramMatcher {
 
    /** the query sequence text (coded) */
    //TODO change to HugeByteArray
-   final byte[] t;
+   final HugeByteArray t;
 
    /** sequence separator positions in text t */
    final private long[] tssp;
@@ -86,7 +87,7 @@ public class QGramMatcher {
    int[] newpos; // starting positions of new matches in s // TODO rename to currentpos
    int[] newlen; // match lengths for new matches
    // int[] newdiag;
-   int seqstart = 0; // starting pos of current sequence in t
+   long seqstart = 0; // starting pos of current sequence in t
 
    /**
     * Creates a new instance of QgramMatcher
@@ -97,6 +98,7 @@ public class QGramMatcher {
     *           the command line arguments
     * @param toomanyhits
     *           may be null
+    * @param project Project of ds
     */
    public QGramMatcher(Globals g, String dt, String ds, String toomanyhitsfilename,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
@@ -137,7 +139,10 @@ public class QGramMatcher {
       final String seqfile = ds + FileNameExtensions.seq;
       final String sspfile = ds + FileNameExtensions.ssp;
       System.gc();
-      t = g.slurpByteArray(tfile);
+      
+      ProjectInfo tproject = ProjectInfo.createFromFile(dt);
+      t = new HugeByteArray(tproject.getLongProperty("Length"));
+      t.read(tfile, 0, -1, 0);
       tssp = g.slurpLongArray(tsspfile);
       final ArrayList<String> tdesc = g.slurpTextFile(dt + FileNameExtensions.desc, tssp.length);
       assert tdesc.size() == tssp.length;
@@ -145,7 +150,7 @@ public class QGramMatcher {
       final ArrayList<String> sdesc;
 
       if (dt.equals(ds)) {
-         s = t;
+         s = g.slurpByteArray(tfile); //TODO ineffective, because reading the file 
          ssp = tssp;
          sm = tssp.length;
          sdesc = tdesc;
@@ -199,16 +204,16 @@ public class QGramMatcher {
       // / currentpos = new int[maxactive];
 
       // (B) Walking ...
-      final int tn = t.length;
+      final long tn = t.length;
       final int slicefreq = 5;
-      final int slicesize = 1 + (slicefreq * tn / 100);
+      final long slicesize = 1 + (slicefreq * tn / 100);
       int nextslice = 0;
       int percentdone = 0;
-      int symremaining = 0;
+      long symremaining = 0;
 
       seqstart = 0;
       int seqnum = 0; // number of current sequence in t
-      int tp = 0; // current position in t
+      long tp = 0; // current position in t
       int seqmatches = 0; // number of matches in current target sequence
       while (tp < tn) {
 
@@ -217,8 +222,8 @@ public class QGramMatcher {
             // TODO < q
             tp += symremaining;
             symremaining = 0;
-            for (; tp < tn && (!alphabet.isSymbol(t[tp])); tp++) {
-               if (alphabet.isSeparator(t[tp])) {
+            for (; tp < tn && (!alphabet.isSymbol(t.get(tp))); tp++) {
+               if (alphabet.isSeparator(t.get(tp))) {
                   assert tp == tssp[seqnum];
                   matchReporter.write(seqnum);
                   matchReporter.clear();
@@ -235,14 +240,14 @@ public class QGramMatcher {
                tp = (int) tssp[seqnum];
                continue;
             }
-            int i; // next valid symbol is now at tp, count number of valid symbols
-            for (i = tp; i < tn && alphabet.isSymbol(t[i]); i++) {
+            long i; // next valid symbol is now at tp, count number of valid symbols
+            for (i = tp; i < tn && alphabet.isSymbol(t.get(i)); i++) {
             }
             symremaining = i - tp;
             if (symremaining < minlen)
                continue; // / < q
          }
-         assert alphabet.isSymbol(t[tp]);
+         assert alphabet.isSymbol(t.get(tp));
          assert symremaining >= minlen; // TODO >= q
          log.debug("  position %d (in seq. %d, starting at %d): %d symbols", tp, seqnum, seqstart,
                symremaining);
@@ -272,7 +277,7 @@ public class QGramMatcher {
             tp++;
             symremaining--;
             if (symremaining >= minlen) {
-               qcode = qgramcoder.codeUpdate(qcode, t[tp + q - 1]);
+               qcode = qgramcoder.codeUpdate(qcode, t.get(tp + q - 1));
                assert qcode >= 0;
                seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
                      qgramfilter.isFiltered(qcode));
@@ -309,16 +314,16 @@ public class QGramMatcher {
       newlen = new int[maxactive];
 
       // (B) Walking ...
-      final int tn = t.length;
+      final long tn = t.length;
       final int slicefreq = 5;
-      final int slicesize = 1 + (slicefreq * tn / 100);
+      final long slicesize = 1 + (slicefreq * tn / 100);
       int nextslice = 0;
       int percentdone = 0;
-      int symremaining = 0;
+      long symremaining = 0;
 
       seqstart = 0;
       int seqnum = 0; // number of current sequence in t
-      int tp = 0; // current position in t
+      long tp = 0; // current position in t
       int seqmatches = 0; // number of matches in current target sequence
 
       outer: while (tp < tn) {
@@ -328,8 +333,8 @@ public class QGramMatcher {
             // TODO < q
             tp += symremaining;
             symremaining = 0;
-            for (; tp < tn && (!alphabet.isSymbol(t[tp])); tp++) {
-               if (alphabet.isSeparator(t[tp])) {
+            for (; tp < tn && (!alphabet.isSymbol(t.get(tp))); tp++) {
+               if (alphabet.isSeparator(t.get(tp))) {
                   assert tp == tssp[seqnum];
                   matchReporter.write(seqnum);
                   matchReporter.clear();
@@ -347,12 +352,12 @@ public class QGramMatcher {
                continue;
             }
             // next valid symbol is now at tp, count number of remaining valid symbols
-            int i;
-            for (i = tp; i < tn && alphabet.isSymbol(t[i]); i++) {
+            long i;
+            for (i = tp; i < tn && alphabet.isSymbol(t.get(i)); i++) {
             }
             symremaining = i - tp;
          }
-         assert alphabet.isSymbol(t[tp]);
+         assert alphabet.isSymbol(t.get(tp));
          assert symremaining >= minlen; // TODO >= q
          log.debug("  position %d (in seq. %d, starting at %d): %d symbols", tp, seqnum, seqstart,
                symremaining);
@@ -719,7 +724,7 @@ public class QGramMatcher {
             if (!bisulfiteIndex) {
                sp = newpos[ni] + q;
                offset = q;
-               while (s[sp] == t[tp + offset] && alphabet.isSymbol(s[sp])) {
+               while (s[sp] == t.get(tp + offset) && alphabet.isSymbol(s[sp])) {
                   sp++;
                   offset++;
                }
@@ -789,10 +794,10 @@ public class QGramMatcher {
     * 
     *         TODO seqstart should not be needed here
     */
-   private int bisulfiteMatchLengthCmC(int sstart, int tstart, int[] ret) {
+   private long bisulfiteMatchLengthCmC(int sstart, long tstart, long[] ret) {
       assert ret.length == 3;
       int sstop = sstart;
-      int tstop = tstart;
+      long tstop = tstart;
 
       // try {
       // System.out.format("t: %d. s: %d%n", tstart, sstart);
@@ -807,7 +812,7 @@ public class QGramMatcher {
 
       // TODO the match type could often be determined from the q-gram itself!
 
-      while (alphabet.isSymbol(s[sstop]) && s[sstop] == t[tstop]) {
+      while (alphabet.isSymbol(s[sstop]) && s[sstop] == t.get(tstop)) {
          sstop++;
          tstop++;
       }
@@ -815,13 +820,13 @@ public class QGramMatcher {
       // the first mismatch tells us what type of match this is
       final byte nucleotide_s;
       final byte nucleotide_t;
-      if (s[sstop] == NUCLEOTIDE_C && t[tstop] == NUCLEOTIDE_T) {
+      if (s[sstop] == NUCLEOTIDE_C && t.get(tstop) == NUCLEOTIDE_T) {
          // we have C -> T replacements
          nucleotide_s = NUCLEOTIDE_C;
          nucleotide_t = NUCLEOTIDE_T;
          sstop++;
          tstop++;
-      } else if (s[sstop] == NUCLEOTIDE_G && t[tstop] == NUCLEOTIDE_A) {
+      } else if (s[sstop] == NUCLEOTIDE_G && t.get(tstop) == NUCLEOTIDE_A) {
          // we have G -> A replacements
          nucleotide_s = NUCLEOTIDE_G;
          nucleotide_t = NUCLEOTIDE_A;
@@ -835,23 +840,23 @@ public class QGramMatcher {
 
          if (stride > 1) {
             while (sstart > 0 && tstart > seqstart && alphabet.isSymbol(s[sstart - 1])
-                  && s[sstart - 1] == t[tstart - 1]) {
+                  && s[sstart - 1] == t.get(tstart - 1)) {
                sstart--;
                tstart--;
             }
             if (sstart == 0 || tstart == seqstart || !alphabet.isSymbol(s[sstart - 1])) {
-               assert seqstart == 0 || !alphabet.isSymbol(t[seqstart - 1]);
+               assert seqstart == 0 || !alphabet.isSymbol(t.get(seqstart - 1));
                ret[0] = sstart;
                ret[1] = tstart;
                ret[2] = sstop - sstart;
                assert sstop - sstart == tstop - tstart;
                return ret[2];
             }
-            if (s[sstart - 1] == NUCLEOTIDE_C && t[tstart - 1] == NUCLEOTIDE_T) {
+            if (s[sstart - 1] == NUCLEOTIDE_C && t.get(tstart - 1) == NUCLEOTIDE_T) {
                // we have C -> T replacements
                nucleotide_s = NUCLEOTIDE_C;
                nucleotide_t = NUCLEOTIDE_T;
-            } else if (s[sstart - 1] == NUCLEOTIDE_G && t[tstart - 1] == NUCLEOTIDE_A) {
+            } else if (s[sstart - 1] == NUCLEOTIDE_G && t.get(tstart - 1) == NUCLEOTIDE_A) {
                // we have G -> A replacements
                nucleotide_s = NUCLEOTIDE_G;
                nucleotide_t = NUCLEOTIDE_A;
@@ -880,7 +885,7 @@ public class QGramMatcher {
 
       // search further to the right ...
       while (alphabet.isSymbol(s[sstop])
-            && (s[sstop] == t[tstop] || (s[sstop] == nucleotide_s && t[tstop] == nucleotide_t))) {
+            && (s[sstop] == t.get(tstop) || (s[sstop] == nucleotide_s && t.get(tstop) == nucleotide_t))) {
          sstop++;
          tstop++;
       }
@@ -891,8 +896,8 @@ public class QGramMatcher {
          while (sstart > 0
                && tstart > seqstart
                && alphabet.isSymbol(s[sstart - 1])
-               && (s[sstart - 1] == t[tstart - 1] || s[sstart - 1] == nucleotide_s
-                     && t[tstart - 1] == nucleotide_t)) {
+               && (s[sstart - 1] == t.get(tstart - 1) || s[sstart - 1] == nucleotide_s
+                     && t.get(tstart - 1) == nucleotide_t)) {
             sstart--;
             tstart--;
          }
@@ -912,9 +917,9 @@ public class QGramMatcher {
     * @param ret
     *           TODO only used within updateActiveIntervals_strided
     */
-   private void regularMatchLength(int sp, int tp, int[] ret) {
+   private void regularMatchLength(int sp, long tp, long[] ret) {
       int len = q;
-      while (s[sp + len] == t[tp + len] && alphabet.isSymbol(s[sp])) {
+      while (s[sp + len] == t.get(tp + len) && alphabet.isSymbol(s[sp])) {
          len++;
       }
       if (stride > 1) {
@@ -953,8 +958,8 @@ public class QGramMatcher {
       // not within this method, but as object variables. they are just here to make the code compile.
 
       int[] currentpos = new int[0];
-      int[] newdiag = new int[0];
-      int[] activediag = new int[0];
+      long[] newdiag = new long[0];
+      long[] activediag = new long[0];
 
       if (filtered)
          return 0;
@@ -986,7 +991,7 @@ public class QGramMatcher {
 
       // temporary. needed for getting results out of the matchLength functions
       // declared here so we can re-use it (and avoid reallocating memory)
-      int[] match = { 0, 0, 0 };
+      long[] match = { 0, 0, 0 };
 
       // loop over all new q-gram positions and construct the new array of active intervals
       // (overwriting newpos)
@@ -1005,9 +1010,9 @@ public class QGramMatcher {
             } else {
                regularMatchLength(currentpos[ci], tp, match);
             }
-            final int sstart = match[0];
-            final int tstart = match[1];
-            final int len = match[2];
+            final int sstart = (int) match[0];
+            final long tstart = match[1];
+            final int len = (int) match[2];
 
             // System.out.printf("matchleng: sstart=%d tstart=%d len=%d%n", sstart, tstart, len);
             if (len >= minlen) {
@@ -1084,7 +1089,7 @@ public class QGramMatcher {
       // The same holds for the match length arrays activelen and newlen.
 
       // swap activepos <-> newpos and activelen <-> newlen
-      int[] tmp;
+      long[] tmp;
       tmp = activepos;
       activepos = newpos;
       newpos = tmp;
