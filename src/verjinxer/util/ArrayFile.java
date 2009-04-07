@@ -119,14 +119,14 @@ public class ArrayFile {
     * @return length of this file in bytes
     */
    public long length() {
-      return (file.length());
+      return file.length();
    }
 
    /** Returns the length of the ArrayFile in bytes, synonymous to length()
     * @return length of this file in bytes
     */
    public long size() {
-      return (length());
+      return length();
    }
    
    public String getMode() {

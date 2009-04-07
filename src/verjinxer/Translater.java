@@ -347,15 +347,15 @@ public class Translater {
       ArrayFile r2p = new ArrayFile(fname + FileNameExtensions.run2pos).openW();
       final int n = seq.limit();
 
-      byte next;
+      byte current;
       byte prev = -1;
       int start = 0;
       int len;
       for (int p = 0; p < n; p++) {
-         next = seq.get();
-         if (next != prev || p == 0) {
+         current = seq.get();
+         if (current != prev || p == 0) {
             run++;
-            prev = next;
+            prev = current;
             len = p - start;
             assert len > 0 || p == 0;
             if (len > 127)
@@ -363,7 +363,7 @@ public class Translater {
             if (p != 0)
                rlen.writeByte((byte) len);
             start = p;
-            rseq.writeByte(next);
+            rseq.writeByte(current);
             r2p.writeInt(p);
          }
          p2r.put(run);
@@ -396,15 +396,15 @@ public class Translater {
       ArrayFile p2r = new ArrayFile(fname + FileNameExtensions.pos2run).openW();
       ArrayFile r2p = new ArrayFile(fname + FileNameExtensions.run2pos).openW();
       final int n = seq.limit();
-      byte next;
+      byte current;
       byte prev = -1;
       int start = 0;
       int len;
       for (int p = 0; p < n; p++) {
-         next = seq.get();
-         if (next != prev || p == 0) {
+         current = seq.get();
+         if (current != prev || p == 0) {
             run++;
-            prev = next;
+            prev = current;
             len = p - start;
             assert len > 0 || p == 0;
             if (len > 127)
@@ -412,7 +412,7 @@ public class Translater {
             if (p != 0)
                rlen.writeByte((byte) len);
             start = p;
-            rseq.writeByte(next);
+            rseq.writeByte(current);
             r2p.writeInt(p);
          }
          p2r.writeInt(run);

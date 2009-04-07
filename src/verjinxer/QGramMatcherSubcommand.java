@@ -121,21 +121,22 @@ public class QGramMatcherSubcommand implements Subcommand {
       ds = g.dir + sname;
 
       // Read project data and determine asize, q; read alphabet map
-      ProjectInfo project;
+      ProjectInfo indexProject, queryProject;
       try {
-         project = ProjectInfo.createFromFile(ds);
+         indexProject = ProjectInfo.createFromFile(ds);
+         queryProject = ProjectInfo.createFromFile(dt);
       } catch (IOException ex) {
-         log.error("qmatch: cannot read project file.");
+         log.error("qmatch: cannot read project files.");
          return 1;
       }
-      g.startProjectLogging(project);
+      g.startProjectLogging(indexProject);
 
       final int asize, q;
 
       // Read project data and determine asize, q; read alphabet map
       try {
-         asize = project.getIntProperty("qAlphabetSize");
-         q = project.getIntProperty("q");
+         asize = indexProject.getIntProperty("qAlphabetSize");
+         q = indexProject.getIntProperty("q");
       } catch (NumberFormatException ex) {
          log.error("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s",
                ds, ex);
@@ -185,7 +186,7 @@ public class QGramMatcherSubcommand implements Subcommand {
             : "stdout"));
 
       final boolean bisulfiteQueries = opt.isGiven("b");
-      final boolean bisulfiteIndex = project.isBisulfiteIndex();
+      final boolean bisulfiteIndex = indexProject.isBisulfiteIndex();
       if (bisulfiteIndex)
          log.info("qmatch: index contains simulated bisulfite-treated sequences, using bisulfite matching");
 
@@ -208,7 +209,7 @@ public class QGramMatcherSubcommand implements Subcommand {
          else
             log.info("qmatch: C matches C only before G");
       }
-      final int stride = project.getStride();
+      final int stride = indexProject.getStride();
       log.info("qmatch: stride length of index is %d", stride);
 
       // start output
@@ -231,9 +232,9 @@ public class QGramMatcherSubcommand implements Subcommand {
       }
 
       try {
-         QGramMatcher qgrammatcher = new QGramMatcher(g, dt, ds, toomanyhitsfilename,
+         QGramMatcher qgrammatcher = new QGramMatcher(g, queryProject, indexProject, toomanyhitsfilename,
                maxseqmatches, minseqmatches, minlen, qgramcoder, qgramfilter, out, sorted, selfcmp,
-               c_matches_c, project);
+               c_matches_c);
          if (bisulfiteQueries) {
             qgrammatcher.bisulfiteMatch();
          } else {

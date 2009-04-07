@@ -85,7 +85,7 @@ verlängern
 
 - why is the separator in the prj file? it should already be in the alphabet file
 
-
+- run-length index is not very well tested
 
 
 
@@ -109,3 +109,6 @@ for (String prefix : commands.keySet()) {
    }
 }
 
+
+================
+run-length index: there are too many matches! -> need to filter out useless matches in which run-lengths of each nucleotide differ too much
