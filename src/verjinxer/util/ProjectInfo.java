@@ -17,7 +17,9 @@ import verjinxer.FileNameExtensions;
  * Metadata about a project. While primary data such as a suffix array, the alphabet, or the q-gram
  * index are stored in separate files, secondary data such as the number of sequences, the value of q,
  * whether an index is for bisulfite sequences, and so on is stored in a project file. This class 
- * provides a way to read and write that information.   
+ * provides a way to read and write that information.
+ * 
+ * @author Marcel Martin
  */
 public class ProjectInfo {
    Properties properties;
@@ -30,6 +32,7 @@ public class ProjectInfo {
 
       Properties defaults = new Properties();
       defaults.setProperty("BisulfiteIndex", "false");
+      defaults.setProperty("RunIndex", "false");
       this.properties = new Properties(defaults);
    }
 
@@ -96,6 +99,14 @@ public class ProjectInfo {
       setProperty("Bisulfite", value);
    }
    
+   public void setRunIndex(boolean value) {
+      setProperty("RunIndex", true);
+   }
+   
+   public boolean isRunIndex() {
+      return getBooleanProperty("RunIndex");
+   }
+   
    public int getStride() {
       return getIntProperty("Stride");
    }
@@ -143,4 +154,17 @@ public class ProjectInfo {
    public void setProperty(final String name, boolean value) {
       properties.setProperty(name, Boolean.toString(value));
    }
+/*
+   public String getSequenceFileName() {
+      return projectname + FileNameExtensions.seq;
+   }
+   
+   public String getRunSequenceFileName() {
+      return projectname + FileNameExtensions.runseq;
+   }
+   
+   public String getRunLengthFileName() {
+      return projectname + FileNameExtensions.runlen;
+   }
+*/
 }

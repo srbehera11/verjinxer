@@ -53,7 +53,7 @@ public class QGramMatcher {
    /** number of sequences in s */
    final int sm;
 
-   /** stride width of the q-gram index */
+   /** stride length of the q-gram index */
    final int stride;
 
    /** maximum number of allowed matches */
@@ -64,16 +64,28 @@ public class QGramMatcher {
    final BitArray toomanyhits;
    final QGramFilter qgramfilter;
 
-   /** whether the index is for bisulfite sequences */
+   /** whether the index contains simulated bisulfite-treated sequences */
    final boolean bisulfiteIndex;
 
    /** whether C matches C, even if not before G */
-   final boolean c_matches_c; //
+   final boolean c_matches_c;
 
    // TODO make some of these final
    /** number of active matches */
    int active;
 
+   // TODO put this note somewhere else
+   // There are always two buffers for match positions:
+   // - activepos contains the currently active matches.
+   // - newpos contains the matches of the next round.
+   //
+   // One buffer is not enough since the computation needs to be able to look at both.
+   // When newpos has been updated after a round and contains the now active
+   // positions, references are simply swapped: activepos becomes newpos and vice-versa.
+   // In this way, newpos and activepos never have to be re-allocated.
+   //
+   // The same holds for the match length arrays activelen and newlen.
+   
    /** starting positions of active matches in s */
    int[] activepos;
 
@@ -87,7 +99,7 @@ public class QGramMatcher {
    int seqstart = 0; // starting pos of current sequence in t
 
    /**
-    * Creates a new instance of QgramMatcher
+    * Creates a new instance of QGramMatcher
     * 
     * @param gl
     *           the Globals structure
@@ -108,6 +120,8 @@ public class QGramMatcher {
       this.q = qgramcoder.q;
       this.c_matches_c = c_matches_c;
       this.stride = project.getStride();
+      
+      assert !project.isRunIndex();
 
       if (c_matches_c && !bisulfiteIndex) throw new UnsupportedOperationException("c_matches_c for non-bisulfite index not supported");
       alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
@@ -741,19 +755,6 @@ public class QGramMatcher {
             ai++;
          }
       }
-
-      // TODO put this note somewhere else
-
-      // There are always two buffers for match positions:
-      // - activepos contains the currently active matches.
-      // - newpos contains the matches of the next round.
-      //
-      // One buffer is not enough since the computation needs to be able to look at both.
-      // When newpos has been updated after a round and contains the now active
-      // positions, references are simply swapped: activepos becomes newpos and vice-versa.
-      // In this way, newpos and activepos never have to be re-allocated.
-      //
-      // The same holds for the match length arrays activelen and newlen.
 
       // swap activepos <-> newpos and activelen <-> newlen
       int[] tmp;
