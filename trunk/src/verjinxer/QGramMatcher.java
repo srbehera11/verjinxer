@@ -38,17 +38,14 @@ public class QGramMatcher {
    /** the query sequence text (coded) */
    final byte[] t;
 
-   /** sequence separator positions in text t */
+   /** sequence separator positions in text t TODO this does not contain the correct information when 'runs' is true */
    final private long[] tssp;
-
+   
    /** Positions of all q-grams */
    final QGramIndex qgramindex;
 
    /** the indexed text (coded) */
    final byte[] s;
-
-   /** sequence separator positions in indexed sequence s */
-   final long[] ssp;
 
    /** number of sequences in s */
    final int sm;
@@ -98,6 +95,9 @@ public class QGramMatcher {
    // int[] newdiag;
    int seqstart = 0; // starting pos of current sequence in t
 
+   /** Whether the index was created over the run-length compressed sequence */
+   private boolean runs;
+
    /**
     * Creates a new instance of QGramMatcher
     * 
@@ -108,11 +108,10 @@ public class QGramMatcher {
     * @param toomanyhits
     *           may be null
     */
-   public QGramMatcher(Globals g, String dt, String ds, String toomanyhitsfilename,
+   public QGramMatcher(Globals g, ProjectInfo tProject, ProjectInfo project, String toomanyhitsfilename,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
-         final boolean selfcmp, final boolean c_matches_c,
-         ProjectInfo project) throws IOException {
+         final boolean selfcmp, final boolean c_matches_c) throws IOException {
       this.g = g;
       this.bisulfiteIndex = project.isBisulfiteIndex();
       this.qgramfilter = qgramfilter;
@@ -120,10 +119,12 @@ public class QGramMatcher {
       this.q = qgramcoder.q;
       this.c_matches_c = c_matches_c;
       this.stride = project.getStride();
+      this.runs = project.isRunIndex();
       
-      assert !project.isRunIndex();
-
       if (c_matches_c && !bisulfiteIndex) throw new UnsupportedOperationException("c_matches_c for non-bisulfite index not supported");
+      
+      final String dt = tProject.getName();
+      final String ds = project.getName();
       alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
 
       // final BitSet thefilter = coder.createFilter(opt.get("F")); // empty filter if null
@@ -144,9 +145,9 @@ public class QGramMatcher {
       // read sequence descriptions;
       // memory-map or read qpos.
       TicToc ttimer = new TicToc();
-      final String tfile = dt + FileNameExtensions.seq;
+      final String tfile = runs ? (dt + FileNameExtensions.runseq) : (dt + FileNameExtensions.seq);
       final String tsspfile = dt + FileNameExtensions.ssp;
-      final String seqfile = ds + FileNameExtensions.seq;
+      final String seqfile = runs ? (ds + FileNameExtensions.runseq) : (ds + FileNameExtensions.seq);
       final String sspfile = ds + FileNameExtensions.ssp;
       System.gc();
       t = g.slurpByteArray(tfile);
@@ -155,7 +156,8 @@ public class QGramMatcher {
       assert tdesc.size() == tssp.length;
 
       final ArrayList<String> sdesc;
-
+		/** sequence separator positions in text t */
+      final long[] ssp;
       if (dt.equals(ds)) {
          s = t;
          ssp = tssp;
@@ -169,12 +171,24 @@ public class QGramMatcher {
          assert sdesc.size() == sm;
       }
 
-      if (sorted) {
-         matchReporter = new SortedMatchReporter(ssp, minseqmatches, minlen, tdesc, sdesc, out);
+      if (runs) {
+         log.info("matching run-compressed index against run-compressed queries");
+         // TODO change int[] to a memory-mapped ByteBuffer to avoid wasting (resident) memory
+         int[] queryRunToPos = g.slurpIntArray(dt + FileNameExtensions.run2pos);
+         int[] indexRunToPos = g.slurpIntArray(ds + FileNameExtensions.run2pos);
+         
+         if (sorted) {
+            throw new UnsupportedOperationException("sorted matches and a run-compressed index: this is not supported");
+         } else {
+            matchReporter = new RunGlobalMatchReporter(ssp, minseqmatches, maxseqmatches, selfcmp, out, queryRunToPos, indexRunToPos);
+         }
       } else {
-         matchReporter = new GlobalMatchReporter(ssp, minseqmatches, maxseqmatches, selfcmp, out);
+         if (sorted) {
+            matchReporter = new SortedMatchReporter(ssp, minseqmatches, minlen, tdesc, sdesc, out);
+         } else {
+            matchReporter = new GlobalMatchReporter(ssp, minseqmatches, maxseqmatches, selfcmp, out);
+         }
       }
-
       qgramindex = new QGramIndex(project);
       log.info("qmatch: mapping and reading files took %.1f sec", ttimer.tocs());
 
@@ -231,7 +245,7 @@ public class QGramMatcher {
             symremaining = 0;
             for (; tp < tn && (!alphabet.isSymbol(t[tp])); tp++) {
                if (alphabet.isSeparator(t[tp])) {
-                  assert tp == tssp[seqnum];
+                  assert tp == tssp[seqnum] || runs;
                   matchReporter.write(seqnum);
                   matchReporter.clear();
                   seqnum++;
@@ -244,7 +258,12 @@ public class QGramMatcher {
                break;
             if (toomanyhits.get(seqnum) == 1) {
                symremaining = 0;
-               tp = (int) tssp[seqnum];
+               if (runs) {
+                  // TODO too lazy to implement this correctly (should not iterate over the sequence)
+                  while (!alphabet.isSeparator(t[tp])) tp++;
+               } else {
+                  tp = (int) tssp[seqnum];
+               }
                continue;
             }
             int i; // next valid symbol is now at tp, count number of valid symbols
@@ -267,7 +286,12 @@ public class QGramMatcher {
                qgramfilter.isFiltered(qcode));
          if (seqmatches > maxseqmatches) {
             symremaining = 0;
-            tp = (int) tssp[seqnum];
+            if (runs) {
+               // TODO too lazy to implement this correctly (should not iterate over the sequence)
+               while (!alphabet.isSeparator(t[tp])) tp++;
+            } else {
+               tp = (int) tssp[seqnum];
+            }
             toomanyhits.set(seqnum, true);
          }
 
@@ -290,7 +314,12 @@ public class QGramMatcher {
                      qgramfilter.isFiltered(qcode));
                if (seqmatches > maxseqmatches) {
                   symremaining = 0;
-                  tp = (int) tssp[seqnum];
+                  if (runs) {
+                     // TODO too lazy to implement this correctly (should not iterate over the sequence)
+                     while (!alphabet.isSeparator(t[tp])) tp++;
+                  } else {
+                     tp = (int) tssp[seqnum];
+                  }
                   toomanyhits.set(seqnum, true);
                }
             }
@@ -342,7 +371,6 @@ public class QGramMatcher {
             symremaining = 0;
             for (; tp < tn && (!alphabet.isSymbol(t[tp])); tp++) {
                if (alphabet.isSeparator(t[tp])) {
-                  assert tp == tssp[seqnum];
                   matchReporter.write(seqnum);
                   matchReporter.clear();
                   seqnum++;
@@ -355,7 +383,12 @@ public class QGramMatcher {
                break outer;
             if (toomanyhits.get(seqnum) == 1) {
                symremaining = 0;
-               tp = (int) tssp[seqnum];
+               if (runs) {
+                  // TODO too lazy to implement this correctly (should not iterate over the sequence)
+                  while (!alphabet.isSeparator(t[tp])) tp++;
+               } else {
+                  tp = (int) tssp[seqnum];
+               }
                continue;
             }
             // next valid symbol is now at tp, count number of remaining valid symbols
@@ -386,7 +419,12 @@ public class QGramMatcher {
          // /////// qgramfilter.isFiltered(qcode));
          if (seqmatches > maxseqmatches) {
             symremaining = 0;
-            tp = (int) tssp[seqnum];
+            if (runs) {
+               // TODO too lazy to implement this correctly (should not iterate over the sequence)
+               while (!alphabet.isSeparator(t[tp])) tp++;
+            } else {
+               tp = (int) tssp[seqnum];
+            }
             toomanyhits.set(seqnum, true);
          }
 
@@ -419,7 +457,12 @@ public class QGramMatcher {
                // //////// qgramfilter.isFiltered(qcode));
                if (seqmatches > maxseqmatches) {
                   symremaining = 0;
-                  tp = (int) tssp[seqnum];
+                  if (runs) {
+                     // TODO too lazy to implement this correctly (should not iterate over the sequence)
+                     while (!alphabet.isSeparator(t[tp])) tp++;
+                  } else {
+                     tp = (int) tssp[seqnum];
+                  }
                   toomanyhits.set(seqnum, true);
                }
             }

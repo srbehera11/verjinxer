@@ -33,7 +33,9 @@ class SortedMatchReporter implements MatchReporter {
    /** list of sorted matches */
    private final ArrayList<ArrayList<Match>> matches;
    private final PrintWriter out;
-   private long[] ssp;
+   
+   /** sequence separator positions in indexed sequence s */
+   private final long[] ssp;
 
    /** minimum number of matches for output */
    private final int minseqmatches;
@@ -141,6 +143,8 @@ class GlobalMatchReporter implements MatchReporter {
    private final int minseqmatches;
    private final int maxseqmatches;
    private final PrintWriter out;
+   
+   /** sequence separator positions in indexed sequence s */
    private final long[] ssp;
 
    /** comparing text against itself? */
@@ -156,7 +160,6 @@ class GlobalMatchReporter implements MatchReporter {
       this.selfcmp = selfcmp;
       this.out = out;
       globalmatches = new ArrayList<GlobalMatch>(maxseqmatches < 127 ? maxseqmatches + 1 : 128);
-      globalmatches.ensureCapacity(maxseqmatches < 127 ? maxseqmatches + 1 : 128);
    }
 
    /**
@@ -177,7 +180,7 @@ class GlobalMatchReporter implements MatchReporter {
          globalmatches.add(new GlobalMatch(ttt, i, sss, matchlength));
    }
 
-   private int seqindex(final int p) {
+   protected int seqindex(final int p) {
       int si = java.util.Arrays.binarySearch(ssp, p);
       if (si >= 0)
          return si; // return the index of the ssp position
@@ -229,5 +232,39 @@ class GlobalMatchReporter implements MatchReporter {
    @Override
    public void setSequenceStart(int seqstart) {
       this.seqstart = seqstart;
+   }
+}
+
+class RunGlobalMatchReporter extends GlobalMatchReporter {
+
+   private int[] queryRunToPos; // 't'
+   private int[] indexRunToPos; // 's'
+
+   // TODO don't use int[] arrays as parameter, but IntBuffers instead
+   public RunGlobalMatchReporter(long[] ssp, int minseqmatches, int maxseqmatches, boolean selfcmp,
+         PrintWriter out, int[] queryRunToPos, int[] indexRunToPos) {
+      super(ssp, minseqmatches, maxseqmatches, selfcmp, out);
+      this.queryRunToPos = queryRunToPos;
+      this.indexRunToPos = indexRunToPos;
+   }
+
+   @Override
+   public void add(int sRunStart, int tRunStart, int runMatchLength) {
+      // convert run-based indices to regular indices
+      int sStart = indexRunToPos[sRunStart];
+      int tStart = queryRunToPos[tRunStart];
+      
+      // compute actual matchLength
+      // TODO what do we report when the matchLengths differ?
+      int matchLength = java.lang.Math.min(indexRunToPos[sRunStart + runMatchLength] - sStart, queryRunToPos[tRunStart + runMatchLength] - tStart);
+      
+//      int i = seqindex(sStart);
+//      int ttt = tStart - seqstart;
+//      int sss = sStart - (i == 0 ? 0 : (int) ssp[i - 1] + 1);
+//      if (!selfcmp || sStart > tStart)
+//         globalmatches.add(new GlobalMatch(ttt, i, sss, matchLength));
+    
+      
+      super.add(sStart, tStart, matchLength);
    }
 }
