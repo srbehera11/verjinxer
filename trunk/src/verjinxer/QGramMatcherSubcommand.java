@@ -59,7 +59,7 @@ public class QGramMatcherSubcommand implements Subcommand {
       log.info("  --self               compare index against itself");
       log.info("  -t, --tmh <filename> name of too-many-hits-filter file (use #)");
       log.info("  -o, --out <filename> specify output file (use # for stdout)");
-      log.info("  -x, --external       save memory at the cost of lower speed");
+//      log.info("  -x, --external       save memory at the cost of lower speed");
       log.info("  -c, --cmatchesc      C matches C, even if not before G");
       log.info("  -b, --bisulfite      index is over bisulfite-modified DNA reads.");
       log.info("                       simulates bisulfite modification for the queries");
@@ -85,7 +85,7 @@ public class QGramMatcherSubcommand implements Subcommand {
       g.cmdname = "qmatch";
 
       Options opt = new Options(
-            "b=bisulfite,l=length:,s=sort=sorted,o=out=output:,x=external,m=min=minmatch=minmatches:,M=max:,F=filter:,t=tmh:,self,c=cmatchesc");
+            "b=bisulfite,l=length:,s=sort=sorted,o=out=output:,m=min=minmatch=minmatches:,M=max:,F=filter:,t=tmh:,self,c=cmatchesc");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -160,7 +160,6 @@ public class QGramMatcherSubcommand implements Subcommand {
       }
 
       // Determine option values
-      boolean external = opt.isGiven("x");
       boolean sorted = opt.isGiven("s");
       int minlen = (opt.isGiven("l") ? Integer.parseInt(opt.get("l")) : q);
       if (minlen < q) {
@@ -188,7 +187,7 @@ public class QGramMatcherSubcommand implements Subcommand {
       final boolean bisulfiteQueries = opt.isGiven("b");
       final boolean bisulfiteIndex = project.isBisulfiteIndex();
       if (bisulfiteIndex)
-         log.info("qmatch: index is for bisulfite sequences, using bisulfite matching");
+         log.info("qmatch: index contains simulated bisulfite-treated sequences, using bisulfite matching");
 
       if (bisulfiteQueries) {
          log.info("qmatch: will simulate bisulfite treatment for query sequences");
@@ -210,7 +209,7 @@ public class QGramMatcherSubcommand implements Subcommand {
             log.info("qmatch: C matches C only before G");
       }
       final int stride = project.getStride();
-      log.info("qmatch: stride of index is %d", stride);
+      log.info("qmatch: stride length of index is %d", stride);
 
       // start output
       PrintWriter out = new PrintWriter(System.out);
@@ -219,7 +218,7 @@ public class QGramMatcherSubcommand implements Subcommand {
             out = new PrintWriter(
                   new BufferedOutputStream(new FileOutputStream(outname), 32 * 1024), false);
          } catch (FileNotFoundException ex) {
-            log.error("qmatch: could not create output file. Stop.");
+            log.error("qmatch: could not create output file.");
             return 1;
          }
       }

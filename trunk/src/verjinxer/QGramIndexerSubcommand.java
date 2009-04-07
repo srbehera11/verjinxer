@@ -53,13 +53,14 @@ public final class QGramIndexerSubcommand implements Subcommand {
       log.info("  -C, --onlycheck         ONLY check index integrity");
       log.info("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter to %s", FileNameExtensions.qbuckets);
       log.info("  -X, --notexternal       DON'T save memory at the cost of lower speed");
+      log.info("  -r, --runs              build the index of the run-compressed sequence (%s)", FileNameExtensions.runseq);
    }
 
    /** if run independently, call main
     * @param args  the command line arguments
     */
    public static void main(String[] args) {
-      new QGramIndexerSubcommand(new Globals()).run(args);
+      System.exit(new QGramIndexerSubcommand(new Globals()).run(args));
    }
 
    /**
@@ -71,7 +72,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
       int returnvalue = 0;
       String action = "qgram \"" + StringUtils.join("\" \"", args) + "\"";
       Options opt = new Options(
-            "q:,F=filter:,c=check,C=onlycheck,X=notexternal=nox=noexternal,b=bisulfite,s=stride:,freq=fr,sfreq=seqfreq=sf,f=allfreq");
+            "q:,F=filter:,c=check,C=onlycheck,X=notexternal=nox=noexternal,b=bisulfite,s=stride:,freq=fr,sfreq=seqfreq=sf,f=allfreq,r=runs");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -85,18 +86,19 @@ public final class QGramIndexerSubcommand implements Subcommand {
       }
 
       // Determine values of boolean options
-      final boolean external  = !(opt.isGiven("X"));
-      final boolean freq      =  (opt.isGiven("f") || opt.isGiven("freq"));
-      final boolean sfreq     =  (opt.isGiven("f") || opt.isGiven("sfreq"));
-      final boolean check     =  (opt.isGiven("c"));
-      final boolean checkonly =  (opt.isGiven("C"));
-      final boolean bisulfite =  (opt.isGiven("b"));
+      final boolean external  = !opt.isGiven("X");
+      final boolean freq      =  opt.isGiven("f") || opt.isGiven("freq");
+      final boolean sfreq     =  opt.isGiven("f") || opt.isGiven("sfreq");
+      final boolean check     =  opt.isGiven("c");
+      final boolean checkonly =  opt.isGiven("C");
+      final boolean bisulfite =  opt.isGiven("b");
+      final boolean runs      =  opt.isGiven("r") || opt.isGiven("runs");
 
       // Determine parameter q
       final int q = (opt.isGiven("q"))? Integer.parseInt(opt.get("q")) : 0;
 
       stride = opt.isGiven("s") ? Integer.parseInt(opt.get("s")) : 1;
-      log.info("qgram: stride width is %d", stride);
+      log.info("qgram: stride length is %d", stride);
       
       // Loop through all files
       for (String indexname : args) {
@@ -123,10 +125,16 @@ public final class QGramIndexerSubcommand implements Subcommand {
          project.setProperty("QGramAction", action);
 
 
+         String sequenceFileName = di + FileNameExtensions.seq;
+         if (runs) {
+            sequenceFileName = di + FileNameExtensions.runseq;
+            project.setRunIndex(true);
+            log.info("generating index for run-compressed sequence");
+         }
          try {
             final String freqfile = (freq ? dout + FileNameExtensions.qfreq : null);
             final String sfreqfile = (sfreq ? dout + FileNameExtensions.qseqfreq : null);
-            qgramindexer.generateAndWriteIndex(di + FileNameExtensions.seq, 
+            qgramindexer.generateAndWriteIndex(sequenceFileName, 
                   dout + FileNameExtensions.qbuckets, dout + FileNameExtensions.qpositions, freqfile, sfreqfile);
          } catch (IOException ex) {
             ex.printStackTrace();

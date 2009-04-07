@@ -316,12 +316,17 @@ public class Translater {
    /** ***************************** runs ********************************** */
 
    /**
-    * reads translated sequence (using memory-mapping) and writes run-related files .runseq: the
-    * character sequence of runs (same as original sequence, but each run condensed to a single
-    * character); .runlen: the length of each run (as a byte); for run lengths &gt; 127, we store
-    * -1; .pos2run: pos2run[p]=r means that we are in run r at position p; .run2pos: run2pos[r]=p
-    * means that run r starts at position p. The run-related files are written using streams in the
-    * native byte order.
+    * reads translated sequence (using memory-mapping) and writes run-related files
+    * 
+    * .runseq: the character sequence of runs (same as original sequence, but each run condensed to
+    * a single character);
+    * 
+    * .runlen: the length of each run (as a byte); for run lengths &gt; 127, we store -1;
+    * 
+    * .pos2run: pos2run[p]=r means that we are in run r at position p;
+    * 
+    * .run2pos: run2pos[r]=p means that run r starts at position p. The run-related files are
+    * written using streams in the native byte order.
     * 
     * @param fname
     *           filename (without extension) of the sequence file
@@ -352,7 +357,7 @@ public class Translater {
             run++;
             prev = next;
             len = p - start;
-            assert (len > 0 || p == 0);
+            assert len > 0 || p == 0;
             if (len > 127)
                len = -1;
             if (p != 0)
@@ -368,8 +373,8 @@ public class Translater {
       assert (len > 0);
       if (len > 127)
          len = -1;
-      rlen.writeByte((byte) len); // while 'len' is an int, we only write the least significant
-      // byte!
+      // while 'len' is an int, we only write the least significant byte!
+      rlen.writeByte((byte) len);
       r2p.writeInt(n); // write sentinel
       rseq.close();
       rlen.close();
@@ -401,7 +406,7 @@ public class Translater {
             run++;
             prev = next;
             len = p - start;
-            assert (len > 0 || p == 0);
+            assert len > 0 || p == 0;
             if (len > 127)
                len = -1;
             if (p != 0)
@@ -414,11 +419,11 @@ public class Translater {
       }
       run++; // number of runs
       len = n - start;
-      assert (len > 0);
+      assert len > 0;
       if (len > 127)
          len = -1;
-      rlen.writeByte((byte) len); // while 'len' is an int, we only write the least significant
-      // byte!
+      // while 'len' is an int, we only write the least significant byte!
+      rlen.writeByte((byte) len); 
       r2p.writeInt(n); // write sentinel
       rseq.close();
       rlen.close();
@@ -426,7 +431,7 @@ public class Translater {
       r2p.close();
       seq = null;
 
-      assert (4 * run == r2p.length() - 4) : String.format(
+      assert 4 * run == r2p.length() - 4 : String.format(
             "n=%d, runs=%d, rseq=%d. 4*run=%d, run2pos=%d, pos2run=%d", n, run, rseq.length(),
             4 * run, r2p.length(), p2r.length());
       return run;
@@ -448,5 +453,4 @@ public class Translater {
    private enum FileType {
       FASTA, TEXT
    }
-
 }

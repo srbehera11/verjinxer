@@ -48,7 +48,7 @@ public class QGramIndex {
    final int stride;
 
    /**
-    * Size of a superbucket, in bits. That is, if this is 10, then each superbucket contains 2**10
+    * Size of a superbucket, in bits. That is, if this is n, then each superbucket contains 2**n
     * buckets
     */
    final private static int BITS = 10;
@@ -80,17 +80,20 @@ public class QGramIndex {
       ArrayFile af = new ArrayFile(qbckfile);
       this.qbck = af.readArray(this.qbck);
       this.stride = stride;
+      this.maximumBucketSize = maximumBucketSize;
+      this.q = q;
       final int buckets = qbck.length - 1;
-      assert (buckets & BITMASK_LOW) == 0;
+//      assert (buckets & BITMASK_LOW) == 0;
 
       this.qpos = new int[(buckets >> BITS) + 1][];
 
-      // piecewise read of the qpos file into qposa
+      // piecewise read of the qpos file into qpos array
       int start, end;
 
       af.setFilename(qposfile);
 
       // read a superbucket (consisting of 2**BITS buckets) at a time
+//      for (int i = 0; i < ((buckets-1) >> BITS) + 1; ++i) {
       for (int i = 0; i < (buckets >> BITS); ++i) {
          start = qbck[i << BITS];
          assert ((i + 1) << BITS) < qbck.length;
@@ -98,9 +101,14 @@ public class QGramIndex {
          qpos[i] = new int[end - start];
          af.readArray(qpos[i], 0, end - start, start);
       }
+      // last superbucket can be filled only partially
+      if ((buckets & BITMASK_LOW) > 0) {
+         start = qbck[buckets & BITMASK_HIGH];
+         end = qbck[buckets];
+         qpos[qpos.length-1] = new int[end - start];
+         af.readArray(qpos[qpos.length-1], 0, end - start, start);
+      }
       af.close();
-      this.maximumBucketSize = maximumBucketSize;
-      this.q = q;
    }
 
    // TODO
@@ -168,7 +176,7 @@ public class QGramIndex {
    /**
     * TODO where should meta information about the index go? into this class?
     * 
-    * @return stride width of this index
+    * @return stride length of this index
     */
    public int getStride() {
       return stride;
