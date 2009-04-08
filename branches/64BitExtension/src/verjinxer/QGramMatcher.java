@@ -364,17 +364,15 @@ public class QGramMatcher {
 
          // (2) initialize qcode and active q-grams
          active = 0; // number of active q-grams
-         //TODO bisulfit treatment
-         int[] qcodesForward = {};//bicoder.bisulfiteQCodes(t, tp, true);
-         int[] qcodesReverse = {};//bicoder.bisulfiteQCodes(t, tp, false);
+         int[] qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
+         int[] qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
 
          // TODO copying the arrays is totally unnecessary
          int[] qcodes = new int[qcodesForward.length + qcodesReverse.length];
          System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
          System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
 
-         //TODO bisulfit treatment
-         //seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
+         seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
 
          // /////////assert qcode >= 0;
          // //////seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
@@ -398,18 +396,15 @@ public class QGramMatcher {
             tp++;
             symremaining--;
             if (symremaining >= minlen) {
-            	//TODO bisulfit treatment
-//               qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
-//               qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
+               qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
+               qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
 
                // TODO copying the arrays is totally unnecessary
                qcodes = new int[qcodesForward.length + qcodesReverse.length];
                System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
                System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
              
-               //TODO bisulfit treatment
-               //seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
-               
+               seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
                // /////// qcode = bicoder.codeUpdate(qcode, t[tp + q - 1]);
                // ///////// assert qcode >= 0;
                // //////// seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches -
@@ -440,11 +435,11 @@ public class QGramMatcher {
     *           start index in t
     * @return length of match
     */
-   private int bisulfiteMatchLength(byte[] s, int sp, byte[] t, int tp) {
+   private int bisulfiteMatchLength(HugeByteArray s, long sp, byte[] t, int tp) {
       BisulfiteState state = BisulfiteState.UNKNOWN;
       int offset = 0;
       while (true) {
-         if (!alphabet.isSymbol(s[sp + offset]))
+         if (!alphabet.isSymbol( s.get(sp + offset) ))
             break;
 
          // What follows is some ugly logic to find out what type
@@ -455,30 +450,30 @@ public class QGramMatcher {
          // If there's a C not preceding a G that has not been replaced
          // by a T, then we must not allow C->T replacements.
 
-         if (s[sp + offset] == NUCLEOTIDE_G && t[tp + offset] == NUCLEOTIDE_A) {
+         if ( s.get(sp + offset) == NUCLEOTIDE_G && t[tp + offset] == NUCLEOTIDE_A) {
             if (state == BisulfiteState.CT)
                break;
             state = BisulfiteState.GA;
-         } else if (offset > 0 && s[sp + offset - 1] != NUCLEOTIDE_C
-               && t[tp + offset - 1] != NUCLEOTIDE_C && s[sp + offset] == NUCLEOTIDE_G
+         } else if (offset > 0 && s.get(sp + offset - 1) != NUCLEOTIDE_C
+               && t[tp + offset - 1] != NUCLEOTIDE_C && s.get(sp + offset) == NUCLEOTIDE_G
                && t[tp + offset] == NUCLEOTIDE_G) {
             // G on both without preceding C
             if (state == BisulfiteState.GA)
                break;
             state = BisulfiteState.CT;
-         } else if (s[sp + offset] == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_T) {
+         } else if ( s.get(sp + offset) == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_T) {
             if (state == BisulfiteState.GA)
                break;
             state = BisulfiteState.CT;
          } else if (sp + offset + 1 < s.length && tp + offset + 1 < t.length
-               && s[sp + offset + 1] != NUCLEOTIDE_G &&
+               && s.get(sp + offset + 1) != NUCLEOTIDE_G &&
                /* t[tp+offset+1] != NUCLEOTIDE_G && */
-               s[sp + offset] == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_C) {
+               s.get(sp + offset) == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_C) {
             if (state == BisulfiteState.CT)
                break;
             state = BisulfiteState.GA;
          } else {
-            if (s[sp + offset] != t[tp + offset])
+            if ( s.get(sp + offset) != t[tp + offset])
                break;
          }
          offset++;
@@ -497,7 +492,7 @@ public class QGramMatcher {
     *           start index in t
     * @return length of match
     */
-   private int bisulfiteMatchLengthCmC(byte[] s, int sp, byte[] t, int tp) {
+   private int bisulfiteMatchLengthCmC(HugeByteArray s, long sp, byte[] t, int tp) {
          System.out.println("bisulfiteMatchLengthCmC. tp=" + tp + ". sp="+sp);
          try {
             System.out.println("s[sp..sp+q]="+alphabet.preimage(s, sp, q));
@@ -507,24 +502,24 @@ public class QGramMatcher {
          }
       int offset = 0;
 
-      while (alphabet.isSymbol(s[sp + offset]) && s[sp + offset] == t[tp + offset])
+      while (alphabet.isSymbol (s.get(sp + offset) ) && s.get(sp + offset) == t[tp + offset])
          offset++;
 
       // the first mismatch tells us what type of match this is
-      byte s_char = s[sp + offset];
+      byte s_char = s.get(sp + offset);
       byte t_char = t[tp + offset];
       if (s_char == NUCLEOTIDE_C && t_char == NUCLEOTIDE_T) {
          // we have C -> T replacements
          offset++;
-         while (alphabet.isSymbol(s[sp + offset])
-               && (s[sp + offset] == t[tp + offset] || s[sp + offset] == NUCLEOTIDE_C
-                     && t[tp + offset] == NUCLEOTIDE_T))
+         while (alphabet.isSymbol( s.get(sp + offset) )
+               && ( s.get(sp + offset) == t[tp + offset] || s.get(sp + offset) == NUCLEOTIDE_C
+                     && t[tp + offset] == NUCLEOTIDE_T) )
             offset++;
       } else if (s_char == NUCLEOTIDE_G && t_char == NUCLEOTIDE_A) {
          // we have G -> A replacements
          offset++;
-         while (alphabet.isSymbol(s[sp + offset])
-               && (s[sp + offset] == t[tp + offset] || s[sp + offset] == NUCLEOTIDE_G
+         while (alphabet.isSymbol( s.get(sp + offset) )
+               && ( s.get(sp + offset) == t[tp + offset] || s.get(sp + offset) == NUCLEOTIDE_G
                      && t[tp + offset] == NUCLEOTIDE_A))
             offset++;
       }
@@ -540,7 +535,7 @@ public class QGramMatcher {
     * @param filtered
     * @return number of matches reported
     */
-   private int updateActiveIntervalsBisulfite(final int tp, final int[] qcodes, final int maxmatches) {
+   private int updateActiveIntervalsBisulfite(final long tp, final int[] qcodes, final int maxmatches) {
 //      System.out.println("updateActiveIntervalsBisulfite. tp = "+tp);
       int matches = 0;
       // decrease length of active matches, as long as they stay >= q TODO >= minlen?
@@ -612,10 +607,8 @@ public class QGramMatcher {
                sp -= offset; // go back to start of match
             } else {*/
             sp = newpos[ni];
-            //TODO bisulfit treatment
-            offset = 0;
-//            offset = c_matches_c ? bisulfiteMatchLengthCmC(t, tp, s, sp)
-//                  : bisulfiteMatchLength(t, tp, s, sp);
+            offset = c_matches_c ? bisulfiteMatchLengthCmC(t, tp, s, sp)
+                  : bisulfiteMatchLength(t, tp, s, sp);
 //            }
             newlen[ni] = offset;
 
@@ -737,11 +730,10 @@ public class QGramMatcher {
                }
                sp -= offset; // go back to start of match
             } else {
-            	//TODO bisulfite treatment
                sp = newpos[ni];
-               offset = 0;
-//               offset = c_matches_c ? bisulfiteMatchLengthCmC(s, sp, t, tp)
-//                     : bisulfiteMatchLength(s, sp, t, tp);
+               //TODO not shure if it works: switch places of s and t
+               offset = c_matches_c ? bisulfiteMatchLengthCmC(t, tp, s, sp)
+                     : bisulfiteMatchLength(t, tp, s, sp);
             }
             newlen[ni] = offset;
 
