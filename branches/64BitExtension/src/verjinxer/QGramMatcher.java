@@ -37,7 +37,6 @@ public class QGramMatcher {
    final Alphabet alphabet;
 
    /** the query sequence text (coded) */
-   //TODO change to HugeByteArray
    final HugeByteArray t;
 
    /** sequence separator positions in text t */
@@ -189,6 +188,7 @@ public class QGramMatcher {
     * @param thefilter
     */
    public void match() {
+	   log.info("64Bit version");
       // Walk through t:
       // (A) Initialization
       TicToc timer = new TicToc();
@@ -364,15 +364,17 @@ public class QGramMatcher {
 
          // (2) initialize qcode and active q-grams
          active = 0; // number of active q-grams
-         int[] qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
-         int[] qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
+         //TODO bisulfit treatment
+         int[] qcodesForward = {};//bicoder.bisulfiteQCodes(t, tp, true);
+         int[] qcodesReverse = {};//bicoder.bisulfiteQCodes(t, tp, false);
 
          // TODO copying the arrays is totally unnecessary
          int[] qcodes = new int[qcodesForward.length + qcodesReverse.length];
          System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
          System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
 
-         seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
+         //TODO bisulfit treatment
+         //seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
 
          // /////////assert qcode >= 0;
          // //////seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches - seqmatches,
@@ -396,15 +398,18 @@ public class QGramMatcher {
             tp++;
             symremaining--;
             if (symremaining >= minlen) {
-               qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
-               qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
+            	//TODO bisulfit treatment
+//               qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
+//               qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
 
                // TODO copying the arrays is totally unnecessary
                qcodes = new int[qcodesForward.length + qcodesReverse.length];
                System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
                System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
-
-               seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
+             
+               //TODO bisulfit treatment
+               //seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
+               
                // /////// qcode = bicoder.codeUpdate(qcode, t[tp + q - 1]);
                // ///////// assert qcode >= 0;
                // //////// seqmatches += updateActiveIntervals(tp, qcode, maxseqmatches -
@@ -607,8 +612,10 @@ public class QGramMatcher {
                sp -= offset; // go back to start of match
             } else {*/
             sp = newpos[ni];
-            offset = c_matches_c ? bisulfiteMatchLengthCmC(t, tp, s, sp)
-                  : bisulfiteMatchLength(t, tp, s, sp);
+            //TODO bisulfit treatment
+            offset = 0;
+//            offset = c_matches_c ? bisulfiteMatchLengthCmC(t, tp, s, sp)
+//                  : bisulfiteMatchLength(t, tp, s, sp);
 //            }
             newlen[ni] = offset;
 
@@ -662,7 +669,7 @@ public class QGramMatcher {
     * @param filtered
     * @return number of matches reported
     */
-   private int updateActiveIntervals(final int tp, final int qcode, final int maxmatches,
+   private int updateActiveIntervals(final long tp, final int qcode, final int maxmatches,
          final boolean filtered) {
       int matches = 0;
       // decrease length of active matches, as long as they stay >= q TODO >= minlen?
@@ -730,9 +737,11 @@ public class QGramMatcher {
                }
                sp -= offset; // go back to start of match
             } else {
+            	//TODO bisulfite treatment
                sp = newpos[ni];
-               offset = c_matches_c ? bisulfiteMatchLengthCmC(s, sp, t, tp)
-                     : bisulfiteMatchLength(s, sp, t, tp);
+               offset = 0;
+//               offset = c_matches_c ? bisulfiteMatchLengthCmC(s, sp, t, tp)
+//                     : bisulfiteMatchLength(s, sp, t, tp);
             }
             newlen[ni] = offset;
 
@@ -1089,16 +1098,17 @@ public class QGramMatcher {
       // The same holds for the match length arrays activelen and newlen.
 
       // swap activepos <-> newpos and activelen <-> newlen
-      long[] tmp;
-      tmp = activepos;
+      int[] tmp;
+      tmp = activepos; //remain int
       activepos = newpos;
-      newpos = tmp;
-      tmp = activelen;
+      newpos = tmp;  //remain int
+      tmp = activelen; //remain int
       activelen = newlen;
-      newlen = tmp;
-      tmp = activediag;
+      newlen = tmp; //remain int
+      long[] tmpLong;
+      tmpLong = activediag;
       activediag = newdiag;
-      newdiag = tmp;
+      newdiag = tmpLong;
       active = ni;
       return matches; // if (seqmatches > maxseqmatches) throw new TooManyHitsException();
    }
