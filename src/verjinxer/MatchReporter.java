@@ -15,13 +15,13 @@ interface MatchReporter {
    public void write(int seqnum);
 
    /** Appends a match to the list of matches. */
-   public void add(int sstart, final int tstart, int matchlength);
+   public void add(int sstart, final long tstart, int matchlength);
 
    /**
     * Matches are reported relative to this position within the query sequence t. Call this every
     * time you advance to the next query sequence.
     */
-   public void setSequenceStart(int seqstart);
+   public void setSequenceStart(long seqstart);
 
    /**
     * Clears the match list.
@@ -37,7 +37,7 @@ class SortedMatchReporter implements MatchReporter {
 
    /** minimum number of matches for output */
    private final int minseqmatches;
-   private int seqstart;
+   private long seqstart;
 
    /** sequence descriptions of t (queries) */
    private final ArrayList<String> tdesc;
@@ -70,9 +70,9 @@ class SortedMatchReporter implements MatchReporter {
     * @param matchlength
     *           length of match
     */
-   public void add(int sstart, final int tstart, int matchlength) {
+   public void add(int sstart, final long tstart, int matchlength) {
       int i = seqindex(sstart);
-      int ttt = tstart - seqstart;
+      long ttt = tstart - seqstart;
       int sss = sstart - (i == 0 ? 0 : (int) ssp[i - 1] + 1);
       matches.get(i).add(new Match(ttt, sss, matchlength));
    }
@@ -117,11 +117,11 @@ class SortedMatchReporter implements MatchReporter {
 
    /** simple structure for sorted matches, per index sequence */
    private class Match {
-      final int tpos;
+      final long tpos;
       final int spos;
       final int len;
 
-      public Match(final int tpos, final int spos, final int len) {
+      public Match(final long tpos, final int spos, final int len) {
          this.tpos = tpos;
          this.spos = spos;
          this.len = len;
@@ -129,7 +129,7 @@ class SortedMatchReporter implements MatchReporter {
    }
 
    @Override
-   public void setSequenceStart(int seqstart) {
+   public void setSequenceStart(long seqstart) {
       this.seqstart = seqstart;
    }
 }
@@ -146,7 +146,7 @@ class GlobalMatchReporter implements MatchReporter {
    /** comparing text against itself? */
    final boolean selfcmp;
 
-   private int seqstart;
+   private long seqstart;
 
    public GlobalMatchReporter(long[] ssp, int minseqmatches, int maxseqmatches, boolean selfcmp,
          PrintWriter out) {
@@ -169,9 +169,9 @@ class GlobalMatchReporter implements MatchReporter {
     * @param matchlength
     *           length of match
     */
-   public void add(int sstart, final int tstart, int matchlength) {
+   public void add(int sstart, final long tstart, int matchlength) {
       int i = seqindex(sstart);
-      int ttt = tstart - seqstart;
+      long ttt = tstart - seqstart;
       int sss = sstart - (i == 0 ? 0 : (int) ssp[i - 1] + 1);
       if (!selfcmp || sstart > tstart)
          globalmatches.add(new GlobalMatch(ttt, i, sss, matchlength));
@@ -213,12 +213,12 @@ class GlobalMatchReporter implements MatchReporter {
 
    /** simple structure for unsorted (global) matches */
    private class GlobalMatch {
-      final int tpos;
+      final long tpos;
       final int sseqnum;
       final int spos;
       final int len;
 
-      public GlobalMatch(final int tpos, final int sseqnum, final int spos, final int len) {
+      public GlobalMatch(final long tpos, final int sseqnum, final int spos, final int len) {
          this.tpos = tpos;
          this.sseqnum = sseqnum;
          this.spos = spos;
@@ -227,7 +227,7 @@ class GlobalMatchReporter implements MatchReporter {
    }
 
    @Override
-   public void setSequenceStart(int seqstart) {
+   public void setSequenceStart(long seqstart) {
       this.seqstart = seqstart;
    }
 }
