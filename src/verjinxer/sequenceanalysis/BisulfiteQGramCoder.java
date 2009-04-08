@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import verjinxer.util.HugeByteArray;
+
 /**
  * This class is a special QGramCoder that simulates bisulfite treatment on its input sequence.
  * It creates all possible q-grams. The alphabet size is fixed to four.
@@ -197,6 +199,19 @@ public final class BisulfiteQGramCoder extends QGramCoder {
       int qcode = code(t, start);
       boolean specialBorder = (reverse && start > 0 && t[start-1] == NUCLEOTIDE_G) ||
             (!reverse && start+q < t.length && t[start+q] == NUCLEOTIDE_C);
+      return bisulfiteQCodes(qcode, reverse, specialBorder);
+   }
+   
+   /**
+    * Returns an array of all bisulfite qcodes of the q-gram at t[start..start+q-1]
+    * @param t
+    * @param reverse
+    * @return
+    */
+   public int[] bisulfiteQCodes(HugeByteArray t, long start, final boolean reverse) {
+      int qcode = code(t, start);
+      boolean specialBorder = (reverse && start > 0 && t.get(start-1) == NUCLEOTIDE_G) ||
+            (!reverse && start+q < t.length && t.get(start+q) == NUCLEOTIDE_C);
       return bisulfiteQCodes(qcode, reverse, specialBorder);
    }
 
