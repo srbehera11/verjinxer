@@ -163,7 +163,7 @@ public class NonUniqueProbeDesigner {
           seqfile, sspfile);
       return 1;
     }
-    final int maxactive = project.getIntProperty("qbckMax");
+    final int maxactive = project.getMaximumBucketSize();
     try {
        qgramindex = new QGramIndex(project);
        assert qgramindex.getStride() == 1 : "Stride is not equal to 1. We don't know, yet, whether this works here!";
