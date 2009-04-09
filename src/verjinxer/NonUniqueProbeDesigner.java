@@ -49,7 +49,7 @@ public class NonUniqueProbeDesigner {
    */
   public void help() {
     log.info("Usage:  %s nonunique  [options] Indexname", programname);
-    log.info("Finds non unique, but specific, probes within an index,");
+    log.info("Finds non unique, but specific, probes within an index built with '--dnarc #',");
     log.info("writes output to .<zero>-<one>-<length>.nuprobes file.");
     log.info("Options:");
     log.info("  -l, --length   <length>    length of probes to be computed [70]");
@@ -192,7 +192,6 @@ public class NonUniqueProbeDesigner {
     int p = 0;
     int qcode;
     LRMM = new int[pl-q+1][m];
-    // TODO int maxactive = Integer.parseInt(prj.getProperty("qbckMax"));
     activepos = new int[maxactive];  active=0;
     newpos    = new int[maxactive];
     lenforact = new int[maxactive];
@@ -233,7 +232,7 @@ public class NonUniqueProbeDesigner {
             }           
           } else if (p==middle && dontdorc) {
             p = (int)(ssp[seqnum]-1); // -1 because of p++
-            log.info("  skipping reverse complement to ssp at %d",p+1);
+            //log.info("  skipping reverse complement to ssp at %d",p+1);
           }
         }
         if (p>=n) break;
@@ -416,7 +415,7 @@ public class NonUniqueProbeDesigner {
     } catch (InvalidSymbolException ex) {
       ex.printStackTrace();
       log.error("Error printing oligo");
-      g.terminate(1);
+      Globals.terminate(1);
     }
     out.printf("%s%n%n", StringUtils.join(" ",incidence,0,m));
     out.flush();
