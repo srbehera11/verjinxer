@@ -271,10 +271,15 @@ public class Translater {
    }
 
    /**
-    * text file processing differs from fasta processing by the following: -- reverse complement
-    * option is ignored, even for DNA text file; -- each cr/lf is replaced by whitespace (error if
-    * the alphabet map does not allow whitespace); -- description is simply the filename; --
-    * separator is appended (never the wildcard).
+    * text file processing differs from fasta processing by the following:
+    * 
+    * -- reverse complement option is ignored, even for DNA text file;
+    * 
+    * -- each cr/lf is replaced by whitespace (error if the alphabet map does not allow whitespace);
+    * 
+    * -- description is simply the filename;
+    * 
+    * -- separator is appended (never the wildcard).
     */
    void translateText(final String fname, final AnnotatedArrayFile out) {
       ByteBuffer tr = null;
@@ -423,7 +428,7 @@ public class Translater {
       if (len > 127)
          len = -1;
       // while 'len' is an int, we only write the least significant byte!
-      rlen.writeByte((byte) len); 
+      rlen.writeByte((byte) len);
       r2p.writeInt(n); // write sentinel
       rseq.close();
       rlen.close();

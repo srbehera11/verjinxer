@@ -1,5 +1,7 @@
 To Do
 
+- Test cases!
+
 - Index uber die Reads
 
 - Shape eines q-Gramms
@@ -44,8 +46,6 @@ verlängern
 
 - move q-gram stuff into its own subdirectory
 
-- use log4j
-
 - when multiple project files are given, logging does not work correctly
 
 
@@ -86,6 +86,8 @@ verlängern
 - why is the separator in the prj file? it should already be in the alphabet file
 
 - run-length index is not very well tested
+
+- don't continue on superfluous arguments
 
 
 
