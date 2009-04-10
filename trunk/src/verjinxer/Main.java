@@ -97,7 +97,7 @@ public class Main {
             g.outdir += File.separatorChar;
       }
 
-      // log file
+      // extra log file
       if (opt.isGiven("L")) {
          try {
             log.addAppender(new FileAppender(new PatternLayout("%m%n"), g.dir + opt.get("L")));
@@ -106,7 +106,8 @@ public class Main {
          }
       }
 
-      g.plog = opt.isGiven("P");
+      g.plog = !opt.isGiven("P");
+      //g.startProjectLogging(project);
       // TODO
       // // no -P option (--noplog) given means: project log is requested
       //       
