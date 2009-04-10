@@ -1,10 +1,68 @@
 To Do
+=====
 
-- Test cases!
+General
+-------
 
-- Index uber die Reads
+- add test cases
 
-- Shape eines q-Gramms
+
+Refactoring
+-----------
+
+Before doing this, merge the 64 Bit Extension branch!
+
+- rename Globals.stopplog to stopProjetLogging
+
+- Globals.startProjectLogging(String fname): rename fname to projectname
+
+- rename projectlog to projectappender, make it private
+
+- write a Sequence class
+
+- write a SequenceSet class
+
+- use exceptions instead of Globals.terminate (remove g.terminate() method)
+
+- make G in QgramFrequencer uppercase
+
+Bugs
+----
+
+- log.info within the help() method does not write anything when --quiet is selected
+
+
+Features
+--------
+
+- shape of a q-gram
+
+- run-length index: there are too many matches! -> need to filter out 
+  useless matches in which run-lengths nucleotides differ too much
+
+- make it possible to create an index over the reads
+
+- make it possible to create an index over bisulfite reads
+
+- compress the q-gram index: 
+  The positions increase monotonically, only store differences between positions.
+  (At least on disk and when we use 64 bit.)  
+
+Unit Tests
+----------
+
+- Write a unit test for HugeShortArray
+
+- Collect problematic sequence files, automatically test the algorithms on them.
+
+Other
+-----
+
+- don't continue on superfluous arguments
+
+
+Brain Dump Area
+===============
 
 steps for making the q-gram index cope with long sequences
 
@@ -12,53 +70,22 @@ steps for making the q-gram index cope with long sequences
 
 - Überschneidungsbereich zwischen CGI und Read muss momentan nur >0bp sein
 
-- use exceptions instead of terminating the program
-(remove g.terminate() method)
-
-- the indexed text can be longer if stride > 1: for example, if stride == 8, store q-gram position << 3 in the index
-
-- split up q-gram index into three separate indices: one for unmodified, one for C->T, one for G->A.
-Or somehow remember, for each q-gram, from which replacement type it originates.
-This could speed up the matching since it is know what type of match is found and it's
-then not necessary anymore to iterate over the sequence to know which match type it is.
-
-
-- bisulfiteMatchLength nicht sofort aufrufen. besser: liste der aktiven intervalle speichern und
-ein intervall verlängern, wenn ein neues q-gramm ankommt, das dieses verlängert. mit obiger änderung
-hat man dann gleich den typ des matches (ct/ga) und kann dann den match (bei stride>1) nach li. verlängern.
-wenn cmatchesc, kann man ihn auch nach rechts verlängern (und evtl. noch weiter nach links)
- und re.
-verlängern
-
-- neugefundene Matches müssen sofort aktiv gemacht werden bzw. es muss dafür gesorgt werden, dass sich q-gramme,
- die sich innerhalb eines buckets überlagern, rausgefiltert werden
-
  - problem: a q-gram matches and its first character comes from a c/t substitution. the match is extended,
  using c/t substitutions. then, at the next position, on the same diagonal, the q-gram matches again,
  but this time we throw the match away and do not see that using g/a substitutions would lead to a longer match
 
-
 - make qmatch accept fasta files
-
-- sorted rausfactorn
-
-- review von cutadapt
 
 - move q-gram stuff into its own subdirectory
 
 - when multiple project files are given, logging does not work correctly
 
-
- - use exceptions instead of terminating the program
--(remove g.terminate() method)
-
 - the indexed text can be longer if stride > 1: for example, if stride == 8, store q-gram position << 3 in the index
 
 - split up q-gram index into three separate indices: one for unmodified, one for C->T, one for G->A.
 Or somehow remember, for each q-gram, from which replacement type it originates.
 This could speed up the matching since it is know what type of match is found and it's
 then not necessary anymore to iterate over the sequence to know which match type it is.
-
 
 - bisulfiteMatchLength nicht sofort aufrufen. besser: liste der aktiven intervalle speichern und
 ein intervall verlängern, wenn ein neues q-gramm ankommt, das dieses verlängert. mit obiger änderung
@@ -70,47 +97,6 @@ verlängern
 - neugefundene Matches müssen sofort aktiv gemacht werden bzw. es muss dafür gesorgt werden, dass sich q-gramme,
  die sich innerhalb eines buckets überlagern, rausgefiltert werden
 
- - problem: a q-gram matches and its first character comes from a c/t substitution. the match is extended,
- using c/t substitutions. then, at the next position, on the same diagonal, the q-gram matches again,
- but this time we throw the match away and do not see that using g/a substitutions would lead to a longer match
-
-
-- make qmatch accept fasta files
-
-- sorted rausfactorn
-
-
-- log.info within the help() method does not write anything when --quiet is selected
-
-
 - why is the separator in the prj file? it should already be in the alphabet file
 
 - run-length index is not very well tested
-
-- don't continue on superfluous arguments
-
-
-
-
-Map<String,Class<? extends Subcommand>> commands = new HashMap<String,Class<? extends Subcommand>>();
-commands.put("tr", TranslaterSubcommand.class);
-//commands.put("cut", CutterSubcommand.class);
-commands.put("ma", MapperSubcommand.class);
-commands.put("qm", QgramMatcherSubcommand.class);
-commands.put("tr", TranslaterSubcommand.class);
-commands.put("qg", QgramIndexer.class);
-
-for (String prefix : commands.keySet()) {
-   if (command.startsWith(prefix)) {
-      try {
-         commands.get(prefix).getConstructor(new Class [] { Globals.class } ).newInstance(g);
-      } catch (NoSuchMethodException e) { }
-      catch (InvocationTargetException e) { }
-      catch (IllegalAccessException e) { }
-      catch (InstantiationException e) {}
-   }
-}
-
-
-================
-run-length index: there are too many matches! -> need to filter out useless matches in which run-lengths of each nucleotide differ too much

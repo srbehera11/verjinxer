@@ -83,12 +83,12 @@ public class Globals {
       if (!plog)
          return;
       try {
-         projectlog = new FileAppender(new PatternLayout("%m"), projectname
+         projectlog = new FileAppender(new PatternLayout("%m%n"), projectname
                + FileNameExtensions.log, !startnew);
          log.addAppender(projectlog);
 
          // TODO previously, this was only logged to the project log file
-         log.info("%n# %s", new Date());
+         log.info("# %s", new Date());
          log.info("# \"%s\"", StringUtils.join("\" \"", action));
       } catch (IOException ex) {
          warnmsg("%s: could not open project log '%s'; continuing...", programname, projectname);

@@ -1005,7 +1005,7 @@ public class SuffixTrayBuilder {
          }
          f.close();
       } catch (IOException ex) {
-         g.warnmsg("suffixtray: error writing '%s': %s%n", fname, ex);
+         log.warn("suffixtray: error writing '%s': %s", fname, ex);
          g.terminate(1);
       }
    }
@@ -1116,7 +1116,7 @@ public class SuffixTrayBuilder {
             f1x.close();
          }
       } catch (IOException ex) {
-         g.warnmsg("suffixtray: error writing lcp file(s): %s%n", ex);
+         log.warn("suffixtray: error writing lcp file(s): %s", ex);
          g.terminate(1);
       }
    }
