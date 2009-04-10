@@ -1,4 +1,6 @@
-alias vji='java -ea -d64 -Xmx8G -cp /home/martin/workspace/verjinxer/log5j-1.2.jar:/usr/share/java/log4j-1.2.jar:/home/martin/workspace/verjinxer/bin/ verjinxer.Main'
+To run VerJInxer, you need to have log4j and log5j in your CLASSPATH. Both jar files can be found in the lib/ directory. I use something like this to simplify things:
+
+alias vji="java -ea -d64 -Xmx8G -cp $HOME/workspace/verjinxer/lib/log5j-1.2.jar:$HOME/workspace/verjinxer/lib/log4j-1.2.jar:$HOME/workspace/verjinxer/bin/ verjinxer.Main"
 
 To work with sequence data, it must first be translated from FASTA
 format.
