@@ -73,8 +73,9 @@ public class NonUniqueProbeDesigner {
   
   
   /* Variables */
-  boolean     dontdorc = false;
-  boolean outputdetails= false;
+  boolean     dontdorc  = false;
+  boolean outputdetails = false;
+  boolean        unique = false;
   int         pl    = 0;     // probe length
   int         c0    = 0;     // zero-cutoff
   int         c1    = 0;     // one-cutoff
@@ -187,6 +188,7 @@ public class NonUniqueProbeDesigner {
     if (m0<0) m0 = m-1;
     int m1 = (int)(m*ufrac);
     if (ufrac>0.0 && m1<m0 ) m0 = m1;
+    unique = (m0==1);
     int symremaining = 0;
     int seqnum = 0;
     int p = 0;
@@ -417,7 +419,7 @@ public class NonUniqueProbeDesigner {
       log.error("Error printing oligo");
       Globals.terminate(1);
     }
-    out.printf("%s%n%n", StringUtils.join(" ",incidence,0,m));
+    if (!unique) out.printf("%s%n%n", StringUtils.join(" ",incidence,0,m));
     out.flush();
     for(int i=0; i<m; i++) {
       if(incidence[i]==0) continue; // nothing to add for seq i
