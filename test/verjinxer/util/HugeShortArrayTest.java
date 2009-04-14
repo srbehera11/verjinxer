@@ -514,10 +514,38 @@ public class HugeShortArrayTest {
 	 */
 	@Test
 	public void testSwap() {
-		fail("Not yet implemented");
-		//TODO test if two values swap positions
+		short s1, s2;
+		long[] pos1 = {0                    , twoPowerThirty  , twoPowerThirty  , twoPowerThirty  , twoPowerThirty-1, 154   , 7654345};
+		long[] pos2 = {twoPowerThirtyThree-1, twoPowerThirty+1, twoPowerThirty*2, twoPowerThirty-1, twoPowerThirty+1, 199287, 63544  };
+		//test if two values swap positions
+		for(int i = 0; i < pos1.length; i++){
+			s1 = arrayTwoPowerThirtyThree.get(pos1[i]);
+			s2 = arrayTwoPowerThirtyThree.get(pos2[i]);
+			arrayTwoPowerThirtyThree.swap(pos1[i], pos2[i]);
+			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s1, arrayTwoPowerThirtyThree.get(pos2[i]) );
+			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s2, arrayTwoPowerThirtyThree.get(pos1[i]) );
+		}
 		
-		//TODO test if all other positions are unmodified
+		//test if all other positions are unmodified
+		HugeShortArray array1 = generateRandomArray(seed, 500);
+		HugeShortArray array2 = generateRandomArray(seed, 500); //both arrays are equal
+		
+		pos1 = new long[]{0  , 50, 0  , 499, 256};
+		pos2 = new long[]{499, 51, 403, 134, 16};
+		
+		for(int i = 0; i < pos1.length; i++){
+			array1.swap(pos1[i], pos2[i]);
+			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,array1.get(pos1[i]), array2.get(pos2[i]) );
+			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,array1.get(pos2[i]), array2.get(pos1[i]) );
+			//rest unmodified?
+			for(long l = 0; l < array1.length; l++){
+				if(l != pos1[i] && l != pos2[i])
+					assertEquals(String.format("Error, positions %d was modified.", l ) ,array1.get(l), array2.get(l) );
+			}
+			
+			//revoke changes in array1
+			array1 = fillWithRandomShorts(array1, seed, 500);
+		}
 		
 		//TODO test what happens when positions to swap are not in array  
 	}
@@ -527,9 +555,14 @@ public class HugeShortArrayTest {
 	 */
 	@Test
 	public void testCopy() {
-		fail("Not yet implemented");
-		//TODO test returned array is not the same but equal in length an each position
+		//test returned array is not the same but equal in length an each position
+		HugeShortArray array = arrayTwoPowerThirtyThree.copy();
 		
+		assertFalse("Error, copied array is the same", array == arrayTwoPowerThirtyThree); //TODO better change one and test if the other remains unchanged
+		assertEquals(String.format("Error, arrays have different length: %d, %d.", array.length, arrayTwoPowerThirtyThree.length) , array.length, arrayTwoPowerThirtyThree.length );
+		for(long l = 0; l < array.length; l++){
+			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l) );
+		}
 	}
 
 	/**
@@ -537,8 +570,15 @@ public class HugeShortArrayTest {
 	 */
 	@Test
 	public void testCopyRange() {
-		fail("Not yet implemented");
-		//TODO test like testCopy() without range
+		//test returned array is not the same but equal in length an each position
+		final long from = twoPowerThirty-100;
+		final long to = twoPowerThirty*2+100;
+		HugeShortArray array = arrayTwoPowerThirtyThree.copyRange( from, to);
+		
+		assertEquals(String.format("Error, array has wrong length: %d, %d.", array.length, twoPowerThirty+200) , array.length, to-from );
+		for(long l = 0; l < array.length; l++){
+			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l+from) );
+		}
 	}
 
 }
