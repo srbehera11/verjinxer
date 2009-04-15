@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Random;
 
 
@@ -18,12 +19,6 @@ import java.util.Random;
  *
  */
 public class HugeShortArrayTest {
-	
-	private static HugeShortArray epsilon; 						//emtpy Array: length 0
-	private static HugeShortArray arrayTwoPowerThirty;			//length 2^30
-	private static HugeShortArray arrayTwoPowerThirtyMinusOne;	//length 2^30 - 1
-	private static HugeShortArray arrayTwoPowerThirtyPlusOne;	//length 2^30 + 1
-	private static HugeShortArray arrayTwoPowerThirtyThree;		//length 2^33
 	private static short[] randomValues;
 	
 	private static final long seed = 5;
@@ -111,17 +106,6 @@ public class HugeShortArrayTest {
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-//		epsilon = new HugeShortArray(0);
-//		arrayTwoPowerThirty = new HugeShortArray( twoPowerThirty );
-//		arrayTwoPowerThirtyMinusOne = new HugeShortArray( twoPowerThirty - 1 );
-//		arrayTwoPowerThirtyPlusOne = new HugeShortArray( twoPowerThirty + 1 );
-//		arrayTwoPowerThirtyThree = new HugeShortArray( twoPowerThirtyThree );
-		
-//		twoPowerThirty = generateRandomArray(seed, l); 
-//		twoPowerThirtyMinusOne = generateRandomArray(seed, l-1 );
-//		twoPowerThirtyPlusOne = generateRandomArray(seed, l+1 );
-//		twoPowerThirtyThree = generateRandomArray(seed, (long) Math.pow(2, 33) );
-		
 		randomValues = new short[100];
 		Random r = new Random(seed);
 		for(int i = 0; i < randomValues.length; i++){
@@ -141,11 +125,6 @@ public class HugeShortArrayTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-//		epsilon = new HugeShortArray(0);
-//		arrayTwoPowerThirty = fillWithRandomShorts(arrayTwoPowerThirty, seed, twoPowerThirty );
-//		arrayTwoPowerThirtyMinusOne = fillWithRandomShorts(arrayTwoPowerThirtyMinusOne, seed, twoPowerThirty-1 );
-//		arrayTwoPowerThirtyPlusOne = fillWithRandomShorts(arrayTwoPowerThirtyPlusOne, seed, twoPowerThirty+1 );
-//		arrayTwoPowerThirtyThree = fillWithRandomShorts(arrayTwoPowerThirtyThree, seed, twoPowerThirtyThree ); //TODO fill not complete
 	}
 
 	/**
@@ -153,25 +132,19 @@ public class HugeShortArrayTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		epsilon = null;
-		arrayTwoPowerThirty = null;
-		arrayTwoPowerThirtyMinusOne = null;
-		arrayTwoPowerThirtyPlusOne = null;
-		arrayTwoPowerThirtyThree = null;
 		System.gc();
+//		Thread.sleep(1000);
 	}
-	
-	//TODO modify each test so that not the whole array must be filled with data an not the whole array is tested. So performance should be gained
-	// use putValuesAtPositions for this.
 
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test
-	@Ignore
 	public void testGet1() {
-		arrayTwoPowerThirty = generateRandomArray(seed, twoPowerThirty );
-		testRandomArray(arrayTwoPowerThirty, seed, twoPowerThirty);
+		HugeShortArray arrayTwoPowerThirty = new HugeShortArray( twoPowerThirty );
+		long pos[] = {0, twoPowerThirty/4, twoPowerThirty/4*3, twoPowerThirty-randomValues.length};
+		putValuesAtPositions(arrayTwoPowerThirty, randomValues, pos);
+		testValuesAtPositions(arrayTwoPowerThirty, randomValues, pos, twoPowerThirty);
 	}
 	
 	/**
@@ -179,30 +152,46 @@ public class HugeShortArrayTest {
 	 */
 	@Test
 	public void testGet2() {
-		//arrayTwoPowerThirtyMinusOne = generateRandomArray(seed, twoPowerThirty-1 );
-		arrayTwoPowerThirtyMinusOne = arrayToHugeArray(randomValues, twoPowerThirty-1);
-		//testRandomArray(arrayTwoPowerThirtyMinusOne, seed, twoPowerThirty-1);
-		testRandomArray(arrayTwoPowerThirtyMinusOne, twoPowerThirty-1, randomValues);
+		HugeShortArray arrayTwoPowerThirtyMinusOne = new HugeShortArray( twoPowerThirty-1);
+		long pos[] = {0, twoPowerThirty/4, twoPowerThirty/4*3, twoPowerThirty-1-randomValues.length};
+		putValuesAtPositions(arrayTwoPowerThirtyMinusOne, randomValues, pos);
+		testValuesAtPositions(arrayTwoPowerThirtyMinusOne, randomValues, pos, twoPowerThirty-1);
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test
-	@Ignore
 	public void testGet3() {
-		arrayTwoPowerThirtyPlusOne = generateRandomArray(seed, twoPowerThirty+1 );
-		testRandomArray(arrayTwoPowerThirtyPlusOne, seed, twoPowerThirty+1);
+		HugeShortArray arrayTwoPowerThirtyPlusOne = new HugeShortArray( twoPowerThirty+1);
+		long pos[] = {0, twoPowerThirty/4, twoPowerThirty/4*3, twoPowerThirty+1-randomValues.length};
+		putValuesAtPositions(arrayTwoPowerThirtyPlusOne, randomValues, pos);
+		testValuesAtPositions(arrayTwoPowerThirtyPlusOne, randomValues, pos, twoPowerThirty+1);
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test
-	@Ignore
+	@Ignore //needs more than 13GB memory
 	public void testGet4() {
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		testRandomArray(arrayTwoPowerThirtyThree, seed, twoPowerThirtyThree); //TODO test not all positions
+		HugeShortArray arrayTwoPowerThirtyThree = new HugeShortArray( twoPowerThirtyThree);
+		long pos[] = {0, twoPowerThirty/4, twoPowerThirty/4*3, twoPowerThirty-(randomValues.length/2), (long)(twoPowerThirty*1.5), twoPowerThirty*2-(randomValues.length/2), (long)(twoPowerThirty*3), twoPowerThirty*4-(randomValues.length/2), (long)(twoPowerThirty*5), twoPowerThirtyThree-randomValues.length};
+		putValuesAtPositions(arrayTwoPowerThirtyThree, randomValues, pos);
+		testValuesAtPositions(arrayTwoPowerThirtyThree, randomValues, pos, twoPowerThirtyThree);
+	}
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
+	 */
+	@Test //runs with 13BG memory
+	@Ignore //need more than 8GB memory
+	public void testGet5() {
+		final long length = 4000005023l;
+		HugeShortArray mrd5 = new HugeShortArray( length);
+		long pos[] = {0, twoPowerThirty*2-(randomValues.length/2), length/8, length/4, length/2, length/4*3, length-randomValues.length};
+		putValuesAtPositions(mrd5, randomValues, pos);
+		testValuesAtPositions(mrd5, randomValues, pos, length);
 	}
 
 	/**
@@ -222,6 +211,28 @@ public class HugeShortArrayTest {
 		}
 	}
 	
+	/**
+	 * Tests if the array has the given length and if the given values are at the given positions in the array
+	 * @param array
+	 * @param values
+	 * @param pos positions
+	 * @param length
+	 */
+	private static void testValuesAtPositions(final HugeShortArray array, final short[] values, final long[] pos, final long length){
+		assertEquals("Array has not the right length",array.length, length);
+		for(long l: pos){
+			for(int i =0; i < values.length; i++){
+				assertEquals(String.format("Error at position %d",l+i),array.get(l+i), values[i]);
+			}
+		}
+	}
+	
+	/**
+	 * Test if array.get(l) = values[ l % values.length ]
+	 * @param array
+	 * @param length
+	 * @param values
+	 */
 	private static void testRandomArray(final HugeShortArray array, final long length, final short[] values){
 		System.out.println("test HugeShortArray");
 		assertEquals("Array has not the right length",array.length, length);
@@ -239,9 +250,7 @@ public class HugeShortArrayTest {
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
 	public void testGetToLow1(){
-//		HugeShortArray array = new HugeShortArray(0);
-//		array.get(0);
-		epsilon = new HugeShortArray(0);
+		HugeShortArray epsilon = new HugeShortArray(0);
 		epsilon.get(0);
 	}
 	
@@ -250,9 +259,7 @@ public class HugeShortArrayTest {
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
 	public void testSetToLow1(){
-//		HugeShortArray array = new HugeShortArray(0);
-//		array.set( 0, (short)6);
-		epsilon = new HugeShortArray(0);
+		HugeShortArray epsilon = new HugeShortArray(0);
 		epsilon.set( 0, (short)6);
 	}
 	
@@ -261,9 +268,7 @@ public class HugeShortArrayTest {
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
 	public void testGetToHigh1(){
-//		HugeShortArray array = new HugeShortArray(0);
-//		array.get(1);
-		epsilon = new HugeShortArray(0);
+		HugeShortArray epsilon = new HugeShortArray(0);
 		epsilon.get(1);
 	}
 	
@@ -272,9 +277,7 @@ public class HugeShortArrayTest {
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
 	public void testSetToHigh1(){
-//		HugeShortArray array = new HugeShortArray(0);
-//		array.set( 1, (short)6);
-		epsilon = new HugeShortArray(0);
+		HugeShortArray epsilon = new HugeShortArray(0);
 		epsilon.set( 1, (short)6);
 	}
 	
@@ -282,123 +285,147 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testGetToLow2(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.get(-1);
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.get(-1);
+		HugeShortArray arrayTwoPowerThirty = new HugeShortArray(twoPowerThirty);
+		arrayTwoPowerThirty.get(-1);
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#set(long,short)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testSetToLow2(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.set(-1, (short)6 );
-		arrayTwoPowerThirtyThree = generateRandomArray(seed,twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.set(-1, (short)6 );
+		HugeShortArray array = new HugeShortArray(twoPowerThirty+100);
+		array.set(-1, (short)6 );
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testGetToHigh2(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.get(length);
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.get(twoPowerThirtyThree);
+		HugeShortArray array = new HugeShortArray(twoPowerThirty+100);
+		array.get(twoPowerThirty+100);
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#set(long,short)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testSetToHigh2(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.set(length, (short)6 );
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.set( twoPowerThirtyThree, (short)6 );
+		HugeShortArray array = new HugeShortArray(twoPowerThirty);
+		array.set( twoPowerThirty, (short)6 );
 	}
 
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testGetToLow3(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.get(Long.MIN_VALUE);
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.get(Long.MIN_VALUE);
+		HugeShortArray array = new HugeShortArray(500);
+		array.get(-1000);
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#set(long,short)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testSetToLow3(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.set(Long.MIN_VALUE, (short)6 );
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.set(Long.MIN_VALUE, (short)6 );
+		HugeShortArray array = new HugeShortArray(512);
+		array.set(Long.MIN_VALUE+1000, (short)6 );
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testGetToHigh3(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.get(Long.MAX_VALUE);
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.get(Long.MAX_VALUE);
+		HugeShortArray array = new HugeShortArray(500);
+		array.get(Long.MAX_VALUE);
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#set(long,short)}.
 	 */
 	@Test ( expected = ArrayIndexOutOfBoundsException.class )
-	@Ignore
 	public void testSetToHigh3(){
-//		final long length = (long) Math.pow(2, 60);
-//		HugeShortArray array = new HugeShortArray(length);
-//		array.set(Long.MAX_VALUE, (short)6 );
-		arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree );
-		arrayTwoPowerThirtyThree.set(Long.MAX_VALUE, (short)6 );
+		HugeShortArray array = new HugeShortArray(500);
+		array.set(Long.MAX_VALUE, (short)6 );
+	}
+	
+	//TODO dont test the whole array if it is filled
+	// testFill2 need 1,551,784s wenn the whole array is tested.
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
+	 */
+	@Test
+	public void testFill1() {
+		HugeShortArray arrayTwoPowerThirty = new HugeShortArray(twoPowerThirty);
+		arrayTwoPowerThirty.fill( (short)6 );
+		short[] test = new short[100];
+		Arrays.fill(test, (short)6 );
+		//testFill(arrayTwoPowerThirty, twoPowerThirty, (short)6 );
+		final long[] pos = {0, twoPowerThirty/4, twoPowerThirty/2, twoPowerThirty/4*3,  twoPowerThirty-test.length};
+		testValuesAtPositions(arrayTwoPowerThirty, test, pos, twoPowerThirty);
 	}
 	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
 	 */
 	@Test
-	@Ignore
-	public void testFill() {
-		arrayTwoPowerThirty.fill( (short)6 );
-		testFill(arrayTwoPowerThirty, twoPowerThirty, (short)6 );
-		
+	public void testFill2() {		
+		HugeShortArray arrayTwoPowerThirtyMinusOne = new HugeShortArray(twoPowerThirty-1);
 		arrayTwoPowerThirtyMinusOne.fill( (short)(-1) );
-		testFill(arrayTwoPowerThirtyMinusOne, twoPowerThirty-1, (short)(-1) );
-		
+		//testFill(arrayTwoPowerThirtyMinusOne, twoPowerThirty-1, (short)(-1) );
+		short[] test = new short[100];
+		Arrays.fill(test, (short)(-1) );
+		final long[] pos = {0, twoPowerThirty/4, twoPowerThirty/2, twoPowerThirty/4*3,  twoPowerThirty-1-test.length};
+		testValuesAtPositions(arrayTwoPowerThirtyMinusOne, test, pos, twoPowerThirty-1);
+	}
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
+	 */
+	@Test
+	public void testFill3() {	
+		HugeShortArray arrayTwoPowerThirtyPlusOne = new HugeShortArray(twoPowerThirty+1);
 		arrayTwoPowerThirtyPlusOne.fill( Short.MAX_VALUE );
-		testFill(arrayTwoPowerThirtyPlusOne, twoPowerThirty+1 , Short.MAX_VALUE );
-		
+		//testFill(arrayTwoPowerThirtyPlusOne, twoPowerThirty+1 , Short.MAX_VALUE );
+		short[] test = new short[100];
+		Arrays.fill(test, Short.MAX_VALUE );
+		final long[] pos = {0, twoPowerThirty/4, twoPowerThirty/2, twoPowerThirty/4*3,  twoPowerThirty+1-test.length};
+		testValuesAtPositions(arrayTwoPowerThirtyPlusOne, test, pos, twoPowerThirty+1);
+	}
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
+	 */
+	@Test
+	@Ignore //needs more than 8GB memory
+	public void testFill4() {		
+		HugeShortArray arrayTwoPowerThirtyThree = new HugeShortArray(twoPowerThirtyThree);
 		arrayTwoPowerThirtyThree.fill( Short.MIN_VALUE );
-		testFill(arrayTwoPowerThirtyThree, twoPowerThirtyThree, Short.MIN_VALUE );
+		//testFill(arrayTwoPowerThirtyThree, twoPowerThirtyThree, Short.MIN_VALUE );
+		short[] test = new short[100];
+		Arrays.fill(test, Short.MIN_VALUE );
+		final long[] pos = {0, twoPowerThirty-(test.length/2), (long)(twoPowerThirty*1.5), twoPowerThirty*2-(test.length/2), (long)(twoPowerThirty*3), twoPowerThirty*4-(test.length/2), (long)(twoPowerThirty*5), twoPowerThirtyThree/8, twoPowerThirtyThree/4, twoPowerThirtyThree/2, twoPowerThirtyThree/4*3,  twoPowerThirtyThree-test.length};
+		testValuesAtPositions(arrayTwoPowerThirtyThree, test, pos, twoPowerThirtyThree);
+	}
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
+	 */
+	@Test
+	@Ignore //needs more than 8GB memory
+	public void testFill5() {		
+		final long length = 4000005023l;
+		HugeShortArray mrd4 = new HugeShortArray( length);
+		mrd4.fill( Short.MIN_VALUE );
+		//testFill(arrayTwoPowerThirtyThree, twoPowerThirtyThree, Short.MIN_VALUE );
+		short[] test = new short[100];
+		Arrays.fill(test, Short.MIN_VALUE );
+		long pos[] = {0, twoPowerThirty*2-(test.length/2), length/8, length/4, length/2, length/4*3, length-test.length};
+		testValuesAtPositions(mrd4, test, pos, length);
 	}
 	
 	private static void testFill(final HugeShortArray array, final long length, final short value){
@@ -413,21 +440,55 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#sort()}.
 	 */
 	@Test
-	@Ignore
-	public void testSort() {
+	public void testSort1() {
+		HugeShortArray arrayTwoPowerThirty = generateRandomArray(seed, twoPowerThirty);
 		arrayTwoPowerThirty.sort();
-		testSort(arrayTwoPowerThirty, twoPowerThirty);
-		
+		final int n = 100;
+		final long[] pos = {0, twoPowerThirty/4, twoPowerThirty/2, twoPowerThirty/4*3,  twoPowerThirty-n};
+		testSort(arrayTwoPowerThirty, twoPowerThirty, pos, n);
+	}
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#sort()}.
+	 */
+	@Test
+	public void testSort2() {		
+		HugeShortArray arrayTwoPowerThirtyMinusOne = generateRandomArray(seed, twoPowerThirty-1);
 		arrayTwoPowerThirtyMinusOne.sort();
-		testSort(arrayTwoPowerThirtyMinusOne, twoPowerThirty-1);
-		
-		arrayTwoPowerThirtyPlusOne.sort();
-		testSort(arrayTwoPowerThirtyPlusOne, twoPowerThirty+1);
-		
-		arrayTwoPowerThirtyThree.sort();
-		testSort(arrayTwoPowerThirtyThree, twoPowerThirtyThree);
+		final int n = 100;
+		final long[] pos = {0, twoPowerThirty/4, twoPowerThirty/2, twoPowerThirty/4*3,  twoPowerThirty-1-n};
+		testSort(arrayTwoPowerThirtyMinusOne, twoPowerThirty-1, pos, n);
 	}
 	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#sort()}.
+	 */
+	@Test
+	public void testSort3() {
+		HugeShortArray arrayTwoPowerThirtyPlusOne = generateRandomArray(seed, twoPowerThirty+1);
+		arrayTwoPowerThirtyPlusOne.sort();
+		final int n = 100;
+		final long[] pos = {0, twoPowerThirty/4, twoPowerThirty/2, twoPowerThirty/4*3,  twoPowerThirty+1-n};
+		testSort(arrayTwoPowerThirtyPlusOne, twoPowerThirty+1, pos, n);
+	}
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#sort()}.
+	 */
+	@Test
+	@Ignore //needs more than 8GB memory
+	public void testSort4() {
+		HugeShortArray arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree);
+		arrayTwoPowerThirtyThree.sort();
+		final int n = 100;
+		final long[] pos = {0, twoPowerThirty-n/2, (long)(twoPowerThirty*1.5), twoPowerThirty*2-n/2, (long)(twoPowerThirty*3), twoPowerThirty*4-n/2, (long)(twoPowerThirty*5), twoPowerThirtyThree/8, twoPowerThirtyThree/4, twoPowerThirtyThree/2, twoPowerThirtyThree/4*3,  twoPowerThirtyThree-n};
+		testSort(arrayTwoPowerThirtyThree, twoPowerThirtyThree, pos, n);
+	}
+	
+	/**
+	 * Test the whole array if it is sorted
+	 * @param array
+	 * @param length Expected length of array
+	 */
 	private static void testSort(final HugeShortArray array, final long length){
 		assertEquals("Array has not the right length",array.length, length);
 		
@@ -435,22 +496,55 @@ public class HugeShortArrayTest {
 			assertTrue(String.format("Error at position %d",l), array.get(l) <= array.get(l+1) );
 		}
 	}
+	
+	/**
+	 * Test, beginning from each given pos, the next n positions if they are sorted.
+	 * @param array
+	 * @param length Expected length of array
+	 * @param pos
+	 * @param n
+	 */
+	private static void testSort(final HugeShortArray array, final long length, final long[] pos, final int n){
+		assertEquals("Array has not the right length",array.length, length);
+		for(long l: pos){
+			for(int i = 0; i < n-1 ; i++){
+				assertTrue(String.format("Error at position %d",l), array.get(l+i) <= array.get(l+i+1) );
+			}
+		}
+	}
 
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#sort(long, long)}.
 	 */
 	@Test
-	@Ignore
-	public void testSortLongLong() {
-		//test if can sort over bucket boundary
+	public void testSortLongLong1() {
 		final long start = twoPowerThirty - 1500 ;
-		final long length = 3000;
-		arrayTwoPowerThirtyThree.sort(start, length);
-		assertEquals("Array has not the right length",arrayTwoPowerThirtyThree.length, twoPowerThirtyThree);
-		for( long l=start ; l < start+length-1 ; l++){
-			assertTrue(String.format("Error at position %d",l), arrayTwoPowerThirtyThree.get(l) <= arrayTwoPowerThirtyThree.get(l+1) );
-		}
+		final int length = 3000;
 		
+		HugeShortArray arrayTwoPowerThirtyOne = new HugeShortArray(twoPowerThirty*2);
+		final long pos[] = {0, start, twoPowerThirty*2-length};
+		final short values[] = new short[length];
+		Random r = new Random(seed);
+		for(int i = 0; i < values.length; i++){
+			values[i] = (short) r.nextInt();
+		}
+		putValuesAtPositions(arrayTwoPowerThirtyOne, values, pos);
+		
+		//test if it can sort at the beginng, over bucket boundarys and at the end
+		for(long p: pos){
+			arrayTwoPowerThirtyOne.sort(p, length);
+			assertEquals("Array has not the right length",arrayTwoPowerThirtyOne.length, twoPowerThirty*2);
+			for( long l=p ; l < p+length-1 ; l++){
+				assertTrue(String.format("Error at position %d",l), arrayTwoPowerThirtyOne.get(l) <= arrayTwoPowerThirtyOne.get(l+1) );
+			}
+		}
+	}
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#sort(long, long)}.
+	 */
+	@Test
+	public void testSortLongLong2() {		
 		//test if it does only sort the asked positions.
 		final long twoPowerSixteen = (long)Math.pow(2,16);
 		HugeShortArray array = new HugeShortArray( twoPowerSixteen );
@@ -463,6 +557,11 @@ public class HugeShortArrayTest {
 		testSortLongLong(array, twoPowerSixteen, twoPowerTen, twoPowerTen);
 		
 		//TODO Test what happens with bad parameters off and len
+	}
+	
+	public static void main (String[] args){
+		HugeShortArrayTest t = new HugeShortArrayTest();
+		t.testBinarySearchShort();
 	}
 	
 	/**
@@ -484,7 +583,7 @@ public class HugeShortArrayTest {
 			assertTrue(String.format("Error at position %d",l), array.get(l) <= array.get(l+1) );
 		}
 		
-		for( l++ ; l < arrayLength; l++){
+		for( l++ ; l < arrayLength-1; l++){
 			assertFalse(String.format("Error at position %d",l), array.get(l) <= array.get(l+1) );
 		}
 		
@@ -494,23 +593,24 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#binarySearch(short)}.
 	 */
 	@Test
-	@Ignore
 	public void testBinarySearchShort() {
-		arrayTwoPowerThirty.sort();
+		final long twoPowerTen = (long)Math.pow(2,10);
+		HugeShortArray arrayTwoPowerTen = generateRandomArray(seed, twoPowerTen);
+		arrayTwoPowerTen.sort();
 		//random test
 		short randomeValue;
 		Random r = new Random(seed+174);
 		long pos;
 		for(int i = 0; i < 10; i++){
 			randomeValue = (short) r.nextInt();
-			pos = arrayTwoPowerThirty.binarySearch(randomeValue);
+			pos = arrayTwoPowerTen.binarySearch(randomeValue);
 			if(pos >= 0){
-				assertEquals(String.format("Error at position %d with value %d. Expected value %d ",pos,arrayTwoPowerThirty.get(pos),randomeValue ) ,randomeValue, arrayTwoPowerThirty.get(pos));
+				assertEquals(String.format("Error at position %d with value %d. Expected value %d ",pos,arrayTwoPowerTen.get(pos),randomeValue ) ,randomeValue, arrayTwoPowerTen.get(pos));
 			} else {
 				pos *= (-1);
 				pos -= 1;
-				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos) > randomeValue );
-				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos-1) < randomeValue );
+				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerTen.get(pos) > randomeValue );
+				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerTen.get(pos-1) < randomeValue );
 			}
 		}
 		
@@ -527,7 +627,7 @@ public class HugeShortArrayTest {
 		for(short s = 0; s < 9; s++){
 			array.set(pos++, (short)7);
 		}
-		for(short s = 8; s <= 100; s+=2){
+		for(short s = 8; s < 100; s+=2){
 			array.set(pos++,s);
 		}
 		
@@ -538,8 +638,8 @@ public class HugeShortArrayTest {
 		pos = array.binarySearch((short)-100);
 		assertEquals("Could not find -100" ,0, pos);
 		
-		pos = array.binarySearch((short)100);
-		assertEquals("Could not find 100" ,109, pos);
+		pos = array.binarySearch((short)98);
+		assertEquals("Could not find 98" ,109, pos);
 		
 		// search multiple occurrence
 		pos = array.binarySearch((short)7);
@@ -547,39 +647,44 @@ public class HugeShortArrayTest {
 		
 		// search value not in the array
 		pos = array.binarySearch((short)1);
-		assertEquals("Could not find position for 1" ,52, pos);
+		pos = pos * -1;
+		pos = pos -1;
+		assertEquals("Could not find position for 1. Says " + pos ,52, pos);
 		
 		pos = array.binarySearch((short)-101);
-		assertEquals("Could not find position for -101" ,0, pos);
+		pos = pos * -1;
+		pos = pos -1;
+		assertEquals("Could not find position for -101. Says " + pos ,0, pos);
 		
 		pos = array.binarySearch((short)101);
-		assertEquals("Could not find position for 101" ,110, pos);
+		pos = pos * -1;
+		pos = pos -1;
+		assertEquals("Could not find position for 101. Says " + pos ,110, pos);
 	}
 
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#binarySearch(short, long, long)}.
 	 */
 	@Test
-	@Ignore
 	public void testBinarySearchShortLongLong() {
-		//test like unbounded at bin boundary
-		arrayTwoPowerThirtyThree.sort();
-		//random test
-		short randomeValue;
-		Random r = new Random(seed+174);
+//		//test like unbounded at bin boundary
+//		arrayTwoPowerThirtyThree.sort();
+//		//random test
+//		short randomeValue;
+//		Random r = new Random(seed+174);
 		long pos;
-		for(int i = 0; i < 10; i++){
-			randomeValue = (short) r.nextInt();
-			pos = arrayTwoPowerThirtyThree.binarySearch(randomeValue, twoPowerThirty-100, twoPowerThirty+100);
-			if(pos >= 0){
-				assertEquals(String.format("Error at position %d with value %d. Expected value %d ",pos,arrayTwoPowerThirty.get(pos),randomeValue ) ,randomeValue, arrayTwoPowerThirty.get(pos));
-			} else {
-				pos *= (-1);
-				pos -= 1;
-				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos) > randomeValue );
-				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos-1) < randomeValue );
-			}
-		}
+//		for(int i = 0; i < 10; i++){
+//			randomeValue = (short) r.nextInt();
+//			pos = arrayTwoPowerThirtyThree.binarySearch(randomeValue, twoPowerThirty-100, twoPowerThirty+100);
+//			if(pos >= 0){
+//				assertEquals(String.format("Error at position %d with value %d. Expected value %d ",pos,arrayTwoPowerThirty.get(pos),randomeValue ) ,randomeValue, arrayTwoPowerThirty.get(pos));
+//			} else {
+//				pos *= (-1);
+//				pos -= 1;
+//				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos) > randomeValue );
+//				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos-1) < randomeValue );
+//			}
+//		}
 		
 		//deterministic test
 		HugeShortArray array = new HugeShortArray(twoPowerThirty+55);
@@ -595,36 +700,42 @@ public class HugeShortArrayTest {
 		for(short s = 0; s < 9; s++){
 			array.set(pos++, (short)7);
 		}
-		for(short s = 8; s <= 100; s+=2){
+		for(short s = 8; s < 100; s+=2){
 			array.set(pos++,s);
 		}
 		
 		//search one occurrence
-		pos = array.binarySearch((short)-5, twoPowerThirty-55, twoPowerThirty+54);
+		pos = array.binarySearch((short)-5, twoPowerThirty-55, twoPowerThirty+55);
 		assertEquals("Could not find -5" ,twoPowerThirty-55+48, pos);
 		
-		pos = array.binarySearch((short)6, twoPowerThirty-55, twoPowerThirty+54);
+		pos = array.binarySearch((short)6, twoPowerThirty-55, twoPowerThirty+55);
 		assertEquals("Could not find 6" ,twoPowerThirty-55+54, pos);
 		
-		pos = array.binarySearch((short)-100, twoPowerThirty-55, twoPowerThirty+54);
+		pos = array.binarySearch((short)-100, twoPowerThirty-55, twoPowerThirty+55);
 		assertEquals("Could not find -100" ,twoPowerThirty-55+0, pos);
 		
-		pos = array.binarySearch((short)100, twoPowerThirty-55, twoPowerThirty+54);
-		assertEquals("Could not find 100" ,twoPowerThirty-55+109, pos);
+		pos = array.binarySearch((short)98, twoPowerThirty-55, twoPowerThirty+55);
+		assertEquals("Could not find 98" ,twoPowerThirty-55+109, pos);
 		
 		// search multiple occurrence
-		pos = array.binarySearch((short)7, twoPowerThirty-55, twoPowerThirty+54);
-		assertTrue("Could not find 7" , twoPowerThirty-55+55 <= pos && pos <= twoPowerThirty-100+63 );
+		pos = array.binarySearch((short)7, twoPowerThirty-55, twoPowerThirty+55);
+		assertTrue("Could not find 7" , twoPowerThirty-55+55 <= pos && pos <= twoPowerThirty-55+63 );
 		
 		// search value not in the array
-		pos = array.binarySearch((short)1, twoPowerThirty-55, twoPowerThirty+54); //1 occurs in array beneath lower bound
-		assertEquals("Could not find position for 1" ,twoPowerThirty-55+52, pos);
+		pos = array.binarySearch((short)1, twoPowerThirty-55, twoPowerThirty+55); //1 occurs in array beneath lower bound
+		pos = pos * -1;
+		pos = pos -1;
+		assertEquals("Could not find position for 1. Says " + pos ,twoPowerThirty-55+52, pos);
 		
-		pos = array.binarySearch((short)-101, twoPowerThirty-55, twoPowerThirty+54);
-		assertEquals("Could not find position for -101" ,twoPowerThirty-55+0, pos);
+		pos = array.binarySearch((short)-101, twoPowerThirty-55, twoPowerThirty+55);
+		pos = pos * -1;
+		pos = pos -1;
+		assertEquals("Could not find position for -101. Says " + pos ,twoPowerThirty-55+0, pos);
 		
-		pos = array.binarySearch((short)101, twoPowerThirty-55, twoPowerThirty+54);
-		assertEquals("Could not find position for 101" ,twoPowerThirty-55+110, pos);
+		pos = array.binarySearch((short)101, twoPowerThirty-55, twoPowerThirty+55);
+		pos = pos * -1;
+		pos = pos -1;
+		assertEquals("Could not find position for 101. Says " + pos ,twoPowerThirty-55+110, pos);
 	}
 
 	/**
@@ -633,16 +744,24 @@ public class HugeShortArrayTest {
 	@Test
 	@Ignore
 	public void testSwap() {
+		HugeShortArray array = new HugeShortArray(twoPowerThirtyThree+300);
+		final long pos[] = {0, twoPowerThirty-randomValues.length/2, twoPowerThirty*2-randomValues.length/2,
+				154-randomValues.length/2>=0?154-randomValues.length/2:0,
+				63544-randomValues.length/2>=0?63544-randomValues.length/2:0,
+				199287-randomValues.length/2>=0?199287-randomValues.length/2:0,
+				7654345-randomValues.length/2>=0?7654345-randomValues.length/2:0,
+		};
+		
 		short s1, s2;
 		long[] pos1 = {0                    , twoPowerThirty  , twoPowerThirty  , twoPowerThirty  , twoPowerThirty-1, 154   , 7654345};
 		long[] pos2 = {twoPowerThirtyThree-1, twoPowerThirty+1, twoPowerThirty*2, twoPowerThirty-1, twoPowerThirty+1, 199287, 63544  };
 		//test if two values swap positions
 		for(int i = 0; i < pos1.length; i++){
-			s1 = arrayTwoPowerThirtyThree.get(pos1[i]);
-			s2 = arrayTwoPowerThirtyThree.get(pos2[i]);
-			arrayTwoPowerThirtyThree.swap(pos1[i], pos2[i]);
-			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s1, arrayTwoPowerThirtyThree.get(pos2[i]) );
-			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s2, arrayTwoPowerThirtyThree.get(pos1[i]) );
+			s1 = array.get(pos1[i]);
+			s2 = array.get(pos2[i]);
+			array.swap(pos1[i], pos2[i]);
+			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s1, array.get(pos2[i]) );
+			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s2, array.get(pos1[i]) );
 		}
 		
 		//test if all other positions are unmodified
@@ -676,13 +795,14 @@ public class HugeShortArrayTest {
 	@Ignore
 	public void testCopy() {
 		//test returned array is not the same but equal in length an each position
-		HugeShortArray array = arrayTwoPowerThirtyThree.copy();
-		
-		assertFalse("Error, copied array is the same", array == arrayTwoPowerThirtyThree); //TODO better change one and test if the other remains unchanged
-		assertEquals(String.format("Error, arrays have different length: %d, %d.", array.length, arrayTwoPowerThirtyThree.length) , array.length, arrayTwoPowerThirtyThree.length );
-		for(long l = 0; l < array.length; l++){
-			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l) );
-		}
+		//TODO
+//		HugeShortArray array = arrayTwoPowerThirtyThree.copy();
+//		
+//		assertFalse("Error, copied array is the same", array == arrayTwoPowerThirtyThree); //TODO better change one and test if the other remains unchanged
+//		assertEquals(String.format("Error, arrays have different length: %d, %d.", array.length, arrayTwoPowerThirtyThree.length) , array.length, arrayTwoPowerThirtyThree.length );
+//		for(long l = 0; l < array.length; l++){
+//			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l) );
+//		}
 	}
 
 	/**
@@ -692,14 +812,15 @@ public class HugeShortArrayTest {
 	@Ignore
 	public void testCopyRange() {
 		//test returned array is not the same but equal in length an each position
-		final long from = twoPowerThirty-100;
-		final long to = twoPowerThirty*2+100;
-		HugeShortArray array = arrayTwoPowerThirtyThree.copyRange( from, to);
-		
-		assertEquals(String.format("Error, array has wrong length: %d, %d.", array.length, twoPowerThirty+200) , array.length, to-from );
-		for(long l = 0; l < array.length; l++){
-			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l+from) );
-		}
+		//TODO
+//		final long from = twoPowerThirty-100;
+//		final long to = twoPowerThirty*2+100;
+//		HugeShortArray array = arrayTwoPowerThirtyThree.copyRange( from, to);
+//		
+//		assertEquals(String.format("Error, array has wrong length: %d, %d.", array.length, twoPowerThirty+200) , array.length, to-from );
+//		for(long l = 0; l < array.length; l++){
+//			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l+from) );
+//		}
 	}
 
 }
