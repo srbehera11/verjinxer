@@ -431,4 +431,12 @@ public class HugeShortArray {
       a.read(fname, 0, flen / BYTESPERELEMENT, 0);
       return a;
    }
+
+   
+   // ================= getter for testing purposes =========================================
+
+   public int getBins() {
+   	  return bins;
+   }
+   
 }
