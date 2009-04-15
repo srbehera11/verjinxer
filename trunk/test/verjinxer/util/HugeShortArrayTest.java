@@ -135,6 +135,24 @@ public class HugeShortArrayTest {
 		System.gc();
 //		Thread.sleep(1000);
 	}
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#testHugeShortArray(long)}.
+	 */
+	@Test
+	public void testHugeShortArrayLong(){
+		final long[] length = {0, 1, 500, (long)Math.pow(2, 29), twoPowerThirty-1, twoPowerThirty, twoPowerThirty+1, twoPowerThirty*2-1, twoPowerThirty*2, twoPowerThirty*2+1, (long)(twoPowerThirty*2.5)};
+		final int[]  bins   = {0, 1, 1  , 1                    , 1               , 1             , 2               , 2                 , 2               , 3                 , 3};
+		HugeShortArray array;
+		for(int i = 0; i < length.length; i++){
+			System.out.println(i);
+			array = new HugeShortArray(length[i]);
+			assertEquals(String.format("Wrong length: %d",array.length), length[i], array.length);
+			assertEquals(String.format("Wrong bins: %d",array.getBins()), bins[i], array.getBins());
+			array = null;
+			System.gc();
+		}
+	}
 
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
@@ -353,9 +371,6 @@ public class HugeShortArrayTest {
 		array.set(Long.MAX_VALUE, (short)6 );
 	}
 	
-	//TODO dont test the whole array if it is filled
-	// testFill2 need 1,551,784s wenn the whole array is tested.
-	
 	/**
 	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
 	 */
@@ -561,7 +576,12 @@ public class HugeShortArrayTest {
 	
 	public static void main (String[] args){
 		HugeShortArrayTest t = new HugeShortArrayTest();
-		t.testBinarySearchShort();
+		randomValues = new short[100];
+		Random r = new Random(seed);
+		for(int i = 0; i < randomValues.length; i++){
+			randomValues[i] = (short) r.nextInt();
+		}
+		t.testSwap1();
 	}
 	
 	/**
@@ -742,19 +762,21 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#swap(long, long)}.
 	 */
 	@Test
-	@Ignore
-	public void testSwap() {
-		HugeShortArray array = new HugeShortArray(twoPowerThirtyThree+300);
+	public void testSwap1() {
+		HugeShortArray array = new HugeShortArray(twoPowerThirty*2+300);
 		final long pos[] = {0, twoPowerThirty-randomValues.length/2, twoPowerThirty*2-randomValues.length/2,
+				twoPowerThirty*2+300-randomValues.length,
 				154-randomValues.length/2>=0?154-randomValues.length/2:0,
 				63544-randomValues.length/2>=0?63544-randomValues.length/2:0,
 				199287-randomValues.length/2>=0?199287-randomValues.length/2:0,
 				7654345-randomValues.length/2>=0?7654345-randomValues.length/2:0,
 		};
 		
+		putValuesAtPositions(array, randomValues, pos);
+		
 		short s1, s2;
 		long[] pos1 = {0                    , twoPowerThirty  , twoPowerThirty  , twoPowerThirty  , twoPowerThirty-1, 154   , 7654345};
-		long[] pos2 = {twoPowerThirtyThree-1, twoPowerThirty+1, twoPowerThirty*2, twoPowerThirty-1, twoPowerThirty+1, 199287, 63544  };
+		long[] pos2 = {twoPowerThirty*2+300-1, twoPowerThirty+1, twoPowerThirty*2, twoPowerThirty-1, twoPowerThirty+1, 199287, 63544  };
 		//test if two values swap positions
 		for(int i = 0; i < pos1.length; i++){
 			s1 = array.get(pos1[i]);
@@ -763,13 +785,19 @@ public class HugeShortArrayTest {
 			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s1, array.get(pos2[i]) );
 			assertEquals(String.format("Error while swapping positions %d and $d.", pos1[i], pos2[i] ) ,s2, array.get(pos1[i]) );
 		}
-		
+	}
+	
+	/**
+	 * Test method for {@link verjinxer.util.HugeShortArray#swap(long, long)}.
+	 */
+	@Test
+	public void testSwap2() {
 		//test if all other positions are unmodified
 		HugeShortArray array1 = generateRandomArray(seed, 500);
 		HugeShortArray array2 = generateRandomArray(seed, 500); //both arrays are equal
 		
-		pos1 = new long[]{0  , 50, 0  , 499, 256};
-		pos2 = new long[]{499, 51, 403, 134, 16};
+		long[] pos1 = new long[]{0  , 50, 0  , 499, 256};
+		long[] pos2 = new long[]{499, 51, 403, 134, 16};
 		
 		for(int i = 0; i < pos1.length; i++){
 			array1.swap(pos1[i], pos2[i]);
@@ -792,17 +820,16 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#copy()}.
 	 */
 	@Test
-	@Ignore
 	public void testCopy() {
 		//test returned array is not the same but equal in length an each position
-		//TODO
-//		HugeShortArray array = arrayTwoPowerThirtyThree.copy();
-//		
-//		assertFalse("Error, copied array is the same", array == arrayTwoPowerThirtyThree); //TODO better change one and test if the other remains unchanged
-//		assertEquals(String.format("Error, arrays have different length: %d, %d.", array.length, arrayTwoPowerThirtyThree.length) , array.length, arrayTwoPowerThirtyThree.length );
-//		for(long l = 0; l < array.length; l++){
-//			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l) );
-//		}
+		HugeShortArray array = generateRandomArray(seed, twoPowerThirty+300);
+		HugeShortArray arrayCopy = array.copy();
+		
+		assertFalse("Error, copied array is the same", arrayCopy == array); //TODO better change one and test if the other remains unchanged
+		assertEquals(String.format("Error, arrays have different length: %d, %d.", arrayCopy.length, array.length) , arrayCopy.length, array.length );
+		for(long l = 0; l < arrayCopy.length; l++){
+			assertEquals(String.format("Error at position %d.", l) , arrayCopy.get(l), array.get(l) );
+		}
 	}
 
 	/**
