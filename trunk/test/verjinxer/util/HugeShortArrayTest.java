@@ -390,7 +390,7 @@ public class HugeShortArrayTest {
 		int p;
 		short value;
 		for(int i = 0; i < 10; i++){
-			p = r.nextInt();
+			p = r.nextInt((int)twoPowerThirty);
 			value = (short) r.nextInt();
 			arrayTwoPowerThirty.set(p, value);
 		}
@@ -414,7 +414,7 @@ public class HugeShortArrayTest {
 		int p;
 		short value;
 		for(int i = 0; i < 10; i++){
-			p = r.nextInt();
+			p = r.nextInt((int)twoPowerThirty-1);
 			value = (short) r.nextInt();
 			arrayTwoPowerThirtyMinusOne.set(p, value);
 		}
@@ -438,7 +438,7 @@ public class HugeShortArrayTest {
 		int p;
 		short value;
 		for(int i = 0; i < 10; i++){
-			p = r.nextInt();
+			p = r.nextInt((int)twoPowerThirty+1);
 			value = (short) r.nextInt();
 			arrayTwoPowerThirtyPlusOne.set(p, value);
 		}
@@ -462,7 +462,7 @@ public class HugeShortArrayTest {
 		int p;
 		short value;
 		for(int i = 0; i < 10; i++){
-			p = r.nextInt();
+			p = r.nextInt(Integer.MAX_VALUE);
 			value = (short) r.nextInt();
 			arrayTwoPowerThirtyThree.set(p, value);
 		}
@@ -488,7 +488,7 @@ public class HugeShortArrayTest {
 		int p;
 		short value;
 		for(int i = 0; i < 10; i++){
-			p = r.nextInt();
+			p = r.nextInt(Integer.MAX_VALUE);
 			value = (short) r.nextInt();
 			mrd4.set(p, value);
 		}
