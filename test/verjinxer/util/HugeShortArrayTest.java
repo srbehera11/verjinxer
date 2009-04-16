@@ -756,7 +756,7 @@ public class HugeShortArrayTest {
 		long pos;
 		for(int i = 0; i < 10; i++){
 			randomeValue = (short) r.nextInt();
-			pos = array.binarySearch(randomeValue, twoPowerThirty-100, twoPowerThirty+100);
+			pos = array.binarySearch(randomeValue, tmp, tmp+randomValues.length);
 			if(pos >= 0){
 				assertEquals(String.format("Error at position %d with value %d. Expected value %d ",pos,array.get(pos),randomeValue ) ,randomeValue, array.get(pos));
 			} else {
