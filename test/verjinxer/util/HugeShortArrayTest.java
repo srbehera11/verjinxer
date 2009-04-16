@@ -137,19 +137,27 @@ public class HugeShortArrayTest {
 	}
 	
 	/**
-	 * Test method for {@link verjinxer.util.HugeShortArray#testHugeShortArray(long)}.
+	 * Test method for {@link verjinxer.util.HugeShortArray#testHugeShortArray(long)}
+	 * and {@link verjinxer.util.HugeShortArray#testHugeShortArray(HugeShortArray)}.
 	 */
 	@Test
-	public void testHugeShortArrayLong(){
+	public void testHugeShortArray(){
 		final long[] length = {0, 1, 500, (long)Math.pow(2, 29), twoPowerThirty-1, twoPowerThirty, twoPowerThirty+1, twoPowerThirty*2-1, twoPowerThirty*2, twoPowerThirty*2+1, (long)(twoPowerThirty*2.5)};
 		final int[]  bins   = {0, 1, 1  , 1                    , 1               , 1             , 2               , 2                 , 2               , 3                 , 3};
 		HugeShortArray array;
+		HugeShortArray arrayCopy;
 		for(int i = 0; i < length.length; i++){
 			System.out.println(i);
 			array = new HugeShortArray(length[i]);
 			assertEquals(String.format("Wrong length: %d",array.length), length[i], array.length);
 			assertEquals(String.format("Wrong bins: %d",array.getBins()), bins[i], array.getBins());
+			//test copy constructor
+			arrayCopy = new HugeShortArray(array);
+			assertEquals(String.format("Wrong length: %d",arrayCopy.length), length[i], arrayCopy.length);
+			assertEquals(String.format("Wrong bins: %d",arrayCopy.getBins()), bins[i], arrayCopy.getBins());
+			
 			array = null;
+			arrayCopy = null;
 			System.gc();
 		}
 	}
@@ -377,6 +385,16 @@ public class HugeShortArrayTest {
 	@Test
 	public void testFill1() {
 		HugeShortArray arrayTwoPowerThirty = new HugeShortArray(twoPowerThirty);
+		
+		Random r = new Random(seed);
+		int p;
+		short value;
+		for(int i = 0; i < 10; i++){
+			p = r.nextInt();
+			value = (short) r.nextInt();
+			arrayTwoPowerThirty.set(p, value);
+		}
+		
 		arrayTwoPowerThirty.fill( (short)6 );
 		short[] test = new short[100];
 		Arrays.fill(test, (short)6 );
@@ -391,6 +409,16 @@ public class HugeShortArrayTest {
 	@Test
 	public void testFill2() {		
 		HugeShortArray arrayTwoPowerThirtyMinusOne = new HugeShortArray(twoPowerThirty-1);
+		
+		Random r = new Random(seed);
+		int p;
+		short value;
+		for(int i = 0; i < 10; i++){
+			p = r.nextInt();
+			value = (short) r.nextInt();
+			arrayTwoPowerThirtyMinusOne.set(p, value);
+		}
+		
 		arrayTwoPowerThirtyMinusOne.fill( (short)(-1) );
 		//testFill(arrayTwoPowerThirtyMinusOne, twoPowerThirty-1, (short)(-1) );
 		short[] test = new short[100];
@@ -405,6 +433,16 @@ public class HugeShortArrayTest {
 	@Test
 	public void testFill3() {	
 		HugeShortArray arrayTwoPowerThirtyPlusOne = new HugeShortArray(twoPowerThirty+1);
+		
+		Random r = new Random(seed);
+		int p;
+		short value;
+		for(int i = 0; i < 10; i++){
+			p = r.nextInt();
+			value = (short) r.nextInt();
+			arrayTwoPowerThirtyPlusOne.set(p, value);
+		}
+		
 		arrayTwoPowerThirtyPlusOne.fill( Short.MAX_VALUE );
 		//testFill(arrayTwoPowerThirtyPlusOne, twoPowerThirty+1 , Short.MAX_VALUE );
 		short[] test = new short[100];
@@ -419,6 +457,16 @@ public class HugeShortArrayTest {
 	@Ignore //needs more than 8GB memory
 	public void testFill4() {		
 		HugeShortArray arrayTwoPowerThirtyThree = new HugeShortArray(twoPowerThirtyThree);
+		
+		Random r = new Random(seed);
+		int p;
+		short value;
+		for(int i = 0; i < 10; i++){
+			p = r.nextInt();
+			value = (short) r.nextInt();
+			arrayTwoPowerThirtyThree.set(p, value);
+		}
+		
 		arrayTwoPowerThirtyThree.fill( Short.MIN_VALUE );
 		//testFill(arrayTwoPowerThirtyThree, twoPowerThirtyThree, Short.MIN_VALUE );
 		short[] test = new short[100];
@@ -435,6 +483,16 @@ public class HugeShortArrayTest {
 	public void testFill5() {		
 		final long length = 4000005023l;
 		HugeShortArray mrd4 = new HugeShortArray( length);
+		
+		Random r = new Random(seed);
+		int p;
+		short value;
+		for(int i = 0; i < 10; i++){
+			p = r.nextInt();
+			value = (short) r.nextInt();
+			mrd4.set(p, value);
+		}
+		
 		mrd4.fill( Short.MIN_VALUE );
 		//testFill(arrayTwoPowerThirtyThree, twoPowerThirtyThree, Short.MIN_VALUE );
 		short[] test = new short[100];
@@ -545,7 +603,7 @@ public class HugeShortArrayTest {
 		}
 		putValuesAtPositions(arrayTwoPowerThirtyOne, values, pos);
 		
-		//test if it can sort at the beginng, over bucket boundarys and at the end
+		//test if it can sort at the beginning, over bucket boundaries and at the end
 		for(long p: pos){
 			arrayTwoPowerThirtyOne.sort(p, length);
 			assertEquals("Array has not the right length",arrayTwoPowerThirtyOne.length, twoPowerThirty*2);
@@ -687,27 +745,30 @@ public class HugeShortArrayTest {
 	 */
 	@Test
 	public void testBinarySearchShortLongLong() {
-//		//test like unbounded at bin boundary
-//		arrayTwoPowerThirtyThree.sort();
-//		//random test
-//		short randomeValue;
-//		Random r = new Random(seed+174);
+		//test like unbounded at bin boundary
+		HugeShortArray array =  new HugeShortArray(twoPowerThirty+55);
+		final long tmp = Math.min(twoPowerThirty+55-randomValues.length, twoPowerThirty-randomValues.length/2);
+		putValuesAtPositions(array, randomValues, new long[]{tmp});
+		array.sort(tmp, randomValues.length);
+		//random test
+		short randomeValue;
+		Random r = new Random(seed+174);
 		long pos;
-//		for(int i = 0; i < 10; i++){
-//			randomeValue = (short) r.nextInt();
-//			pos = arrayTwoPowerThirtyThree.binarySearch(randomeValue, twoPowerThirty-100, twoPowerThirty+100);
-//			if(pos >= 0){
-//				assertEquals(String.format("Error at position %d with value %d. Expected value %d ",pos,arrayTwoPowerThirty.get(pos),randomeValue ) ,randomeValue, arrayTwoPowerThirty.get(pos));
-//			} else {
-//				pos *= (-1);
-//				pos -= 1;
-//				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos) > randomeValue );
-//				assertTrue(String.format("Error at position %d",pos), arrayTwoPowerThirty.get(pos-1) < randomeValue );
-//			}
-//		}
+		for(int i = 0; i < 10; i++){
+			randomeValue = (short) r.nextInt();
+			pos = array.binarySearch(randomeValue, twoPowerThirty-100, twoPowerThirty+100);
+			if(pos >= 0){
+				assertEquals(String.format("Error at position %d with value %d. Expected value %d ",pos,array.get(pos),randomeValue ) ,randomeValue, array.get(pos));
+			} else {
+				pos *= (-1);
+				pos -= 1;
+				assertTrue(String.format("Error at position %d",pos), array.get(pos) > randomeValue );
+				assertTrue(String.format("Error at position %d",pos), array.get(pos-1) < randomeValue );
+			}
+		}
 		
 		//deterministic test
-		HugeShortArray array = new HugeShortArray(twoPowerThirty+55);
+		
 		array.fill((short)1);
 		pos = twoPowerThirty-55;
 		for(short s = -100; s <= -6; s+=2){
@@ -822,11 +883,19 @@ public class HugeShortArrayTest {
 	@Test
 	public void testCopy() {
 		//test returned array is not the same but equal in length an each position
-		HugeShortArray array = generateRandomArray(seed, twoPowerThirty+300);
+		HugeShortArray array = new HugeShortArray(0);
 		HugeShortArray arrayCopy = array.copy();
+		assertFalse("Error, copied array is the same", arrayCopy == array);
+		assertEquals(String.format("Error, arrays have different length: %d, %d.", arrayCopy.length, array.length) , arrayCopy.length, array.length );
+		assertEquals(String.format("Error, arrays have different bins: %d, %d.", arrayCopy.getBins(), array.getBins()) , arrayCopy.getBins(), array.getBins() );
+		
+		
+		array = generateRandomArray(seed, twoPowerThirty+300);
+		arrayCopy = array.copy();
 		
 		assertFalse("Error, copied array is the same", arrayCopy == array); //TODO better change one and test if the other remains unchanged
 		assertEquals(String.format("Error, arrays have different length: %d, %d.", arrayCopy.length, array.length) , arrayCopy.length, array.length );
+		assertEquals(String.format("Error, arrays have different bins: %d, %d.", arrayCopy.getBins(), array.getBins()) , arrayCopy.getBins(), array.getBins() );
 		for(long l = 0; l < arrayCopy.length; l++){
 			assertEquals(String.format("Error at position %d.", l) , arrayCopy.get(l), array.get(l) );
 		}
@@ -836,18 +905,33 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#copyRange(long, long)}.
 	 */
 	@Test
-	@Ignore
 	public void testCopyRange() {
 		//test returned array is not the same but equal in length an each position
-		//TODO
-//		final long from = twoPowerThirty-100;
-//		final long to = twoPowerThirty*2+100;
-//		HugeShortArray array = arrayTwoPowerThirtyThree.copyRange( from, to);
-//		
-//		assertEquals(String.format("Error, array has wrong length: %d, %d.", array.length, twoPowerThirty+200) , array.length, to-from );
-//		for(long l = 0; l < array.length; l++){
-//			assertEquals(String.format("Error at position %d.", l) , array.get(l), arrayTwoPowerThirtyThree.get(l+from) );
-//		}
+		final long length = twoPowerThirty+1030;
+		final long[] from = {0, twoPowerThirty-100    , length-200};
+		final long[] to   = {200, twoPowerThirty+100, length-1};
+		HugeShortArray array = new HugeShortArray(length);
+		Random r = new Random(seed);
+		short value;
+		for(int i = 0; i < from.length; i++)
+			for(long pos = from[i]-5; pos <= to[i]+5; pos++){
+				if(pos < 0) pos = 0;
+				else if(pos >= array.length) continue;
+				value = (short)r.nextInt();
+				array.set(pos, value);
+			}
+		
+		HugeShortArray arrayCopy;
+		for(int i = 0; i < from.length; i++){
+			arrayCopy = array.copyRange( from[i],to[i] );
+			
+			assertEquals(String.format("Error, array has wrong length: %d, %d.", arrayCopy.length, to[i]-from[i]) , arrayCopy.length, to[i]-from[i] );
+			for(long l = 0; l < arrayCopy.length; l++){
+				assertEquals(String.format("Error at position %d.", l) , arrayCopy.get(l), array.get(l+from[i]) );
+			}
+			arrayCopy = null;
+			System.gc();
+		}
 	}
 
 }
