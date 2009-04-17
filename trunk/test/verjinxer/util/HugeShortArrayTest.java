@@ -152,13 +152,20 @@ public class HugeShortArrayTest {
 			assertEquals(String.format("Wrong length: %d",array.length), length[i], array.length);
 			assertEquals(String.format("Wrong bins: %d",array.getBins()), bins[i], array.getBins());
 			//test copy constructor
-			arrayCopy = new HugeShortArray(array);
-			assertEquals(String.format("Wrong length: %d",arrayCopy.length), length[i], arrayCopy.length);
-			assertEquals(String.format("Wrong bins: %d",arrayCopy.getBins()), bins[i], arrayCopy.getBins());
-			
+			//if(i < 7){ //just for testing - need more than 8GB memory
+				arrayCopy = new HugeShortArray(array);
+				assertEquals(String.format("Wrong length: %d",arrayCopy.length), length[i], arrayCopy.length);
+				assertEquals(String.format("Wrong bins: %d",arrayCopy.getBins()), bins[i], arrayCopy.getBins());
+			//}
 			array = null;
 			arrayCopy = null;
 			System.gc();
+			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -199,7 +206,7 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test
-	@Ignore //needs more than 13GB memory
+	//@Ignore //needs more than 13GB memory
 	public void testGet4() {
 		HugeShortArray arrayTwoPowerThirtyThree = new HugeShortArray( twoPowerThirtyThree);
 		long pos[] = {0, twoPowerThirty/4, twoPowerThirty/4*3, twoPowerThirty-(randomValues.length/2), (long)(twoPowerThirty*1.5), twoPowerThirty*2-(randomValues.length/2), (long)(twoPowerThirty*3), twoPowerThirty*4-(randomValues.length/2), (long)(twoPowerThirty*5), twoPowerThirtyThree-randomValues.length};
@@ -211,7 +218,7 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#get(long)}.
 	 */
 	@Test //runs with 13BG memory
-	@Ignore //need more than 8GB memory
+	//@Ignore //need more than 8GB memory
 	public void testGet5() {
 		final long length = 4000005023l;
 		HugeShortArray mrd5 = new HugeShortArray( length);
@@ -454,7 +461,7 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
 	 */
 	@Test
-	@Ignore //needs more than 8GB memory
+	//@Ignore //needs more than 8GB memory
 	public void testFill4() {		
 		HugeShortArray arrayTwoPowerThirtyThree = new HugeShortArray(twoPowerThirtyThree);
 		
@@ -479,7 +486,7 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#fill(short)}.
 	 */
 	@Test
-	@Ignore //needs more than 8GB memory
+	//@Ignore //needs more than 8GB memory
 	public void testFill5() {		
 		final long length = 4000005023l;
 		HugeShortArray mrd4 = new HugeShortArray( length);
@@ -548,7 +555,7 @@ public class HugeShortArrayTest {
 	 * Test method for {@link verjinxer.util.HugeShortArray#sort()}.
 	 */
 	@Test
-	@Ignore //needs more than 8GB memory
+	//@Ignore //needs more than 8GB memory
 	public void testSort4() {
 		HugeShortArray arrayTwoPowerThirtyThree = generateRandomArray(seed, twoPowerThirtyThree);
 		arrayTwoPowerThirtyThree.sort();
