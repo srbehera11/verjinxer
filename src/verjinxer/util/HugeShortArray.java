@@ -66,7 +66,9 @@ public class HugeShortArray {
          arrays[i] = new short[BINSIZE];
       }
       if (bins > 0) {
-         arrays[bins - 1] = new short[(int) (length & BITMASK_LOW)];
+    	  if ( (length & BITMASK_LOW) > 0) arrays[bins - 1] = new short[ (int) (length & BITMASK_LOW) ];
+    	  else                             arrays[bins - 1] = new short[          BINSIZE             ];
+    	  
          assert arrays[bins - 1].length > 0;
       }
    }
@@ -82,7 +84,13 @@ public class HugeShortArray {
       bins = other.bins;
       arrays = new short[bins][];
       for (int i = 0; i < bins; i++) {
-         System.arraycopy(other.arrays[i], 0, arrays[i], 0, other.arrays[i].length);
+    	  arrays[i] = new short[ other.arrays[i].length ];
+    	  assert other.arrays[i] != null: String.format("HugeShortArray copy constructor: other.arrays[%d] is null", i);
+    	  assert this.arrays[i] != null : String.format("HugeShortArray copy constructor: this.arrays[%d] is null", i);
+         //System.arraycopy(other.arrays[i], 0, arrays[i], 0, other.arrays[i].length);
+    	  for(int j = 0; j < arrays[i].length; j++){
+    		  arrays[i] = other.arrays[i];
+    	  }
       }
    }
 
