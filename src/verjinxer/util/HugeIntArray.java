@@ -1,4 +1,4 @@
-/*
+/**
  */
 package verjinxer.util;
 
@@ -22,11 +22,11 @@ import java.util.Arrays;
 public class HugeIntArray {
 
    /** number of bytes per element */
-   private final static int BYTESPERELEMENT = Integer.SIZE/8;
+   private final static int BYTESPERELEMENT = Integer.SIZE / 8;
 
    /** number of elements in the array */
    public final long length;
-   
+
    final private static int BITS = 30;
    final private static int BINSIZE = 1 << BITS;
    final private static int BITMASK_HIGH = (-1) << BITS;
@@ -36,23 +36,25 @@ public class HugeIntArray {
    private final int[][] arrays;
 
    private final int bins;
-   
+
    /**
     * creates a new HugeIntArray
     * 
     * @param size
-    *           number of elements in the array, up to (2^63 -1)
+    *           number of elements in the array
     */
    public HugeIntArray(final long length) {
       this.length = length;
-      bins = (int)((length-1) >> BITS) + 1; // last bin is potentially empty (array of length 0)
+      bins = (int) ((length - 1) >> BITS) + 1; // last bin is potentially empty (array of length 0)
       arrays = new int[bins][];
       for (int i = 0; i < bins - 1; ++i) {
          arrays[i] = new int[BINSIZE];
       }
       if (bins > 0) {
-         arrays[bins - 1] = new int[(int)(length & BITMASK_LOW)];
-         assert arrays[bins-1].length > 0;
+    	  if ( (length & BITMASK_LOW) > 0) arrays[bins - 1] = new int[ (int) (length & BITMASK_LOW) ];
+    	  else                             arrays[bins - 1] = new int[          BINSIZE             ];
+    	  
+         assert arrays[bins - 1].length > 0;
       }
    }
 
@@ -67,7 +69,13 @@ public class HugeIntArray {
       bins = other.bins;
       arrays = new int[bins][];
       for (int i = 0; i < bins; i++) {
-         System.arraycopy(other.arrays[i], 0, arrays[i], 0, other.arrays[i].length);
+    	  arrays[i] = new int[ other.arrays[i].length ];
+    	  assert other.arrays[i] != null: String.format("HugeIntArray copy constructor: other.arrays[%d] is null", i);
+    	  assert this.arrays[i] != null : String.format("HugeIntArray copy constructor: this.arrays[%d] is null", i);
+         //System.arraycopy(other.arrays[i], 0, arrays[i], 0, other.arrays[i].length);
+    	  for(int j = 0; j < arrays[i].length; j++){
+    		  arrays[i] = other.arrays[i];
+    	  }
       }
    }
 
@@ -79,7 +87,7 @@ public class HugeIntArray {
     * @return value of element i
     */
    public final int get(final long i) {
-      return arrays[(int)(i >> BITS)][(int)(i & BITMASK_LOW)];
+      return arrays[(int) (i >> BITS)][(int) (i & BITMASK_LOW)];
    }
 
    /**
@@ -91,7 +99,7 @@ public class HugeIntArray {
     *           new value of element i
     */
    public final void set(final long i, final int value) {
-      arrays[(int)(i >> BITS)][(int)(i & BITMASK_LOW)] = value;
+      arrays[(int) (i >> BITS)][(int) (i & BITMASK_LOW)] = value;
    }
 
    /**
@@ -416,4 +424,12 @@ public class HugeIntArray {
       a.read(fname, 0, flen / BYTESPERELEMENT, 0);
       return a;
    }
+
+   
+   // ================= getter for testing purposes =========================================
+
+   public int getBins() {
+   	  return bins;
+   }
+   
 }
