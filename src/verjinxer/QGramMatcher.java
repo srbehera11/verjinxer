@@ -543,13 +543,13 @@ public class QGramMatcher {
     * @return length of match
     */
    private int bisulfiteMatchLengthCmC(byte[] s, int sp, byte[] t, int tp) {
-         System.out.println("bisulfiteMatchLengthCmC. tp=" + tp + ". sp="+sp);
-         try {
-            System.out.println("s[sp..sp+q]="+alphabet.preimage(s, sp, q));
-            System.out.println("t[tp..tp+q]="+alphabet.preimage(t, tp, q));
-         } catch (InvalidSymbolException e) {
-            e.printStackTrace();
-         }
+//      System.out.println("bisulfiteMatchLengthCmC. tp=" + tp + ". sp="+sp);
+//      try {
+//         System.out.println("s[sp..sp+q]="+alphabet.preimage(s, sp, q));
+//         System.out.println("t[tp..tp+q]="+alphabet.preimage(t, tp, q));
+//      } catch (InvalidSymbolException e) {
+//         e.printStackTrace();
+//      }
       int offset = 0;
 
       while (alphabet.isSymbol(s[sp + offset]) && s[sp + offset] == t[tp + offset])
