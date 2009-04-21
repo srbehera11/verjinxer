@@ -13,6 +13,7 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.sequenceanalysis.Sequence;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
@@ -155,6 +156,55 @@ public class QGramIndexer {
 
       return frq;
    }
+   
+   /** @see computeFrequencies(ByteBuffer,QGramCoder,String,byte) */
+   private int[] computeFrequencies(final Sequence in, final QGramCoder coder,
+         final String qseqfreqfile, final byte separator) {
+
+      final TicToc timer = new TicToc();
+      final int aq = coder.getNumberOfQGrams();
+      int[] lastseq = null; // lastseq[i] == k := q-gram i was last seen in sequence k
+      int[] sfrq = null; // sfrq[i] == n := q-gram i appears in n distinct sequences.
+      final int[] frq = new int[aq + 1]; // frq[i] == n := q-gram i appears n times; space for
+      // sentinel at the end
+
+      final boolean doseqfreq = (qseqfreqfile != null); // true if we compute sequence-based q-gram
+      // frequencies
+      if (doseqfreq) {
+         lastseq = new int[aq];
+         Arrays.fill(lastseq, -1);
+         sfrq = new int[aq];
+      }
+
+      log.debug("doseqfreq = %s, separator = %d", doseqfreq, separator);
+      int seqnum = 0;
+      for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
+         final int qcode = (int) pc;
+         final int pos = (int) (pc >> 32);
+         if (qcode < 0) {
+            assert doseqfreq;
+            seqnum++;
+            continue;
+         }
+
+         // TODO make this work again
+         // assert qcode >= 0 && qcode < frq.length : String.format(
+         // "Error: qcode=%d at pos %d (%s)", qcode, pos, StringUtils.join("",
+         // coder.getQCoder().qGram(qcode), 0, coder.getQCoder().q)); // DEBUG
+         if (pos % stride == 0)
+            frq[qcode]++;
+         if (doseqfreq && lastseq[qcode] < seqnum) {
+            lastseq[qcode] = seqnum;
+            if (pos % stride == 0)
+               sfrq[qcode]++;
+         }
+      }
+      log.info("  time for word counting: %.2f sec", timer.tocs());
+      if (doseqfreq)
+         g.dumpIntArray(qseqfreqfile, sfrq);
+
+      return frq;
+   }
 
    /**
     * Computes the necessary sizes of q-gram buckets from q-gram frequencies, while taking a filter
@@ -242,8 +292,8 @@ public class QGramIndexer {
          final String qposfile, final String qfreqfile, final String qseqfreqfile)
          throws IOException {
       final TicToc totalTimer = new TicToc();
-      final ByteBuffer in = readSequenceFile(seqfile, external);
-      final long ll = in.limit();
+      final Sequence in = new Sequence(seqfile);
+      final long ll = in.length();
 
       final QGramCoder coder;
       if (bisulfiteIndex) {
