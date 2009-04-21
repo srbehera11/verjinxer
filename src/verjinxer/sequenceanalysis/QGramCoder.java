@@ -267,6 +267,20 @@ public class QGramCoder {
          }
       };
    }
+   
+   /**
+    * @see sparseQGrams(ByteBuffer)
+    * 
+    * @param t
+    * @return the iterable object
+    */
+   public Iterable<Long> sparseQGrams(final Sequence t) {
+      return new Iterable<Long>() {
+         public Iterator<Long> iterator() {
+            return sparseQGramIterator(t);
+         }
+      };
+   }
 
    /**
     * @see sparseQGrams(ByteBuffer)
@@ -303,6 +317,15 @@ public class QGramCoder {
          }
       };
    }
+   
+   /** @see sparseQGrams(ByteBuffer,byte) */
+   public Iterable<Long> sparseQGrams(final Sequence t, final byte separator) {
+      return new Iterable<Long>() {
+         public Iterator<Long> iterator() {
+            return sparseQGramIterator(t, separator);
+         }
+      };
+   }
 
    /** @see sparseQGrams(ByteBuffer,byte) */
    public Iterable<Long> sparseQGrams(final byte[] t, final byte separator) {
@@ -331,6 +354,15 @@ public class QGramCoder {
          return sparseQGrams(t);
       }
    }
+   
+   /** @see sparseQGrams(ByteBuffer,boolean,separator) */
+   public Iterable<Long> sparseQGrams(final Sequence t, final boolean showSeparators, final byte separator) {
+	  if (showSeparators) {
+	     return sparseQGrams(t, separator);
+	  } else {
+	     return sparseQGrams(t);
+	  }
+	}
 
    /** @see sparseQGrams(ByteBuffer,boolean,separator) */
    public Iterable<Long> sparseQGrams(final byte[] t, final boolean showSeparators, final byte separator) {
@@ -360,6 +392,11 @@ public class QGramCoder {
    protected Iterator<Long> sparseQGramIterator(final ByteBuffer t) {
       return new SparseQGramIterator(t);
    }
+   
+   /** @see sparseQGramIterator(ByteBuffer) */
+   protected Iterator<Long> sparseQGramIterator(final Sequence t) {
+	  return new SparseQGramIterator(t);
+   }
 
    /**
     * Produces a q-gram iterator over a byte source.
@@ -384,6 +421,11 @@ public class QGramCoder {
     */
    protected Iterator<Long> sparseQGramIterator(final byte[] t, final byte separator) {
       return new SparseQGramSepIterator(t, separator);
+   }
+   
+   /** @see sparseQGramIterator(ByteBuffer,byte) */
+   protected Iterator<Long> sparseQGramIterator(final Sequence t, final byte separator) {
+	  return new SparseQGramSepIterator(t, separator);
    }
 
    /**
@@ -519,6 +561,15 @@ public class QGramCoder {
          end = t.length - q + 1;
          findNextT();
       }
+      
+      /** construct iterator from Sequence */
+      public SparseQGramIterator(final Sequence s) {
+         this.t = s.array();
+         this.b = null;
+         pos = 0;
+         end = t.length - q + 1;
+         findNextT();
+      }
 
       /** construct iterator from byte buffer */
       public SparseQGramIterator(final ByteBuffer b) {
@@ -619,6 +670,16 @@ public class QGramCoder {
       /** construct iterator from byte array */
       public SparseQGramSepIterator(final byte[] t, final int sep) {
          this.t = t;
+         this.b = null;
+         pos = 0;
+         end = t.length - q + 1;
+         separator = sep;
+         findNextT();
+      }
+      
+      /** construct iterator from Sequence */
+      public SparseQGramSepIterator(final Sequence s, final int sep) {
+         this.t = s.array();
          this.b = null;
          pos = 0;
          end = t.length - q + 1;
