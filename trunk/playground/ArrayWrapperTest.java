@@ -20,38 +20,52 @@ public class ArrayWrapperTest {
 
    public static void main(String[] args) {
       Random r = new Random();
-      int[] a = new int[LENGTH];
-
+      
+      final int[] a = new int[LENGTH];
+      LargeArrayWrapper law = new LargeArrayWrapper(LENGTH);
+      SmallArrayWrapper saw = new SmallArrayWrapper(LENGTH);
       HugeIntArray hia = new HugeIntArray(LENGTH);
-      LargeArrayWrapper hia2 = new LargeArrayWrapper(LENGTH);
       // Integer[] ai = new Integer[LENGTH];
-      SmallArrayWrapper aw = new SmallArrayWrapper(LENGTH);
       // ArrayList<Integer> al = new ArrayList<Integer>(LENGTH);
 
       for (int i = 0; i < LENGTH; ++i) {
          int v = r.nextInt();
          a[i] = v;
-         aw.set(i, v);
-         hia.set(i, v);
-         hia2.set(i, v);
+         law.set(i, v+1);
+         saw.set(i, v+3);
+         hia.set(i, v+4);
          // al.add(v);
          // ai[i] = v;
       }
       // al.trimToSize();
 
+      TicToc t = new TicToc();
       for (int run = 0; run < 10; ++run) {
-         TicToc t = new TicToc();
          long actual_sum = 0;
          long sum;
-
+         double x;
+                 
          t.tic();
+         actual_sum = 0;
          for (int k = 0; k < RUNS; ++k) {
             for (int i = 1; i < LENGTH; ++i) {
                actual_sum += a[i];
                a[i-1] = (int)actual_sum;
             }
          }
-         System.out.println("int array: " + t.tocs());
+         x = t.tocs();
+         System.out.format("%30s: %6.1fms\n", "int array", x*1000);
+         
+         t.tic();
+         actual_sum = 0;
+         for (int k = 0; k < RUNS; ++k) {
+            for (int i = 1; i < LENGTH; ++i) {
+               actual_sum += a[i];
+               a[i-1] = (int)actual_sum;
+            }
+         }
+         x = t.tocs();
+         System.out.format("%30s: %6.1fms\n", "int array", x*1000);
          
          /*
           * t.tic(); result = 0; for (int v : a) { result += v; // a[i-1] = (int)result; }
@@ -65,36 +79,49 @@ public class ArrayWrapperTest {
             sum = 0;
             for (int i = 1; i < LENGTH; ++i) {
                sum += hia.get(i);
-               aw.set(i-1, (int)sum);
+               hia.set(i-1, (int)sum);
             }
          }
-         assert sum == actual_sum;
-         System.out.println("HugeIntArray: " + t.tocs());
-
-         t.tic();
-         for (int k = 0; k < RUNS; ++k) {
-            sum = 0;
-            for (int i = 1; i < LENGTH; ++i) {
-               sum += aw.get(i);
-               aw.set(i-1, (int)sum);
-   
-            }
-         }
-         assert sum == actual_sum;
-         System.out.println("Wrapper: " + t.tocs());
+         x = t.tocs();
+         System.out.format("%30s: %6.1fms\n", "HugeIntArray", x*1000);
+//         assert sum == actual_sum;
 
          t.tic();
          sum = 0;
          for (int k = 0; k < RUNS; ++k) {
             sum = 0;
             for (int i = 1; i < LENGTH; ++i) {
-               sum += hia2.get(i);
-               aw.set(i-1, (int)sum);
+               sum += law.get(i);
+               law.set(i-1, (int)sum);
             }
          }
-         assert sum == actual_sum;
-         System.out.println("HugeIntArray2: " + t.tocs());
-
+         x = t.tocs();
+//         assert sum == actual_sum;
+         System.out.format("%30s: %6.1fms\n", "LargeArrayWrapper", x*1000);
+         
+         t.tic();
+         for (int k = 0; k < RUNS; ++k) {
+            sum = 0;
+            for (int i = 1; i < LENGTH; ++i) {
+               sum += saw.get(i);
+               saw.set(i-1, (int)sum);
+            }
+         }
+         x = t.tocs();
+//         assert sum == actual_sum;
+         System.out.format("%30s: %6.1fms\n", "ShortArrayWrapper", x*1000);
+         
+         t.tic();
+         actual_sum = 0;
+         for (int k = 0; k < RUNS; ++k) {
+            for (int i = 1; i < LENGTH; ++i) {
+               actual_sum += a[i];
+               a[i-1] = (int)actual_sum;
+            }
+         }
+         x = t.tocs();
+         System.out.format("%30s: %6.1fms\n", "int array", x*1000);
+         
 
          /*
           * t.tic(); result = 0; for (int i = 1; i < LENGTH; ++i) { result += al.get(i); //
@@ -117,19 +144,19 @@ public class ArrayWrapperTest {
       }
    }
 }
+//
+//interface ArrayWrapper extends Iterable<Integer> {
+//
+//   public abstract void set(long i, int value);
+//
+//   public abstract int get(long i);
+//
+//   public abstract Iterator<Integer> iterator();
+//
+//}
 
-interface ArrayWrapper extends Iterable<Integer> {
 
-   public abstract void set(long i, int value);
-
-   public abstract int get(long i);
-
-   public abstract Iterator<Integer> iterator();
-
-}
-
-
-class SmallArrayWrapper implements ArrayWrapper {
+class SmallArrayWrapper {
    int[] array;
    SmallArrayWrapper(int length) {
       array = new int[length];
@@ -138,21 +165,21 @@ class SmallArrayWrapper implements ArrayWrapper {
    /* (non-Javadoc)
     * @see ArrayWrapper#set(int, int)
     */
-   public final void set(long i, int value) {
-      array[(int)i] = value;
+   public final void set(int i, int value) {
+      array[i] = value;
    }
 
    /* (non-Javadoc)
     * @see ArrayWrapper#get(int)
     */
-   public final int get(long i) {
-      return array[(int)i];
+   public final int get(int i) {
+      return array[i];
    }
 
    /* (non-Javadoc)
     * @see ArrayWrapper#iterator()
     */
-   @Override
+//   @Override
    public Iterator<Integer> iterator() {
       return new Iterator<Integer>() {
 
@@ -178,36 +205,3 @@ class SmallArrayWrapper implements ArrayWrapper {
 }
 
 
-class LargeArrayWrapper implements ArrayWrapper {
-   private int[][] arrays;
-   final public long length;
-   
-   final private static int BITS = 30;
-   final private static int BINSIZE = 1 << BITS;
-   final private static int BITMASK_HIGH = (-1) << BITS;
-   final private static int BITMASK_LOW = ~BITMASK_HIGH;
-
-   LargeArrayWrapper(int length) {
-      this.length = length;
-      final int bins = (length >> BITS) + 1; // last bin is potentially empty
-      arrays = new int[bins][];
-      for (int i = 0; i < bins - 1; ++i) {
-         arrays[i] = new int[BINSIZE];
-      }
-      arrays[bins - 1] = new int[length & BITMASK_LOW];
-   }
-
-   public void set(long i, int value) {
-      arrays[(int)(i >> BITS)][(int)(i & BITMASK_LOW)] = value;
-   }
-
-   public int get(long i) {
-      return arrays[(int)(i >> BITS)][(int)(i & BITMASK_LOW)];
-   }
-
-   @Override
-   public Iterator<Integer> iterator() {
-      // TODO Auto-generated method stub
-      return null;
-   }
-}
