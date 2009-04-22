@@ -7,6 +7,8 @@ package verjinxer.sequenceanalysis;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
+import verjinxer.util.HugeByteArray;
+
 /**
  * This class contains routines for coding byte sequences of a given length q (so-called q-grams)
  * over a given alphabet {0,1,...,asize-1} of size 'asize' as integers (base-asize numbers). The
@@ -119,6 +121,19 @@ public class QGramCoder {
       }
       return c;
    }
+   
+   public int code(HugeByteArray qgram, long offset) {
+	      int c = 0;
+	      for (long i = offset; i < offset + q; i++) {
+	         final int qi = qgram.get(i);
+	         if (qi < 0 || qi >= asize)
+	            return (-1 - (int)(i - offset));
+	         c %= mod;
+	         c *= asize;
+	         c += qi;
+	      }
+	      return c;
+	}
 
    /**
     * update the current code by shifting out the leftmost (most significant) character and
@@ -780,4 +795,6 @@ public class QGramCoder {
          throw new UnsupportedOperationException();
       }
    }
+
+
 }

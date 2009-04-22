@@ -16,6 +16,7 @@ import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 
 import verjinxer.util.ArrayFile;
+import verjinxer.util.HugeByteArray;
 
 /**
  * 
@@ -320,6 +321,26 @@ public class Alphabet {
       StringBuilder s = new StringBuilder(len);
       for (int i = 0; i < len; i++)
          s.append(preimage(a[offset + i]));
+      return s.toString();
+   }
+   
+   /**
+    * Compute the pre-image of an array of given codes
+    * 
+    * @param a
+    *           the array of code values
+    * @param offset
+    *           where to start computing pre-images in a
+    * @param len
+    *           how many pre-images to compute
+    * @return the string of concatenated pre-images of a[offset .. offset+len-1]
+    * @throws verjinxer.sequenceanalysis.InvalidSymbolException
+    *            if there is a problem
+    */
+   public final String preimage(HugeByteArray a, long offset, int len) throws InvalidSymbolException {
+      StringBuilder s = new StringBuilder(len);
+      for (int i = 0; i < len; i++)
+         s.append(preimage( a.get(offset + i) ));
       return s.toString();
    }
 

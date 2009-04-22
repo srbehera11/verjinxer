@@ -51,7 +51,9 @@ Features
 
 - compress the q-gram index: 
   The positions increase monotonically, only store differences between positions.
-  (At least on disk and when we use 64 bit.)  
+  (At least on disk and when we use 64 bit.)
+  
+- Since using filters speeds up matching a lot, use a better filter: Ignore overrepresented q-grams.
 
 Unit Tests
 ----------
