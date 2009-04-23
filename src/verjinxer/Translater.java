@@ -16,6 +16,7 @@ import verjinxer.sequenceanalysis.FastaFile;
 import verjinxer.sequenceanalysis.FastaFormatException;
 import verjinxer.sequenceanalysis.FastaSequence;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
+import verjinxer.sequenceanalysis.Sequence;
 import verjinxer.util.AnnotatedArrayFile;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ProjectInfo;
@@ -84,9 +85,9 @@ public class Translater {
       // open the output file stream
       log.info("translate: creating index '%s'...", project.getName());
       // use default buffer size
-      AnnotatedArrayFile out = new AnnotatedArrayFile(project.getName() + FileNameExtensions.seq);
+      Sequence sequence = null;
       try {
-         out.openW();
+         sequence = Sequence.openSequence(project.getName(), Sequence.Mode.WRITE);
       } catch (IOException ex) {
          log.warn("translate: could not create output file '%s'; %s", project.getName()
                + FileNameExtensions.seq, ex);
@@ -97,20 +98,20 @@ public class Translater {
          String fname = g.dir + filenames[i];
          log.info("  processing '%s' (%s)...", fname, filetype[i]);
          if (filetype[i] == FileType.FASTA)
-            translateFasta(fname, out);
+            translateFasta(fname, sequence);
          else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
-            translateFastaBisulfite(fname, out);
+            translateFastaBisulfite(fname, sequence);
          else if (filetype[i] == FileType.TEXT)
-            translateText(fname, out);
+            translateText(fname, sequence);
          else
             g.terminate("translate: unsupported file type for file " + filenames[i]);
       }
       // DONE processing all files.
       try {
-         out.close();
+         sequence.store(); //stores seq, ssp and desc
       } catch (IOException ex) {
       }
-      long totallength = out.length();
+      long totallength = sequence.length();
       log.info("translate: translated sequence length: %d", totallength);
       if (totallength >= (2L * 1024 * 1024 * 1024))
          log.warn("translate: length %d exceeds 2 GB limit!!", totallength);
@@ -118,33 +119,12 @@ public class Translater {
          log.warn("translate: long sequence, %d is within 99% of 2GB limit!", totallength);
       project.setProperty("Length", totallength);
 
-      // Write the ssp array.
-      g.dumpLongArray(project.getName() + FileNameExtensions.ssp, out.getSsps());
-      project.setProperty("NumberSequences", out.getSsps().length);
+      
+      project.setProperty("NumberSequences", sequence.getNumberSequences() );
 
       // Write sequence length statistics.
-      long maxseqlen = 0;
-      long minseqlen = Long.MAX_VALUE;
-      for (long seqlen : out.getLengths()) {
-         if (seqlen > maxseqlen)
-            maxseqlen = seqlen;
-         if (seqlen < minseqlen)
-            minseqlen = seqlen;
-      }
-      project.setProperty("LongestSequence", maxseqlen);
-      project.setProperty("ShortestSequence", minseqlen);
-
-      // Write the descriptions
-      PrintWriter descfile = null;
-      try {
-         descfile = new PrintWriter(project.getName() + FileNameExtensions.desc);
-         for (String s : out.getDescriptions())
-            descfile.println(s);
-         descfile.close();
-      } catch (IOException ex) {
-         log.error("translate: %s%s: %s", project.getName(), FileNameExtensions.desc, ex);
-         g.terminate(1);
-      }
+      project.setProperty("LongestSequence", sequence.getMaxSeqLength());
+      project.setProperty("ShortestSequence", sequence.getMinSeqLength());
 
       // Write the alphabet
       PrintWriter alphabetfile = null;
@@ -168,7 +148,7 @@ public class Translater {
    /**
     * 
     */
-   public void translateFasta(final String fname, final AnnotatedArrayFile out) {
+   public void translateFasta(final String fname, final Sequence out) {
       FastaFile f = new FastaFile(fname);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
@@ -228,7 +208,7 @@ public class Translater {
     * @param out
     * @deprecated
     */
-   void translateFastaBisulfite(final String fname, final AnnotatedArrayFile out) {
+   void translateFastaBisulfite(final String fname, final Sequence out) {
       FastaFile f = new FastaFile(fname);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
@@ -281,7 +261,7 @@ public class Translater {
     * 
     * -- separator is appended (never the wildcard).
     */
-   void translateText(final String fname, final AnnotatedArrayFile out) {
+   void translateText(final String fname, final Sequence out) {
       ByteBuffer tr = null;
       long lastbyte = 0;
       byte appender;
