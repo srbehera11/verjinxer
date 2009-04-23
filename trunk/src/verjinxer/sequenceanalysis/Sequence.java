@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import verjinxer.FileNameExtensions;
+import verjinxer.util.HugeByteArray;
 
 /**
  * Datastructure for a sequence
@@ -65,7 +66,7 @@ public abstract class Sequence {
    /**
     * @return The underlying array for the concatenated sequences.
     */
-   public byte[] array() {
+   public HugeByteArray array() {
       throw new RuntimeException(String.format("Operation not supported in %d mode", mode==Mode.READ?"READ":"WRITE"));
    }
 

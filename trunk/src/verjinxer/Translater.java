@@ -17,7 +17,6 @@ import verjinxer.sequenceanalysis.FastaFormatException;
 import verjinxer.sequenceanalysis.FastaSequence;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.Sequence;
-import verjinxer.util.AnnotatedArrayFile;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ProjectInfo;
 

@@ -6,14 +6,17 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import verjinxer.util.ArrayFile;
 
+/**
+ * @author Markus Kemmerling
+ */
 public class SequenceWriter extends Sequence{
    
    private ArrayFile seq;
-   private ArrayList<String> description = new ArrayList<String>(1024);
-   private ArrayList<Long> sequenceLengths = new ArrayList<Long>(1024);
+   private ArrayList<String> description = new ArrayList<String>();
+   private ArrayList<Long> sequenceLengths = new ArrayList<Long>();
    private long maxSequenceLength = 0;
    private long minSequenceLength = Long.MAX_VALUE;
-   private ArrayList<Long> ssps = new ArrayList<Long>(1024);
+   private ArrayList<Long> ssps = new ArrayList<Long>();
    
    SequenceWriter(final String projectname, Mode mode) throws IOException{
       super(projectname, mode);
