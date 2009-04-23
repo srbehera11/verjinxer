@@ -12,16 +12,16 @@ public class SequenceReader extends Sequence{
    private long[] ssp;
    private String[] description;
    
-   SequenceReader(final String projectname, Mode mode){
+   SequenceReader(final String projectname, Mode mode) throws IOException{
       super(projectname, mode);
       load();
    }
    
    /**
-    * Read the sequence and ssp from file.
+    * Read the .seq and .ssp files into memory.
     * sequence and ssp are null until this method is invoked.
     */
-   public void load(){
+   private void load() throws IOException{
       // Code only copied from Globals.slurpByteArray(String file)
       //TODO with runs, seqFile is f.e. chr22.runseq.seq, what is wrong
       try {
@@ -36,7 +36,7 @@ public class SequenceReader extends Sequence{
    }
    
    /**
-    * reads the description from file.
+    * reads the .desc file into memory.
     * description is null until this method is invoked.
     */
    private void loadDescription(){
@@ -55,16 +55,12 @@ public class SequenceReader extends Sequence{
       assert description.length > 0 : String.format("No description for %s", descFile);
    }
    
-   /**
-    * @return Sequence length
-    */
-   public int length() {
+   @Override
+   public long length() {
       return sequence.length;
    }
 
-   /**
-    * @return The underlying array
-    */
+   @Override
    public byte[] array() {
       return sequence;
    }
