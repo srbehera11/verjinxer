@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 import verjinxer.util.HugeByteArray;
+import verjinxer.util.Pair;
 
 /**
  * This class contains routines for coding byte sequences of a given length q (so-called q-grams)
@@ -284,14 +285,17 @@ public class QGramCoder {
    }
    
    /**
-    * @see sparseQGrams(ByteBuffer)
+    * Produces an iterator that iterates over all q-grams in 't'. In contrast to
+    * <code>qGrams</code>, only the valid q-grams are returned as a pair
+    * pc=(pos,code), where pos is the starting position of the q-gram in t, and code is the q-gram
+    * code. The pair is encoded in a <code>Pair</code>, such that pos = pc.fst and code = pc.snd.
     * 
     * @param t
     * @return the iterable object
     */
-   public Iterable<Long> sparseQGrams(final Sequence t) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   public Iterable< Pair<Long,Integer> > sparseQGrams(final Sequence t) {
+      return new Iterable< Pair<Long,Integer> >() {
+         public Iterator< Pair<Long,Integer> > iterator() {
             return sparseQGramIterator(t);
          }
       };
@@ -333,10 +337,22 @@ public class QGramCoder {
       };
    }
    
-   /** @see sparseQGrams(ByteBuffer,byte) */
-   public Iterable<Long> sparseQGrams(final Sequence t, final byte separator) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   /**
+    * Produces an object that iterates over all q-grams in 't', taking into account q-grams and
+    * also separators.
+    * 
+    * @param t
+    *           the text
+    * @param separator
+    *           the separator code
+    * @return an iterable object that returns the q-grams in t, ordered by increasing position.
+    *         q-grams are returned as a pair pc=(pos,code), where pos is the starting
+    *         position of the q-gram in t. The pair is encoded in a <code>Pair</code>, such that pos = pc.fst
+    *         and code = pc.snd.
+    */
+   public Iterable< Pair<Long,Integer> > sparseQGrams(final Sequence t, final byte separator) {
+      return new Iterable< Pair<Long,Integer> >() {
+         public Iterator< Pair<Long,Integer> > iterator() {
             return sparseQGramIterator(t, separator);
          }
       };
@@ -370,8 +386,21 @@ public class QGramCoder {
       }
    }
    
-   /** @see sparseQGrams(ByteBuffer,boolean,separator) */
-   public Iterable<Long> sparseQGrams(final Sequence t, final boolean showSeparators, final byte separator) {
+   /**
+    * Convenience method. Returns sparseQGrams(t,separator) if showSeparators is true
+    * and sparseQGrams(t) otherwise. 
+    * 
+    * @param showSeparators
+    *       whether to show separators      
+    * @param t
+    * @param separator
+    *         the separator character. only used when showSeparators is true
+    * @return the iterable object that returns the q-grams in t, ordered by increasing position.
+    *         q-grams are returned as a pair pc=(pos,code), where pos is the starting
+    *         position of the q-gram in t. The pair is encoded in a <code>Pair</code>, such that pos = pc.fst
+    *         and code = pc.snd.
+    */
+   public Iterable< Pair<Long,Integer> > sparseQGrams(final Sequence t, final boolean showSeparators, final byte separator) {
 	  if (showSeparators) {
 	     return sparseQGrams(t, separator);
 	  } else {
@@ -409,8 +438,8 @@ public class QGramCoder {
    }
    
    /** @see sparseQGramIterator(ByteBuffer) */
-   protected Iterator<Long> sparseQGramIterator(final Sequence t) {
-	  return new SparseQGramIterator(t);
+   protected Iterator< Pair<Long,Integer> > sparseQGramIterator(final Sequence t) {
+	  return new SparseQGramIteratorForSequence(t);
    }
 
    /**
@@ -439,8 +468,8 @@ public class QGramCoder {
    }
    
    /** @see sparseQGramIterator(ByteBuffer,byte) */
-   protected Iterator<Long> sparseQGramIterator(final Sequence t, final byte separator) {
-	  return new SparseQGramSepIterator(t, separator);
+   protected Iterator< Pair<Long,Integer> > sparseQGramIterator(final Sequence t, final byte separator) {
+	  return new SparseQGramSepIteratorForSequence(t, separator);
    }
 
    /**
@@ -563,6 +592,7 @@ public class QGramCoder {
    protected class SparseQGramIterator implements Iterator<Long> {
       private final byte[] t; // text as array
       private final ByteBuffer b; // text as buffer
+      
       private final int end; // 1 + starting position of last q-gram in t or b
       private int pos; // current position in array or buffer
       private int nextc = -1; // next valid code
@@ -571,15 +601,6 @@ public class QGramCoder {
       /** construct iterator from byte array */
       public SparseQGramIterator(final byte[] t) {
          this.t = t;
-         this.b = null;
-         pos = 0;
-         end = t.length - q + 1;
-         findNextT();
-      }
-      
-      /** construct iterator from Sequence */
-      public SparseQGramIterator(final Sequence s) {
-         this.t = s.array();
          this.b = null;
          pos = 0;
          end = t.length - q + 1;
@@ -672,6 +693,67 @@ public class QGramCoder {
       }
    }
 
+   /** sparse iterator class */
+   protected class SparseQGramIteratorForSequence implements Iterator< Pair<Long,Integer> > {
+      private final HugeByteArray hba; // text as HugeArray
+      
+      private final long end; // 1 + starting position of last q-gram in hba
+      private long pos; // current position in hba
+      private int nextc = -1; // next valid code
+      private boolean hasnext = true; // result of next hasnext() call
+
+      /** construct iterator from Sequence */
+      public SparseQGramIteratorForSequence(final Sequence s) {
+         this.hba = s.array();
+         pos = 0;
+         end = hba.length - q + 1;
+         findNext();
+      }
+
+      @Override
+      public final boolean hasNext() {
+         return hasnext;
+      }
+
+      @Override
+      public final Pair<Long,Integer> next() {
+         assert nextc >= 0 && nextc < numberOfQGrams;
+         assert pos >= 0 && pos < end;
+         final Pair<Long,Integer> pc = new Pair<Long,Integer>(pos++,nextc); // pos is incremented here!
+         findNext();
+         return pc;
+      }
+
+      private void findNext() { // current pos is first position to look at
+         while (true) {
+            // System.out.printf("in findNextT: pos=%d, nextc=%d, hasnext=%s%n", pos, nextc,
+            // hasnext); // DEBUG
+            if (pos >= end) {
+               hasnext = false;
+               nextc = -1;
+               return;
+            }
+            if (nextc >= 0) {
+               nextc = codeUpdate(nextc, hba.get(pos + q - 1) );
+               if (nextc >= 0)
+                  return;
+               pos += q; // the new character is invalid!
+            } else { // nextc<0
+               nextc = code(hba, pos);
+               if (nextc >= 0)
+                  return;
+               pos -= nextc; // now nextc == -(position of first invalid character), counting
+               // starting at 1.
+            }
+         }
+      }
+
+      @Override
+      public final void remove() {
+         throw new UnsupportedOperationException();
+      }
+   }
+   
    /** iterator class with separators */
    protected class SparseQGramSepIterator implements Iterator<Long> {
       private final byte[] t; // text as array
@@ -685,16 +767,6 @@ public class QGramCoder {
       /** construct iterator from byte array */
       public SparseQGramSepIterator(final byte[] t, final int sep) {
          this.t = t;
-         this.b = null;
-         pos = 0;
-         end = t.length - q + 1;
-         separator = sep;
-         findNextT();
-      }
-      
-      /** construct iterator from Sequence */
-      public SparseQGramSepIterator(final Sequence s, final int sep) {
-         this.t = s.array();
          this.b = null;
          pos = 0;
          end = t.length - q + 1;
@@ -796,5 +868,67 @@ public class QGramCoder {
       }
    }
 
+   /** iterator class with separators */
+   protected class SparseQGramSepIteratorForSequence implements Iterator< Pair<Long,Integer> > {
+      private final HugeByteArray hba; // text as HugeArray
+      private final long end; // 1 + starting position of last q-gram in hba
+      private final int separator; // separator code
+      private long pos; // current position in hba
+      private int nextc = -1; // next valid code
+      private boolean hasnext = true; // result of next hasnext() call
 
+      /** construct iterator from Sequence */
+      public SparseQGramSepIteratorForSequence(final Sequence s , final int sep) {
+         this.hba = s.array();
+         pos = 0;
+         end = hba.length - q + 1;
+         separator = sep;
+         findNext();
+      }
+
+      @Override
+      public final boolean hasNext() {
+         return hasnext;
+      }
+
+      @Override
+      public final Pair<Long,Integer> next() {
+         assert nextc >= -1 && nextc < numberOfQGrams; // -1 since separator may be used
+         assert pos >= 0 && pos < end;
+         final Pair<Long,Integer> pc = new Pair<Long,Integer>(pos++, nextc); // pos is incremented here!
+         findNext();
+         return pc;
+      }
+
+      private void findNext() { // current pos is first position to look at
+         while (true) {
+            // System.out.printf("in findNextT: pos=%d, nextc=%d, hasnext=%s%n", pos, nextc,
+            // hasnext); // DEBUG
+            if (pos >= end) {
+               hasnext = false;
+               nextc = -1;
+               return;
+            }
+            if (nextc >= 0) {
+               nextc = codeUpdate(nextc, hba.get(pos + q - 1) );
+               if (nextc >= 0)
+                  return;
+               pos += q - 1; // the new character is invalid, but may be a separator!
+            } else { // nextc<0, may be looking at a separator!
+               nextc = code(hba, pos);
+               if (nextc >= 0)
+                  return;
+               pos -= nextc + 1; // skip up to invalid character
+               if (hba.get(pos) == separator)
+                  return;
+               pos++;
+            }
+         }
+      }
+
+      @Override
+      public final void remove() {
+         throw new UnsupportedOperationException();
+      }
+   }
 }

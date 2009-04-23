@@ -17,6 +17,7 @@ import verjinxer.sequenceanalysis.Sequence;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
+import verjinxer.util.Pair;
 import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
@@ -255,9 +256,9 @@ public class QGramIndexer {
 
       log.debug("doseqfreq = %s, separator = %d", doseqfreq, separator);
       int seqnum = 0;
-      for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
-         final int qcode = (int) pc;
-         final int pos = (int) (pc >> 32);
+      for (Pair<Long,Integer> pc : coder.sparseQGrams(in, doseqfreq, separator)) {
+         final int qcode = pc.snd;
+         final int pos = pc.fst.intValue(); //TODO 64Bit -> long
          if (qcode < 0) {
             assert doseqfreq;
             seqnum++;
@@ -447,11 +448,11 @@ public class QGramIndexer {
 
          // read through input and collect all qgrams with bckstart<=qcode<bckend
          //TODO 64Bit whole loop
-         for (long pc : coder.sparseQGrams(in)) {
-            final int pos = (int) (pc >>> 32);
+         for (Pair<Long,Integer> pc : coder.sparseQGrams(in)) {
+            final int pos = pc.fst.intValue(); //TODO 64Bit -> long
             if (pos % stride != 0)
                continue;
-            final int qcode = (int) (pc);
+            final int qcode = pc.snd;
             if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode) == 0)
                qposslice[(bck[qcode]++) - qposstart] = pos;
          }
