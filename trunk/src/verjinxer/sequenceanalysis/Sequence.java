@@ -1,51 +1,75 @@
 package verjinxer.sequenceanalysis;
 
-import java.io.IOException;
-import verjinxer.util.ArrayFile;
+import verjinxer.FileNameExtensions;
 
 /**
  * Datastructure for a sequence
  * 
  * @author Markus Kemmerling
  */
-public class Sequence {
-
-   private byte[] sequence;
+public abstract class Sequence {
+   
+   public enum Mode { READ, WRITE }
+   private final Mode mode;
+   protected final String seqFile;
+   protected final String sspFile;
+   protected final String descFile;
 
    /**
-    * Reads a sequence from the given seqfile
-    * 
-    * @param seqfile
+    * @param projectname 
     */
-   public Sequence(String seqfile) {
-      // Code only copied from Globals.slurpByteArray(String file)
-      try {
-         sequence = new ArrayFile().setFilename(seqfile).readArray(sequence);
-         assert sequence != null : String.format("No sequence for %s", seqfile);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         System.exit(1);
+   public Sequence(final String projectname, Mode mode) {
+      seqFile = projectname + FileNameExtensions.seq;
+      sspFile = projectname + FileNameExtensions.ssp;
+      descFile = projectname + FileNameExtensions.desc;
+      this.mode = mode;
+   }
+   
+   public static Sequence openSequence(final String projectname, Mode mode){
+      if(mode == Mode.READ){
+         return new SequenceReader(projectname, mode);
+      } else {
+         return new SequenceWriter(projectname, mode);
       }
+   }
+   
+   /**
+    * Read the sequence and ssp from file.
+    * sequence and ssp are null until this method is invoked.
+    */
+   public void load(){
+      throw new RuntimeException(String.format("Operation not supported in %d mode", mode==Mode.READ?"READ":"WRITE"));
+   }
+   
+   /**
+    * 
+    */
+   public void store(){
+      throw new RuntimeException(String.format("Operation not supported in %d mode", mode==Mode.READ?"READ":"WRITE"));
    }
 
    /**
     * @return Sequence length
     */
    public int length() {
-      return sequence.length;
+      throw new RuntimeException(String.format("Operation not supported in %d mode", mode==Mode.READ?"READ":"WRITE"));
    }
 
    /**
     * @return The underlying array
     */
    public byte[] array() {
-      return sequence;
+      throw new RuntimeException(String.format("Operation not supported in %d mode", mode==Mode.READ?"READ":"WRITE"));
    }
 
    /**
     * Rewinds this sequence. The position is set to zero.
     */
    public void rewind() {
-      // TODO Auto-generated method stub
+      throw new RuntimeException(String.format("Operation not supported in %d mode", mode==Mode.READ?"READ":"WRITE"));
    }
+   
+   
+   
+   
 }

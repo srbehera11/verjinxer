@@ -125,7 +125,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
          project.setProperty("QGramAction", action);
 
 
-         String sequenceFileName = di + FileNameExtensions.seq;
+         String sequenceFileName = di;
          if (runs) {
             sequenceFileName = di + FileNameExtensions.runseq;
             project.setRunIndex(true);

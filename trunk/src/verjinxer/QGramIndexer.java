@@ -373,7 +373,7 @@ public class QGramIndexer {
          final String qposfile, final String qfreqfile, final String qseqfreqfile)
          throws IOException {
       final TicToc totalTimer = new TicToc();
-      final Sequence in = new Sequence(seqfile);
+      final Sequence in = Sequence.openSequence(seqfile, Sequence.Mode.READ);
       final long ll = in.length();
 
       final QGramCoder coder;
