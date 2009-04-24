@@ -17,6 +17,7 @@ import verjinxer.sequenceanalysis.Sequence;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
+import verjinxer.util.PositionQCodePair;
 import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
@@ -204,10 +205,10 @@ public class QGramIndexer {
       //TODO also 64Bit???
       int seqnum = 0;
       //TODO sparseQGrams must be extended so that pos can be 32Bit
-      for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
-         final int qcode = (int) pc; //lower 32bit
+      for (PositionQCodePair pc : coder.sparseQGrams(in, doseqfreq, separator)) {
+         final int qcode = pc.qcode; //lower 32bit
          //TODO Pos must be 64Bit, 
-         final int pos = (int) (pc >> 32); //higher 32bit
+         final int pos = pc.position; //higher 32bit
          if (qcode < 0) {
             assert doseqfreq;
             seqnum++;
@@ -255,9 +256,9 @@ public class QGramIndexer {
 
       log.debug("doseqfreq = %s, separator = %d", doseqfreq, separator);
       int seqnum = 0;
-      for (long pc : coder.sparseQGrams(in, doseqfreq, separator)) {
-         final int qcode = (int) pc;
-         final int pos = (int) (pc >> 32);
+      for (PositionQCodePair pc : coder.sparseQGrams(in, doseqfreq, separator)) {
+         final int qcode = pc.qcode;
+         final int pos = pc.position;
          if (qcode < 0) {
             assert doseqfreq;
             seqnum++;
@@ -447,11 +448,11 @@ public class QGramIndexer {
 
          // read through input and collect all qgrams with bckstart<=qcode<bckend
          //TODO 64Bit whole loop
-         for (long pc : coder.sparseQGrams(in)) {
-            final int pos = (int) (pc >>> 32);
+         for (PositionQCodePair pc : coder.sparseQGrams(in)) {
+            final int pos = pc.position;
             if (pos % stride != 0)
                continue;
-            final int qcode = (int) (pc);
+            final int qcode = pc.qcode;
             if (bckstart <= qcode && qcode < bckend && thefilter.get(qcode) == 0)
                qposslice[(bck[qcode]++) - qposstart] = pos;
          }
