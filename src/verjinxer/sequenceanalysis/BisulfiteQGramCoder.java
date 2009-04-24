@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import verjinxer.util.HugeByteArray;
+import verjinxer.util.PositionQCodePair;
 
 /**
  * This class is a special QGramCoder that simulates bisulfite treatment on its input sequence.
@@ -233,7 +234,7 @@ public final class BisulfiteQGramCoder extends QGramCoder {
     *         separators.
     */
    @Override
-   protected Iterator<Long> sparseQGramIterator(final ByteBuffer t) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final ByteBuffer t) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
    }
 
@@ -246,12 +247,12 @@ public final class BisulfiteQGramCoder extends QGramCoder {
     *         separators.
     */
    @Override
-   protected Iterator<Long> sparseQGramIterator(final byte[] t) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final byte[] t) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
    }
 
    @Override
-   protected Iterator<Long> sparseQGramIterator(Sequence t) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(Sequence t) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
    }
 
@@ -265,7 +266,7 @@ public final class BisulfiteQGramCoder extends QGramCoder {
     * @return an iterator that iterates over valid q-grams in t, and over separators.
     */
    @Override
-   protected Iterator<Long> sparseQGramIterator(final byte[] t, final byte separator) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final byte[] t, final byte separator) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
    }
 
@@ -279,12 +280,12 @@ public final class BisulfiteQGramCoder extends QGramCoder {
     * @return an iterator that iterates over valid q-grams in t, and over separators.
     */
    @Override
-   protected Iterator<Long> sparseQGramIterator(final ByteBuffer t, final byte separator) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final ByteBuffer t, final byte separator) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
    }
    
    @Override
-   protected Iterator<Long> sparseQGramIterator(Sequence t, byte separator) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(Sequence t, byte separator) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
    }
 
@@ -294,31 +295,31 @@ public final class BisulfiteQGramCoder extends QGramCoder {
     * the iterator is deferred to the QGramCoder class.)
     * 
     */
-   class BisulfiteSparseQGramIterator implements Iterator<Long> {
-      private final Iterator<Long> it; // iterator of the underlying QGramCoder
+   class BisulfiteSparseQGramIterator implements Iterator<PositionQCodePair> {
+      private final Iterator<PositionQCodePair> it; // iterator of the underlying QGramCoder
       private int bisFwdRemaining = 0; // number of remaining forward bisulfite codes
       private int bisRevRemaining = 0; // number of ramaining reverse bisulfite codes
       private int[] bisFwdCodes = null; // remaining forward bisulfite codes
       private int[] bisRevCodes = null; // remaining reverse bisulfite codes
-      private long pos = -1;
+      private int pos = -1;
 
       /** sequence over which to iterate */
       private final Object t;
       private final int tLength;
 
-      BisulfiteSparseQGramIterator(final ByteBuffer t, Iterator<Long> it) {
+      BisulfiteSparseQGramIterator(final ByteBuffer t, Iterator<PositionQCodePair> it) {
          this.t = t;
          tLength = t.limit();
          this.it = it;
       }
 
-      BisulfiteSparseQGramIterator(final byte[] t, Iterator<Long> it) {
+      BisulfiteSparseQGramIterator(final byte[] t, Iterator<PositionQCodePair> it) {
          this.t = t;
          tLength = t.length;
          this.it = it;
       }
 
-      public BisulfiteSparseQGramIterator(Sequence t, Iterator<Long> it) {
+      public BisulfiteSparseQGramIterator(Sequence t, Iterator<PositionQCodePair> it) {
          this(t.array(), it);
       }
 
@@ -334,27 +335,27 @@ public final class BisulfiteQGramCoder extends QGramCoder {
       }
 
       @Override
-      public Long next() {
+      public PositionQCodePair next() {
          if (bisFwdRemaining > 0) {
-            final long pc = (pos << 32) + bisFwdCodes[--bisFwdRemaining];
+            final PositionQCodePair pc = new PositionQCodePair(pos, bisFwdCodes[--bisFwdRemaining] );
             return pc;
          }
          if (bisRevRemaining > 0) {
-            final long pc = (pos << 32) + bisRevCodes[--bisRevRemaining];
+            final PositionQCodePair pc = new PositionQCodePair(pos, bisRevCodes[--bisRevRemaining] );
             return pc;
          }
          // get standard q-code first (no bisulfite replacement)
-         final long pc = it.next();
-         pos = (pc >>> 32);
-         final int qcode = (int) pc;
+         final PositionQCodePair pc = it.next();
+         pos = pc.position;
+         final int qcode = pc.qcode;
             
          // get forward bisulfite q-codes. If original q-code is invalid, get empty list.
          bisFwdCodes = bisulfiteQCodes(qcode, false,
-               charAt((int) (pos + q)) == BisulfiteQGramCoder.NUCLEOTIDE_G);
+               charAt(pos + q) == BisulfiteQGramCoder.NUCLEOTIDE_G);
          bisFwdRemaining = bisFwdCodes.length;
          // get reverse bisulfite q-codes. If original q-code is invalid, get empty list.
          bisRevCodes = bisulfiteQCodes(qcode, true,
-               charAt((int) (pos - 1)) == BisulfiteQGramCoder.NUCLEOTIDE_C);
+               charAt(pos - 1) == BisulfiteQGramCoder.NUCLEOTIDE_C);
          bisRevRemaining = bisRevCodes.length;
          // System.out.printf("   [pos=%d, fwd=%d, rev=%d]%n", pos, bisFwdRemaining, bisRevRemaining);
 

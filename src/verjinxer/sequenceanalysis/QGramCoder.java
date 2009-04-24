@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 import verjinxer.util.HugeByteArray;
+import verjinxer.util.PositionQCodePair;
 
 /**
  * This class contains routines for coding byte sequences of a given length q (so-called q-grams)
@@ -275,9 +276,9 @@ public class QGramCoder {
     * @param t
     * @return the iterable object
     */
-   public Iterable<Long> sparseQGrams(final ByteBuffer t) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   public Iterable<PositionQCodePair> sparseQGrams(final ByteBuffer t) {
+      return new Iterable<PositionQCodePair>() {
+         public Iterator<PositionQCodePair> iterator() {
             return sparseQGramIterator(t);
          }
       };
@@ -289,9 +290,9 @@ public class QGramCoder {
     * @param t
     * @return the iterable object
     */
-   public Iterable<Long> sparseQGrams(final Sequence t) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   public Iterable<PositionQCodePair> sparseQGrams(final Sequence t) {
+      return new Iterable<PositionQCodePair>() {
+         public Iterator<PositionQCodePair> iterator() {
             return sparseQGramIterator(t);
          }
       };
@@ -303,9 +304,9 @@ public class QGramCoder {
     * @param t
     * @return the iterable object
     */
-   public Iterable<Long> sparseQGrams(final byte[] t) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   public Iterable<PositionQCodePair> sparseQGrams(final byte[] t) {
+      return new Iterable<PositionQCodePair>() {
+         public Iterator<PositionQCodePair> iterator() {
             return sparseQGramIterator(t);
          }
       };
@@ -325,27 +326,27 @@ public class QGramCoder {
     *         the high integer and code in the low integer, such that pos = (int)(pc &gt;&gt; 32),
     *         and code = (int)(pc).
     */
-   public Iterable<Long> sparseQGrams(final ByteBuffer t, final byte separator) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   public Iterable<PositionQCodePair> sparseQGrams(final ByteBuffer t, final byte separator) {
+      return new Iterable<PositionQCodePair>() {
+         public Iterator<PositionQCodePair> iterator() {
             return sparseQGramIterator(t, separator);
          }
       };
    }
    
    /** @see sparseQGrams(ByteBuffer,byte) */
-   public Iterable<Long> sparseQGrams(final Sequence t, final byte separator) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   public Iterable<PositionQCodePair> sparseQGrams(final Sequence t, final byte separator) {
+      return new Iterable<PositionQCodePair>() {
+         public Iterator<PositionQCodePair> iterator() {
             return sparseQGramIterator(t, separator);
          }
       };
    }
 
    /** @see sparseQGrams(ByteBuffer,byte) */
-   public Iterable<Long> sparseQGrams(final byte[] t, final byte separator) {
-      return new Iterable<Long>() {
-         public Iterator<Long> iterator() {
+   public Iterable<PositionQCodePair> sparseQGrams(final byte[] t, final byte separator) {
+      return new Iterable<PositionQCodePair>() {
+         public Iterator<PositionQCodePair> iterator() {
             return sparseQGramIterator(t, separator);
          }
       };
@@ -362,7 +363,7 @@ public class QGramCoder {
     *         the separator character. only used when showSeparators is true
     * @return the iterable object
     */
-   public Iterable<Long> sparseQGrams(final ByteBuffer t, final boolean showSeparators, final byte separator) {
+   public Iterable<PositionQCodePair> sparseQGrams(final ByteBuffer t, final boolean showSeparators, final byte separator) {
       if (showSeparators) {
          return sparseQGrams(t, separator);
       } else {
@@ -371,7 +372,7 @@ public class QGramCoder {
    }
    
    /** @see sparseQGrams(ByteBuffer,boolean,separator) */
-   public Iterable<Long> sparseQGrams(final Sequence t, final boolean showSeparators, final byte separator) {
+   public Iterable<PositionQCodePair> sparseQGrams(final Sequence t, final boolean showSeparators, final byte separator) {
 	  if (showSeparators) {
 	     return sparseQGrams(t, separator);
 	  } else {
@@ -380,7 +381,7 @@ public class QGramCoder {
 	}
 
    /** @see sparseQGrams(ByteBuffer,boolean,separator) */
-   public Iterable<Long> sparseQGrams(final byte[] t, final boolean showSeparators, final byte separator) {
+   public Iterable<PositionQCodePair> sparseQGrams(final byte[] t, final boolean showSeparators, final byte separator) {
       if (showSeparators) {
          return sparseQGrams(t, separator);
       } else {
@@ -404,12 +405,12 @@ public class QGramCoder {
     * @return an iterator that iterates over valid q-grams in t, not over invald q-grams or
     *         separators.
     */
-   protected Iterator<Long> sparseQGramIterator(final ByteBuffer t) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final ByteBuffer t) {
       return new SparseQGramIterator(t);
    }
    
    /** @see sparseQGramIterator(ByteBuffer) */
-   protected Iterator<Long> sparseQGramIterator(final Sequence t) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final Sequence t) {
 	  return new SparseQGramIterator(t);
    }
 
@@ -421,7 +422,7 @@ public class QGramCoder {
     * @return an iterator that iterates over valid q-grams in t, not over invald q-grams or
     *         separators.
     */
-   protected Iterator<Long> sparseQGramIterator(final byte[] t) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final byte[] t) {
       return new SparseQGramIterator(t);
    }
 
@@ -434,12 +435,12 @@ public class QGramCoder {
     *           specifies the code of the separator in t.
     * @return an iterator that iterates over valid q-grams in t, and over separators.
     */
-   protected Iterator<Long> sparseQGramIterator(final byte[] t, final byte separator) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final byte[] t, final byte separator) {
       return new SparseQGramSepIterator(t, separator);
    }
    
    /** @see sparseQGramIterator(ByteBuffer,byte) */
-   protected Iterator<Long> sparseQGramIterator(final Sequence t, final byte separator) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final Sequence t, final byte separator) {
 	  return new SparseQGramSepIterator(t, separator);
    }
 
@@ -452,7 +453,7 @@ public class QGramCoder {
     *           specifies the code of the separator in t.
     * @return an iterator that iterates over valid q-grams in t, and over separators.
     */
-   protected Iterator<Long> sparseQGramIterator(final ByteBuffer t, final byte separator) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(final ByteBuffer t, final byte separator) {
       return new SparseQGramSepIterator(t, separator);
    }
 
@@ -560,7 +561,7 @@ public class QGramCoder {
    }
 
    /** sparse iterator class */
-   protected class SparseQGramIterator implements Iterator<Long> {
+   protected class SparseQGramIterator implements Iterator<PositionQCodePair> {
       private final byte[] t; // text as array
       private final ByteBuffer b; // text as buffer
       private final int end; // 1 + starting position of last q-gram in t or b
@@ -610,10 +611,10 @@ public class QGramCoder {
       }
 
       @Override
-      public final Long next() {
+      public final PositionQCodePair next() {
          assert nextc >= 0 && nextc < numberOfQGrams;
          assert pos >= 0 && pos < end;
-         final long pc = (((long) pos++) << 32) + nextc; // pos is incremented here!
+         final PositionQCodePair pc = new PositionQCodePair( pos++, nextc); // pos is incremented here!
          if (b == null)
             findNextT();
          else
@@ -673,7 +674,7 @@ public class QGramCoder {
    }
 
    /** iterator class with separators */
-   protected class SparseQGramSepIterator implements Iterator<Long> {
+   protected class SparseQGramSepIterator implements Iterator<PositionQCodePair> {
       private final byte[] t; // text as array
       private final ByteBuffer b; // text as buffer
       private final int end; // 1 + starting position of last q-gram in t or b
@@ -727,10 +728,10 @@ public class QGramCoder {
       }
 
       @Override
-      public final Long next() {
+      public final PositionQCodePair next() {
          assert nextc >= -1 && nextc < numberOfQGrams; // -1 since separator may be used
          assert pos >= 0 && pos < end;
-         final long pc = (((long) pos++) << 32) + (nextc & 0xffffffffL); // pos is incremented here!
+         final PositionQCodePair pc = new PositionQCodePair(pos++, nextc); // pos is incremented here!
          if (b == null)
             findNextT();
          else
