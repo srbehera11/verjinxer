@@ -250,6 +250,11 @@ public final class BisulfiteQGramCoder extends QGramCoder {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
    }
 
+   @Override
+   protected Iterator<Long> sparseQGramIterator(Sequence t) {
+      return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
+   }
+
    /**
     * Produces a q-gram iterator over a byte source.
     * 
@@ -277,7 +282,11 @@ public final class BisulfiteQGramCoder extends QGramCoder {
    protected Iterator<Long> sparseQGramIterator(final ByteBuffer t, final byte separator) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
    }
-
+   
+   @Override
+   protected Iterator<Long> sparseQGramIterator(Sequence t, byte separator) {
+      return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
+   }
 
    /**
     * sparse iterator class for both standard and bisulfite q-grams
@@ -307,6 +316,10 @@ public final class BisulfiteQGramCoder extends QGramCoder {
          this.t = t;
          tLength = t.length;
          this.it = it;
+      }
+
+      public BisulfiteSparseQGramIterator(Sequence t, Iterator<Long> it) {
+         this(t.array(), it);
       }
 
       public byte charAt(final int p) {

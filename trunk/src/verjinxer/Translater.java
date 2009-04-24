@@ -100,9 +100,10 @@ public class Translater {
             translateFasta(fname, sequence);
          else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
             translateFastaBisulfite(fname, sequence);
-         else if (filetype[i] == FileType.TEXT)
-            translateText(fname, sequence);
-         else
+         else if (filetype[i] == FileType.TEXT){
+            throw new UnsupportedOperationException("Translating a textfile is currently untested.");
+            //translateText(fname, sequence); //TODO Test this case and use it again
+         }else
             g.terminate("translate: unsupported file type for file " + filenames[i]);
       }
       // DONE processing all files.
