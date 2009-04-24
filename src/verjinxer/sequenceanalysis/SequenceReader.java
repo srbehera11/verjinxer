@@ -5,16 +5,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import verjinxer.util.ArrayFile;
-import verjinxer.util.HugeByteArray;
 
-/**
- * 
- * @author Markus Kemmerling
- *
- */
 public class SequenceReader extends Sequence{
    
-   private HugeByteArray sequence;
+   private byte[] sequence;
    private long[] ssp;
    private String[] description;
    
@@ -31,7 +25,7 @@ public class SequenceReader extends Sequence{
       // Code only copied from Globals.slurpByteArray(String file)
       //TODO with runs, seqFile is f.e. chr22.runseq.seq, what is wrong
       try {
-         sequence = HugeByteArray.fromFile(seqFile);
+         sequence = new ArrayFile().setFilename(seqFile).readArray(sequence);
          ssp      = new ArrayFile().setFilename(sspFile).readArray(ssp);
          assert sequence != null : String.format("No sequence for %s", seqFile);
          assert ssp      != null : String.format("No ssp for %s", sspFile);
@@ -67,7 +61,7 @@ public class SequenceReader extends Sequence{
    }
 
    @Override
-   public HugeByteArray array() {
+   public byte[] array() {
       return sequence;
    }
 }
