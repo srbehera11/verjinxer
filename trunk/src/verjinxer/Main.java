@@ -45,6 +45,7 @@ public class Main {
       log.info("  translate    ...          apply alphabet map to text or FASTA files");
       log.info("  cut          ...          cut translated sequences at specific patterns");
       log.info("  qgram        ...          create qgram-index of translated file(s)");
+      log.info("  analyzer     ...          analyze qgram-index how it can be compressed");
       log.info("  qfreq        ...          report most frequent q-grams in an index");
       log.info("  qmatch       ...          report maximal matches of sequences vs index");
       log.info("  suffix       ...          build suffixtray of translated file(s)");
@@ -143,6 +144,8 @@ public class Main {
          new Cutter(g).run(rest);
       } else if (command.startsWith("qg")) {
          subcommand = new QGramIndexerSubcommand(g);
+      } else if (command.startsWith("an")) {
+         subcommand = new QGramIndexCompressionAnalyzerSubcommand(g);
       } else if (command.startsWith("qf")) {
          new QgramFrequencer(g).run(rest);
       } else if (command.startsWith("qm")) {
