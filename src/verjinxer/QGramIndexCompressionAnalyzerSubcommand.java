@@ -61,6 +61,7 @@ public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
 		
 		QGramIndexCompressionAnalyzer compressionAnalyzer = new QGramIndexCompressionAnalyzer(qgramindex);
 		compressionAnalyzer.analyze();
+		compressionAnalyzer.printStatistic();
 
 		log.info("%s: done; total time was %.1f secs.", command, timer.tocs());
 		return 0;
