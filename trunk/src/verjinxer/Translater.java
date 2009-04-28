@@ -100,15 +100,15 @@ public class Translater {
             translateFasta(fname, sequence);
          else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
             translateFastaBisulfite(fname, sequence);
-         else if (filetype[i] == FileType.TEXT){
+         else if (filetype[i] == FileType.TEXT) {
             throw new UnsupportedOperationException("Translating a textfile is currently untested.");
-            //translateText(fname, sequence); //TODO Test this case and use it again
-         }else
+            // translateText(fname, sequence); //TODO Test this case and use it again
+         } else
             g.terminate("translate: unsupported file type for file " + filenames[i]);
       }
       // DONE processing all files.
       try {
-         sequence.store(); //stores seq, ssp and desc
+         sequence.store(); // stores seq, ssp and desc
       } catch (IOException ex) {
       }
       long totallength = sequence.length();
@@ -119,12 +119,11 @@ public class Translater {
          log.warn("translate: long sequence, %d is within 99% of 2GB limit!", totallength);
       project.setProperty("Length", totallength);
 
-      
-      project.setProperty("NumberSequences", sequence.getNumberSequences() );
+      project.setProperty("NumberSequences", sequence.getNumberSequences());
 
       // Write sequence length statistics.
-      project.setProperty("LongestSequence", sequence.getMaxSeqLength());
-      project.setProperty("ShortestSequence", sequence.getMinSeqLength());
+      project.setProperty("LongestSequence", sequence.getMaximumSequenceLength());
+      project.setProperty("ShortestSequence", sequence.getMinimumSequenceLength());
 
       // Write the alphabet
       PrintWriter alphabetfile = null;
