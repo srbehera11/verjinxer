@@ -70,9 +70,10 @@ public class HugeIntArray {
       arrays = new int[bins][];
       for (int i = 0; i < bins; i++) {
     	  arrays[i] = new int[ other.arrays[i].length ];
+    	  
     	  assert other.arrays[i] != null: String.format("HugeIntArray copy constructor: other.arrays[%d] is null", i);
     	  assert this.arrays[i] != null : String.format("HugeIntArray copy constructor: this.arrays[%d] is null", i);
-         //System.arraycopy(other.arrays[i], 0, arrays[i], 0, other.arrays[i].length);
+    	  
     	  for(int j = 0; j < arrays[i].length; j++){
     		  arrays[i] = other.arrays[i];
     	  }
@@ -100,6 +101,13 @@ public class HugeIntArray {
     */
    public final void set(final long i, final int value) {
       arrays[(int) (i >> BITS)][(int) (i & BITMASK_LOW)] = value;
+   }
+   
+   /**
+    * @return number of primitive arrays back up this HugeArray
+    */
+   public int getBins() {
+      return bins;
    }
 
    /**
@@ -424,12 +432,4 @@ public class HugeIntArray {
       a.read(fname, 0, flen / BYTESPERELEMENT, 0);
       return a;
    }
-
-   
-   // ================= getter for testing purposes =========================================
-
-   public int getBins() {
-   	  return bins;
-   }
-   
 }
