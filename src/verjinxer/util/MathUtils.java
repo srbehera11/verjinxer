@@ -144,6 +144,14 @@ public final class MathUtils {
     }
     return s;
   }
+  
+  /**
+    * @param value
+    * @return Returns the base 2 logarithm of a double value.
+    */
+  public static double log2(double value) {
+    return Math.log10(value) / Math.log10(2);
+  }
 
   
 // end class
