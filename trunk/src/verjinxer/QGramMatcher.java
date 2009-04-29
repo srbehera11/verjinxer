@@ -165,7 +165,7 @@ public class QGramMatcher {
 		/** sequence separator positions in text t */
       final long[] ssp;
       if (dt.equals(ds)) {
-         s = g.slurpByteArray(tfile); //TODO ineffective, because reading the file 
+         s = g.slurpByteArray(tfile); //TODO inefficient, because reading the file 
          ssp = tssp;
          sm = tssp.length;
          sdesc = tdesc;
