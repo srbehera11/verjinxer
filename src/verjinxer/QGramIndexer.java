@@ -24,81 +24,84 @@ import verjinxer.util.TicToc;
 
 public class QGramIndexer {
    private static final Logger log = Globals.log;
-   /**
-    * true == DON'T save memory at the cost of lower speed
-    */
+   
+   /** Whether not to save memory at the cost of lower speed */
    final boolean external;
-   /**
-    * true == simulate bisulfite treatment
-    */
+
+   /** Whether to simulate bisulfite treatment */
    final boolean bisulfiteIndex;
+   
    /**
-    * only store q-grams whose positions are divisible by stride (default: 1)
+    * Only store q-grams whose positions are divisible by stride (default: 1) 
     * TODO maybe also 64Bit???
     */
    final int stride;
+   
    Globals g;
-   /**
-    * project info
-    */
+   
+   /** Project info */
    final ProjectInfo project;
-   /**
-    * length of q-gram
-    */
+   
+   /** Length of q-gram */
    final int q;
-   /**
-    * alphabet size
-    */
+   
+   /** Alphabet size */
    final int asize;
-   /**
-    * separator for different sequences according to alphabet 
-    */
+   
+   /** Separator for different sequences according to alphabet */
    final byte separator;
-   /**
-    * filter, with q-gram is not considered
-    */
+   
+   /** Filter, which q-gram is not considered */
    final QGramFilter thefilter;
 
-   //TODO 64Bit
+   // TODO 64Bit
    private int maximumFrequency = 0;
    private int maximumBucketSize = 0;
    private double[] times;
-   
+
    /**
-    * Factory method
-    * Generates a QGramIndexer, either 32Bit or 64Bit, according to the sequence length
+    * Factory method. Generates a QGramIndexer, either 32Bit or 64Bit, according to the sequence
+    * length
+    * 
     * @param g
     * @param project
-    * @param q Length of q-gram
-    * @return new instance of QGramIndexer
+    * @param q
+    *           Length of q-gram
+    * @return New instance of QGramIndexer
     */
-   public static QGramIndexer generateQGramIndexer(Globals g, ProjectInfo project, int q){
-	   return new QGramIndexer(g, project, q);
+   public static QGramIndexer generateQGramIndexer(Globals g, ProjectInfo project, int q) {
+      return new QGramIndexer(g, project, q);
    }
-   
+
    /**
-    * Factory method
-    * Generates a QGramIndexer, either 32Bit or 64Bit, according to the sequence length
+    * Factory method. Generates a QGramIndexer, either 32Bit or 64Bit, according to the sequence
+    * length
+    * 
     * @param g
     * @param project
-    * @param q Length of q-gram
-    * @param external true == DON'T save memory at the cost of lower speed
-    * @param bisulfiteIndex true == simulate bisulfite treatment
-    * @param stride only store q-grams whose positions are divisible by stride
+    * @param q
+    *           Length of q-gram
+    * @param external
+    *           Whether not to save memory at the cost of lower speed
+    * @param bisulfiteIndex
+    *           Whether to simulate bisulfite treatment
+    * @param stride
+    *           Only store q-grams whose positions are divisible by stride
     * @param filterparam
-    * @return new instance of QGramIndexer
+    * @return New instance of QGramIndexer
     */
-   public static QGramIndexer generateQGramIndexer(Globals g, ProjectInfo project, int q, boolean external,
-	         boolean bisulfiteIndex, int stride, String filterparam){
-	   
-	   return new QGramIndexer(g, project, q, external, bisulfiteIndex, stride, filterparam);
+   public static QGramIndexer generateQGramIndexer(Globals g, ProjectInfo project, int q,
+         boolean external, boolean bisulfiteIndex, int stride, String filterparam) {
+
+      return new QGramIndexer(g, project, q, external, bisulfiteIndex, stride, filterparam);
    }
 
    /**
     * 
     * @param g
     * @param project
-    * @param q Length of q-gram
+    * @param q
+    *           Length of q-gram
     */
    public QGramIndexer(Globals g, ProjectInfo project, int q) {
       this(g, project, q, false, false, 1, null);
@@ -108,10 +111,14 @@ public class QGramIndexer {
     * 
     * @param g
     * @param project
-    * @param q Length of q-gram
-    * @param external true == DON'T save memory at the cost of lower speed
-    * @param bisulfiteIndex true == simulate bisulfite treatment
-    * @param stride only store q-grams whose positions are divisible by stride
+    * @param q
+    *           Length of q-gram
+    * @param external
+    *           Whether not to save memory at the cost of lower speed
+    * @param bisulfiteIndex
+    *           Whether to simulate bisulfite treatment
+    * @param stride
+    *           Only store q-grams whose positions are divisible by stride
     * @param filterparam
     */
    public QGramIndexer(Globals g, ProjectInfo project, int q, boolean external,
@@ -134,7 +141,7 @@ public class QGramIndexer {
       if (q > 0)
          qq = q;
       else {
-         long filesize = project.getLongProperty("Length"); //length of the sequence
+         long filesize = project.getLongProperty("Length"); // length of the sequence
          qq = computeSensibleQ(filesize);
       }
       project.setProperty("q", qq);
@@ -171,25 +178,24 @@ public class QGramIndexer {
     * @param coder
     *           the q-gram coder.
     * @param qseqfreqfile
-    *           If this is not null, an array sfrq will be written to this file. 
-    *           sfrq[i] == n means: q-gram i appears in n different sequences.
+    *           If this is not null, an array sfrq will be written to this file. sfrq[i] == n means:
+    *           q-gram i appears in n different sequences.
     * @param separator
     *           a sequence separator, only used when qseqfreqfile != null.
     * @return An array of q-gram frequencies. frq[i] == n means that q-gram with code i occurs n
     *         times.
     * 
-    *         TODO not only computes frequencies but also writes sequence frequencies
-    *         TODO 64BIT
+    *         TODO not only computes frequencies but also writes sequence frequencies TODO 64BIT
     */
    private int[] computeFrequencies(final ByteBuffer in, final QGramCoder coder,
          final String qseqfreqfile, final byte separator) {
 
       final TicToc timer = new TicToc();
       final int aq = coder.getNumberOfQGrams();
-      //TODO Maybe 64Bit
+      // TODO Maybe 64Bit
       int[] lastseq = null; // lastseq[i] == k := q-gram i was last seen in sequence k
       int[] sfrq = null; // sfrq[i] == n := q-gram i appears in n distinct sequences.
-      //TODO 64BIT
+      // TODO 64BIT
       final int[] frq = new int[aq + 1]; // frq[i] == n := q-gram i appears n times; space for
       // sentinel at the end
 
@@ -202,13 +208,13 @@ public class QGramIndexer {
       }
 
       log.debug("doseqfreq = %s, separator = %d", doseqfreq, separator);
-      //TODO also 64Bit???
+      // TODO also 64Bit???
       int seqnum = 0;
-      //TODO sparseQGrams must be extended so that pos can be 32Bit
+      // TODO sparseQGrams must be extended so that pos can be 32Bit
       for (PositionQCodePair pc : coder.sparseQGrams(in, doseqfreq, separator)) {
-         final int qcode = pc.qcode; //lower 32bit
-         //TODO Pos must be 64Bit, 
-         final int pos = pc.position; //higher 32bit
+         final int qcode = pc.qcode; // lower 32bit
+         // TODO Pos must be 64Bit,
+         final int pos = pc.position; // higher 32bit
          if (qcode < 0) {
             assert doseqfreq;
             seqnum++;
@@ -234,7 +240,7 @@ public class QGramIndexer {
 
       return frq;
    }
-   
+
    /** @see computeFrequencies(ByteBuffer,QGramCoder,String,byte) */
    private int[] computeFrequencies(final Sequence in, final QGramCoder coder,
          final String qseqfreqfile, final byte separator) {
@@ -297,11 +303,10 @@ public class QGramIndexer {
     * @return An array of size 2 containing {bck, maxbcksize}, where bck is the array of bucket
     *         positions and maxbcksize is the largest occurring bucket size. The actual bucket
     *         starts are in bck[0..bck.length-2]. The element bck[bck.length-1] is the sum over all
-    *         buckets (that is, the number of q-grams in the index).
-    *         //TODO 64Bit
+    *         buckets (that is, the number of q-grams in the index). //TODO 64Bit
     */
    private Object[] computeBucketStartPositions(final int[] frq, final boolean overwrite) {
-	   //TODO 64Bit
+      // TODO 64Bit
       final int[] bck = (overwrite) ? frq : Arrays.copyOf(frq, frq.length);
       // Java 5: bck = new int[frq.length]; System.arraycopy(frq,0,bck,0,frq.length);
       final int aq = bck.length - 1; // subtract sentinel space
@@ -312,7 +317,7 @@ public class QGramIndexer {
             bck[c] = 0; // reduce frequency to zero
 
       // compute bck from frq
-      //TODO 64Bit
+      // TODO 64Bit
       int sum = 0;
       int add = 0;
       int maxbcksize = 0; // maximum bucket size
@@ -330,10 +335,10 @@ public class QGramIndexer {
    }
 
    public void generateAndWriteIndex(final String seqfile, final String bucketfile,
-		   final String qposfile) throws IOException {
-	   generateAndWriteIndex(seqfile, bucketfile, qposfile, null, null);
+         final String qposfile) throws IOException {
+      generateAndWriteIndex(seqfile, bucketfile, qposfile, null, null);
    }
-   
+
    public void generateAndWriteIndex() throws IOException {
 
       final String seqfile = project.getName() + FileNameExtensions.seq;
@@ -367,8 +372,7 @@ public class QGramIndexer {
     *         largest q-bucket size.
     * @throws java.io.IOException
     * @throws java.lang.IllegalArgumentException
-    *            if bisulfiteIndex is set, but asize is not 4
-    * TODO 64Bit
+    *            if bisulfiteIndex is set, but asize is not 4 TODO 64Bit
     */
    public void generateAndWriteIndex(final String seqfile, final String bucketfile,
          final String qposfile, final String qfreqfile, final String qseqfreqfile)
@@ -391,7 +395,7 @@ public class QGramIndexer {
       // frq[i] == n means: q-gram with code i occurs n times in the input sequence.
       // This holds before applying a filter.
       final TicToc timer = new TicToc();
-      //TODO 64Bit
+      // TODO 64Bit
       int[] frq = computeFrequencies(in, coder, qseqfreqfile, separator);
       maximumFrequency = ArrayUtils.maximumElement(frq);
       if (qfreqfile != null)
@@ -402,13 +406,13 @@ public class QGramIndexer {
       // bck[i] == r means: positions of q-grams with code i start at index r within qpos
       timer.tic();
       final Object[] r = computeBucketStartPositions(frq, external);
-      //TODO 64Bit
+      // TODO 64Bit
       final int[] bck = (int[]) r[0];
-      //TODO 64Bit
+      // TODO 64Bit
       maximumBucketSize = (Integer) r[1]; // only needed to return to caller
       if (external)
          frq = null; // in this case, frq has been overwritten with bck anyway
-      //TODO 64Bit
+      // TODO 64Bit
       final int sum = bck[aq];
       if (bucketfile != null)
          g.dumpIntArray(bucketfile, bck);
@@ -422,7 +426,7 @@ public class QGramIndexer {
 
       // Determine slice size
       timer.tic();
-      //TODO 64Bit
+      // TODO 64Bit
       final int[] qposslice = ArrayUtils.getIntSlice(sum);
       final int slicesize = qposslice.length;
 
@@ -432,14 +436,14 @@ public class QGramIndexer {
       while (bckstart < aq) {
          TicToc wtimer = new TicToc();
          wtimer.tic();
-         //TODO 64Bit
+         // TODO 64Bit
          final int qposstart = bck[bckstart]; //
          int bckend;
          for (bckend = bckstart; bckend < aq && (bck[bckend + 1] - qposstart) <= slicesize; bckend++) {
          }
-         //TODO 64Bit
+         // TODO 64Bit
          final int qposend = bck[bckend];
-         final int qpossize = qposend - qposstart; //remain int in 64Bit -> assertion
+         final int qpossize = qposend - qposstart; // remain int in 64Bit -> assertion
          final double percentdone = (sum == 0) ? 100.0 : 100.0 * (double) qposend
                / ((double) sum + 0);
          log.info("  collecting qcodes [%d..%d] = qpos[%d..%d] --> %.1f%%", bckstart, bckend - 1,
@@ -447,7 +451,7 @@ public class QGramIndexer {
          assert ((qpossize <= slicesize && qpossize > 0) || sum == 0) : "qgram: internal consistency error";
 
          // read through input and collect all qgrams with bckstart<=qcode<bckend
-         //TODO 64Bit whole loop
+         // TODO 64Bit whole loop
          for (PositionQCodePair pc : coder.sparseQGrams(in)) {
             final int pos = pc.position;
             if (pos % stride != 0)
@@ -498,14 +502,14 @@ public class QGramIndexer {
    }
 
    public void setMaximumFrequency(int maximumFrequency) {
-		this.maximumFrequency = maximumFrequency;
-	}
+      this.maximumFrequency = maximumFrequency;
+   }
 
-	public void setMaximumBucketSize(int maximumBucketSize) {
-		this.maximumBucketSize = maximumBucketSize;
-	}
+   public void setMaximumBucketSize(int maximumBucketSize) {
+      this.maximumBucketSize = maximumBucketSize;
+   }
 
-public double[] getLastTimes() {
+   public double[] getLastTimes() {
       return times;
    }
 
@@ -529,7 +533,7 @@ public double[] getLastTimes() {
     * @return an index &gt;=0 where the first error in qpos is found, or -N-1&lt;0, where N is the
     *         number of q-grams in the index.
     * @throws java.io.IOException
-    * TODO 64Bit
+    *            TODO 64Bit
     */
    public static int checkQGramIndex(final String seqfile, final int q, final int asize,
          final String bucketfile, final String qposfile, final QGramFilter thefilter,
@@ -539,17 +543,19 @@ public double[] getLastTimes() {
       TicToc timer = new TicToc();
       log.info("  reading %s and %s", seqfile, bucketfile);
       final ArrayFile arf = new ArrayFile(null);
-      //TODO 64Bit HugeByteArray
+      // TODO 64Bit HugeByteArray
       byte[] sequence = arf.setFilename(seqfile).readArray((byte[]) null);
-      //TODO 64Bit long
+      // TODO 64Bit long
       int[] bck = arf.setFilename(bucketfile).readArray((int[]) null);
       log.info("  reading finished after %.2f sec", timer.tocs());
 
-      //TODO 64Bit long
+      // TODO 64Bit long
       final int sequenceLength = sequence.length;
-      //TODO 64Bit HugeBitArray
-      final BitArray sok = new BitArray(sequenceLength - q + 1); // TODO what is sok? - sok[i] = true iff 
-      log.info("  %s has length %d, contains %d %d-grams", seqfile, sequenceLength, sequenceLength - q + 1, q);
+      // TODO 64Bit HugeBitArray
+      final BitArray sok = new BitArray(sequenceLength - q + 1); // TODO what is sok? - sok[i] =
+      // true iff
+      log.info("  %s has length %d, contains %d %d-grams", seqfile, sequenceLength, sequenceLength
+            - q + 1, q);
 
       // Initialize q-gram storage
       final QGramCoder coder;
@@ -561,8 +567,9 @@ public double[] getLastTimes() {
       byte[] qgram = new byte[q];
 
       // Read the q-position array.
-      //TODO 64Bit long wrong datatype??? capacity is int
-      IntBuffer qpos = Globals.mapR(qposfile).asIntBuffer(); //to q-gram index ; change whole method
+      // TODO 64Bit long wrong datatype??? capacity is int
+      IntBuffer qpos = Globals.mapR(qposfile).asIntBuffer(); // to q-gram index ; change whole
+      // method
       int b = -1; // current bucket
       int bold;
       int i = -1;
@@ -588,7 +595,8 @@ public double[] getLastTimes() {
       }
 
       // now check that all untouched text positions in fact contain filtered or invalid q-grams
-      log.info("  checking %d remaining text positions...", sequenceLength - q + 1 - sok.cardinality());
+      log.info("  checking %d remaining text positions...", sequenceLength - q + 1
+            - sok.cardinality());
       for (int ii = 0; ii < sequenceLength - q + 1; ii++) {
          if (sok.get(ii) == 1)
             continue;
@@ -611,8 +619,7 @@ public double[] getLastTimes() {
     *           name of the sequence file
     * @param memoryMapped
     *           whether to use memory mapping instead of reading the sequence
-    * @return the sequence in a ByteBuffer
-    * TODO posible to write human gnome in ByteBuffer???
+    * @return the sequence in a ByteBuffer TODO posible to write human gnome in ByteBuffer???
     */
    private ByteBuffer readSequenceFile(final String seqfile, boolean memoryMapped)
          throws IOException {

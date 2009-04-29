@@ -569,7 +569,7 @@ public class QGramCoder {
       private int nextc = -1; // next valid code
       private boolean hasnext = true; // result of next hasnext() call
 
-      /** construct iterator from byte array */
+      /** constructs iterator from byte array */
       public SparseQGramIterator(final byte[] t) {
          this.t = t;
          this.b = null;
@@ -578,7 +578,7 @@ public class QGramCoder {
          findNextT();
       }
       
-      /** construct iterator from Sequence */
+      /** constructs iterator from Sequence */
       public SparseQGramIterator(final Sequence s) {
          this.t = s.array();
          this.b = null;
@@ -587,7 +587,7 @@ public class QGramCoder {
          findNextT();
       }
 
-      /** construct iterator from byte buffer */
+      /** constructs iterator from byte buffer */
       public SparseQGramIterator(final ByteBuffer b) {
          if (b.hasArray() && !b.isReadOnly()) {
             // if possible, use the backing array, because it's more efficient
@@ -683,7 +683,7 @@ public class QGramCoder {
       private int nextc = -1; // next valid code
       private boolean hasnext = true; // result of next hasnext() call
 
-      /** construct iterator from byte array */
+      /** constructs iterator from byte array */
       public SparseQGramSepIterator(final byte[] t, final int sep) {
          this.t = t;
          this.b = null;
@@ -693,7 +693,7 @@ public class QGramCoder {
          findNextT();
       }
       
-      /** construct iterator from Sequence */
+      /** constructs iterator from Sequence */
       public SparseQGramSepIterator(final Sequence s, final int sep) {
          this.t = s.array();
          this.b = null;
@@ -703,7 +703,7 @@ public class QGramCoder {
          findNextT();
       }
 
-      /** construct iterator from byte buffer */
+      /** constructs iterator from byte buffer */
       public SparseQGramSepIterator(final ByteBuffer b, final int sep) {
          separator = sep;
          if (b.hasArray() && !b.isReadOnly()) {
