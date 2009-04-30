@@ -129,7 +129,7 @@ public class QGramIndexCompressionAnalyzer {
             integerFormater.format(numberPositionsCompressionImpossible),
             doubleFormater.format(((double) numberPositionsCompressionImpossible / numberSteps) * 100));
    }
-   
+
    private void printIndexInfo() {
       log.info("Infomations about the analyzed index:");
       log.info("q: %s", qgramindex.q);
