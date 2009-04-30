@@ -181,6 +181,13 @@ public class QGramIndex {
    public int getStride() {
       return stride;
    }
+   
+   /**
+    * @return total number of positions in this index
+    */
+   public int getNumberOfPositions() {
+      return qbck[qbck.length - 1];
+   }
 
    /**
     * @return size of a q-gram bucket, that is, the number of positions stored for the given q-code.

@@ -24,7 +24,10 @@ public class QGramIndexCompressionAnalyzer {
                                                        // used
    private int numberPositionsCompressionImpossible = 0; // counts, where compression method can't
                                                          // be used
-
+   private int sequenceLength = -1; // length of the sequence to that the index belongs
+   private DecimalFormat doubleFormater = new DecimalFormat("###,###,###,###,##0.0");
+   private DecimalFormat integerFormater = new DecimalFormat("###,###,###,###,##0");
+   
    public QGramIndexCompressionAnalyzer(QGramIndex qgramindex) {
       super();
       this.qgramindex = qgramindex;
@@ -74,11 +77,10 @@ public class QGramIndexCompressionAnalyzer {
       }
    }
 
-   public void printStatistic() {
+   private void printCompressionStatistic() {
       double averageStepSize = (double) stepSizeSum / numberSteps;
 
-      DecimalFormat doubleFormater = new DecimalFormat("###,###,###,###,##0.0");
-      DecimalFormat integerFormater = new DecimalFormat("###,###,###,###,##0");
+      log.info("Informations about the possible compression:");
 
       log.info("Average step size: %s", doubleFormater.format(averageStepSize));
       log.info("Average needed bits: %s", Math.ceil(MathUtils.log2(averageStepSize + 1)));
@@ -118,9 +120,36 @@ public class QGramIndexCompressionAnalyzer {
             "Memory saving with compressed storage in percent: %s",
             doubleFormater.format(((double) (usedBytesNormal - usedBytesCompressed) / usedBytesNormal) * 100));
 
-      log.info("Compression is possible at %s positions.",
-            integerFormater.format(numberPositionsCompressionPossible));
-      log.info("Compression is impossible at %s positions.",
-            integerFormater.format(numberPositionsCompressionImpossible));
+      log.info(
+            "Compression is possible at %s (%s percent) positions.",
+            integerFormater.format(numberPositionsCompressionPossible),
+            doubleFormater.format(((double) numberPositionsCompressionPossible / numberSteps) * 100));
+      log.info(
+            "Compression is impossible at %s (%s percent) positions.",
+            integerFormater.format(numberPositionsCompressionImpossible),
+            doubleFormater.format(((double) numberPositionsCompressionImpossible / numberSteps) * 100));
+   }
+   
+   private void printIndexInfo() {
+      log.info("Infomations about the analyzed index:");
+      log.info("q: %s", qgramindex.q);
+      log.info("Stride: %s", qgramindex.getStride());
+      log.info("Index contains %s positions.",
+            integerFormater.format(qgramindex.getNumberOfPositions()));
+      assert sequenceLength > 0;
+      log.info(
+            "Ratio of the total number of positions in the index to the length of the sequence: %s",
+            doubleFormater.format((double) qgramindex.getNumberOfPositions() / sequenceLength)); // TODO
+   }
+
+   public void printStatistic() {
+      log.info("The sequence, to that the analyzed index belongs, has a length of %s.",
+            integerFormater.format(sequenceLength));
+      printIndexInfo();
+      printCompressionStatistic();
+   }
+
+   public void setSequenceLength(int sequenceLength) {
+      this.sequenceLength = sequenceLength;
    }
 }

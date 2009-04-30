@@ -60,6 +60,7 @@ public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
 		}
 		
 		QGramIndexCompressionAnalyzer compressionAnalyzer = new QGramIndexCompressionAnalyzer(qgramindex);
+		compressionAnalyzer.setSequenceLength(project.getIntProperty("Length"));
 		compressionAnalyzer.analyze();
 		compressionAnalyzer.printStatistic();
 
