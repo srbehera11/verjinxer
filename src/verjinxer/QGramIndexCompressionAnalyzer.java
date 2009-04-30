@@ -28,11 +28,18 @@ public class QGramIndexCompressionAnalyzer {
    private DecimalFormat doubleFormater = new DecimalFormat("###,###,###,###,##0.0");
    private DecimalFormat integerFormater = new DecimalFormat("###,###,###,###,##0");
    
+   /**
+    * @param qgramindex
+    *           Index to be analyzed
+    */
    public QGramIndexCompressionAnalyzer(QGramIndex qgramindex) {
       super();
       this.qgramindex = qgramindex;
    }
 
+   /**
+    * Analyzes the QGramIndex apropos the compression possibilities.
+    */
    public void analyze() {
       int positions[] = new int[qgramindex.getMaximumBucketSize()];
       int stepSize;
@@ -77,6 +84,9 @@ public class QGramIndexCompressionAnalyzer {
       }
    }
 
+   /**
+    * Prints informations about how good the index can be compressed.
+    */
    private void printCompressionStatistic() {
       double averageStepSize = (double) stepSizeSum / numberSteps;
 
@@ -130,6 +140,9 @@ public class QGramIndexCompressionAnalyzer {
             doubleFormater.format(((double) numberPositionsCompressionImpossible / numberSteps) * 100));
    }
 
+   /**
+    * Prints informations about the analyzed index.
+    */
    private void printIndexInfo() {
       log.info("Infomations about the analyzed index:");
       log.info("q: %s", qgramindex.q);
@@ -142,6 +155,9 @@ public class QGramIndexCompressionAnalyzer {
             doubleFormater.format((double) qgramindex.getNumberOfPositions() / sequenceLength)); // TODO
    }
 
+   /**
+    * Prints informations about the analyzed index and how good it can be compressed.
+    */
    public void printStatistic() {
       log.info("The sequence, to that the analyzed index belongs, has a length of %s.",
             integerFormater.format(sequenceLength));
@@ -149,6 +165,10 @@ public class QGramIndexCompressionAnalyzer {
       printCompressionStatistic();
    }
 
+   /**
+    * @param sequenceLength
+    *           The length of the sequence to that the analyzed index belongs
+    */
    public void setSequenceLength(int sequenceLength) {
       this.sequenceLength = sequenceLength;
    }
