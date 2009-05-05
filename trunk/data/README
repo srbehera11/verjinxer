@@ -12,3 +12,8 @@ read120636.fa, cgi1.fa:
 cgi1.fa contains a single CpG island. Starting from index 0, it contains
 the read from read120636.fa, without any errors. (Only C->T replacements since
 it is a bisulfite-modified read.)
+
+colorspace.fa:
+Test file for color-space conversion. After conversion of this file to color space
+using translate --colorspace, the resulting sequence file should be the same as
+colorspace.seq.
