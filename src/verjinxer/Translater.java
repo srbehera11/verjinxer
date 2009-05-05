@@ -73,12 +73,7 @@ public class Translater {
       FileType[] filetype = new FileType[filenames.length];
       for (int i = 0; i < filenames.length; i++) {
          String filename = g.dir + filenames[i];
-         try {
-            filetype[i] = determineFileType(filename);
-         } catch (IOException ex) {
-            log.error("translate: could not open sequence file '%s'; %s", filename, ex);
-            g.terminate(1);
-         }
+         filetype[i] = determineFileType(filename);
       }
 
       // open the output file stream
@@ -96,8 +91,13 @@ public class Translater {
       for (int i = 0; i < filenames.length; i++) {
          String fname = g.dir + filenames[i];
          log.info("  processing '%s' (%s)...", fname, filetype[i]);
+         //if (filetype[i] == FileType.FASTA && alphabet.getName().equals("color space"))
+            //TODO should this action depend on filetype and alphabet???
+            //TODO translate to CSFASTA or in a sequence???
          if (filetype[i] == FileType.FASTA)
             translateFasta(fname, sequence);
+         else if (filetype[i] == FileType.CSFASTA)
+            translateCSFasta(fname, sequence);
          else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
             translateFastaBisulfite(fname, sequence);
          else if (filetype[i] == FileType.TEXT) {
@@ -142,6 +142,17 @@ public class Translater {
          project.setProperty("Separator", 128); // illegal byte code 128 -> nothing
       }
       project.setProperty("LastAction", "translate");
+   }
+   
+   /**
+    * @see translateFasta(String,Sequence)
+    */
+   public void translateCSFasta(final String fname, final Sequence out) {
+      // nothing special
+      // FastaFile.read() already ignores comment lines with #
+      // so call translateFasta(String,Sequence)
+      translateFasta(fname, out);
+      // TODO maybe make some assertions like alphabet == CS???
    }
 
    /**
@@ -421,20 +432,29 @@ public class Translater {
       return run;
    }
 
-   private FileType determineFileType(String filename) throws IOException {
-      int ch = ' ';
-
-      FileReader reader = new FileReader(filename);
-      for (ch = reader.read(); ch != -1 && Character.isWhitespace(ch); ch = reader.read()) {
+   /**
+    * Determines the type by the suffix of the name.<br>
+    * *.fa -> FASTA<br>
+    * *csfa -> CSFASTA<br>
+    * otherwise -> TEXT
+    * 
+    * @param filename
+    * @return
+    */
+   private FileType determineFileType(String filename) {
+      int suffixPosition = filename.lastIndexOf(".");
+      if (suffixPosition >= 0) {
+         if (filename.substring(suffixPosition + 1).startsWith("fa")) {
+            return FileType.FASTA;
+         } else if (filename.substring(suffixPosition + 1).startsWith("csfa")) {
+            return FileType.CSFASTA;
+         }
       }
-      reader.close();
-      if (ch == '>')
-         return FileType.FASTA;
-      else
-         return FileType.TEXT;
+      // neither .fasta nor .csfasta detected
+      return FileType.TEXT;
    }
 
    private enum FileType {
-      FASTA, TEXT
+      FASTA, TEXT, CSFASTA
    }
 }
