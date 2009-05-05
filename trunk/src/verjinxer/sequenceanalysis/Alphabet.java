@@ -441,6 +441,15 @@ public class Alphabet {
    }
 
    /** ***************** special alphabet maps ***************** */
+   
+   /**
+    * @return the color space alphabet
+    * @author Markus Kemmerling
+    */
+   public static final Alphabet CS() {
+      return new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "4", "##wildcards",
+            "T", "##separators:-1" });
+   }
 
    /**
     * @return the standard DNA alphabet

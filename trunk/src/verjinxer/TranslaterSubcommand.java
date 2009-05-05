@@ -46,6 +46,7 @@ public class TranslaterSubcommand implements Subcommand {
 //      log.info("  -b, --bisulfite      translates DNA to a three-letter alphabet"); // FIXME only for C->T currently
       log.info("  --dnabi              translate to bisulfite-treated DNA");
       log.info("  --protein            use standard protein alphabet");
+      log.info("  -c, --colorspace     use standard color space alphabet");
       log.info("  --masked             lowercase bases are translated to wildcards (only for DNA alphabets)");
       log.info("  --reverse            reverse sequence before applying alphabet (use with -a)");
       log.info("  -r, --runs           additionally create run-related files");
@@ -84,7 +85,7 @@ public class TranslaterSubcommand implements Subcommand {
 
       String filenames[];
       Options opt = new Options(
-            "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs,reverse");
+            "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs,reverse,c=color=colorspace");
 
       try {
          filenames = opt.parse(args);
@@ -134,8 +135,10 @@ public class TranslaterSubcommand implements Subcommand {
          givenmaps++;
       if (opt.isGiven("bisulfite"))
          givenmaps++;
+      if (opt.isGiven("colorspace"))
+         givenmaps++;
       if (givenmaps > 1) {
-         log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein}.");
+         log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --bisulfite, --colorspace}.");
          return 1;
       }
 
@@ -146,7 +149,7 @@ public class TranslaterSubcommand implements Subcommand {
       }
       Alphabet alphabet = null;
       if (opt.isGiven("a"))
-         alphabet = g.readAlphabet(g.dir + opt.get("a"));
+         alphabet = Globals.readAlphabet(g.dir + opt.get("a"));
       if (opt.isGiven("dna") || opt.isGiven("dnarc"))
          alphabet = opt.isGiven("masked") ? Alphabet.maskedDNA() : Alphabet.DNA();
 
@@ -179,9 +182,11 @@ public class TranslaterSubcommand implements Subcommand {
       }
       if (opt.isGiven("protein"))
          alphabet = Alphabet.Protein();
+      if (opt.isGiven("colorspace"))
+         alphabet = Alphabet.CS();
 
       if (alphabet == null) {
-         log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --protein}.");
+         log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
          return 1;
       }
       g.startProjectLogging(project, true);
