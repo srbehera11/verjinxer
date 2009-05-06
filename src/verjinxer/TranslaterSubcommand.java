@@ -2,12 +2,12 @@ package verjinxer;
 
 import static verjinxer.Globals.programname;
 
-import java.io.File;
 import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.ProjectInfo;
@@ -60,25 +60,6 @@ public class TranslaterSubcommand implements Subcommand {
       System.exit(new TranslaterSubcommand(new Globals()).run(args));
    }
 
-   /**
-    * Removes a file name extension from a string. If no extension is found, the name is returned
-    * unchanged.
-    * 
-    * @param name
-    *           file name. For example, "hello.fa"
-    * @return file name without extension. For example, "hello"
-    */
-   // TODO This class is not responsible for files -> put somewhere else with static use!!!
-   public static String extensionRemoved(String name) {
-      name = new File(name).getName(); // TODO is this necessary?
-      int lastdot = name.lastIndexOf('.');
-      if (lastdot >= 0) {
-         return name.substring(0, lastdot);
-      } else {
-         return name;
-      }
-   }
-
    @Override
    public int run(final String[] args) {
       TicToc gtimer = new TicToc();
@@ -106,7 +87,7 @@ public class TranslaterSubcommand implements Subcommand {
       if (opt.isGiven("i"))
          projectname = opt.get("i");
       else { // take base name of first FASTA file
-         projectname = extensionRemoved(filenames[0]);
+         projectname = FileUtils.extensionRemoved(filenames[0]);
       }
       projectname = g.outdir + projectname;
       ProjectInfo project = new ProjectInfo(projectname);

@@ -18,7 +18,9 @@ import verjinxer.sequenceanalysis.FastaSequence;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.Sequence;
 import verjinxer.util.ArrayFile;
+import verjinxer.util.FileUtils;
 import verjinxer.util.ProjectInfo;
+import verjinxer.util.FileUtils.FileType;
 
 import com.spinn3r.log5j.Logger;
 
@@ -75,7 +77,7 @@ public class Translater {
       FileType[] filetype = new FileType[filenames.length];
       for (int i = 0; i < filenames.length; i++) {
          String filename = g.dir + filenames[i];
-         filetype[i] = determineFileType(filename);
+         filetype[i] = FileUtils.determineFileType(filename);
       }
 
       // open the output file stream
@@ -432,33 +434,5 @@ public class Translater {
             "n=%d, runs=%d, rseq=%d. 4*run=%d, run2pos=%d, pos2run=%d", n, run, rseq.length(),
             4 * run, r2p.length(), p2r.length());
       return run;
-   }
-
-   /**
-    * Determines the type by the suffix of the name.<br>
-    * *.fa -> FASTA<br>
-    * *csfa -> CSFASTA<br>
-    * otherwise -> TEXT
-    * 
-    * @param filename
-    * @return
-    */
-   // TODO This class is not responsible for filetypes -> put somewhere else with static use!!!
-   private FileType determineFileType(String filename) {
-      int suffixPosition = filename.lastIndexOf(".");
-      if (suffixPosition >= 0) {
-         if (filename.substring(suffixPosition + 1).startsWith("fa")) {
-            return FileType.FASTA;
-         } else if (filename.substring(suffixPosition + 1).startsWith("csfa")) {
-            return FileType.CSFASTA;
-         }
-      }
-      // neither .fasta nor .csfasta detected
-      return FileType.TEXT;
-   }
-
-   // TODO This class is not responsible for filetypes -> put somewhere else with static use!!!
-   private enum FileType {
-      FASTA, TEXT, CSFASTA
    }
 }
