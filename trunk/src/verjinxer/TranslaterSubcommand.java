@@ -34,7 +34,7 @@ public class TranslaterSubcommand implements Subcommand {
             FileNameExtensions.alphabet, FileNameExtensions.ssp, FileNameExtensions.prj);
       log.info("with option -r, also creates %s, %s, %s, %s.", FileNameExtensions.runseq,
             FileNameExtensions.runlen, FileNameExtensions.run2pos, FileNameExtensions.pos2run);
-      log.info("Options:");
+      log.info("Options:"); //TODO explain CSFASTA handling
       log.info("  -i, --index <name>   name of index files [first filename]");
       log.info("  -t, --trim           trim non-symbol characters at both ends");
       log.info("  -a, --alphabet <file>   filename of alphabet");
@@ -117,7 +117,7 @@ public class TranslaterSubcommand implements Subcommand {
          givenmaps++;
       if (opt.isGiven("bisulfite"))
          givenmaps++;
-      if (opt.isGiven("colorspace")) // TODO all given files must be fasta
+      if (opt.isGiven("colorspace"))
          givenmaps++;
       if (givenmaps > 1) {
          log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --bisulfite, --colorspace}.");
@@ -166,9 +166,8 @@ public class TranslaterSubcommand implements Subcommand {
          alphabet = Alphabet.Protein();
       boolean colorspace = false;
       if (opt.isGiven("colorspace")) {
-         // TODO translate not with Alphabet.CS(), translate DNA into CS!!!
-         // Maybe can use alphabet = Alphabet.DNA() and alphabet2 = Alphabet.CS() for this
-         // purpose???
+         alphabet = Alphabet.CS();
+         // TODO all given files must be fasta
          colorspace = true;
       }
 
