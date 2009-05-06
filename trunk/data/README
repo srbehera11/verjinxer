@@ -17,3 +17,11 @@ colorspace.fa:
 Test file for color-space conversion. After conversion of this file to color space
 using translate --colorspace, the resulting sequence file should be the same as
 colorspace.seq.
+
+colorspace.seq:
+Created by 'manual' conversion of colorspace.fa to colorspace, approximately
+like this:
+tr acgtnmMrR ACGTNNNNN < in.fa > out.fa
+encodeFasta.py out.fa > color.csfa
+vji tr -a colorspace.alphabet colorspace.csfa
+
