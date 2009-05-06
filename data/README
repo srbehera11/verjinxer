@@ -14,14 +14,25 @@ the read from read120636.fa, without any errors. (Only C->T replacements since
 it is a bisulfite-modified read.)
 
 colorspace.fa:
-Test file for color-space conversion. After conversion of this file to color space
-using translate --colorspace, the resulting sequence file should be the same as
-colorspace.seq.
+Test file for color-space conversion. This file is in regular 'nucleotide
+space' (that is, its alphabet is ACGTN etc.)
+
+colorspace.csfasta:
+Test file for color-space conversion. This file is the colorspace-converted
+version of colorspace.fa. The conversion was done like this:
+ tr acgtnmMrR ACGTNNNNN < colorspace.fa > tmp.fa
+ encodeFasta.py tmp.fa > colorspace.csfasta
+where encodeFasta.py is a tool that is included in //Corona lite//
+(available at http://solidsoftwaretools.com/gf/project/corona/). 
 
 colorspace.seq:
-Created by 'manual' conversion of colorspace.fa to colorspace, approximately
-like this:
-tr acgtnmMrR ACGTNNNNN < in.fa > out.fa
-encodeFasta.py out.fa > color.csfa
-vji tr -a colorspace.alphabet colorspace.csfa
+The command
+vji translate --colorspace colorspace.csfasta
+should create a file that is exactly the same as this one.
+
+It was created like this:
+ vji tr -a colorspace.alphabet colorspace.csfasta
+
+colorspace.alphabet:
+Test file for color-space conversion. See above.
 
