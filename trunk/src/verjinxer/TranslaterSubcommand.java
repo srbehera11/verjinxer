@@ -46,7 +46,7 @@ public class TranslaterSubcommand implements Subcommand {
 //      log.info("  -b, --bisulfite      translates DNA to a three-letter alphabet"); // FIXME only for C->T currently
       log.info("  --dnabi              translate to bisulfite-treated DNA");
       log.info("  --protein            use standard protein alphabet");
-      log.info("  -c, --colorspace     use standard color space alphabet");
+      log.info("  -c, --colorspace     translate DNA to color space sequence");
       log.info("  --masked             lowercase bases are translated to wildcards (only for DNA alphabets)");
       log.info("  --reverse            reverse sequence before applying alphabet (use with -a)");
       log.info("  -r, --runs           additionally create run-related files");
@@ -68,6 +68,7 @@ public class TranslaterSubcommand implements Subcommand {
     *           file name. For example, "hello.fa"
     * @return file name without extension. For example, "hello"
     */
+   // TODO This class is not responsible for files -> put somewhere else with static use!!!
    public static String extensionRemoved(String name) {
       name = new File(name).getName(); // TODO is this necessary?
       int lastdot = name.lastIndexOf('.');
@@ -135,7 +136,7 @@ public class TranslaterSubcommand implements Subcommand {
          givenmaps++;
       if (opt.isGiven("bisulfite"))
          givenmaps++;
-      if (opt.isGiven("colorspace"))
+      if (opt.isGiven("colorspace")) // TODO all given files must be fasta
          givenmaps++;
       if (givenmaps > 1) {
          log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --bisulfite, --colorspace}.");
@@ -182,17 +183,24 @@ public class TranslaterSubcommand implements Subcommand {
       }
       if (opt.isGiven("protein"))
          alphabet = Alphabet.Protein();
-      if (opt.isGiven("colorspace"))
-         alphabet = Alphabet.CS();
+      boolean colorspace = false;
+      if (opt.isGiven("colorspace")) {
+         // TODO translate not with Alphabet.CS(), translate DNA into CS!!!
+         // Maybe can use alphabet = Alphabet.DNA() and alphabet2 = Alphabet.CS() for this
+         // purpose???
+         colorspace = true;
+      }
 
       if (alphabet == null) {
+         // TODO no alphabets was set, test if all files are csfasta. Than translate with
+         // Alphabet.CS();
          log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
          return 1;
-      }
+      } // TODO if alphabet was set, test if all files are NOT csfasta.
       g.startProjectLogging(project, true);
 
       Translater translater = new Translater(g, trim, alphabet, alphabet2, separateRCByWildcard,
-            reverse, addrc, bisulfite, dnarcstring);
+            reverse, addrc, bisulfite, dnarcstring, colorspace);
 
       translater.createProject(project, filenames);
 
