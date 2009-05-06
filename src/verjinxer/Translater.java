@@ -37,10 +37,11 @@ public class Translater {
    final boolean addrc;
    final boolean bisulfite;
    final String dnarcstring;
+   final boolean colorspace;
 
    public Translater(Globals g, boolean trim, Alphabet alphabet, Alphabet amap2,
          boolean separateRCByWildcard, boolean reverse, boolean addrc, boolean bisulfite,
-         String dnarcstring) {
+         String dnarcstring, final boolean colorspace) {
 
       // for now, only print the message itself (%m), nothing else
 
@@ -53,10 +54,11 @@ public class Translater {
       this.bisulfite = bisulfite;
       this.dnarcstring = dnarcstring;
       this.addrc = addrc;
+      this.colorspace = colorspace;
    }
 
    public Translater(Globals g, Alphabet alphabet) {
-      this(g, false, alphabet, null, false, false, false, false, "");
+      this(g, false, alphabet, null, false, false, false, false, "", false);
    }
 
    /**
@@ -441,6 +443,7 @@ public class Translater {
     * @param filename
     * @return
     */
+   // TODO This class is not responsible for filetypes -> put somewhere else with static use!!!
    private FileType determineFileType(String filename) {
       int suffixPosition = filename.lastIndexOf(".");
       if (suffixPosition >= 0) {
@@ -454,6 +457,7 @@ public class Translater {
       return FileType.TEXT;
    }
 
+   // TODO This class is not responsible for filetypes -> put somewhere else with static use!!!
    private enum FileType {
       FASTA, TEXT, CSFASTA
    }
