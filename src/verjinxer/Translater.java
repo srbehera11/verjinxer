@@ -98,9 +98,13 @@ public class Translater {
          //if (filetype[i] == FileType.FASTA && alphabet.getName().equals("color space"))
             //TODO should this action depend on filetype and alphabet???
             //TODO translate to CSFASTA or in a sequence???
-         if (filetype[i] == FileType.FASTA)
-            translateFasta(fname, sequence);
-         else if (filetype[i] == FileType.CSFASTA)
+         if (filetype[i] == FileType.FASTA) {
+            if (colorspace) {
+               translateFastaFromDNA2CS(fname, sequence);
+            } else {
+               translateFasta(fname, sequence);
+            }
+         } else if (filetype[i] == FileType.CSFASTA)
             translateCSFasta(fname, sequence);
          else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
             translateFastaBisulfite(fname, sequence);
@@ -157,6 +161,49 @@ public class Translater {
       // so call translateFasta(String,Sequence)
       translateFasta(fname, out);
       // TODO maybe make some assertions like alphabet == CS???
+   }
+   
+   /**
+    * @see translateFasta(String,Sequence)
+    */
+   public void translateFastaFromDNA2CS(final String fname, final Sequence out) {
+      FastaFile f = new FastaFile(fname);
+      FastaSequence fseq = null;
+      ByteBuffer tr = null;
+      final int appendforward = (addrc && separateRCByWildcard) ? 1 : 2;
+      long lastbyte = 0;
+
+      try {
+         f.open();
+      } catch (IOException ex) {
+         log.warn("translate: skipping '%s': %s", fname, ex);
+         return;
+      }
+      while (true) {
+         try {
+            fseq = f.read(); // reads one fasta sequence from file f
+            if (fseq == null)
+               break;
+            tr = fseq.translateDNAtoCS(tr, trim, appendforward);
+            lastbyte = out.writeBuffer(tr);
+            out.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
+         } catch (InvalidSymbolException ex) {
+            log.error("translate: %s", ex);
+            break;
+         } catch (IOException ex) {
+            log.error("translate: %s", ex);
+            break;
+         } catch (FastaFormatException ex) {
+            log.error("translate: %s", ex);
+            break;
+         }
+      }
+      // close file
+      try {
+         f.close();
+      } catch (IOException ex) {
+         log.error("translate: %s", ex);
+      }
    }
 
    /**
