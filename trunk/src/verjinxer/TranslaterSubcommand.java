@@ -167,16 +167,31 @@ public class TranslaterSubcommand implements Subcommand {
       boolean colorspace = false;
       if (opt.isGiven("colorspace")) {
          alphabet = Alphabet.CS();
-         // TODO all given files must be fasta
+         for (int i = 0; i < filenames.length; i++)
+            // all files must be FASTA
+            if (FileUtils.determineFileType(filenames[i]) != FileUtils.FileType.FASTA) {
+               log.error("translate: The option --colorspace is only valid for FASTA files.");
+               return 1;
+            }
          colorspace = true;
       }
 
       if (alphabet == null) {
-         // TODO no alphabets was set, test if all files are csfasta. Than translate with
-         // Alphabet.CS();
-         log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
-         return 1;
-      } // TODO if alphabet was set, test if all files are NOT csfasta.
+         for (int i = 0; i < filenames.length; i++)
+            if (FileUtils.determineFileType(filenames[i]) != FileUtils.FileType.CSFASTA) { // only for CSFASTA omitting alphabet map is allowed
+               log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
+               return 1;
+            }
+         // all files are CSFASTA -> go on
+         alphabet = Alphabet.CS();
+      } else {
+         // A alphabet was set, test if all files are NOT CSFASTA
+         for (int i = 0; i < filenames.length; i++)
+            if (FileUtils.determineFileType(filenames[i]) == FileUtils.FileType.CSFASTA) { // invalid option for CSFASTA
+               log.error("translate: the options -a, --dna, --rconly, --dnarc, --dnabi, --protein and --colorspace are not valid for CSFASTA files.");
+               return 1;
+            }
+      }
       g.startProjectLogging(project, true);
 
       Translater translater = new Translater(g, trim, alphabet, alphabet2, separateRCByWildcard,

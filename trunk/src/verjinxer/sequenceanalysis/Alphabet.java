@@ -448,7 +448,7 @@ public class Alphabet {
     */
    public static final Alphabet CS() {
       return new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "##wildcards", "ACGT4",
-            "##separators:-1" });
+            "##wildcards", "#", "##separators:-1" });
    }
 
    /**

@@ -159,6 +159,7 @@ public class Translater {
       // nothing special
       // FastaFile.read() already ignores comment lines with #
       // so call translateFasta(String,Sequence)
+      assert FileUtils.determineFileType(fname) == FileUtils.FileType.CSFASTA;
       translateFasta(fname, out);
       // TODO maybe make some assertions like alphabet == CS???
    }
