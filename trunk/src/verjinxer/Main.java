@@ -16,6 +16,11 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 
+import verjinxer.subcommands.QGramIndexCompressionAnalyzerSubcommand;
+import verjinxer.subcommands.QGramIndexerSubcommand;
+import verjinxer.subcommands.QGramMatcherSubcommand;
+import verjinxer.subcommands.Subcommand;
+import verjinxer.subcommands.TranslaterSubcommand;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 
@@ -28,7 +33,7 @@ import com.spinn3r.log5j.Logger;
 
 public class Main {
 
-   static Logger log = Globals.log;
+   static Logger log = Globals.getLogger();
    Globals g;
 
    public Main(Globals gl) {
@@ -45,7 +50,7 @@ public class Main {
       log.info("  translate    ...          apply alphabet map to text or FASTA files");
       log.info("  cut          ...          cut translated sequences at specific patterns");
       log.info("  qgram        ...          create qgram-index of translated file(s)");
-      log.info("  analyzer     ...          analyze qgram-index how it can be compressed");
+      log.info("  analyzer     ...          analyze compressibility of qgram-index");
       log.info("  qfreq        ...          report most frequent q-grams in an index");
       log.info("  qmatch       ...          report maximal matches of sequences vs index");
       log.info("  suffix       ...          build suffixtray of translated file(s)");

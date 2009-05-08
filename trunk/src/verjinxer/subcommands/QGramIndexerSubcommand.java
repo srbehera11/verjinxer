@@ -2,7 +2,7 @@
  * QgramIndexer.java
  * Created on 30. Januar 2007, 15:15
  */
-package verjinxer;
+package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
@@ -10,6 +10,9 @@ import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
 
+import verjinxer.FileNameExtensions;
+import verjinxer.Globals;
+import verjinxer.QGramIndexer;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.ProjectInfo;
@@ -21,7 +24,7 @@ import verjinxer.util.StringUtils;
  * @author Marcel Martin
  */
 public final class QGramIndexerSubcommand implements Subcommand {
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
    
    /** only store q-grams whose positions are divisible by stride */
    private int stride = 1;

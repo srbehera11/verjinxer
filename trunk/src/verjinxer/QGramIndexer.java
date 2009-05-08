@@ -23,7 +23,7 @@ import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
 public class QGramIndexer {
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
    
    /** Whether not to save memory at the cost of lower speed */
    final boolean external;

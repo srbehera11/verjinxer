@@ -34,7 +34,7 @@ import com.spinn3r.log5j.Logger;
  */
 public class NonUniqueProbeDesigner {
   
-  private final static Logger log = Globals.log;
+  private final static Logger log = Globals.getLogger();
   private Globals g;
   
   /** Creates a new instance of NonUniqueProbeDesigner

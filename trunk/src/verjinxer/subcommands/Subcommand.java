@@ -1,4 +1,4 @@
-package verjinxer;
+package verjinxer.subcommands;
 
 /**
  * All subcommands must implement the Subcommand interface.

@@ -1,0 +1,12 @@
+Coding style, other guidelines
+==============================
+
+The code should follow the official Java code conventions available at  
+http://java.sun.com/docs/codeconv/ .
+
+Each indentation level is three spaces.
+
+If you work with Eclipse, use the eclipse-coding-style.xml (in this directory)
+by importing it in Eclipse as follows: Go to Window -> Preferences -> Java ->
+Code Style -> Formatter and then click "Import...".
+

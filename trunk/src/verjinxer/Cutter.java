@@ -24,7 +24,7 @@ import static verjinxer.Globals.*;
  */
 public class Cutter {
   
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
   private Globals g;
   
   /** Creates a new instance of Cutter

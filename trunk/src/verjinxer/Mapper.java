@@ -22,6 +22,7 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.subcommands.Subcommand;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
@@ -39,7 +40,7 @@ import verjinxer.util.TicToc;
  * @author Sven Rahmann
  */
 public class Mapper implements Subcommand {
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
    private Globals g;
 
    /**
