@@ -1,14 +1,8 @@
-/*
- * WriteFibonacciString.java
- *
- * Created on May 3, 2007, 5:33 PM
- *
- */
 
-package verjinxer.util;
 
 import java.io.IOException;
 import verjinxer.sequenceanalysis.FastaFile;
+import verjinxer.util.MathUtils;
 
 /**
  * executable class that writes a Fibonacci string to a FASTA file

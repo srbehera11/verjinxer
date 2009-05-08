@@ -1,9 +1,11 @@
-package verjinxer;
+package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
 import java.io.IOException;
 
+import verjinxer.Globals;
+import verjinxer.QGramIndexCompressionAnalyzer;
 import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
@@ -14,7 +16,7 @@ import com.spinn3r.log5j.Logger;
  */
 public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
 
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
    private static final String command = "analyzer";
    final Globals g;
 

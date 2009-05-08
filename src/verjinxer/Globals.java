@@ -25,9 +25,11 @@ import com.spinn3r.log5j.Logger;
 /**
  * 
  * @author Sven Rahmann
+ * 
+ * TODO 
  */
 public class Globals {
-   static final Logger log = Logger.getLogger(Globals.class);
+   private static final Logger log = Logger.getLogger(Globals.class);
 
    static {
       log.setLevel(Level.INFO);
@@ -41,7 +43,7 @@ public class Globals {
    private final ArrayFile arf;
    
    /** prefix to diagnostic messages */
-   static String cmdname = programname;
+   public static String cmdname = programname;
    
    /** all arguments to Main for logfile */
    String[] action = null;
@@ -50,13 +52,18 @@ public class Globals {
    boolean plog = true;
    
    /** project (working) directory */
-   String dir = "";
-   String outdir = ""; // output dir -- do not use lightly!
+   public String dir = "";
+   public String outdir = ""; // output dir -- do not use lightly!
 
    FileAppender projectlog = null;
 
    public Globals() {
       arf = new ArrayFile(); // array file to be used
+   }
+
+   // TODO mark as deprecated
+   public static Logger getLogger() {
+      return log;
    }
 
    // TODO rename
@@ -117,7 +124,7 @@ public class Globals {
    /**************************************************************************/
 
    /** read alphabet map file */
-   static final Alphabet readAlphabet(String fname) {
+   public static final Alphabet readAlphabet(String fname) {
       Alphabet alphabet = null;
       try {
          alphabet = Alphabet.fromFile(fname);

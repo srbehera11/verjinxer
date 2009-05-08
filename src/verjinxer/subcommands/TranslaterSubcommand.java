@@ -1,4 +1,4 @@
-package verjinxer;
+package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
@@ -6,6 +6,9 @@ import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
 
+import verjinxer.FileNameExtensions;
+import verjinxer.Globals;
+import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
@@ -17,7 +20,7 @@ import verjinxer.util.TicToc;
 public class TranslaterSubcommand implements Subcommand {
    final Globals g;
 
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
 
    // TODO should not be public
    public TranslaterSubcommand(Globals g) {

@@ -11,7 +11,7 @@ import verjinxer.util.MathUtils;
  * @author Markus Kemmerling
  */
 public class QGramIndexCompressionAnalyzer {
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
 
    private QGramIndex qgramindex;
    private int minStepSize = Integer.MAX_VALUE;

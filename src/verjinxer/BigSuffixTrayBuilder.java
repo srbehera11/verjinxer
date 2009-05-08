@@ -31,7 +31,7 @@ import verjinxer.util.TicToc;
  * @author Sven Rahmann
  */
 public class BigSuffixTrayBuilder {
-  private static final Logger log = Globals.log;
+  private static final Logger log = Globals.getLogger();
   private Globals g;
   
   /** Creates a new instance of SuffixTrayBuilder

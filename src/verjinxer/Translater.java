@@ -30,7 +30,7 @@ import com.spinn3r.log5j.Logger;
  * @author Sven Rahmann
  */
 public class Translater {
-   private final static Logger log = Globals.log;
+   private final static Logger log = Globals.getLogger();
    final Globals g;
    final boolean trim;
    final Alphabet alphabet, alphabet2;
@@ -380,7 +380,7 @@ public class Translater {
     * @return number of runs in the sequence file
     * @throws java.io.IOException
     */
-   long computeRuns(final String fname) throws IOException {
+   public long computeRuns(final String fname) throws IOException {
       return computeRunsAF(fname);
    }
 

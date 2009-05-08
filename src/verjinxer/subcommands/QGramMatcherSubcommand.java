@@ -13,7 +13,7 @@
  * sequences that have already been identified as repeats (ie, have too many hits).
  */
 
-package verjinxer;
+package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
@@ -25,6 +25,8 @@ import java.io.PrintWriter;
 
 import com.spinn3r.log5j.Logger;
 
+import verjinxer.Globals;
+import verjinxer.QGramMatcher;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
@@ -39,7 +41,7 @@ import verjinxer.util.TicToc;
  * @author Marcel Martin
  */
 public class QGramMatcherSubcommand implements Subcommand {
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
    private Globals g;
 
    /**

@@ -30,7 +30,7 @@ import verjinxer.util.TicToc;
  * @author Sven Rahmann
  */
 public class QgramFrequencer {
-  private static final Logger log = Globals.log;
+  private static final Logger log = Globals.getLogger();
   private Globals g;
   
   /** creates a new instance of QgramFrequencer

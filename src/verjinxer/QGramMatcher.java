@@ -24,7 +24,7 @@ import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
 public class QGramMatcher {
-   private static final Logger log = Globals.log;
+   private static final Logger log = Globals.getLogger();
    final Globals g;
 
    /** minimum match length; guaranteed to be at least q */
