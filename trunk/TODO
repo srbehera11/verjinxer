@@ -28,6 +28,8 @@ Before doing this, merge the 64 Bit Extension branch!
 
 - split a Subcommand class from front-end classes where that has not been done 
 
+- prefixes in output ("map:") should not be in the code
+
 Bugs
 ----
 
