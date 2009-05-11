@@ -32,12 +32,13 @@ public class TranslaterSubcommand implements Subcommand {
     */
    public void help() {
       log.info("Usage:  %s translate [options] <TextAndFastaFiles...>", programname);
-      log.info("translates one or more text or FASTA files, using an alphabet map;");
+      log.info("translates one or more text, CSFASTA or FASTA files, using an alphabet map;");
       log.info("creates %s, %s, %s, %s, %s;", FileNameExtensions.seq, FileNameExtensions.desc,
             FileNameExtensions.alphabet, FileNameExtensions.ssp, FileNameExtensions.prj);
       log.info("with option -r, also creates %s, %s, %s, %s.", FileNameExtensions.runseq,
             FileNameExtensions.runlen, FileNameExtensions.run2pos, FileNameExtensions.pos2run);
-      log.info("Options:"); //TODO explain CSFASTA handling
+      log.info("To translate CSFASTA files, the specification of an alphabet map is prohibited.");
+      log.info("Options:");
       log.info("  -i, --index <name>   name of index files [first filename]");
       log.info("  -t, --trim           trim non-symbol characters at both ends");
       log.info("  -a, --alphabet <file>   filename of alphabet");
