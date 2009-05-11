@@ -15,9 +15,10 @@ public abstract class Sequence {
    }
 
    private final Mode mode;
-   protected final String seqFile;
-   protected final String sspFile;
-   protected final String descFile;
+   protected final String seqFilename;
+   protected final String sspFilename;
+   protected final String descFilename;
+   protected final String qualityFilename;
 
    /**
     * Sets the Filenames for the sequence, ssp and description files.
@@ -25,9 +26,10 @@ public abstract class Sequence {
     * @param projectname
     */
    public Sequence(final String projectname, Mode mode) {
-      seqFile = projectname + FileNameExtensions.seq;
-      sspFile = projectname + FileNameExtensions.ssp;
-      descFile = projectname + FileNameExtensions.desc;
+      seqFilename = projectname + FileNameExtensions.seq;
+      sspFilename = projectname + FileNameExtensions.ssp;
+      descFilename = projectname + FileNameExtensions.desc;
+      qualityFilename = projectname + FileNameExtensions.quality;
       this.mode = mode;
    }
 
@@ -54,7 +56,7 @@ public abstract class Sequence {
     * @throws IOException
     */
    public void store() throws IOException {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -62,7 +64,7 @@ public abstract class Sequence {
     * @return Accumulated length of all sequences (length of .seq file)
     */
    public long length() {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -70,7 +72,7 @@ public abstract class Sequence {
     * @return The underlying array for the concatenated sequences.
     */
    public byte[] array() {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -78,7 +80,7 @@ public abstract class Sequence {
     * Rewinds this sequence. The position is set to zero.
     */
    public void rewind() {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -90,7 +92,7 @@ public abstract class Sequence {
     * @throws IOException
     */
    public long writeBuffer(ByteBuffer tr) throws IOException {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -105,7 +107,7 @@ public abstract class Sequence {
     *           Separator position after sequence
     */
    public void addInfo(String header, long length, long ssp) {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -113,7 +115,7 @@ public abstract class Sequence {
     * @return Number of concatenated sequences
     */
    public int getNumberSequences() {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -121,7 +123,7 @@ public abstract class Sequence {
     * @return Array containing the length of each sequence
     */
    public long[] getLengths() {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -129,7 +131,7 @@ public abstract class Sequence {
     * @return Maximum length of sequences
     */
    public long getMaximumSequenceLength() {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
@@ -137,7 +139,22 @@ public abstract class Sequence {
     * @return Minimum length of sequences
     */
    public long getMinimumSequenceLength() {
-      throw new RuntimeException(String.format("Operation not supported in %d mode",
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
+            mode == Mode.READ ? "READ" : "WRITE"));
+   }
+
+   public void addQualityValues(ByteBuffer buffer) throws IOException {
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
+            mode == Mode.READ ? "READ" : "WRITE"));
+   }
+
+   /**
+    * Returns array of quality values (concatenated, with separators); i.e. for each k,
+    * getQualityValues()[k] contains the quality of the character arrar()[k].
+    * @return Returns null of qualities are not available.
+    */
+   public byte[] getQualityValues() throws IOException {
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 

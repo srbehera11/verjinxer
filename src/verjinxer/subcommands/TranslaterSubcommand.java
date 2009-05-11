@@ -54,6 +54,7 @@ public class TranslaterSubcommand implements Subcommand {
       log.info("  --masked             lowercase bases are translated to wildcards (only for DNA alphabets)");
       log.info("  --reverse            reverse sequence before applying alphabet (use with -a)");
       log.info("  -r, --runs           additionally create run-related files");
+      log.info("  -q, --quality <file> read quality file (only for CSFASTA)");
    }
 
    /**
@@ -71,7 +72,7 @@ public class TranslaterSubcommand implements Subcommand {
 
       String filenames[];
       Options opt = new Options(
-            "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs,reverse,c=color=colorspace");
+            "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs,reverse,c=color=colorspace,q=quality:");
 
       try {
          filenames = opt.parse(args);
@@ -179,6 +180,18 @@ public class TranslaterSubcommand implements Subcommand {
             }
          colorspace = true;
       }
+      String qualityFilename = null; 
+      if (opt.isGiven("quality")) {
+         qualityFilename = opt.get("quality");
+         if ((filenames.length!=1) || (FileUtils.determineFileType(filenames[0]) != FileUtils.FileType.CSFASTA)) {
+            log.error("translate: If option --quality is given, exactly one CSFASTA file is expected.");
+            return 1;
+         }
+         if (addrc||reverse) {
+            log.error("translate: Option --quality forbids use of reverse (complement).");
+            return 1;
+         }
+      }
 
       if (alphabet == null) {
          for (int i = 0; i < filenames.length; i++)
@@ -199,7 +212,7 @@ public class TranslaterSubcommand implements Subcommand {
       g.startProjectLogging(project, true);
 
       Translater translater = new Translater(g, trim, alphabet, alphabet2, separateRCByWildcard,
-            reverse, addrc, bisulfite, dnarcstring, colorspace);
+            reverse, addrc, bisulfite, dnarcstring, colorspace, qualityFilename);
 
       translater.createProject(project, filenames);
 

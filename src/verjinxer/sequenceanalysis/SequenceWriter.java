@@ -11,46 +11,48 @@ import verjinxer.util.ArrayFile;
  */
 public class SequenceWriter extends Sequence {
 
-   private ArrayFile seq;
-   private ArrayList<String> description = new ArrayList<String>();
+   private ArrayFile sequenceFile;
+   private ArrayList<String> descriptions = new ArrayList<String>();
    private ArrayList<Long> sequenceLengths = new ArrayList<Long>();
    private long maxSequenceLength = 0;
    private long minSequenceLength = Long.MAX_VALUE;
+   /** Sequence separator positions. */
    private ArrayList<Long> ssps = new ArrayList<Long>();
+   private ArrayFile qualityFile = null;
 
    SequenceWriter(final String projectname, Mode mode) throws IOException {
       super(projectname, mode);
 
-      seq = new ArrayFile(seqFile);
-      seq.openW();
+      sequenceFile = new ArrayFile(seqFilename);
+      sequenceFile.openW();
    }
 
    @Override
    public void store() throws IOException {
-      seq.close();
+      sequenceFile.close();
 
       // Write the ssp.
       long[] sspArray = new long[ssps.size()];
       int i = 0;
       for (long l : ssps)
          sspArray[i++] = l;
-      new ArrayFile(sspFile).writeArray(sspArray, 0, ssps.size());
+      new ArrayFile(sspFilename).writeArray(sspArray, 0, ssps.size());
 
       // Write the descriptions
-      PrintWriter descfile = new PrintWriter(descFile);
-      for (String s : description)
+      PrintWriter descfile = new PrintWriter(descFilename);
+      for (String s : descriptions)
          descfile.println(s);
       descfile.close();
    }
 
    @Override
    public long writeBuffer(ByteBuffer tr) throws IOException {
-      return seq.writeBuffer(tr);
+      return sequenceFile.writeBuffer(tr);
    }
 
    @Override
    public void addInfo(String header, long length, long ssp) {
-      description.add(header);
+      descriptions.add(header);
 
       sequenceLengths.add(length);
       if (length < minSequenceLength)
@@ -63,7 +65,7 @@ public class SequenceWriter extends Sequence {
 
    @Override
    public long length() {
-      return seq.length();
+      return sequenceFile.length();
    }
 
    @Override
@@ -90,4 +92,13 @@ public class SequenceWriter extends Sequence {
       return minSequenceLength;
    }
 
+   @Override
+   public void addQualityValues(ByteBuffer buffer) throws IOException {
+      if (qualityFile==null) {
+         qualityFile = new ArrayFile(qualityFilename);
+         qualityFile.openW();
+      }
+      qualityFile.writeBuffer(buffer);
+   }
+   
 }

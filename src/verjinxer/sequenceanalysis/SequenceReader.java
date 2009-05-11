@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+
 import verjinxer.util.ArrayFile;
 
 public class SequenceReader extends Sequence {
@@ -11,7 +12,8 @@ public class SequenceReader extends Sequence {
    private byte[] sequence;
    private long[] ssp;
    private String[] description;
-
+   private byte[] qualityValues = null;
+   
    SequenceReader(final String projectname, Mode mode) throws IOException {
       super(projectname, mode);
       load();
@@ -25,10 +27,11 @@ public class SequenceReader extends Sequence {
       // Code only copied from Globals.slurpByteArray(String file)
       // TODO with runs, seqFile is f.e. chr22.runseq.seq, what is wrong
       try {
-         sequence = new ArrayFile().setFilename(seqFile).readArray(sequence);
-         ssp = new ArrayFile().setFilename(sspFile).readArray(ssp);
-         assert sequence != null : String.format("No sequence for %s", seqFile);
-         assert ssp != null : String.format("No ssp for %s", sspFile);
+         // TODO: uuuooh. think about static methods!
+         sequence = new ArrayFile().setFilename(seqFilename).readArray(sequence);
+         ssp = new ArrayFile().setFilename(sspFilename).readArray(ssp);
+         assert sequence != null : String.format("No sequence for %s", seqFilename);
+         assert ssp != null : String.format("No ssp for %s", sspFilename);
       } catch (IOException ex) {
          ex.printStackTrace();
          System.exit(1);
@@ -41,7 +44,7 @@ public class SequenceReader extends Sequence {
    private void loadDescription() {
       ArrayList<String> desc = new ArrayList<String>();
       try {
-         BufferedReader in = new BufferedReader(new FileReader(descFile));
+         BufferedReader in = new BufferedReader(new FileReader(descFilename));
          String line;
          while ((line = in.readLine()) != null) {
             desc.add(line);
@@ -51,7 +54,7 @@ public class SequenceReader extends Sequence {
          System.exit(1);
       }
       description = desc.toArray(description);
-      assert description.length > 0 : String.format("No description for %s", descFile);
+      assert description.length > 0 : String.format("No description for %s", descFilename);
    }
 
    @Override
@@ -63,4 +66,13 @@ public class SequenceReader extends Sequence {
    public byte[] array() {
       return sequence;
    }
+
+   @Override
+   public byte[] getQualityValues() throws IOException {
+      if (qualityValues==null) {
+         qualityValues = new ArrayFile().setFilename(qualityFilename).readArray(qualityValues);
+      }
+      return qualityValues;
+   }
+      
 }
