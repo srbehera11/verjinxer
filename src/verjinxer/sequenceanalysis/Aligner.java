@@ -345,5 +345,4 @@ public class Aligner {
       }
       return new AlignmentResult(bestd, bestpos);
    }
-
 }
