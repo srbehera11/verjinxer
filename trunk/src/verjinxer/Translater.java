@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.StringTokenizer;
 
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.FastaFile;
@@ -40,10 +41,15 @@ public class Translater {
    final boolean bisulfite;
    final String dnarcstring;
    final boolean colorspace;
+   final String csfastaQualityFilename;
 
+   /** 
+    * @param csfastaQualityFilename File with quality values for each character. Only has an effect
+    *                        of CSFASTA files. May be null.
+    */
    public Translater(Globals g, boolean trim, Alphabet alphabet, Alphabet amap2,
          boolean separateRCByWildcard, boolean reverse, boolean addrc, boolean bisulfite,
-         String dnarcstring, final boolean colorspace) {
+         String dnarcstring, final boolean colorspace, final String csfastaQualityFilename) {
 
       // for now, only print the message itself (%m), nothing else
 
@@ -57,10 +63,11 @@ public class Translater {
       this.dnarcstring = dnarcstring;
       this.addrc = addrc;
       this.colorspace = colorspace;
+      this.csfastaQualityFilename = csfastaQualityFilename;
    }
 
    public Translater(Globals g, Alphabet alphabet) {
-      this(g, false, alphabet, null, false, false, false, false, "", false);
+      this(g, false, alphabet, null, false, false, false, false, "", false, null);
    }
 
    /**
@@ -160,7 +167,7 @@ public class Translater {
       // FastaFile.read() already ignores comment lines with #
       // so call translateFasta(String,Sequence)
       assert FileUtils.determineFileType(fname) == FileUtils.FileType.CSFASTA;
-      translateFasta(fname, out);
+      translateFasta(fname, out, csfastaQualityFilename);
       // TODO maybe make some assertions like alphabet == CS???
    }
    
@@ -214,10 +221,26 @@ public class Translater {
       }
    }
 
-   /**
-    * 
-    */
    public void translateFasta(final String fname, final Sequence out) {
+      translateFasta(fname, out, null);
+   }
+         
+   /**
+    * @param qualityFilename File with FASTA-style quality information (one byte per character).
+    *                        May be null.
+    */
+   public void translateFasta(final String fname, final Sequence out, final String qualityFilename) {
+      FastaFile qualityFasta = null;
+      if (qualityFilename!=null) {
+         qualityFasta = new FastaFile(qualityFilename);
+         try {
+            qualityFasta.open();
+         } catch (IOException ex) {
+            log.warn("translate: quality file not found (%s), skipping. (%s)", qualityFilename, ex);
+            return;
+         }
+         // qualityOutput = new ArrayFile(FileUtils.extensionRemoved(fname)+FileNameExtensions.quality);
+      }
       FastaFile f = new FastaFile(fname);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
@@ -250,6 +273,22 @@ public class Translater {
                         (int) (lastbyte - 1));
             } else { // no reverse complement
                out.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
+            }
+            if (qualityFasta!=null) {
+               FastaSequence qualitySequence = qualityFasta.read();
+               if (!qualitySequence.getHeader().equals(fseq.getHeader())) {
+                  throw new IllegalArgumentException(String.format("Annotations from CSFASTA and quality files do not match (\"%s\" != \"%s\").", qualitySequence.getHeader(), fseq.getHeader()));
+               }
+               String qs = qualitySequence.getSequence();
+               byte[] qualityArray = new byte[qs.length()/2+2];
+               int n = 0;
+               StringTokenizer st = new StringTokenizer(qs, " ", false);
+               while (st.hasMoreTokens()) qualityArray[n++] = Byte.parseByte(st.nextToken());
+               if (n!=fseq.length()) {
+                  throw new IllegalArgumentException(String.format("Length mismatch between CSFASTA (%d) and quality files (%d) (sequence name: \"%s\").", fseq.length(), n, fseq.getHeader()));
+               }
+               qualityArray[n++]=Byte.MIN_VALUE;
+               out.addQualityValues(ByteBuffer.wrap(qualityArray, 0, n));
             }
          } catch (InvalidSymbolException ex) {
             log.error("translate: %s", ex);

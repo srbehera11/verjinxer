@@ -264,7 +264,7 @@ public class ArrayFile {
    /**
     * Writes a part of a given array to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
-    * Otherwise, replace the whole file by the given (part of) the array.
+    * Otherwise, replace the whole file by the given (part of the) array.
     * @param a      the int[] to write
     * @param start  position in array 'a' at which to start writing
     * @param items  number of array entries to write
@@ -298,7 +298,7 @@ public class ArrayFile {
    /**
     * Writes a whole given array to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
-    * Otherwise, replace the whole file by the given (part of) the array.
+    * Otherwise, replace the whole file by the given (part of the) array.
     * @param a     the int[] to write
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
@@ -310,7 +310,7 @@ public class ArrayFile {
    /**
     * Writes a part of a given array to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
-    * Otherwise, replace the whole file by the given (part of) the array.
+    * Otherwise, replace the whole file by the given (part of the) array.
     * @param a      the int[] to write
     * @param start  position in array 'a' at which to start writing
     * @param items  number of array entries to write
@@ -344,7 +344,7 @@ public class ArrayFile {
    /**
     * Writes a whole given array to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
-    * Otherwise, replace the whole file by the given (part of) the array.
+    * Otherwise, replace the whole file by the given (part of the) array.
     * @param a     the int[] to write
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
@@ -359,7 +359,7 @@ public class ArrayFile {
    /** (BYTE array:) 
     * write a part of a given array to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
-    * Otherwise, replace the whole file by the given (part of) the array.
+    * Otherwise, replace the whole file by the given (part of the) array.
     * @param a     the byte[] to write
     * @param start position in array 'a' at which to start writing
     * @param len   number of entries to write
@@ -375,7 +375,7 @@ public class ArrayFile {
    /**
     * Writes a whole byte array to disk via this array file.
     * If this ArrayFile is open for writing, write at the current file position.
-    * Otherwise, replace the whole file by the given (part of) the array.
+    * Otherwise, replace the whole file by the given (part of the) array.
     * @param a
     * @return length of this ArrayFile after writing
     * @throws java.io.IOException if any I/O error occurs
@@ -387,7 +387,7 @@ public class ArrayFile {
   /**
     * Writes the given ByteBuffer (between position and limit) to disk via this ArrayFile. 
     * If this ArrayFile is open for writing, write at the current file position.
-    * Otherwise, replace the whole file by the given (part of) the array.
+    * Otherwise, replace the whole file by the given (part of the) array.
     * @param b     the ByteBuffer to write
     * @return      length of this ArrayFile after writing
     * @throws java.io.IOException  if any I/O error occurs
