@@ -165,6 +165,13 @@ public class Translater {
    }
    
    /**
+    * Interprets a given FASTA file with the DNA alphabet and encodes it into colospace alphabet.
+    * Afterwards the result is translated into the given sequence.
+    * 
+    * @param fname
+    *           the FASTA file
+    * @param out
+    *           sequence to translate into
     * @see translateFasta(String,Sequence)
     */
    public void translateFastaFromDNA2CS(final String fname, final Sequence out) {
