@@ -1,4 +1,4 @@
-/*
+/**
  * Mapper.java 
  * Created on May 14, 2007, 9:08 AM 
  * TODO: qgramatonce, suffix, suffixatonce 
@@ -25,6 +25,7 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.util.ArrayFile;
@@ -51,7 +52,7 @@ public class MapperSubcommand implements Subcommand {
     * Creates a new instance of Mapper
     * 
     * @param gl
-    *           the globals object to be used (contains information about logging streams, etc)
+    *           the globals object to be used
     */
    public MapperSubcommand(Globals gl) {
       g = gl;
@@ -418,9 +419,9 @@ public class MapperSubcommand implements Subcommand {
       iqpos = new int[(int) longestpos];
       itext = new byte[(int) longestindexlen];
 
-      final int blow = (int) java.lang.Math.floor(-(longestsequence + 1.0) / blocksize);
+      final int blow = (int) Math.floor(-(longestsequence + 1.0) / blocksize);
       assert (blow < 0);
-      final int bhi = (int) java.lang.Math.floor((double) longestindexlen / blocksize);
+      final int bhi = (int) Math.floor((double) longestindexlen / blocksize);
       assert (bhi >= 0);
       seqbesterror = new int[tm]; // keep track of best hits' error
       seqbesthits = new int[tm]; // number of hits with best error
@@ -497,8 +498,8 @@ public class MapperSubcommand implements Subcommand {
       int qcode = -1;
       int success;
       final int maxqgrams = jlength - 1 - q + 1 - 2 * trim;
-      final int overlap = (int) (java.lang.Math.ceil(jlength * errorlevel));
-      int subtract = (int) (java.lang.Math.ceil(jlength * errorlevel * q));
+      final int overlap = (int) (Math.ceil(jlength * errorlevel));
+      int subtract = (int) (Math.ceil(jlength * errorlevel * q));
       if (q * seqbesterror[currentj] < subtract)
          subtract = q * seqbesterror[currentj];
       final int bthresh = maxqgrams - subtract;
@@ -548,9 +549,10 @@ public class MapperSubcommand implements Subcommand {
                int bend = bstart + blocksize + jlength + overlap + 1;
                if (bend > ilength)
                   bend = ilength;
-               int endpos = align(txt, jstart + trim, len, itext, bstart, bend, overlap, Dcol); // also
-               // have
-               // enddelta!
+               Aligner.AlignmentResult ar =  Aligner.align(txt, jstart + trim, len, itext, bstart, bend, overlap, Dcol, asize);
+               int endpos, enddelta;
+               endpos = ar.getBestpos();
+               enddelta = ar.getEnddelta();
                if (endpos >= 0) {
                   endpos += trim;
                   seqallhits[currentj]++;
@@ -660,10 +662,13 @@ public class MapperSubcommand implements Subcommand {
          final int jstart, final int jlength, final int currentj, final int currentdir,
          final int trim) {
       final int len = jlength - 2 * trim;
-      final int tol = (int) java.lang.Math.ceil(jlength * errorlevel);
+      final int tol = (int) Math.ceil(jlength * errorlevel);
       log.debug(" tol=%d", tol);
-      int endpos = align(txt, jstart + trim, len, itext, 0, itext.length, tol, Dcol); // also have
-      // enddelta!
+      Aligner.AlignmentResult ar = Aligner.align(txt, jstart + trim, len, itext, 0, itext.length, tol, Dcol, asize);
+      int endpos, enddelta;
+      endpos = ar.getBestpos();
+      enddelta = ar.getEnddelta();
+      
       if (endpos >= 0) {
          endpos += trim;
          seqallhits[currentj]++;
@@ -678,135 +683,6 @@ public class MapperSubcommand implements Subcommand {
       return endpos;
    }
 
-   // =============== ALIGNMENTS =================================================
-
-   /**
-    * align text with parallelogram block #b. Requires blocksize, blow, itext[], asize
-    * 
-    * @param txt
-    *           the text array
-    * @param start
-    *           start position in the text
-    * @param len
-    *           length of the text (part) to align with a block
-    * @param bstart
-    *           where to start alignming in the index
-    * @param bend
-    *           where to end aligning in the index (exclusive)
-    * @param giventol
-    *           absolute error tolerance
-    * @param storage
-    *           work storage area, must have length >=len
-    * @return position where leftmost best match ends in index, -1 if none.
-    */
-   final int align(final byte[] txt, final int start, final int len, final byte[] index,
-         final int bstart, final int bend, final int giventol, final int[] storage) {
-      final int tol = giventol < len ? giventol : len;
-      int bestpos = -1;
-      int bestd = 2 * (len + 1); // as good as infinity
-      final int as = asize;
-
-      for (int k = 0; k < tol; k++)
-         storage[k] = k + 1;
-      int lei = tol - 1; // initial last essential index
-      // int newlei;
-      int dup, dul, diag, dmin;
-      byte tk;
-      for (int c = bstart; c < bend; c++) {
-         dup = dul = dmin = 0;
-         // newlei = lei+1; if(newlei>=len) newlei=len-1;
-         for (int k = 0; k <= lei; k++) {
-            tk = txt[start + k];
-            dmin = 1 + ((dup < storage[k]) ? dup : storage[k]); // left or up
-            diag = dul + ((index[c] != tk || tk < 0 || tk >= as) ? 1 : 0);
-            if (diag < dmin)
-               dmin = diag;
-            dul = storage[k];
-            storage[k] = dup = dmin;
-         }
-         // lei+1 could go diagonally
-         if (lei + 1 < len) {
-            final int k = ++lei;
-            tk = txt[start + k];
-            dmin = 1 + dup;
-            diag = dul + ((index[c] != tk || tk < 0 || tk >= as) ? 1 : 0);
-            if (diag < dmin)
-               dmin = diag;
-            storage[k] = dup = dmin;
-         }
-         // dmin now contains storage[lei]
-         if (dmin > tol) {
-            while (lei >= 0 && storage[lei] > tol)
-               lei--;
-            dmin = (lei >= 0 ? storage[lei] : 0);
-         } else {
-            while (dmin < tol && lei < len - 1) {
-               storage[++lei] = ++dmin;
-            }
-         }
-         // lei=newlei;
-         assert ((lei == -1 && dmin == 0) || dmin == storage[lei]);
-         if (lei == len - 1 && dmin < bestd) {
-            bestd = dmin;
-            bestpos = c;
-         }
-      }
-      enddelta = bestd; // dirty coding for:: return bestd;
-      return bestpos;
-   }
-
-   /**
-    * FULLY align text with parallelogram block #b. Requires blocksize, blow, itext[], asize
-    * 
-    * @param txt
-    *           the text array
-    * @param start
-    *           start position in the text
-    * @param len
-    *           length of the text (part) to align with a block
-    * @param bstart
-    *           where to start alignming in the index
-    * @param bend
-    *           where to end aligning in the index (exclusive)
-    * @param giventol
-    *           absolute error tolerance
-    * @param storage
-    *           work storage area, must have length >=len
-    * @return position where leftmost best match ends in index, -1 if none.
-    */
-   final int fullalign(final byte[] txt, final int start, final int len, final int bstart,
-         final int bend, final int giventol, final int[] storage) {
-      // final int tol = giventol<len? giventol : len;
-      int bestpos = -1;
-      int bestd = 2 * (len + 1); // as good as infinity
-      final byte[] index = itext;
-      final int as = asize;
-
-      for (int k = 0; k < len; k++)
-         storage[k] = k + 1;
-      int dup, dul, diag, dmin;
-      byte tk;
-      for (int c = bstart; c < bend; c++) {
-         dup = dul = dmin = 0;
-         for (int k = 0; k < len; k++) {
-            tk = txt[start + k];
-            dmin = 1 + ((dup < storage[k]) ? dup : storage[k]); // left or up
-            diag = dul + ((index[c] != tk || tk < 0 || tk >= as) ? 1 : 0);
-            if (diag < dmin)
-               dmin = diag;
-            dul = storage[k];
-            storage[k] = dup = dmin;
-         }
-         // dmin now contains storage[len-1]
-         if (dmin < bestd) {
-            bestd = dmin;
-            bestpos = c;
-         }
-      }
-      enddelta = bestd; // dirty coding for:: return bestd;
-      return bestpos;
-   }
-
    // ==================== helpers ===========================================
 
    /**
@@ -818,8 +694,8 @@ public class MapperSubcommand implements Subcommand {
       final int as = asize;
       TicToc timer = new TicToc();
       // set q-gram length q and other parameters
-      int qq = 4 + (int) (java.lang.Math.ceil(java.lang.Math.log(longestsequence)
-            / java.lang.Math.log(asize - 1)));
+      int qq = 4 + (int) (Math.ceil(Math.log(longestsequence)
+            / Math.log(asize - 1)));
       if (qgramtabulate)
          log.info("map: tabulating %d-gram complexity of all reads", qq);
       else
@@ -918,10 +794,10 @@ public class MapperSubcommand implements Subcommand {
       int t;
       for (int ll = 0; ll <= maxlen; ll++) {
          // compute threshold for given errorlevel
-         t = (ll - q) - (int) (java.lang.Math.ceil(ll * errorlevel * q));
+         t = (ll - q) - (int) (Math.ceil(ll * errorlevel * q));
          // qgram hits occur in clumps: distribution of number is Poisson
          // compute the expected number of clumps in a paralleogram of block witdth
-         eclumps = (double) ll * bwidth * (1 - match) * java.lang.Math.pow(match, q);
+         eclumps = (double) ll * bwidth * (1 - match) * Math.pow(match, q);
          // the number of q-gram hits H within a parallelogram is geometric, P(H=h) =
          // (1-match)*match^(h-1)
          if (t <= 0) {
