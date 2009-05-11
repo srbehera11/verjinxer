@@ -36,3 +36,5 @@ It was created like this:
 colorspace.alphabet:
 Test file for color-space conversion. See above.
 
+sequence.fastq:
+An example file for the FASTQ file format.
