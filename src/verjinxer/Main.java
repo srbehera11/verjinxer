@@ -154,7 +154,7 @@ public class Main {
       } else if (command.startsWith("an")) {
          subcommand = new QGramIndexCompressionAnalyzerSubcommand(g);
       } else if (command.startsWith("qf")) {
-         new QgramFrequencer(g).run(rest);
+         new QGramFrequencer(g).run(rest);
       } else if (command.startsWith("qm")) {
          subcommand = new QGramMatcherSubcommand(g);
       } else if (command.startsWith("su")) {
@@ -204,7 +204,7 @@ public class Main {
       } else if (command.startsWith("qg")) {
          subcommand = new QGramIndexerSubcommand(g);
       } else if (command.startsWith("qf")) {
-         new QgramFrequencer(g).help();
+         new QGramFrequencer(g).help();
       } else if (command.startsWith("qm")) {
          subcommand = new QGramMatcherSubcommand(g);
       } else if (command.startsWith("su")) {
