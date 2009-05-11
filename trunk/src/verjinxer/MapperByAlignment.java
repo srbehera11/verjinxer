@@ -15,60 +15,57 @@ import verjinxer.util.ProjectInfo;
 
 /** Maps reads. */
 public class MapperByAlignment {
+   
    private static final Logger log = Globals.getLogger();
 
-   /** current index name */
-   // private final String iname = null;
-   /** current index project data */
-   // private final ProjectInfo iproject;
-   /** current index text length */
-   // private final int ilength;
-   /** current index text */
-   // private final byte[] itext;
-   // private final int enddelta = -1;
    /** keep track of best hits' error */
    private int[] seqbesterror;
+   
    /** number of hits with best error */
    private int[] seqbesthits;
+   
    /** number of all hits */
    private int[] seqallhits;
+   
    private final byte[] rcj;
+   
    private final int[] Dcol;
+   
    /** number of sequences */
    private final int tm;
+
    private final byte[] tall; // the whole text
 
    private final PrintWriter allout;
 
-   // private final ArrayList<String> indices;
-
    // private long tn = 0; // length of t
 
-   private final ArrayList<String> tdesc;
-   private final Alphabet alphabet;
-   private ArrayList<String> indices = null;
+   private final ArrayList<String> indices;
 
    private final long longestsequence;
 
    final BitArray tselect;
+   
    final BitArray trepeat;
+   
    final BitArray tmapped;
+   
    final String tname;
+   
    private int asize;
-   /**sequence separator positions in text t*/
+   
+   /** sequence separator positions in text t */
    private final long[] tssp;
+
    private Globals g;
 
-   public MapperByAlignment(Globals g, long longestsequence, Alphabet alphabet,
-         ArrayList<String> tdesc, int tm, int asize, PrintWriter allout, BitArray tselect,
-         BitArray trepeat, BitArray tmapped, byte[] tall, long[] tssp, String tname) {
+   public MapperByAlignment(Globals g, long longestsequence, int tm, int asize, PrintWriter allout, BitArray tselect,
+         BitArray trepeat, BitArray tmapped, byte[] tall, long[] tssp, String tname, ArrayList<String> indices) {
 
       this.g = g;
       this.longestsequence = longestsequence;
       rcj = new byte[(int) longestsequence + 1]; // +1 for separator
       Dcol = new int[(int) longestsequence + 1]; // +1 for separator
-      this.alphabet = alphabet;
-      this.tdesc = tdesc;
       this.tm = tm;
       seqbesterror = new int[tm]; // keep track of best hits' error
       seqbesthits = new int[tm]; // number of hits with best error
@@ -81,9 +78,11 @@ public class MapperByAlignment {
       this.tall = tall;
       this.tssp = tssp;
       this.tname = tname;
+      this.indices = indices;
    }
 
-   public final void mapByAlignmentAtOnce(final int trim, final double errorlevel, final boolean revcomp) {
+   public final void mapByAlignmentAtOnce(final int trim, final double errorlevel,
+         final boolean revcomp) {
       // String iname = null;
 
       int inum = indices.size();
