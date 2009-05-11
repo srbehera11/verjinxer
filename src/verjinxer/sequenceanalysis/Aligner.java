@@ -345,4 +345,16 @@ public class Aligner {
       }
       return new AlignmentResult(bestd, bestpos);
    }
+   
+   /**
+    * 
+    * @param query
+    * @param reference
+    * @param qualities quality values of the query
+    * @param knownGoodStart
+    * @param knownGoodStop interval known to match exactly
+    */
+   public static void alignWithQualities(final byte[] query, final byte[] reference, final byte[] qualities, final int knownGoodStart, final int knowGoodStop) {
+      // TODO
+   }
 }
