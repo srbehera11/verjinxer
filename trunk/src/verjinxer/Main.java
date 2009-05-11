@@ -2,7 +2,6 @@
  * Main.java Created on 30. Januar 2007, 14:38
  */
 
-// TODO: mirgrate to Java.util.logging instead of my own logger!
 package verjinxer;
 
 import static verjinxer.Globals.programname;
@@ -16,6 +15,8 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 
+import verjinxer.subcommands.AdapterRemoverSubcommand;
+import verjinxer.subcommands.MapperSubcommand;
 import verjinxer.subcommands.QGramIndexCompressionAnalyzerSubcommand;
 import verjinxer.subcommands.QGramIndexerSubcommand;
 import verjinxer.subcommands.QGramMatcherSubcommand;
@@ -57,6 +58,7 @@ public class Main {
       log.info("  bigsuffix    ...          build suffixtray of HUGE translated file(s)");
       log.info("  map          ...          map sequences to an index");
       log.info("  nonunique    ...          find non-unique specific probes in an index");
+      log.info("  rmadapt      ...          remove adapters from sequences");
       log.info("Global options:");
       log.info("  -Q, --quiet               quiet mode, don't print messages to stdout");
       log.info("  -D, --dir    <directory>  working directory");
@@ -160,9 +162,11 @@ public class Main {
       } else if (command.startsWith("bigsu")) {
          new BigSuffixTrayBuilder(g).run(rest);
       } else if (command.startsWith("ma")) {
-         subcommand = new Mapper(g);
+         subcommand = new MapperSubcommand(g);
       } else if (command.startsWith("nu") || command.startsWith("nonunique")) {
          new NonUniqueProbeDesigner(g).run(rest);
+      } else if (command.startsWith("rm")) {
+         subcommand = new AdapterRemoverSubcommand(g);
       } else {
          usage();
          log.error("Unrecognized command: '%s'", command);
@@ -208,7 +212,7 @@ public class Main {
       } else if (command.startsWith("bigsu")) {
          new BigSuffixTrayBuilder(g).help();
       } else if (command.startsWith("ma")) {
-         subcommand = new Mapper(g);
+         subcommand = new MapperSubcommand(g);
       } else if (command.startsWith("nu") || command.startsWith("nonunique")) {
          new NonUniqueProbeDesigner(g).help();
       } else {

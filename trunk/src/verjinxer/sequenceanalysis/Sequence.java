@@ -126,7 +126,7 @@ public abstract class Sequence {
    }
 
    /**
-    * @return Maximum lengths of sequences
+    * @return Maximum length of sequences
     */
    public long getMaximumSequenceLength() {
       throw new RuntimeException(String.format("Operation not supported in %d mode",

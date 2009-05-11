@@ -145,7 +145,7 @@ public class Globals {
     *           the name of the file to be read
     * @return the newly created byte[] with the file's contents
     */
-   byte[] slurpByteArray(String file) {
+   public byte[] slurpByteArray(String file) {
       byte[] a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
@@ -174,7 +174,7 @@ public class Globals {
     *           Otherwise, a new array of the correct size is created.
     * @return the newly created byte[] or a with the file's contents.
     */
-   byte[] slurpByteArray(String file, long startindex, long stopindex, byte[] a) {
+   public byte[] slurpByteArray(String file, long startindex, long stopindex, byte[] a) {
       // log.info("%s: reading '%s' [%d..%d] into memory...", cmdname, file, startindex, stopindex);
       try {
          a = arf.setFilename(file).readArray(a, 0, (int) (stopindex - startindex), startindex);
@@ -259,7 +259,7 @@ public class Globals {
     *           an existing array to be used if large enough.
     * @return the int[] with the file's contents
     */
-   int[] slurpIntArray(String file, int[] a) {
+   public int[] slurpIntArray(String file, int[] a) {
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
          a = arf.setFilename(file).readArray(a);
@@ -279,7 +279,7 @@ public class Globals {
     *           the name of the file to be read
     * @return the newly created array with the file's contents
     */
-   long[] slurpLongArray(String file) {
+   public long[] slurpLongArray(String file) {
       long[] a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
@@ -337,7 +337,7 @@ public class Globals {
 
    // ======================= text file readers =================================
 
-   static ArrayList<String> slurpTextFile(String file, int ll) {
+   public static ArrayList<String> slurpTextFile(String file, int ll) {
       if (ll <= 0)
          ll = 32;
       log.info("%s: reading '%s'; expecting %d lines...", cmdname, file, ll);
@@ -395,7 +395,7 @@ public class Globals {
     * @param a
     *           the array to be dumped
     */
-   final void dumpIntArray(final String file, final int[] a) {
+   public final void dumpIntArray(final String file, final int[] a) {
       dumpIntArray(file, a, 0, a.length);
    }
 
@@ -480,7 +480,7 @@ public class Globals {
     * @param ba
     *           the bit array
     */
-   void dumpBitArray(final String filename, BitArray ba) {
+   public void dumpBitArray(final String filename, BitArray ba) {
       log.info("%s: writing '%s'...", cmdname, filename);
       try {
          ba.writeTo(arf.setFilename(filename));
@@ -498,7 +498,7 @@ public class Globals {
     *           the name of the file
     * @return the bit array
     */
-   BitArray slurpBitArray(final String filename) {
+   public BitArray slurpBitArray(final String filename) {
       log.info("%s: reading '%s'...", cmdname, filename);
       BitArray ba = null;
       try {
