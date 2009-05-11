@@ -1,10 +1,13 @@
 /*
- * Mapper.java Created on May 14, 2007, 9:08 AM TODO: qgramatonce, suffix, suffixatonce TODO:
- * pvalues and Evalues TODO / BROKEN: Especially the alignment code needs review! TODO: adapt to
- * 64-bit files
+ * Mapper.java 
+ * Created on May 14, 2007, 9:08 AM 
+ * TODO: qgramatonce, suffix, suffixatonce 
+ * TODO: pvalues and Evalues 
+ * TODO / BROKEN: Especially the alignment code needs review! 
+ * TODO: adapt to 64-bit files
  */
 
-package verjinxer;
+package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
@@ -19,10 +22,11 @@ import java.util.Locale;
 
 import com.spinn3r.log5j.Logger;
 
+import verjinxer.FileNameExtensions;
+import verjinxer.Globals;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
-import verjinxer.subcommands.Subcommand;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
@@ -39,7 +43,7 @@ import verjinxer.util.TicToc;
  * 
  * @author Sven Rahmann
  */
-public class Mapper implements Subcommand {
+public class MapperSubcommand implements Subcommand {
    private static final Logger log = Globals.getLogger();
    private Globals g;
 
@@ -49,7 +53,7 @@ public class Mapper implements Subcommand {
     * @param gl
     *           the globals object to be used (contains information about logging streams, etc)
     */
-   public Mapper(Globals gl) {
+   public MapperSubcommand(Globals gl) {
       g = gl;
    }
 
@@ -85,7 +89,7 @@ public class Mapper implements Subcommand {
     *           the command line arguments
     */
    public static void main(String[] args) {
-      new Mapper(new Globals()).run(args);
+      new MapperSubcommand(new Globals()).run(args);
    }
 
    // Variables
