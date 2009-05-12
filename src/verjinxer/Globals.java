@@ -49,7 +49,7 @@ public class Globals {
    String[] action = null;
    
    /** write to project log? */
-   boolean plog = true;
+   boolean logToFile = true;
    
    /** project (working) directory */
    public static String dir = "";
@@ -68,7 +68,7 @@ public class Globals {
 
    // TODO rename
    public final void startProjectLogging(String projectname, boolean startnew) {
-      if (!plog)
+      if (!logToFile)
          return;
       try {
          projectlog = new FileAppender(new PatternLayout("%m%n"), dir + projectname
@@ -76,8 +76,8 @@ public class Globals {
          log.addAppender(projectlog);
 
          // TODO previously, this was only logged to the project log file
-         log.info("# %s", new Date());
-         log.info("# \"%s\"", StringUtils.join("\" \"", action));
+         log.info("%s", new Date());
+         log.info("command line: \"%s\"", StringUtils.join("\" \"", action));
       } catch (IOException ex) {
          log.warn("%s: could not open project log '%s'; continuing...", programname, projectname);
       }
@@ -129,7 +129,7 @@ public class Globals {
       try {
          alphabet = Alphabet.fromFile(fname);
       } catch (IOException ex) {
-         log.warn("%s: could not read alphabet '%s'. Stop.", cmdname, fname);
+         log.error("%s: could not read alphabet '%s'. Stop.", cmdname, fname);
          terminate(1);
       }
       return alphabet;

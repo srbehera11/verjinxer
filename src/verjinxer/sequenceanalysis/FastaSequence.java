@@ -266,7 +266,7 @@ public class FastaSequence {
          buf.put(CS.codeWildcard());
       else if (append == 2)
          buf.put(CS.codeSeparator());
-      assert (buf.position() == req) : Integer.toString(buf.position()) + " / "
+      assert buf.position() == req : Integer.toString(buf.position()) + " / "
             + Integer.toString(req);
       buf.flip(); // prepare for writing
       return buf;

@@ -5,13 +5,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import verjinxer.Globals;
 import verjinxer.util.ArrayFile;
 
 public class SequenceReader extends Sequence {
 
-   private byte[] sequence;
-   private long[] ssp;
-   private String[] description;
+   private byte[] sequence = null;
+   private long[] separatorPositions = null;
+   private String[] descriptions = null;
    private byte[] qualityValues = null;
 
    SequenceReader(final String projectname, Mode mode) throws IOException {
@@ -29,12 +30,12 @@ public class SequenceReader extends Sequence {
       try {
          // TODO: uuuooh. think about static methods!
          sequence = new ArrayFile().setFilename(seqFilename).readArray(sequence);
-         ssp = new ArrayFile().setFilename(sspFilename).readArray(ssp);
+         separatorPositions = new ArrayFile().setFilename(sspFilename).readArray(separatorPositions);
          assert sequence != null : String.format("No sequence for %s", seqFilename);
-         assert ssp != null : String.format("No ssp for %s", sspFilename);
+         assert separatorPositions != null : String.format("No ssp for %s", sspFilename);
       } catch (IOException ex) {
          ex.printStackTrace();
-         System.exit(1);
+         Globals.terminate(1);
       }
    }
 
@@ -53,8 +54,8 @@ public class SequenceReader extends Sequence {
          ex.printStackTrace();
          System.exit(1);
       }
-      description = desc.toArray(description);
-      assert description.length > 0 : String.format("No description for %s", descFilename);
+      descriptions = desc.toArray(descriptions);
+      assert descriptions.length > 0 : String.format("No description for %s", descFilename);
    }
 
    @Override

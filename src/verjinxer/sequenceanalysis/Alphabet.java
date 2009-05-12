@@ -519,8 +519,6 @@ public class Alphabet {
             "##wildcards", "BbXxZz", "##wildcards", "#", "##separators:-1" });
    }
 
-   /** *********************************************************** */
-
    /**
     * indicates whether a given file can be translated by this AlphabetMap
     * 
@@ -641,6 +639,4 @@ public class Alphabet {
       fcout.close();
       f.close();
    }
-
-   // end class
 }

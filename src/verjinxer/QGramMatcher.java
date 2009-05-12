@@ -152,7 +152,6 @@ public class QGramMatcher {
       final String tsspfile = dt + FileNameExtensions.ssp;
       final String seqfile = runs ? (ds + FileNameExtensions.runseq) : (ds + FileNameExtensions.seq);
       final String sspfile = ds + FileNameExtensions.ssp;
-      System.gc();
       
       ProjectInfo tproject = ProjectInfo.createFromFile(tProject.getName()); // FIXME tProject vs tproject
       t = new HugeByteArray(tproject.getLongProperty("Length"));

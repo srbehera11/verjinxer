@@ -1,5 +1,7 @@
 package verjinxer.sequenceanalysis;
 
+import verjinxer.util.ArrayUtils;
+
 /**
  * 
  * @author Marcel Martin
@@ -7,8 +9,13 @@ package verjinxer.sequenceanalysis;
  */
 public class Aligner {
    /** direction constants for traceback table */
-   private enum DIR {
+   private enum Direction {
       LEFT, UP, DIAG
+   }
+
+   private static class COSTS {
+      public static int INDEL = 1;
+      public static int MISMATCH = 1;
    }
 
    private static final byte GAP = -1; // TODO
@@ -16,9 +23,273 @@ public class Aligner {
    /** DP table entry */
    private class Entry {
       public int score;
-      public DIR backtrack;
+      public Direction backtrack;
    }
 
+   private static class CostEntry {
+      public int cost;
+      public Direction backtrack;
+   }
+
+   public static class ForwardAlignmentResult {
+      private final byte[] sequence1, sequence2;
+      
+      private final int lengthOnReference;
+      
+      private final int errors;
+      
+      public ForwardAlignmentResult(byte[] sequence1, byte[] sequence2, int errors, int lengthOnReference) {
+         this.sequence1 = sequence1;
+         this.sequence2 = sequence2;
+         this.errors = errors;
+         this.lengthOnReference = lengthOnReference;
+// TODO          assert lengthOnReference == sequence1.length && lengthOnReference == sequence2.length;
+      }
+      
+      public byte[] getSequence1() {
+         return sequence1;
+      }
+      
+      public byte[] getSequence2() {
+         return sequence2;
+      }
+      
+      public int getLengthOnReference() {
+         return lengthOnReference;
+      }
+      
+      public int getErrors() {
+         return errors;
+      }
+   }
+
+
+   /**
+    * 
+    * Uses a banded alignment.
+    * @param s1
+    * @param s2
+    * @param e
+    * @return
+    */
+   public static ForwardAlignmentResult forwardAlign(byte[] s1, byte[] s2, int e) {
+      /* 
+                s2 (n, j)
+            --------------->
+           |
+        s1 | (m, i)
+           |
+           V
+      */
+
+      int m = s1.length;
+      int n = s2.length;
+      assert e >= 0;
+
+      if (n < m - e) {
+         return null;
+      }
+      n = Math.min(n, m + e);
+
+      // the following code makes sure that e is at most n.
+      // if that is the case, then there are no savings
+      // using a sparse DP table (in fact, there is some overhead), but
+      // that happens so rarely in our application that it's currently not
+      // worth optimizing for.
+
+      // e_adjusted == 0 means that e wasn't adjusted.
+      // Otherwise, it contains the old value of e.
+      int e_adjusted = 0;
+      if (e > m) {
+         e_adjusted = e;
+         e = m;
+      }
+      // assert n >= e;
+
+      // Since the DP table is stored column-wise, the indices are exchanged: column first, then row.
+      // We use a banded alignment to save space. That is, only those 2*e+1 consecutive entries of each column are stored
+      // that are really necessary. 
+      // Where you would access DP[i][j] in a full DP table, you now have to access columns[j][i-j+e].
+      CostEntry[][] columns = new CostEntry[n+1][2 * e + 1];
+      
+      for (int i = 0; i < columns.length; ++i) {
+         for (int j = 0; j < columns[i].length; ++j) {
+            columns[i][j] = new CostEntry();
+         }
+      }
+      
+      int i, j, d;
+
+      assert columns[0].length == 2*e+1; // TODO remove after porting
+      
+      // fill that part of the first column that is used
+      for (d = e; d < columns[0].length; ++d) {
+         columns[0][d].cost = d - e;
+         columns[0][d].backtrack = Direction.UP;
+      }
+
+      // fill 
+      for (j = 0; j <= Math.min(e, n); ++j) {
+         columns[j][e - j].cost = j;
+         columns[j][e - j].backtrack = Direction.LEFT;
+      }
+
+      // calculate alignment
+      // outer loop goes over columns
+      CostEntry[] cur_column;
+      CostEntry[] prev_column = columns[0];
+      for (j = 1; j < n + 1; ++j) {
+         cur_column = columns[j];
+
+         for (d = Math.max(e - j + 1, 0); d < Math.min(2 * e, m - j + e) + 1; ++d) {
+            Direction bt = Direction.DIAG;
+            // cost function needs previous and next characters
+//            byte p1 = 'x'; // TODO choose a better 'neutral' character
+//            byte p2 = 'x';
+//            byte n1 = 'x';
+//            byte n2 = 'x';
+//            if (d + j - e - 2 >= 0)
+//               p1 = s1[d + j - e - 2];
+//            if (j - 2 >= 0)
+//               p2 = s2[j - 2];
+//            if (d + j - e < m)
+//               n1 = s1[d + j - e];
+//            if (j < n)
+//               n2 = s2[j];
+            byte c1 = s1[d + j - e - 1];
+            byte c2 = s2[j - 1];
+            int cost = prev_column[d].cost;
+
+            // switch (costtype) {
+            // case REGULAR:
+            cost += (c1 != c2) ? COSTS.MISMATCH : 0;
+            // break;
+            // case BISULFITE_CT_CMC:
+            // cost += cost_bisulfite_CT_cmc(c1, c2);
+            // break;
+            // case BISULFITE_GA_CMC:
+            // cost += cost_bisulfite_GA_cmc(c1, c2);
+            // break;
+            // case BISULFITE_CT:
+            // cost += cost_bisulfite_CT(c1, c2, n1, n2);
+            // break;
+            // case BISULFITE_GA:
+            // cost += cost_bisulfite_GA(c1, c2, p1, p2);
+            // break;
+            // }
+
+            // we can only have a deletion (UP in backtrack table) if we are not at the top
+            if (d != 0) {
+               int tmp = cur_column[d - 1].cost + COSTS.INDEL;
+               // avoid aligning "CG" to "C-G"
+               // if (costtype > REGULAR && c2 == 'C' && c1 == 'G' && p1 == 'C' && n2 == 'G') {
+               // tmp += 1;
+               // }
+               if (tmp < cost) {
+                  bt = Direction.UP;
+                  cost = tmp;
+               }
+            }
+            // we can only have an insertion (LEFT in backtrack table) if we are not at the bottom
+            if (d != 2 * e) {
+               int tmp = prev_column[d + 1].cost + COSTS.INDEL;
+
+               // avoid aligning "C-G" to "CG"
+               // if (costtype > REGULAR && c1 == 'C' && c2 == 'G' && p2 == 'C' && n1 == 'G') {
+               // tmp += 1;
+               // }
+               if (tmp < cost) {
+                  bt = Direction.LEFT;
+                  cost = tmp;
+               }
+            }
+            cur_column[d].cost = cost;
+            cur_column[d].backtrack = bt;
+         }
+         // Abort if it's not possible anymore to find an alignment (reduces runtime by more than
+         // 25%)
+         /* TODO
+         if min(cur_column) > e {
+            free(columns);
+            return None;
+         }*/
+         prev_column = cur_column;
+      }
+
+      // find position with lowest cost in last row
+      assert m - e <= n;
+
+      // TODO last_column!
+
+      // TODO actually, shouldn't we take the entry closest to the diagonal?
+
+      int best = m + n + 1;
+      int best_j = -1;
+      for (j = Math.max(0, m - e); j < Math.min(m + e + 1, n + 1); ++j) {
+         if (columns[j][m - j + e].cost < best) {
+            best_j = j;
+            best = columns[j][m - j + e].cost;
+         }
+      }
+      int errors = best;
+
+      if (errors > e || (e_adjusted > 0 && errors > e_adjusted)) {
+         return null;
+      }
+
+      // now track back (from "lower right" corner)
+      // now track back
+      byte[] alignment1 = new byte[m + n + 4]; // TODO
+      byte[] alignment2 = new byte[m + n + 4]; // TODO
+
+      int p1 = 0;
+      int p2 = 0;
+
+      i = m;
+      j = best_j;
+
+      d = i - j + e;
+
+      // we build reverse sequences while backtracking and
+      // reverse them afterwards.
+
+      while (i > 0 || j > 0) {
+         assert i >= 0 && j >= 0;
+         assert 0 <= d && d <= 2 * e;
+         Direction direction = columns[j][d].backtrack;
+         if (direction == Direction.DIAG) {
+            alignment1[p1++] = s1[--i];
+            alignment2[p2++] = s2[--j];
+         } else if (direction == Direction.LEFT) {
+            alignment1[p1++] = GAP;
+            alignment2[p2++] = s2[--j];
+         } else if (direction == Direction.UP) {
+            alignment1[p1++] = s1[--i];
+            alignment2[p2++] = GAP;
+         } else {
+            assert false;
+         }
+         d = i - j + e;
+      }
+
+      assert i == 0 && j == 0 && d == e;
+      // assert(len(r1) == len(r2));
+      // assert error_check == errors
+
+      // reverse result
+      ArrayUtils.reverseArray(alignment1, p1);
+      ArrayUtils.reverseArray(alignment2, p2);
+
+      // return (r1, r2, begin, length, errors)
+      // PyObject* o = Py_BuildValue("ssii", alignment1, alignment2, errors, best_j);
+
+      return new ForwardAlignmentResult(alignment1, alignment2, errors, best_j);
+   }
+
+   public static void printAlignment(ForwardAlignmentResult alignment, Alphabet alphabet) {
+      
+   }
+   
    /**
     * Computes an end-gap free alignment. Also called free-shift alignment or semiglobal alignment.
     * 
@@ -43,15 +314,23 @@ public class Aligner {
       // the DP table is stored column-wise
       Entry[][] columns;
       columns = new Entry[n + 1][m + 1];
-      int i, j; // i:
+      
+      int i, j;
+      
+      for (i = 0; i < columns.length; ++i) {
+         for (j = 0; j < columns[i].length; ++j) {
+            columns[i][j] = new Entry();
+         }
+      }
+
 
       for (i = 0; i <= m; ++i) {
          columns[0][i].score = 0;
-         columns[0][i].backtrack = DIR.UP; // TODO never read
+         columns[0][i].backtrack = Direction.UP; // TODO never read
       }
       for (j = 0; j <= n; ++j) {
          columns[j][0].score = 0;
-         columns[j][0].backtrack = DIR.LEFT; // TODO never read
+         columns[j][0].backtrack = Direction.LEFT; // TODO never read
       }
 
       // calculate alignment (using unit costs)
@@ -61,16 +340,16 @@ public class Aligner {
       for (j = 1; j <= n; ++j) {
          cur_column = columns[j];
          for (i = 1; i <= m; ++i) {
-            DIR bt = DIR.DIAG;
+            Direction bt = Direction.DIAG;
             int score = prev_column[i - 1].score + ((s1[i - 1] == s2[j - 1]) ? 1 : -1);
             int tmp = cur_column[i - 1].score - 1;
             if (tmp > score) {
-               bt = DIR.UP;
+               bt = Direction.UP;
                score = tmp;
             }
             tmp = prev_column[i].score - 1;
             if (tmp > score) {
-               bt = DIR.LEFT;
+               bt = Direction.LEFT;
                score = tmp;
             }
             cur_column[i].score = score;
@@ -141,17 +420,17 @@ public class Aligner {
       // reverse them afterwards.
       while (i > 0 && j > 0) { // columns[j][i] > 0
          // int score = columns[j][i].score;
-         DIR direction = columns[j][i].backtrack;
-         if (direction == DIR.DIAG) {
+         Direction direction = columns[j][i].backtrack;
+         if (direction == Direction.DIAG) {
             if (s1[--i] != s2[--j])
                errors++;
             alignment1[p1++] = s1[i];
             alignment2[p2++] = s2[j];
-         } else if (direction == DIR.LEFT) {
+         } else if (direction == Direction.LEFT) {
             errors++;
             alignment1[p1++] = GAP;
             alignment2[p2++] = s2[--j];
-         } else if (direction == DIR.UP) {
+         } else if (direction == Direction.UP) {
             alignment1[p1++] = s1[--i];
             alignment1[p2++] = GAP;
             errors++;
@@ -187,8 +466,8 @@ public class Aligner {
       assert columns[best_j][best_i].score == length - 2 * errors;
 
       // reverse result
-      reverseArray(alignment1, p1);
-      reverseArray(alignment2, p2);
+      ArrayUtils.reverseArray(alignment1, p1);
+      ArrayUtils.reverseArray(alignment2, p2);
       // *p1 = '\0';
       // *p2 = '\0';
 
@@ -196,25 +475,19 @@ public class Aligner {
       // return o;
    }
 
-   /** Reverses array[0..length-1] in place */
-   private void reverseArray(byte[] array, int length) {
-      for (int i = 0; i < length / 2; ++i) {
-         byte tmp = array[i];
-         array[i] = array[length - 1 - i];
-         array[length - 1 - i] = tmp;
-      }
-   }
-
-   // TODO remove static
+   // TODO perhaps remove static
    public static class AlignmentResult {
-      int enddelta, bestpos;
+      private final int enddelta, bestpos;
+
       AlignmentResult(int enddelta, int bestpos) {
          this.enddelta = enddelta;
          this.bestpos = bestpos;
       }
+
       public int getEnddelta() {
          return enddelta;
       }
+
       public int getBestpos() {
          return bestpos;
       }
@@ -239,8 +512,9 @@ public class Aligner {
     *           work storage area, must have length >=len
     * @return position where leftmost best match ends in index, -1 if none.
     */
-   public final static  AlignmentResult align(final byte[] txt, final int start, final int len, final byte[] index,
-         final int bstart, final int bend, final int giventol, final int[] storage, int asize) {
+   public final static AlignmentResult align(final byte[] txt, final int start, final int len,
+         final byte[] index, final int bstart, final int bend, final int giventol,
+         final int[] storage, int asize) {
       final int tol = giventol < len ? giventol : len;
       int bestpos = -1;
       int bestd = 2 * (len + 1); // as good as infinity
@@ -294,7 +568,6 @@ public class Aligner {
       return new AlignmentResult(bestd, bestpos);
    }
 
-   
    /**
     * FULLY align text with parallelogram block #b. Requires blocksize, blow, itext[], asize
     * 
@@ -314,8 +587,9 @@ public class Aligner {
     *           work storage area, must have length >=len
     * @return position where leftmost best match ends in index, -1 if none.
     */
-   final static AlignmentResult fullalign(final byte[] txt, final byte[] itext, final int start, final int len, final int bstart,
-         final int bend, final int giventol, final int[] storage, final int asize) {
+   final static AlignmentResult fullalign(final byte[] txt, final byte[] itext, final int start,
+         final int len, final int bstart, final int bend, final int giventol, final int[] storage,
+         final int asize) {
       // final int tol = giventol<len? giventol : len;
       int bestpos = -1;
       int bestd = 2 * (len + 1); // as good as infinity
@@ -345,16 +619,19 @@ public class Aligner {
       }
       return new AlignmentResult(bestd, bestpos);
    }
-   
+
    /**
     * 
     * @param query
     * @param reference
-    * @param qualities quality values of the query
+    * @param qualities
+    *           quality values of the query
     * @param knownGoodStart
-    * @param knownGoodStop interval known to match exactly
+    * @param knownGoodStop
+    *           interval known to match exactly
     */
-   public static void alignWithQualities(final byte[] query, final byte[] reference, final byte[] qualities, final int knownGoodStart, final int knowGoodStop) {
+   public static void alignWithQualities(final byte[] query, final byte[] reference,
+         final byte[] qualities, final int knownGoodStart, final int knowGoodStop) {
       // TODO
    }
 }

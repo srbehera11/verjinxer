@@ -28,6 +28,8 @@ Refactoring
 
 - move Globals.readAlphabet to ProjectInfo
 
+- how to handle -D command-line option? is it necessary?
+
 Bugs
 ----
 
