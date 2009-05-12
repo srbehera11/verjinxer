@@ -19,6 +19,7 @@ import org.junit.Test;
 import verjinxer.Globals;
 
 /**
+ * Test cases for the colorspace functionality of the Translater
  * 
  * @author Markus Kemmerling
  */
@@ -27,6 +28,13 @@ public class TranslaterSubcommandTest {
    private static TranslaterSubcommand translaterSubcommand;
    private static File testdataDirectory;
 
+   /**
+    * Creates an instance of Globals with 'data' as input directory and 'testdata' as output dir,
+    * whereas the directory 'testdata' is created on disk. Than creates an instance of
+    * TranslaterSubcommand with this instance of Globals.
+    * 
+    * @throws Exception
+    */
    @BeforeClass
    public static void setUpBeforeClass() throws Exception {
       System.out.println("Setting up.");
@@ -54,6 +62,11 @@ public class TranslaterSubcommandTest {
       translaterSubcommand = new TranslaterSubcommand(g);
    }
 
+   /**
+    * Deletes the 'testdata' directory, that was used as output directory for the tests.
+    * 
+    * @throws Exception
+    */
    @AfterClass
    public static void tearDownAfterClass() throws Exception {
       System.out.println("Deleting directory.");
@@ -72,10 +85,20 @@ public class TranslaterSubcommandTest {
       // assert !testdataDirectory.exists();
    }
 
+   /**
+    * Makes nothing.
+    * 
+    * @throws Exception
+    */
    @Before
    public void setUp() throws Exception {
    }
 
+   /**
+    * Deletes each file in the 'testdata' directory that does not begin with a dot.
+    * 
+    * @throws Exception
+    */
    @After
    public void tearDown() throws Exception {
       System.out.println("Deleting files in directory.");
@@ -93,21 +116,66 @@ public class TranslaterSubcommandTest {
       }
    }
 
+   /**
+    * Tests the behavior for invalid options. Particular, what happens when an alphabet map is set
+    * for a CSFASTA file and what happens when no alphabet map is set for a FASTA file.
+    */
    @Test
-   @Ignore
    public void testRunWithWrongOptions() {
       String[] args;
-      String[] alphabets = { "-a", "--dna", "--rconly", "--dnarc", "--dnabi", "--protein", "-c",
-            "--colorspace" };
+      String[] alphabets = { "--dna", "--rconly", "--dnabi", "--protein", "-c", "--colorspace" };
 
       System.out.println("Testing, that you cannot set an alphabet map with a CSFASTA file.");
+      // test -a separately
+      args = new String[] { "-a", "colorspace.alphabet", "xyz.csfa" }; // only one CSFASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      args = new String[] { "-a", "colorspace.alphabet", "agds.fa", "adfaflj.fasta",
+            "afljafljasl.fasta", "xyz.csfa", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA
+                                                                                  // beneath some
+                                                                                  // FASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      args = new String[] { "-a", "colorspace.alphabet", "abc.csfasta" }; // only one CSFASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      args = new String[] { "-a", "colorspace.alphabet", "agds.fa", "adfaflj.fasta",
+            "afljafljasl.fasta", "xyz.csfasta", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA
+                                                                                     // beneath some
+                                                                                     // FASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      // test --dnarc separately
+      args = new String[] { "--dnarc", "#", "xyz.csfa" }; // only one CSFASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      args = new String[] { "--dnarc", "#", "agds.fa", "adfaflj.fasta", "afljafljasl.fasta",
+            "xyz.csfa", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA beneath some FASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      args = new String[] { "--dnarc", "#", "abc.csfasta" }; // only one CSFASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      args = new String[] { "--dnarc", "#", "agds.fa", "adfaflj.fasta", "afljafljasl.fasta",
+            "xyz.csfasta", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA beneath some FASTA
+      assertEquals(1, translaterSubcommand.run(args));
+      assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+      // test all prefabricated alphabets
       for (String alphabet : alphabets) {
-         args = new String[] { alphabet, "xyz.cs" }; // only one CSFASTA
-         assertEquals(1, translaterSubcommand.run(args));
+         args = new String[] { alphabet, "xyz.csfa" }; // only one CSFASTA
+         assertEquals(String.format("Alphabet: %s", alphabet), 1, translaterSubcommand.run(args));
          assertEquals(0, testdataDirectory.list().length); // no files in directory
 
-         args = new String[] { alphabet, "agds.fa", "adfaflj.fasta", "afljafljasl.fasta", "xyz.cs",
-               "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA beneath some FASTA
+         args = new String[] { alphabet, "agds.fa", "adfaflj.fasta", "afljafljasl.fasta",
+               "xyz.csfa", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA beneath some FASTA
          assertEquals(1, translaterSubcommand.run(args));
          assertEquals(0, testdataDirectory.list().length); // no files in directory
 
@@ -115,21 +183,30 @@ public class TranslaterSubcommandTest {
          assertEquals(1, translaterSubcommand.run(args));
          assertEquals(0, testdataDirectory.list().length); // no files in directory
 
-         args = new String[] { alphabet, "agds.fa", "adfaflj.fasta", "afljafljasl.fasta", "xyz.cs",
-               "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA beneath some FASTA
+         args = new String[] { alphabet, "agds.fa", "adfaflj.fasta", "afljafljasl.fasta",
+               "xyz.csfasta", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA beneath some FASTA
          assertEquals(1, translaterSubcommand.run(args));
          assertEquals(0, testdataDirectory.list().length); // no files in directory
       }
 
       System.out.println("Testing, that you cannot omit the alphabet map by a FASTA file.");
       for (String option : new String[] { "--trim", "--masked", "--reverse", "-r", "--runs" }) {
-         args = new String[] { "abc.csfasta" };
+         args = new String[] { option, "abc.fasta" };
+         assertEquals(1, translaterSubcommand.run(args));
+         assertEquals(0, testdataDirectory.list().length); // no files in directory
+
+         args = new String[] { option, "xyasdgfasdf.fa" };
          assertEquals(1, translaterSubcommand.run(args));
          assertEquals(0, testdataDirectory.list().length); // no files in directory
       }
 
    }
 
+   /**
+    * Tests <code>verjinxer tr -c data/colorspace.fa<code>
+    * 
+    * @throws IOException
+    */
    @Test
    public void testRunFastaWithC() throws IOException {
       String[] args = { "-c", "colorspace.fa" };
@@ -139,6 +216,11 @@ public class TranslaterSubcommandTest {
             testdataDirectory.getAbsolutePath() + File.separator + "colorspace.seq");
    }
 
+   /**
+    * Tests <code>verjinxer tr data/colorspace.csfasta<code>
+    * 
+    * @throws IOException
+    */
    @Test
    public void testRunCSFASTA() throws IOException {
       String[] args = { "colorspace.csfasta" };
@@ -182,7 +264,7 @@ public class TranslaterSubcommandTest {
          System.out.printf("Comparing position %d.%n", pos1);
          pos1 = channel1.read(buffer1);
          pos2 = channel2.read(buffer2);
-         assertEquals(String.format("The files %s and %s have different conent.", filename1,
+         assertEquals(String.format("The files %s and %s have different content.", filename1,
                filename2), 0, buffer1.compareTo(buffer2));
       }
       assertEquals(String.format("Reading the files %s and %s had end at different positions.",
