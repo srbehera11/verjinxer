@@ -6,7 +6,7 @@ package verjinxer.sequenceanalysis;
  * 
  */
 public class Aligner {
-   /** direction constants for backtrack table */
+   /** direction constants for traceback table */
    private enum DIR {
       LEFT, UP, DIAG
    }
