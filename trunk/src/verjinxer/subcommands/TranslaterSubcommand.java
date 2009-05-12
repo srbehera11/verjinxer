@@ -37,7 +37,7 @@ public class TranslaterSubcommand implements Subcommand {
             FileNameExtensions.alphabet, FileNameExtensions.ssp, FileNameExtensions.prj);
       log.info("with option -r, also creates %s, %s, %s, %s.", FileNameExtensions.runseq,
             FileNameExtensions.runlen, FileNameExtensions.run2pos, FileNameExtensions.pos2run);
-      log.info("To translate CSFASTA files, the specification of an alphabet map is prohibited.");
+      log.info("When translating CSFASTA files, an alphabet map must not be given.");
       log.info("Options:");
       log.info("  -i, --index <name>   name of index files [first filename]");
       log.info("  -t, --trim           trim non-symbol characters at both ends");
@@ -91,7 +91,8 @@ public class TranslaterSubcommand implements Subcommand {
       String projectname;
       if (opt.isGiven("i"))
          projectname = opt.get("i");
-      else { // take base name of first FASTA file
+      else { 
+         // take base name of first FASTA file
          projectname = FileUtils.extensionRemoved(filenames[0]);
       }
       ProjectInfo project = new ProjectInfo(projectname);
@@ -171,12 +172,13 @@ public class TranslaterSubcommand implements Subcommand {
       boolean colorspace = false;
       if (opt.isGiven("colorspace")) {
          alphabet = Alphabet.CS();
-         for (int i = 0; i < filenames.length; i++)
+         for (int i = 0; i < filenames.length; i++) {
             // all files must be FASTA
             if (FileUtils.determineFileType(filenames[i]) != FileUtils.FileType.FASTA) {
                log.error("translate: The option --colorspace is only valid for FASTA files.");
                return 1;
             }
+         }
          colorspace = true;
       }
       String qualityFilename = null; 
@@ -193,11 +195,12 @@ public class TranslaterSubcommand implements Subcommand {
       }
 
       if (alphabet == null) {
-         for (int i = 0; i < filenames.length; i++)
+         for (int i = 0; i < filenames.length; i++) {
             if (FileUtils.determineFileType(filenames[i]) != FileUtils.FileType.CSFASTA) { // only for CSFASTA omitting alphabet map is allowed
                log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
                return 1;
             }
+         }
          // all files are CSFASTA -> go on
          alphabet = Alphabet.CS();
       } else {

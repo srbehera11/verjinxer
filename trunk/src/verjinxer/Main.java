@@ -16,6 +16,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 
 import verjinxer.subcommands.AdapterRemoverSubcommand;
+import verjinxer.subcommands.AlignerSubcommand;
 import verjinxer.subcommands.MapperSubcommand;
 import verjinxer.subcommands.QGramIndexCompressionAnalyzerSubcommand;
 import verjinxer.subcommands.QGramIndexerSubcommand;
@@ -57,6 +58,7 @@ public class Main {
       log.info("  suffix       ...          build suffixtray of translated file(s)");
       log.info("  bigsuffix    ...          build suffixtray of HUGE translated file(s)");
       log.info("  map          ...          map sequences to an index");
+      log.info("  align        ...          aligns sequences using results from qmatch");
       log.info("  nonunique    ...          find non-unique specific probes in an index");
       log.info("  rmadapt      ...          remove adapters from sequences");
       log.info("Global options:");
@@ -114,8 +116,8 @@ public class Main {
          }
       }
 
-      g.plog = !opt.isGiven("P");
-      //g.startProjectLogging(project);
+      g.logToFile = !opt.isGiven("P");
+      // g.startProjectLogging(project);
       // TODO
       // // no -P option (--noplog) given means: project log is requested
       //       
@@ -145,6 +147,8 @@ public class Main {
       // Process all available commands
       if (command.startsWith("he")) {
          help(rest);
+      } else if (command.startsWith("al")) {
+         subcommand = new AlignerSubcommand(g);
       } else if (command.startsWith("tr")) {
          subcommand = new TranslaterSubcommand(g);
       } else if (command.startsWith("cut")) {
@@ -197,6 +201,8 @@ public class Main {
       if (command.startsWith("he")) {
          usage();
          return 0;
+      } else if (command.startsWith("al")) {
+         subcommand = new AlignerSubcommand(g);
       } else if (command.startsWith("cut")) {
          new Cutter(g).help();
       } else if (command.startsWith("tr")) {
