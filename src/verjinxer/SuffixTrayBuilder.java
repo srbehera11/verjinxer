@@ -133,7 +133,7 @@ public class SuffixTrayBuilder {
 
       ProjectInfo project;
       try {
-         project = ProjectInfo.createFromFile(projectname);
+         project = ProjectInfo.createFromFile(indexname);
       } catch (IOException ex) {
          log.warn("cannot read project file.");
          return 1;

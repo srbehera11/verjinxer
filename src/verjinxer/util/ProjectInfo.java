@@ -10,25 +10,33 @@ import java.io.PrintWriter;
 import java.util.Properties;
 
 import verjinxer.FileNameExtensions;
+import verjinxer.Globals;
 
 // TODO maybe get...FileName methods should be removed?
 
 /**
  * Metadata about a project. While primary data such as a suffix array, the alphabet, or the q-gram
- * index are stored in separate files, secondary data such as the number of sequences, the value of q,
- * whether an index is for bisulfite sequences, and so on is stored in a project file. This class 
+ * index are stored in separate files, secondary data such as the number of sequences, the value of
+ * q, whether an index is for bisulfite sequences, and so on is stored in a project file. This class
  * provides a way to read and write that information.
  * 
  * @author Marcel Martin
+ * 
  */
 public class ProjectInfo {
    Properties properties;
-   final String projectname;
-   final String projectfilename;
+   final String projectName;
+   final String projectFileName;
 
-   public ProjectInfo(String projectname) {
-      this.projectname = projectname;
-      this.projectfilename = projectname + FileNameExtensions.prj;
+   /**
+    * Creates a new project in memory only. Call load() and store() to synchronize with files.
+    * 
+    * @param projectName
+    *           Name of the project. The file name for the project is constructed from this string.
+    */
+   public ProjectInfo(String projectName) {
+      this.projectName = projectName;
+      this.projectFileName = Globals.dir + projectName + FileNameExtensions.prj;
 
       Properties defaults = new Properties();
       defaults.setProperty("BisulfiteIndex", "false");
@@ -41,9 +49,9 @@ public class ProjectInfo {
     * appending the appropriate file name extension to the project name.
     */
    public void load() throws FileNotFoundException, IOException {
-      BufferedReader projectfile = new BufferedReader(new FileReader(projectfilename));
-      properties.load(projectfile);
-      projectfile.close();
+      BufferedReader projectFile = new BufferedReader(new FileReader(projectFileName));
+      properties.load(projectFile);
+      projectFile.close();
    }
 
    /**
@@ -66,55 +74,55 @@ public class ProjectInfo {
     * the appropriate extension to the project name.
     */
    public void store() throws IOException {
-      PrintWriter projectfile = new PrintWriter(new BufferedWriter(new FileWriter(projectfilename)));
-      properties.store(projectfile, null);
-      projectfile.close();
+      PrintWriter projectFile = new PrintWriter(new BufferedWriter(new FileWriter(projectFileName)));
+      properties.store(projectFile, null);
+      projectFile.close();
    }
 
    public String getFileName() {
-      return projectfilename;
+      return projectFileName;
    }
 
    public String getName() {
-      return projectname;
+      return projectName;
    }
-   
+
    public int getMaximumBucketSize() {
       return Integer.parseInt(properties.getProperty("qbckMax"));
    }
 
    public String getQPositionsFileName() {
-      return projectname + FileNameExtensions.qpositions;
+      return Globals.dir + projectName + FileNameExtensions.qpositions;
    }
 
    public String getQBucketsFileName() {
-      return projectname + FileNameExtensions.qbuckets;
+      return Globals.dir + projectName + FileNameExtensions.qbuckets;
    }
 
    public boolean isBisulfiteIndex() {
       return getBooleanProperty("Bisulfite");
    }
-   
+
    public void setBisulfiteIndex(boolean value) {
       setProperty("Bisulfite", value);
    }
-   
+
    public void setRunIndex(boolean value) {
       setProperty("RunIndex", true);
    }
-   
+
    public boolean isRunIndex() {
       return getBooleanProperty("RunIndex");
    }
-   
+
    public int getStride() {
       return getIntProperty("Stride");
    }
-   
+
    public void setStride(int stride) {
       setProperty("Stride", stride);
    }
-   
+
    // TODO throws NumberFormatException?
    public int getIntProperty(final String name) {
       return Integer.parseInt(properties.getProperty(name));
@@ -154,17 +162,17 @@ public class ProjectInfo {
    public void setProperty(final String name, boolean value) {
       properties.setProperty(name, Boolean.toString(value));
    }
-/*
-   public String getSequenceFileName() {
-      return projectname + FileNameExtensions.seq;
-   }
-   
-   public String getRunSequenceFileName() {
-      return projectname + FileNameExtensions.runseq;
-   }
-   
-   public String getRunLengthFileName() {
-      return projectname + FileNameExtensions.runlen;
-   }
-*/
+   /*
+      public String getSequenceFileName() {
+         return projectname + FileNameExtensions.seq;
+      }
+      
+      public String getRunSequenceFileName() {
+         return projectname + FileNameExtensions.runseq;
+      }
+      
+      public String getRunLengthFileName() {
+         return projectname + FileNameExtensions.runlen;
+      }
+   */
 }

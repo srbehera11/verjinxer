@@ -128,7 +128,7 @@ public class NonUniqueProbeDesigner {
     // Read project data and determine asize, q; read alphabet map
     ProjectInfo project;
     try {
-       project = ProjectInfo.createFromFile(projectname);
+       project = ProjectInfo.createFromFile(indexname);
     } catch (IOException ex) {
        log.error("could not read project file: %s", ex);
        return 1;

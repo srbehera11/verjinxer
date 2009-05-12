@@ -94,7 +94,6 @@ public class TranslaterSubcommand implements Subcommand {
       else { // take base name of first FASTA file
          projectname = FileUtils.extensionRemoved(filenames[0]);
       }
-      projectname = g.outdir + projectname;
       ProjectInfo project = new ProjectInfo(projectname);
 
       project.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"", args)

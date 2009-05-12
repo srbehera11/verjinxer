@@ -154,7 +154,7 @@ public class QGramMatcher {
       final String sspfile = ds + FileNameExtensions.ssp;
       System.gc();
       
-      ProjectInfo tproject = ProjectInfo.createFromFile(dt);
+      ProjectInfo tproject = ProjectInfo.createFromFile(tProject.getName()); // FIXME tProject vs tproject
       t = new HugeByteArray(tproject.getLongProperty("Length"));
       t.read(tfile, 0, -1, 0);
       tssp = g.slurpLongArray(tsspfile);

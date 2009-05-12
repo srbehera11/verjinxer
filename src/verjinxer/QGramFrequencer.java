@@ -118,7 +118,7 @@ public class QGramFrequencer {
       // Read project data and determine asize, q; read alphabet map
       ProjectInfo project;
       try {
-         project = ProjectInfo.createFromFile(di);
+         project = ProjectInfo.createFromFile(indexname);
       } catch (IOException ex) {
          log.error("qfreq: cannot read project file.");
          return 1;

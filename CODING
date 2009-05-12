@@ -10,3 +10,5 @@ If you work with Eclipse, use the eclipse-coding-style.xml (in this directory)
 by importing it in Eclipse as follows: Go to Window -> Preferences -> Java ->
 Code Style -> Formatter and then click "Import...".
 
+Name arrays, sets, and anything resembling a collection of objects of the
+same type in plural form. Example: String[] names;

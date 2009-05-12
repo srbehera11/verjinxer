@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.HugeByteArray;
 
+// TODO add method size()
+
 /**
  * 
  * @author Sven Rahmann

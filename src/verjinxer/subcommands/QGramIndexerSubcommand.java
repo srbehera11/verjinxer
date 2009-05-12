@@ -114,7 +114,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
          
          ProjectInfo project;
          try {
-            project = ProjectInfo.createFromFile(di);
+            project = ProjectInfo.createFromFile(indexname);
          } catch (IOException ex) {
             log.error("qgram: cannot read project file.");
             return 1;

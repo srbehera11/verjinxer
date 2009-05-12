@@ -121,7 +121,7 @@ public class BigSuffixTrayBuilder {
     ProjectInfo project;
     String projectname = g.dir + indexname;
     try {
-       project = ProjectInfo.createFromFile(projectname);
+       project = ProjectInfo.createFromFile(indexname);
     } catch (IOException ex) {
        log.error("could not read project file: %s%n", ex);
        return 1;

@@ -98,9 +98,8 @@ public class MapperSubcommand implements Subcommand {
 
    // byte[] t = null; // the text (coded)
 
-   private long longestindexlen = 0; // length of longest index text
+
    private long totalindexlen = 0; // total length of all index texts
-   private long longestpos = 0; // length of longest [q]pos
    private String filterstring = null;
 
    enum Method {
@@ -208,7 +207,7 @@ public class MapperSubcommand implements Subcommand {
       // Read sequence project
       final ProjectInfo tproject;
       try {
-         tproject = ProjectInfo.createFromFile(dt);
+         tproject = ProjectInfo.createFromFile(tname);
       } catch (IOException ex) {
          log.error("could not read project file: %s", ex);
          return 1;
@@ -260,6 +259,8 @@ public class MapperSubcommand implements Subcommand {
          return 1;
       }
       inum = indices.size();
+      long longestpos = 0; // length of longest [q]pos
+      long longestindexlen = 0; // length of longest index text
       for (int i = 0; i < inum; i++) {
          String fin = indices.get(i) + mext;
          try {
@@ -336,11 +337,11 @@ public class MapperSubcommand implements Subcommand {
 
       // run chosen method
       if (method == Method.QGRAM && !atonce) {
-         MapperByQGrams m = new MapperByQGrams(g, longestsequence, alphabet, tdesc, tm);
+         MapperByQGrams m = new MapperByQGrams(g, longestsequence, alphabet, tdesc, tssp, tm, indices, longestpos, longestindexlen);
          m.mapByQGram(blocksize);
       } else if (method == Method.FULL && atonce) {
-         MapperByAlignment m = new MapperByAlignment(g, longestsequence, alphabet, tdesc, tm,
-               asize, allout, tselect, trepeat, tmapped, tall, tssp, tname);
+         MapperByAlignment m = new MapperByAlignment(g, longestsequence, tm,
+               asize, allout, tselect, trepeat, tmapped, tall, tssp, tname, indices);
          m.mapByAlignmentAtOnce(clip, errorlevel, revcomp);
 
       } else
