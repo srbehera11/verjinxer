@@ -91,41 +91,53 @@ public class ArrayUtils {
   }
   
   
-  /** reverses an array or a prefix of an array in place
-   *@param a  the array
-   *@param len the number of elements to reverse (a[0..len-1] is reversed);
-   * if len&lt;0 or len&gt;a.length, then the whole array is reversed.
+  /**
+   * Reverses a prefix of an int array in place.
+   * 
+   * @param array
+   *           the array
+   *@param length
+   *           the number of elements to reverse (a[0..len-1] is reversed); if len&lt;0 or
+   *           len&gt;a.length, then the whole array is reversed.
    * @return the same array a, (partially) reversed in-place.
    */
-  public static int[] reverseArray(final int[] a, int len) {
-    if(len<0) len=a.length;
-    int tmp;
-    final int half=len/2;
-    for(int i=0; i<half; i++) {
-      tmp=a[i];
-      a[i]=a[len-1-i];
-      a[len-1-i]=tmp;
-    }
-    return a;
+  public static int[] reverseArray(final int[] array, int length) {
+     if (length < 0)
+        length = array.length;
+     int tmp;
+     final int half = length / 2;
+     for (int i = 0; i < half; i++) {
+        tmp = array[i];
+        array[i] = array[length - 1 - i];
+        array[length - 1 - i] = tmp;
+     }
+     return array;
   }
   
-  /** reverses an array or a prefix of an array in place
-   *@param a  the array
-   *@param len the number of elements to reverse (a[0..len-1] is reversed);
-   * if len&lt;0 or len&gt;a.length, then the whole array is reversed.
-   * @return the same array a, (partially) reversed in-place.
-   */
-  public static byte[] reverseArray(final byte[] a, int len) {
-    if(len<0) len=a.length;
-    byte tmp;
-    final int half=len/2;
-    for(int i=0; i<half; i++) {
-      tmp=a[i];
-      a[i]=a[len-1-i];
-      a[len-1-i]=tmp;
-    }
-    return a;
-  }
+  
+  
+  /**
+    * Reverses a prefix of a byte array in place.
+    * 
+    * @param array
+    *           the array
+    * @param length
+    *           the number of elements to reverse (a[0..len-1] is reversed); if len&lt;0 or
+    *           len&gt;a.length, then the whole array is reversed.
+    * @return the same array a, (partially) reversed in-place.
+    */
+   public static byte[] reverseArray(final byte[] array, int length) {
+      if (length < 0)
+         length = array.length;
+      byte tmp;
+      final int half = length / 2;
+      for (int i = 0; i < half; i++) {
+         tmp = array[i];
+         array[i] = array[length - 1 - i];
+         array[length - 1 - i] = tmp;
+      }
+      return array;
+   }
   
   /** reverse-complements part of an array
    *@param a  the array
