@@ -47,7 +47,7 @@ public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
       final String projectname = g.dir + args[0];
       ProjectInfo project;
       try {
-         project = ProjectInfo.createFromFile(projectname);
+         project = ProjectInfo.createFromFile(args[0]);
       } catch (IOException ex) {
          log.error("%s: cannot read project files.", command);
          return 1;

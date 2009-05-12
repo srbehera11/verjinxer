@@ -125,8 +125,8 @@ public class QGramMatcherSubcommand implements Subcommand {
       // Read project data and determine asize, q; read alphabet map
       ProjectInfo indexProject, queryProject;
       try {
-         indexProject = ProjectInfo.createFromFile(ds);
-         queryProject = ProjectInfo.createFromFile(dt);
+         indexProject = ProjectInfo.createFromFile(sname);
+         queryProject = ProjectInfo.createFromFile(tname);
       } catch (IOException ex) {
          log.error("qmatch: cannot read project files.");
          return 1;

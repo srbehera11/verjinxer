@@ -52,8 +52,8 @@ public class Globals {
    boolean plog = true;
    
    /** project (working) directory */
-   public String dir = "";
-   public String outdir = ""; // output dir -- do not use lightly!
+   public static String dir = "";
+   public static String outdir = ""; // output dir -- do not use lightly!
 
    FileAppender projectlog = null;
 
@@ -71,7 +71,7 @@ public class Globals {
       if (!plog)
          return;
       try {
-         projectlog = new FileAppender(new PatternLayout("%m%n"), projectname
+         projectlog = new FileAppender(new PatternLayout("%m%n"), dir + projectname
                + FileNameExtensions.log, !startnew);
          log.addAppender(projectlog);
 

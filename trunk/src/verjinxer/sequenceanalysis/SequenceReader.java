@@ -13,7 +13,7 @@ public class SequenceReader extends Sequence {
    private long[] ssp;
    private String[] description;
    private byte[] qualityValues = null;
-   
+
    SequenceReader(final String projectname, Mode mode) throws IOException {
       super(projectname, mode);
       load();
@@ -69,10 +69,10 @@ public class SequenceReader extends Sequence {
 
    @Override
    public byte[] getQualityValues() throws IOException {
-      if (qualityValues==null) {
+      if (qualityValues == null) {
          qualityValues = new ArrayFile().setFilename(qualityFilename).readArray(qualityValues);
       }
       return qualityValues;
    }
-      
+
 }
