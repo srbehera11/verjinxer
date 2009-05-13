@@ -327,6 +327,23 @@ public class Alphabet {
    }
    
    /**
+    * Computes the pre-image of an array of given codes.
+    * Equivalent to preimage(a, 0, a.length)
+    * @param a
+    *           the array of code values
+    * @param offset
+    *           where to start computing pre-images in a
+    * @param len
+    *           how many pre-images to compute
+    * @return the string of concatenated pre-images of a[offset .. offset+len-1]
+    * @throws verjinxer.sequenceanalysis.InvalidSymbolException
+    *            if there is a problem
+    */
+   public String preimage(byte[] a) throws InvalidSymbolException {
+      return preimage(a, 0, a.length);
+   }
+   
+   /**
     * Compute the pre-image of an array of given codes
     * 
     * @param a
