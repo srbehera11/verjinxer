@@ -83,8 +83,7 @@ public class Translater {
       // TEXT 't': all others
       FileTypes[] filetype = new FileTypes[filenames.length];
       for (int i = 0; i < filenames.length; i++) {
-         String filename = g.dir + filenames[i];
-         filetype[i] = FileUtils.determineFileType(filename);
+         filetype[i] = FileUtils.determineFileType(filenames[i]);
       }
 
       // open the output file stream
@@ -92,10 +91,9 @@ public class Translater {
       // use default buffer size
       Sequences sequence = null;
       try {
-         sequence = Sequences.openSequence(project.getName(), Sequences.Mode.WRITE);
+         sequence = Sequences.openSequence(project, Sequences.Mode.WRITE);
       } catch (IOException ex) {
-         log.warn("translate: could not create output file '%s'; %s", project.getName()
-               + FileNameExtensions.seq, ex);
+         log.warn("translate: could not create output file '%s'; %s",project.makeFileName(FileTypes.SEQ), ex);
       }
 
       // process each file according to type
