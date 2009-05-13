@@ -14,7 +14,7 @@ import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.sequenceanalysis.Sequence;
+import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Match;
@@ -114,10 +114,10 @@ public class AlignerSubcommand implements Subcommand {
          return 1;
       }
       g.startProjectLogging(referencesProject);
-      Sequence queries, references;
+      Sequences queries, references;
       try {
-         queries = Sequence.openSequence(queriesProject.getName(), Sequence.Mode.READ);
-         references = Sequence.openSequence(referencesProject.getName(), Sequence.Mode.READ);
+         queries = Sequences.openSequence(queriesProject.getName(), Sequences.Mode.READ);
+         references = Sequences.openSequence(referencesProject.getName(), Sequences.Mode.READ);
       } catch (IOException ex) {
          ex.printStackTrace();
          return 1;
@@ -130,10 +130,9 @@ public class AlignerSubcommand implements Subcommand {
       final String queriesSeparatorPositionsFileName = g.dir + queriesProject.getName()
             + FileNameExtensions.ssp;
 
-      long[] referencesSeparatorPositions = g.slurpLongArray(referenceSeparatorPositionsFileName);
+      long[] referencesSeparatorPositions = references.getSeparatorPositions();
       long[] queriesSeparatorPositions = g.slurpLongArray(queriesSeparatorPositionsFileName);
-      final ArrayList<String> readDescriptions = g.slurpTextFile(g.dir + queriesProject.getName()
-            + FileNameExtensions.desc, -1);
+      final ArrayList<String> readDescriptions = queries.getDescriptions();
       final ArrayList<String> referenceDescriptions = g.slurpTextFile(g.dir
             + referencesProject.getName() + FileNameExtensions.desc, -1);
 

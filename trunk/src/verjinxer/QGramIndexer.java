@@ -13,7 +13,7 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
-import verjinxer.sequenceanalysis.Sequence;
+import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
@@ -242,7 +242,7 @@ public class QGramIndexer {
    }
 
    /** @see computeFrequencies(ByteBuffer,QGramCoder,String,byte) */
-   private int[] computeFrequencies(final Sequence in, final QGramCoder coder,
+   private int[] computeFrequencies(final Sequences in, final QGramCoder coder,
          final String qseqfreqfile, final byte separator) {
 
       final TicToc timer = new TicToc();
@@ -378,7 +378,7 @@ public class QGramIndexer {
          final String qposfile, final String qfreqfile, final String qseqfreqfile)
          throws IOException {
       final TicToc totalTimer = new TicToc();
-      final Sequence in = Sequence.openSequence(seqfile, Sequence.Mode.READ);
+      final Sequences in = Sequences.openSequence(seqfile, Sequences.Mode.READ);
       final long ll = in.length();
 
       final QGramCoder coder;

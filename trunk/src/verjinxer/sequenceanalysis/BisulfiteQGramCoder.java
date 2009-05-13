@@ -252,7 +252,7 @@ public final class BisulfiteQGramCoder extends QGramCoder {
    }
 
    @Override
-   protected Iterator<PositionQCodePair> sparseQGramIterator(Sequence t) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(Sequences t) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t));
    }
 
@@ -285,7 +285,7 @@ public final class BisulfiteQGramCoder extends QGramCoder {
    }
    
    @Override
-   protected Iterator<PositionQCodePair> sparseQGramIterator(Sequence t, byte separator) {
+   protected Iterator<PositionQCodePair> sparseQGramIterator(Sequences t, byte separator) {
       return new BisulfiteSparseQGramIterator(t, super.sparseQGramIterator(t, separator));
    }
 
@@ -319,7 +319,7 @@ public final class BisulfiteQGramCoder extends QGramCoder {
          this.it = it;
       }
 
-      public BisulfiteSparseQGramIterator(Sequence t, Iterator<PositionQCodePair> it) {
+      public BisulfiteSparseQGramIterator(Sequences t, Iterator<PositionQCodePair> it) {
          this(t.array(), it);
       }
 

@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import verjinxer.Globals;
 import verjinxer.util.ArrayFile;
 
-public class SequenceReader extends Sequence {
-
+public class SequenceReader extends Sequences {
+//TODO merge with Sequences
    private byte[] sequence = null;
    private long[] separatorPositions = null;
    private String[] descriptions = null;
