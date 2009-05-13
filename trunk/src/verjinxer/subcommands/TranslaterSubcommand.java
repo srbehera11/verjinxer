@@ -10,6 +10,7 @@ import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
@@ -174,7 +175,7 @@ public class TranslaterSubcommand implements Subcommand {
          alphabet = Alphabet.CS();
          for (int i = 0; i < filenames.length; i++) {
             // all files must be FASTA
-            if (FileUtils.determineFileType(filenames[i]) != FileUtils.FileType.FASTA) {
+            if (FileUtils.determineFileType(filenames[i]) != FileTypes.FASTA) {
                log.error("translate: The option --colorspace is only valid for FASTA files.");
                return 1;
             }
@@ -184,7 +185,7 @@ public class TranslaterSubcommand implements Subcommand {
       String qualityFilename = null; 
       if (opt.isGiven("quality")) {
          qualityFilename = opt.get("quality");
-         if ((filenames.length!=1) || (FileUtils.determineFileType(filenames[0]) != FileUtils.FileType.CSFASTA)) {
+         if ((filenames.length!=1) || (FileUtils.determineFileType(filenames[0]) != FileTypes.CSFASTA)) {
             log.error("translate: If option --quality is given, exactly one CSFASTA file is expected.");
             return 1;
          }
@@ -196,7 +197,7 @@ public class TranslaterSubcommand implements Subcommand {
 
       if (alphabet == null) {
          for (int i = 0; i < filenames.length; i++) {
-            if (FileUtils.determineFileType(filenames[i]) != FileUtils.FileType.CSFASTA) { // only for CSFASTA omitting alphabet map is allowed
+            if (FileUtils.determineFileType(filenames[i]) != FileTypes.CSFASTA) { // only for CSFASTA omitting alphabet map is allowed
                log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
                return 1;
             }
@@ -206,7 +207,7 @@ public class TranslaterSubcommand implements Subcommand {
       } else {
          // A alphabet was set, test if all files are NOT CSFASTA
          for (int i = 0; i < filenames.length; i++)
-            if (FileUtils.determineFileType(filenames[i]) == FileUtils.FileType.CSFASTA) { // invalid option for CSFASTA
+            if (FileUtils.determineFileType(filenames[i]) == FileTypes.CSFASTA) { // invalid option for CSFASTA
                log.error("translate: the options -a, --dna, --rconly, --dnarc, --dnabi, --protein and --colorspace are not valid for CSFASTA files.");
                return 1;
             }

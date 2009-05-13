@@ -2,16 +2,13 @@ package verjinxer.util;
 
 import java.io.File;
 
+
 /**
  * Utility class with static file functionality.
  * 
  * @author Markus Kemmerling
  */
 public class FileUtils {
-
-   public enum FileType {
-      FASTA, TEXT, CSFASTA
-   }
 
    /**
     * Removes a file name extension from a string. If no extension is found, the name is returned
@@ -40,17 +37,17 @@ public class FileUtils {
     * @param filename
     * @return
     */
-   public static FileType determineFileType(final String filename) {
+   public static FileTypes determineFileType(final String filename) {
       int suffixPosition = filename.lastIndexOf(".");
       if (suffixPosition >= 0) {
          if (filename.substring(suffixPosition + 1).startsWith("fa")) {
-            return FileType.FASTA;
+            return FileTypes.FASTA;
          } else if (filename.substring(suffixPosition + 1).startsWith("csfa")) {
-            return FileType.CSFASTA;
+            return FileTypes.CSFASTA;
          }
       }
       // neither .fasta nor .csfasta detected
-      return FileType.TEXT;
+      return FileTypes.TEXT;
    }
 
 }

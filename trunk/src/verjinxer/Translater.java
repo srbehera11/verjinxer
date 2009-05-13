@@ -21,7 +21,7 @@ import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.FileUtils;
 import verjinxer.util.ProjectInfo;
-import verjinxer.util.FileUtils.FileType;
+import verjinxer.util.FileTypes;
 
 import com.spinn3r.log5j.Logger;
 
@@ -81,7 +81,7 @@ public class Translater {
       // determine the file types: FASTA or TEXT
       // FASTA 'f': First non-whitespace character is a '>''
       // TEXT 't': all others
-      FileType[] filetype = new FileType[filenames.length];
+      FileTypes[] filetype = new FileTypes[filenames.length];
       for (int i = 0; i < filenames.length; i++) {
          String filename = g.dir + filenames[i];
          filetype[i] = FileUtils.determineFileType(filename);
@@ -105,17 +105,17 @@ public class Translater {
          //if (filetype[i] == FileType.FASTA && alphabet.getName().equals("color space"))
             //TODO should this action depend on filetype and alphabet???
             //TODO translate to CSFASTA or in a sequence???
-         if (filetype[i] == FileType.FASTA) {
+         if (filetype[i] == FileTypes.FASTA) {
             if (colorspace) {
                translateFastaFromDNA2CS(fname, sequence);
             } else {
                translateFasta(fname, sequence);
             }
-         } else if (filetype[i] == FileType.CSFASTA)
+         } else if (filetype[i] == FileTypes.CSFASTA)
             translateCSFasta(fname, sequence);
-         else if (bisulfite && filetype[i] == FileType.FASTA) // TODO this is never executed
+         else if (bisulfite && filetype[i] == FileTypes.FASTA) // TODO this is never executed
             translateFastaBisulfite(fname, sequence);
-         else if (filetype[i] == FileType.TEXT) {
+         else if (filetype[i] == FileTypes.TEXT) {
             throw new UnsupportedOperationException("Translating a textfile is currently untested.");
             // translateText(fname, sequence); //TODO Test this case and use it again
          } else
@@ -166,7 +166,7 @@ public class Translater {
       // nothing special
       // FastaFile.read() already ignores comment lines with #
       // so call translateFasta(String,Sequence)
-      assert FileUtils.determineFileType(fname) == FileUtils.FileType.CSFASTA;
+      assert FileUtils.determineFileType(fname) == FileTypes.CSFASTA;
       translateFasta(fname, out, csfastaQualityFilename);
       // TODO maybe make some assertions like alphabet == CS???
    }
