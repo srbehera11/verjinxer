@@ -38,7 +38,7 @@ public class ProjectInfo {
     */
    public ProjectInfo(String projectName) {
       this.projectName = projectName;
-      this.projectFileName = Globals.dir + projectName + FileNameExtensions.prj;
+      this.projectFileName = makeFileName(FileTypes.PRJ);
 
       Properties defaults = new Properties();
       defaults.setProperty("BisulfiteIndex", "false");
@@ -85,18 +85,34 @@ public class ProjectInfo {
       return projectFileName;
    }
    
-   public String makeFileName(String extension) {
-      //TODO stub
-      //TODO extension shoud be enum FileType
-      return "";
+   /**
+    * Creates a path for a file depending on the working directory of the project, the name of the
+    * project and the given file type.
+    * 
+    * @param fileType
+    *           Type of the file.
+    * @return The filename including the path.
+    */
+   public String makeFileName(FileTypes fileType) {
+      return Globals.dir + projectName + fileType;
    }
-   
-   public Sequences readSequence(){
-      return null; //TODO
+
+   /**
+    * Reads the sequence of this project from disc.
+    * 
+    * @return The sequence.
+    */
+   public Sequences readSequence() {
+      return null; // TODO
    }
-   
-   public Alphabet readAlphabet(){
-      return null; //TODO
+
+   /**
+    * Reads the alphabet of this project from disc.
+    * 
+    * @return The alphabet.
+    */
+   public Alphabet readAlphabet() {
+      return null; // TODO
    }
    
 

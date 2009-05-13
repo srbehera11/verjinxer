@@ -1,5 +1,5 @@
 package verjinxer;
-//TODO enum FileTypes with method toString()
+
 @Deprecated
 public class FileNameExtensions {
    public final static String seq      = ".seq";

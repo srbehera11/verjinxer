@@ -5,18 +5,24 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import verjinxer.Globals;
 import verjinxer.util.ArrayFile;
+import verjinxer.util.ProjectInfo;
 
 public class SequenceReader extends Sequences {
 //TODO merge with Sequences
    private byte[] sequence = null;
    private long[] separatorPositions = null;
-   private String[] descriptions = null;
+   private ArrayList<String> descriptions = null;
    private byte[] qualityValues = null;
 
-   SequenceReader(final String projectname, Mode mode) throws IOException {
+   @Deprecated
+   SequenceReader(final String projectname, final Mode mode) throws IOException {
       super(projectname, mode);
+      load();
+   }
+   
+   SequenceReader(final ProjectInfo project, final Mode mode) throws IOException {
+      super(project, mode);
       load();
    }
 
@@ -35,7 +41,7 @@ public class SequenceReader extends Sequences {
          assert separatorPositions != null : String.format("No ssp for %s", sspFilename);
       } catch (IOException ex) {
          ex.printStackTrace();
-         Globals.terminate(1);
+         System.exit(1);
       }
    }
 
@@ -43,19 +49,18 @@ public class SequenceReader extends Sequences {
     * reads the .desc file into memory. description is null until this method is invoked.
     */
    private void loadDescription() {
-      ArrayList<String> desc = new ArrayList<String>();
+      descriptions = new ArrayList<String>();
       try {
          BufferedReader in = new BufferedReader(new FileReader(descFilename));
          String line;
          while ((line = in.readLine()) != null) {
-            desc.add(line);
+            descriptions.add(line);
          }
       } catch (IOException ex) {
          ex.printStackTrace();
          System.exit(1);
       }
-      descriptions = desc.toArray(descriptions);
-      assert descriptions.length > 0 : String.format("No description for %s", descFilename);
+      assert descriptions.size() > 0 : String.format("No description for %s", descFilename);
    }
 
    @Override
@@ -74,6 +79,19 @@ public class SequenceReader extends Sequences {
          qualityValues = new ArrayFile().setFilename(qualityFilename).readArray(qualityValues);
       }
       return qualityValues;
+   }
+   
+   @Override
+   public long[] getSeparatorPositions() {
+      return separatorPositions;
+   }
+
+   @Override
+   public ArrayList<String> getDescriptions() {
+      if (descriptions == null) {
+         loadDescription();
+      }
+      return descriptions;
    }
 
 }

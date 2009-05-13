@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import verjinxer.util.ArrayFile;
+import verjinxer.util.ProjectInfo;
 
 /**
  * @author Markus Kemmerling
@@ -20,8 +21,16 @@ public class SequenceWriter extends Sequences {
    private ArrayList<Long> ssps = new ArrayList<Long>();
    private ArrayFile qualityFile = null;
 
-   SequenceWriter(final String projectname, Mode mode) throws IOException {
+   @Deprecated
+   SequenceWriter(final String projectname, final Mode mode) throws IOException {
       super(projectname, mode);
+
+      sequenceFile = new ArrayFile(seqFilename);
+      sequenceFile.openW();
+   }
+   
+   SequenceWriter(final ProjectInfo project, final Mode mode) throws IOException {
+      super(project, mode);
 
       sequenceFile = new ArrayFile(seqFilename);
       sequenceFile.openW();

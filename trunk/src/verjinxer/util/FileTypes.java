@@ -3,7 +3,7 @@ package verjinxer.util;
 /**
  * @author Markus Kemmerling
  */
-public enum FileTypes {
+public enum FileTypes { //TODO replace FileNameExtension with this
    SEQ("seq"),
    PRJ("prj"),
    LOG("log"),
