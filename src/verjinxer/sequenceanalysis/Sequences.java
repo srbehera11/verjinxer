@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import verjinxer.FileNameExtensions;
+import verjinxer.util.FileTypes;
+import verjinxer.util.ProjectInfo;
 
 /**
  * @author Markus Kemmerling
@@ -26,11 +28,20 @@ public abstract class Sequences {
     * 
     * @param projectname
     */
-   public Sequences(final String projectname, Mode mode) {
+   @Deprecated
+   public Sequences(final String projectname, final Mode mode) {
       seqFilename = projectname + FileNameExtensions.seq;
       sspFilename = projectname + FileNameExtensions.ssp;
       descFilename = projectname + FileNameExtensions.desc;
       qualityFilename = projectname + FileNameExtensions.quality;
+      this.mode = mode;
+   }
+   
+   public Sequences(final ProjectInfo project, final Mode mode) {
+      seqFilename = project.makeFileName(FileTypes.SEQ);
+      sspFilename = project.makeFileName(FileTypes.SSP);
+      descFilename = project.makeFileName(FileTypes.DESC);
+      qualityFilename = project.makeFileName(FileTypes.QUALITIY);
       this.mode = mode;
    }
 
@@ -43,16 +54,27 @@ public abstract class Sequences {
     * @return
     * @throws IOException
     */
-   public static Sequences openSequence(final String projectname, Mode mode) throws IOException {
+   @Deprecated
+   public static Sequences openSequence(final String projectname, final Mode mode) throws IOException {
       if (mode == Mode.READ) {
          return new SequenceReader(projectname, mode);
       } else {
          return new SequenceWriter(projectname, mode);
       }
    }
+   
+   public static Sequences openSequence(final ProjectInfo project, final Mode mode) throws IOException {
+      if (mode == Mode.READ) {
+         return new SequenceReader(project, mode);
+      } else {
+         return new SequenceWriter(project, mode);
+      }
+   }
+   
+   
 
    /**
-    * Writes concatenated sequences, ssps and descriptions into files
+    * Writes concatenated sequences, ssps and descriptions into files.
     * 
     * @throws IOException
     */
@@ -62,7 +84,7 @@ public abstract class Sequences {
    }
 
    /**
-    * @return Accumulated length of all sequences (length of .seq file)
+    * @return Accumulated length of all sequences (length of .seq file).
     */
    public long length() {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
@@ -86,10 +108,10 @@ public abstract class Sequences {
    }
 
    /**
-    * Appends the content of the given buffer to the concatenated sequences
+    * Appends the content of the given buffer to the concatenated sequences.
     * 
     * @param tr
-    * @return Accumulated length of all sequences (length of .seq file) after writing
+    * @return Accumulated length of all sequences (length of .seq file) after writing.
     * @throws IOException
     */
    public long writeBuffer(ByteBuffer tr) throws IOException {
@@ -98,14 +120,14 @@ public abstract class Sequences {
    }
 
    /**
-    * Adds a new info the one of the sequences
+    * Adds a new info the one of the sequences.
     * 
     * @param header
     *           Sequenceheader
     * @param length
     *           Sequencelength
     * @param ssp
-    *           Separator position after sequence
+    *           Separator position after sequence.
     */
    public void addInfo(String header, long length, long ssp) {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
@@ -113,7 +135,7 @@ public abstract class Sequences {
    }
 
    /**
-    * @return Number of concatenated sequences
+    * @return Number of concatenated sequences.
     */
    public int getNumberSequences() {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
@@ -121,7 +143,7 @@ public abstract class Sequences {
    }
 
    /**
-    * @return Array containing the length of each sequence
+    * @return Array containing the length of each sequence.
     */
    public long[] getLengths() {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
@@ -129,7 +151,7 @@ public abstract class Sequences {
    }
 
    /**
-    * @return Maximum length of sequences
+    * @return Maximum length of sequences.
     */
    public long getMaximumLength() {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
@@ -137,7 +159,7 @@ public abstract class Sequences {
    }
 
    /**
-    * @return Minimum length of sequences
+    * @return Minimum length of sequences.
     */
    public long getMinimumLength() {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
@@ -159,16 +181,20 @@ public abstract class Sequences {
             mode == Mode.READ ? "READ" : "WRITE"));
    }
 
+   /**
+    * @return The positions of the separators between the sequences.
+    */
    public long[] getSeparatorPositions() {
-      // TODO Auto-generated method stub
-      //g.slurpLongArray(referenceSeparatorPositionsFileName);
-      return null;
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
+            mode == Mode.READ ? "READ" : "WRITE"));
    }
 
+   /**
+    * @return The descriptions of all sequences.
+    */
    public ArrayList<String> getDescriptions() {
-      // TODO Auto-generated method stub
-      //g.slurpTextFile(g.dir + queriesProject.getName() + FileNameExtensions.desc, -1);
-      return null;
+      throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
+            mode == Mode.READ ? "READ" : "WRITE"));
    }
 
 }
