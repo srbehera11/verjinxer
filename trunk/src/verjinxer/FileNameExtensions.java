@@ -19,4 +19,5 @@ public class FileNameExtensions {
    public final static String pos      = ".pos";        // suffix array
    public final static String lcp      = ".lcp";        // lcp values
    public final static String quality  = ".quality";
+   public final static String mapped   = ".mapped";
 }
