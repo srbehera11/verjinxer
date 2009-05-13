@@ -1,5 +1,7 @@
 package verjinxer.sequenceanalysis;
 
+import java.util.Arrays;
+
 import verjinxer.util.ArrayUtils;
 
 /**
@@ -33,40 +35,42 @@ public class Aligner {
 
    public static class ForwardAlignmentResult {
       private final byte[] sequence1, sequence2;
-      
+
       private final int lengthOnReference;
-      
+
       private final int errors;
-      
-      public ForwardAlignmentResult(byte[] sequence1, byte[] sequence2, int errors, int lengthOnReference) {
+
+      public ForwardAlignmentResult(byte[] sequence1, byte[] sequence2, int errors,
+            int lengthOnReference) {
          this.sequence1 = sequence1;
          this.sequence2 = sequence2;
          this.errors = errors;
          this.lengthOnReference = lengthOnReference;
-// TODO          assert lengthOnReference == sequence1.length && lengthOnReference == sequence2.length;
+         // TODO assert lengthOnReference == sequence1.length && lengthOnReference ==
+         // sequence2.length;
       }
-      
+
       public byte[] getSequence1() {
          return sequence1;
       }
-      
+
       public byte[] getSequence2() {
          return sequence2;
       }
-      
+
       public int getLengthOnReference() {
          return lengthOnReference;
       }
-      
+
       public int getErrors() {
          return errors;
       }
    }
 
-
    /**
     * 
     * Uses a banded alignment.
+    * 
     * @param s1
     * @param s2
     * @param e
@@ -106,29 +110,32 @@ public class Aligner {
       }
       // assert n >= e;
 
-      // Since the DP table is stored column-wise, the indices are exchanged: column first, then row.
-      // We use a banded alignment to save space. That is, only those 2*e+1 consecutive entries of each column are stored
-      // that are really necessary. 
-      // Where you would access DP[i][j] in a full DP table, you now have to access columns[j][i-j+e].
-      CostEntry[][] columns = new CostEntry[n+1][2 * e + 1];
-      
+      // Since the DP table is stored column-wise, the indices are exchanged: column first, then
+      // row.
+      // We use a banded alignment to save space. That is, only those 2*e+1 consecutive entries of
+      // each column are stored
+      // that are really necessary.
+      // Where you would access DP[i][j] in a full DP table, you now have to access
+      // columns[j][i-j+e].
+      CostEntry[][] columns = new CostEntry[n + 1][2 * e + 1];
+
       for (int i = 0; i < columns.length; ++i) {
          for (int j = 0; j < columns[i].length; ++j) {
             columns[i][j] = new CostEntry();
          }
       }
-      
+
       int i, j, d;
 
-      assert columns[0].length == 2*e+1; // TODO remove after porting
-      
+      assert columns[0].length == 2 * e + 1; // TODO remove after porting
+
       // fill that part of the first column that is used
       for (d = e; d < columns[0].length; ++d) {
          columns[0][d].cost = d - e;
          columns[0][d].backtrack = Direction.UP;
       }
 
-      // fill 
+      // fill
       for (j = 0; j <= Math.min(e, n); ++j) {
          columns[j][e - j].cost = j;
          columns[j][e - j].backtrack = Direction.LEFT;
@@ -144,18 +151,18 @@ public class Aligner {
          for (d = Math.max(e - j + 1, 0); d < Math.min(2 * e, m - j + e) + 1; ++d) {
             Direction bt = Direction.DIAG;
             // cost function needs previous and next characters
-//            byte p1 = 'x'; // TODO choose a better 'neutral' character
-//            byte p2 = 'x';
-//            byte n1 = 'x';
-//            byte n2 = 'x';
-//            if (d + j - e - 2 >= 0)
-//               p1 = s1[d + j - e - 2];
-//            if (j - 2 >= 0)
-//               p2 = s2[j - 2];
-//            if (d + j - e < m)
-//               n1 = s1[d + j - e];
-//            if (j < n)
-//               n2 = s2[j];
+            // byte p1 = 'x'; // TODO choose a better 'neutral' character
+            // byte p2 = 'x';
+            // byte n1 = 'x';
+            // byte n2 = 'x';
+            // if (d + j - e - 2 >= 0)
+            // p1 = s1[d + j - e - 2];
+            // if (j - 2 >= 0)
+            // p2 = s2[j - 2];
+            // if (d + j - e < m)
+            // n1 = s1[d + j - e];
+            // if (j < n)
+            // n2 = s2[j];
             byte c1 = s1[d + j - e - 1];
             byte c2 = s2[j - 1];
             int cost = prev_column[d].cost;
@@ -287,9 +294,9 @@ public class Aligner {
    }
 
    public static void printAlignment(ForwardAlignmentResult alignment, Alphabet alphabet) {
-      
+
    }
-   
+
    /**
     * Computes an end-gap free alignment. Also called free-shift alignment or semiglobal alignment.
     * 
@@ -314,15 +321,14 @@ public class Aligner {
       // the DP table is stored column-wise
       Entry[][] columns;
       columns = new Entry[n + 1][m + 1];
-      
+
       int i, j;
-      
+
       for (i = 0; i < columns.length; ++i) {
          for (j = 0; j < columns[i].length; ++j) {
             columns[i][j] = new Entry();
          }
       }
-
 
       for (i = 0; i <= m; ++i) {
          columns[0][i].score = 0;
@@ -492,7 +498,7 @@ public class Aligner {
          return bestpos;
       }
    }
-   
+
    /**
     * align text with parallelogram block #b. Requires blocksize, blow, itext[], asize
     * 
@@ -618,6 +624,102 @@ public class Aligner {
          }
       }
       return new AlignmentResult(bestd, bestpos);
+   }
+
+   /** A query that has been aligned to a reference. */
+   public static class AlignedQuery {
+      private final int start, stop, errors;
+
+      public AlignedQuery(int start, int stop, int errors) {
+         this.start = start;
+         this.stop = stop;
+         this.errors = errors;
+      }
+
+      /** Start position of the query relative to the beginning of the reference */
+      public int getStart() {
+         return start;
+      }
+
+      /** Stop position of the query relative to the beginning of the reference */
+      public int getStop() {
+         return stop;
+      }
+
+      /** Number of errors of the alignment */
+      public int getErrors() {
+         return errors;
+      }
+   }
+
+   /**
+    * Aligns a query to a reference sequence, given an interval on query and reference that matches
+    * exactly (seed). Starting from the exact match, the match is first extended to the right and
+    * then to the left.
+    * 
+    * @param query
+    *           The entire query sequence.
+    * @param reference
+    *           The entire reference sequence.
+    * @param queryPosition
+    *           Position of the exact match on the query sequence.
+    * @param referencePosition
+    *           Position of the exact match on the reference sequence.
+    * @param length
+    *           Length of the exact match.
+    * @param maximumErrorRate
+    *           Allow at most query.length * maximumErrorRate errors during the alignment.
+    * @return If there were too many errors, null is returned. Otherwise, an AlignedQuery is
+    *         returned.
+    */
+   public static AlignedQuery alignMatchToReference(final byte[] query, final byte[] reference,
+         final int queryPosition, final int referencePosition, final int length,
+         final double maximumErrorRate) {
+      int refseqpos = referencePosition;
+
+      int maximumNumberOfErrors = (int) (query.length * maximumErrorRate);
+
+      byte[] endQuery = Arrays.copyOfRange(query, queryPosition + length, query.length);
+      byte[] endReference = Arrays.copyOfRange(reference, refseqpos + length, reference.length);
+
+      // if you want to convert a byte[] to a String for debugging, use alphabet.preimage(array)
+
+      Aligner.ForwardAlignmentResult alignedEnd = Aligner.forwardAlign(endQuery, endReference,
+            maximumNumberOfErrors);
+
+      if (alignedEnd == null) {
+         return null;
+      } else {
+         // System.out.println("alignedEnd: errors " + alignedEnd.getErrors() + ". LengthonRef " +
+         // alignedEnd.getLengthOnReference());
+         // try {
+         // System.out.println("")
+         // } catch (InvalidSymbolException e) {
+         // e.printStackTrace();
+         // }
+      }
+
+      byte[] reversedFrontQuery = Arrays.copyOf(query, queryPosition);
+      ArrayUtils.reverseArray(reversedFrontQuery, -1);
+      byte[] reversedFrontReference = Arrays.copyOf(reference, referencePosition);
+      ArrayUtils.reverseArray(reversedFrontReference, -1);
+
+      Aligner.ForwardAlignmentResult alignedFront = Aligner.forwardAlign(reversedFrontQuery,
+            reversedFrontReference, maximumNumberOfErrors - alignedEnd.getErrors());
+
+      if (alignedFront == null) {
+         return null;
+      }
+      assert alignedFront.getErrors() + alignedEnd.getErrors() <= maximumNumberOfErrors;
+
+      int start = referencePosition - alignedFront.getLengthOnReference();
+      int stop = referencePosition + length + alignedEnd.getLengthOnReference();
+      int errors = alignedFront.getErrors() + alignedEnd.getErrors();
+
+      return new AlignedQuery(start, stop, errors);
+
+      // TODO some string twiddling would be necessary here to compute the actual alignment
+      // TODO if an actual alignment is not needed, we could use a faster version of forwardAlign
    }
 
    /**
