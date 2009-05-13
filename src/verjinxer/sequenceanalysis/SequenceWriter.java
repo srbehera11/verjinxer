@@ -9,8 +9,8 @@ import verjinxer.util.ArrayFile;
 /**
  * @author Markus Kemmerling
  */
-public class SequenceWriter extends Sequence {
-
+public class SequenceWriter extends Sequences {
+   //TODO not extend Sequences
    private ArrayFile sequenceFile;
    private ArrayList<String> descriptions = new ArrayList<String>();
    private ArrayList<Long> sequenceLengths = new ArrayList<Long>();
@@ -83,12 +83,12 @@ public class SequenceWriter extends Sequence {
    }
 
    @Override
-   public long getMaximumSequenceLength() {
+   public long getMaximumLength() {
       return maxSequenceLength;
    }
 
    @Override
-   public long getMinimumSequenceLength() {
+   public long getMinimumLength() {
       return minSequenceLength;
    }
 

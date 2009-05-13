@@ -11,6 +11,8 @@ import java.util.Properties;
 
 import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
+import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.sequenceanalysis.Sequences;
 
 // TODO maybe get...FileName methods should be removed?
 
@@ -82,6 +84,21 @@ public class ProjectInfo {
    public String getFileName() {
       return projectFileName;
    }
+   
+   public String makeFileName(String extension) {
+      //TODO stub
+      //TODO extension shoud be enum FileType
+      return "";
+   }
+   
+   public Sequences readSequence(){
+      return null; //TODO
+   }
+   
+   public Alphabet readAlphabet(){
+      return null; //TODO
+   }
+   
 
    public String getName() {
       return projectName;

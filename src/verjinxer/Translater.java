@@ -17,7 +17,7 @@ import verjinxer.sequenceanalysis.FastaFile;
 import verjinxer.sequenceanalysis.FastaFormatException;
 import verjinxer.sequenceanalysis.FastaSequence;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
-import verjinxer.sequenceanalysis.Sequence;
+import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.FileUtils;
 import verjinxer.util.ProjectInfo;
@@ -90,9 +90,9 @@ public class Translater {
       // open the output file stream
       log.info("translate: creating index '%s'...", project.getName());
       // use default buffer size
-      Sequence sequence = null;
+      Sequences sequence = null;
       try {
-         sequence = Sequence.openSequence(project.getName(), Sequence.Mode.WRITE);
+         sequence = Sequences.openSequence(project.getName(), Sequences.Mode.WRITE);
       } catch (IOException ex) {
          log.warn("translate: could not create output file '%s'; %s", project.getName()
                + FileNameExtensions.seq, ex);
@@ -137,8 +137,8 @@ public class Translater {
       project.setProperty("NumberSequences", sequence.getNumberSequences());
 
       // Write sequence length statistics.
-      project.setProperty("LongestSequence", sequence.getMaximumSequenceLength());
-      project.setProperty("ShortestSequence", sequence.getMinimumSequenceLength());
+      project.setProperty("LongestSequence", sequence.getMaximumLength());
+      project.setProperty("ShortestSequence", sequence.getMinimumLength());
 
       // Write the alphabet
       PrintWriter alphabetfile = null;
@@ -162,7 +162,7 @@ public class Translater {
    /**
     * @see translateFasta(String,Sequence)
     */
-   public void translateCSFasta(final String fname, final Sequence out) {
+   public void translateCSFasta(final String fname, final Sequences out) {
       // nothing special
       // FastaFile.read() already ignores comment lines with #
       // so call translateFasta(String,Sequence)
@@ -181,7 +181,7 @@ public class Translater {
     *           sequence to translate into
     * @see translateFasta(String,Sequence)
     */
-   public void translateFastaFromDNA2CS(final String fname, final Sequence out) {
+   public void translateFastaFromDNA2CS(final String fname, final Sequences out) {
       FastaFile f = new FastaFile(fname);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
@@ -221,7 +221,7 @@ public class Translater {
       }
    }
 
-   public void translateFasta(final String fname, final Sequence out) {
+   public void translateFasta(final String fname, final Sequences out) {
       translateFasta(fname, out, null);
    }
          
@@ -229,7 +229,7 @@ public class Translater {
     * @param qualityFilename File with FASTA-style quality information (one byte per character).
     *                        May be null.
     */
-   public void translateFasta(final String fname, final Sequence out, final String qualityFilename) {
+   public void translateFasta(final String fname, final Sequences out, final String qualityFilename) {
       FastaFile qualityFasta = null;
       if (qualityFilename!=null) {
          qualityFasta = new FastaFile(qualityFilename);
@@ -316,7 +316,7 @@ public class Translater {
     * @param out
     * @deprecated
     */
-   void translateFastaBisulfite(final String fname, final Sequence out) {
+   void translateFastaBisulfite(final String fname, final Sequences out) {
       FastaFile f = new FastaFile(fname);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
@@ -369,7 +369,7 @@ public class Translater {
     * 
     * -- separator is appended (never the wildcard).
     */
-   void translateText(final String fname, final Sequence out) {
+   void translateText(final String fname, final Sequences out) {
       ByteBuffer tr = null;
       long lastbyte = 0;
       byte appender;

@@ -2,20 +2,21 @@ package verjinxer.sequenceanalysis;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import verjinxer.FileNameExtensions;
 
 /**
  * @author Markus Kemmerling
  */
-public abstract class Sequence {
+public abstract class Sequences {
 
    public enum Mode {
       READ, WRITE
    }
 
    private final Mode mode;
-   protected final String seqFilename;
+   protected final String seqFilename; //TODO getter for Filenames
    protected final String sspFilename;
    protected final String descFilename;
    protected final String qualityFilename;
@@ -25,7 +26,7 @@ public abstract class Sequence {
     * 
     * @param projectname
     */
-   public Sequence(final String projectname, Mode mode) {
+   public Sequences(final String projectname, Mode mode) {
       seqFilename = projectname + FileNameExtensions.seq;
       sspFilename = projectname + FileNameExtensions.ssp;
       descFilename = projectname + FileNameExtensions.desc;
@@ -42,7 +43,7 @@ public abstract class Sequence {
     * @return
     * @throws IOException
     */
-   public static Sequence openSequence(final String projectname, Mode mode) throws IOException {
+   public static Sequences openSequence(final String projectname, Mode mode) throws IOException {
       if (mode == Mode.READ) {
          return new SequenceReader(projectname, mode);
       } else {
@@ -130,7 +131,7 @@ public abstract class Sequence {
    /**
     * @return Maximum length of sequences
     */
-   public long getMaximumSequenceLength() {
+   public long getMaximumLength() {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
@@ -138,7 +139,7 @@ public abstract class Sequence {
    /**
     * @return Minimum length of sequences
     */
-   public long getMinimumSequenceLength() {
+   public long getMinimumLength() {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
    }
@@ -156,6 +157,18 @@ public abstract class Sequence {
    public byte[] getQualityValues() throws IOException {
       throw new UnsupportedOperationException(String.format("Operation not supported in %d mode",
             mode == Mode.READ ? "READ" : "WRITE"));
+   }
+
+   public long[] getSeparatorPositions() {
+      // TODO Auto-generated method stub
+      //g.slurpLongArray(referenceSeparatorPositionsFileName);
+      return null;
+   }
+
+   public ArrayList<String> getDescriptions() {
+      // TODO Auto-generated method stub
+      //g.slurpTextFile(g.dir + queriesProject.getName() + FileNameExtensions.desc, -1);
+      return null;
    }
 
 }
