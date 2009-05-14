@@ -105,7 +105,13 @@ public class ProjectInfo {
     * @return The sequences.
     */
    public Sequences readSequences() {
-      return null; // TODO
+      try {
+         return new Sequences(this);
+      } catch (IOException e) {
+         System.err.printf("%s: could not read sequence. Stop.%n", Globals.cmdname);
+         System.exit(1);
+         return null;
+      }
    }
 
    /**
