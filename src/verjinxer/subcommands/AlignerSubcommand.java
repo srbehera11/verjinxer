@@ -15,6 +15,7 @@ import verjinxer.Globals;
 import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Match;
@@ -122,19 +123,11 @@ public class AlignerSubcommand implements Subcommand {
          ex.printStackTrace();
          return 1;
       }
-      Alphabet alphabet = g.readAlphabet(g.dir + queriesProject.getName()
-            + FileNameExtensions.alphabet);
-
-      final String referenceSeparatorPositionsFileName = g.dir + referencesProject.getName()
-            + FileNameExtensions.ssp;
-      final String queriesSeparatorPositionsFileName = g.dir + queriesProject.getName()
-            + FileNameExtensions.ssp;
-
+      Alphabet alphabet = queriesProject.readAlphabet();
       long[] referencesSeparatorPositions = references.getSeparatorPositions();
-      long[] queriesSeparatorPositions = g.slurpLongArray(queriesSeparatorPositionsFileName);
+      long[] queriesSeparatorPositions = references.getSeparatorPositions();
       final ArrayList<String> readDescriptions = queries.getDescriptions();
-      final ArrayList<String> referenceDescriptions = g.slurpTextFile(g.dir
-            + referencesProject.getName() + FileNameExtensions.desc, -1);
+      final ArrayList<String> referenceDescriptions = references.getDescriptions();
 
       assert readDescriptions.size() == queriesSeparatorPositions.length;
       assert referenceDescriptions.size() == referencesSeparatorPositions.length;
