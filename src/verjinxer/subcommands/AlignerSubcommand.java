@@ -115,14 +115,8 @@ public class AlignerSubcommand implements Subcommand {
          return 1;
       }
       g.startProjectLogging(referencesProject);
-      Sequences queries, references;
-      try {
-         queries = Sequences.openSequence(queriesProject.getName(), Sequences.Mode.READ);
-         references = Sequences.openSequence(referencesProject.getName(), Sequences.Mode.READ);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         return 1;
-      }
+      Sequences queries = queriesProject.readSequences();
+      Sequences references = referencesProject.readSequences();
       Alphabet alphabet = queriesProject.readAlphabet();
       long[] referencesSeparatorPositions = references.getSeparatorPositions();
       long[] queriesSeparatorPositions = references.getSeparatorPositions();
