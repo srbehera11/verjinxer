@@ -30,6 +30,8 @@ public class ProjectInfo {
    final String projectName;
    final String projectFileName;
 
+   // final String workingDirectory; // TODO use instead of Globals.dir
+
    /**
     * Creates a new project in memory only. Call load() and store() to synchronize with files.
     * 
@@ -84,7 +86,7 @@ public class ProjectInfo {
    public String getFileName() {
       return projectFileName;
    }
-   
+
    /**
     * Creates a path for a file depending on the working directory of the project, the name of the
     * project and the given file type.
@@ -98,11 +100,11 @@ public class ProjectInfo {
    }
 
    /**
-    * Reads the sequence of this project from disc.
+    * Reads the sequences of this project from disc.
     * 
-    * @return The sequence.
+    * @return The sequences.
     */
-   public Sequences readSequence() {
+   public Sequences readSequences() {
       return null; // TODO
    }
 
@@ -112,9 +114,8 @@ public class ProjectInfo {
     * @return The alphabet.
     */
    public Alphabet readAlphabet() {
-      return null; // TODO
+      return Globals.readAlphabet(makeFileName(FileTypes.ALPHABET)); //TODO don't use Globals anywhere
    }
-   
 
    public String getName() {
       return projectName;
@@ -196,16 +197,8 @@ public class ProjectInfo {
       properties.setProperty(name, Boolean.toString(value));
    }
    /*
-      public String getSequenceFileName() {
-         return projectname + FileNameExtensions.seq;
-      }
-      
-      public String getRunSequenceFileName() {
-         return projectname + FileNameExtensions.runseq;
-      }
-      
-      public String getRunLengthFileName() {
-         return projectname + FileNameExtensions.runlen;
-      }
-   */
+    * public String getSequenceFileName() { return projectname + FileNameExtensions.seq; } public
+    * String getRunSequenceFileName() { return projectname + FileNameExtensions.runseq; } public
+    * String getRunLengthFileName() { return projectname + FileNameExtensions.runlen; }
+    */
 }
