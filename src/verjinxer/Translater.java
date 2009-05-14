@@ -141,7 +141,7 @@ public class Translater {
       // Write the alphabet
       PrintWriter alphabetfile = null;
       try {
-         alphabetfile = new PrintWriter(project.getName() + FileNameExtensions.alphabet);
+         alphabetfile = new PrintWriter(project.makeFileName(FileTypes.ALPHABET));
          alphabet.showSourceStrings(alphabetfile);
          alphabetfile.close();
       } catch (IOException ex) {
