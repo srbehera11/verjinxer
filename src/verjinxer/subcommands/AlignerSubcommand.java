@@ -26,6 +26,11 @@ import verjinxer.util.TicToc;
 
 import com.spinn3r.log5j.Logger;
 
+/**
+ * 
+ * @author Marcel Martin
+ *
+ */
 public class AlignerSubcommand implements Subcommand {
    private static final Logger log = Globals.getLogger();
    private Globals g;
@@ -78,7 +83,6 @@ public class AlignerSubcommand implements Subcommand {
       if (opt.isGiven("e")) {
          maximumErrorRate = Double.parseDouble(opt.get("e"));
       }
-      log.info("Maximum error rate set to %f", maximumErrorRate);
 
 
       // --output
@@ -104,7 +108,6 @@ public class AlignerSubcommand implements Subcommand {
             return 1;
          }
       }
-      log.info("will write results to %s", (outputFileName != null ? "'" + outputFileName + "'" : "stdout"));
       
       ProjectInfo queriesProject, referencesProject;
       try {
@@ -115,6 +118,10 @@ public class AlignerSubcommand implements Subcommand {
          return 1;
       }
       g.startProjectLogging(referencesProject);
+
+      log.info("Will write results to %s", (outputFileName != null ? "'" + outputFileName + "'" : "stdout"));
+      log.info("Maximum error rate set to %f", maximumErrorRate);
+
       Sequences queries = queriesProject.readSequences();
       Sequences references = referencesProject.readSequences();
       Alphabet alphabet = queriesProject.readAlphabet();
@@ -122,6 +129,7 @@ public class AlignerSubcommand implements Subcommand {
       long[] queriesSeparatorPositions = references.getSeparatorPositions();
       final ArrayList<String> readDescriptions = queries.getDescriptions();
       final ArrayList<String> referenceDescriptions = references.getDescriptions();
+
 
       assert readDescriptions.size() == queriesSeparatorPositions.length;
       assert referenceDescriptions.size() == referencesSeparatorPositions.length;
@@ -135,6 +143,7 @@ public class AlignerSubcommand implements Subcommand {
       }
       Match match;
 
+      int i = 1;
       try {
          while ((match = matchesReader.readMatch()) != null) {
             // System.out.format("aligning match: %d %d %d %d %d%n", match.getQueryNumber(),
@@ -143,6 +152,7 @@ public class AlignerSubcommand implements Subcommand {
 
             // copy query and reference
             int qn = match.getQueryNumber();
+            // TODO implement a method Sequences.getCopyOfSequence(int i) and use it here
             byte[] query = Arrays.copyOfRange(queries.array(), qn == 0 ? 0
                   : (int) queriesSeparatorPositions[qn - 1] + 1,
                   (int) queriesSeparatorPositions[qn]);
@@ -158,6 +168,10 @@ public class AlignerSubcommand implements Subcommand {
                      match.getReferenceNumber(), aligned.getStart(), aligned.getStop(),
                      aligned.getErrors());
             }
+            if (i % 100000 == 0) {
+               System.out.printf("%9d matches processed (%.1fs)%n", i, totalTimer.tocs());
+            }
+            i++;
          }
       } catch (IOException ex) {
          ex.printStackTrace();
@@ -175,5 +189,4 @@ public class AlignerSubcommand implements Subcommand {
 
       return 0;
    }
-
 }
