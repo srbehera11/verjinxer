@@ -466,7 +466,7 @@ public class Alphabet {
     * @author Markus Kemmerling
     */
    public static final Alphabet CS() {
-      return new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "##wildcards", "ACGT4",
+      return new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "##wildcards", "ACGT4.",
             "##wildcards", "#", "##separators:-1" });
    }
 
