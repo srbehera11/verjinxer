@@ -126,12 +126,12 @@ public class AlignerSubcommand implements Subcommand {
       Sequences references = referencesProject.readSequences();
       Alphabet alphabet = queriesProject.readAlphabet();
       long[] referencesSeparatorPositions = references.getSeparatorPositions();
-      long[] queriesSeparatorPositions = references.getSeparatorPositions();
-      final ArrayList<String> readDescriptions = queries.getDescriptions();
+      long[] queriesSeparatorPositions = queries.getSeparatorPositions();
+      final ArrayList<String> queriesDescriptions = queries.getDescriptions();
       final ArrayList<String> referenceDescriptions = references.getDescriptions();
 
 
-      assert readDescriptions.size() == queriesSeparatorPositions.length;
+      assert queriesDescriptions.size() == queriesSeparatorPositions.length;
       assert referenceDescriptions.size() == referencesSeparatorPositions.length;
 
       MatchesReader matchesReader;
