@@ -12,6 +12,7 @@ import java.util.Arrays;
 
 import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
+import verjinxer.Project;
 import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
@@ -21,7 +22,6 @@ import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Match;
 import verjinxer.util.MatchesReader;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
 import com.spinn3r.log5j.Logger;
@@ -109,10 +109,10 @@ public class AlignerSubcommand implements Subcommand {
          }
       }
       
-      ProjectInfo queriesProject, referencesProject;
+      Project queriesProject, referencesProject;
       try {
-         queriesProject = ProjectInfo.createFromFile(readsProjectFileName);
-         referencesProject = ProjectInfo.createFromFile(referenceProjectFileName);
+         queriesProject = Project.createFromFile(readsProjectFileName);
+         referencesProject = Project.createFromFile(referenceProjectFileName);
       } catch (IOException ex) {
          log.error("Cannot read project file " + ex.getMessage());
          return 1;

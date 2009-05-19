@@ -1,9 +1,9 @@
 import java.io.IOException;
 
 import verjinxer.Globals;
+import verjinxer.Project;
 import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.util.ProjectInfo;
 
 public class TranslaterExample {
 
@@ -35,7 +35,7 @@ public class TranslaterExample {
       String fastaname = args[0];
 
       String projectname = extensionRemoved(fastaname);
-      ProjectInfo project = new ProjectInfo(projectname);
+      Project project = new Project(projectname);
       Translater translater = new Translater(new Globals(), Alphabet.DNA());
       
       // TODO the way to create a new project is very likely to change

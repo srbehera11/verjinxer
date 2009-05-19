@@ -20,7 +20,6 @@ import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.BitArray;
 import verjinxer.util.HugeByteArray;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
 public class QGramMatcher {
@@ -111,7 +110,7 @@ public class QGramMatcher {
     *           may be null
     * @param project Project of ds
     */
-   public QGramMatcher(Globals g, ProjectInfo tProject, ProjectInfo project, String toomanyhitsfilename,
+   public QGramMatcher(Globals g, Project tProject, Project project, String toomanyhitsfilename,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
          final boolean selfcmp, final boolean c_matches_c) throws IOException {
@@ -153,7 +152,7 @@ public class QGramMatcher {
       final String seqfile = runs ? (ds + FileNameExtensions.runseq) : (ds + FileNameExtensions.seq);
       final String sspfile = ds + FileNameExtensions.ssp;
       
-      ProjectInfo tproject = ProjectInfo.createFromFile(tProject.getName()); // FIXME tProject vs tproject
+      Project tproject = Project.createFromFile(tProject.getName()); // FIXME tProject vs tproject
       t = new HugeByteArray(tproject.getLongProperty("Length"));
       t.read(tfile, 0, -1, 0);
       tssp = g.slurpLongArray(tsspfile);

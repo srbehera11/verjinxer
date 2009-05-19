@@ -17,7 +17,6 @@ import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.Sortable;
 import verjinxer.util.Sorter;
 import verjinxer.util.TicToc;
@@ -116,9 +115,9 @@ public class QGramFrequencer {
       String wordstring = (opt.isGiven("p") ? opt.get("p") : null);
 
       // Read project data and determine asize, q; read alphabet map
-      ProjectInfo project;
+      Project project;
       try {
-         project = ProjectInfo.createFromFile(indexname);
+         project = Project.createFromFile(indexname);
       } catch (IOException ex) {
          log.error("qfreq: cannot read project file.");
          return 1;

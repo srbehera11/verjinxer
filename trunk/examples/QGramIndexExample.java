@@ -1,7 +1,7 @@
 import java.io.IOException;
 
+import verjinxer.Project;
 import verjinxer.sequenceanalysis.QGramIndex;
-import verjinxer.util.ProjectInfo;
 
 
 public class QGramIndexExample {
@@ -12,7 +12,7 @@ public class QGramIndexExample {
          System.exit(1);
       }
       String projectname = args[0];
-      ProjectInfo project = ProjectInfo.createFromFile(projectname);
+      Project project = Project.createFromFile(projectname);
       QGramIndex qgramindex = new QGramIndex(project);
       
       System.out.printf("q-gram index read.%nq=%d%nmaximum bucket size is %d%n", qgramindex.q, qgramindex.getMaximumBucketSize());

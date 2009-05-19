@@ -1,4 +1,4 @@
-package verjinxer.util;
+package verjinxer;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,10 +9,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
 
-import verjinxer.FileNameExtensions;
-import verjinxer.Globals;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.util.FileTypes;
 
 // TODO maybe get...FileName methods should be removed?
 
@@ -25,7 +24,7 @@ import verjinxer.sequenceanalysis.Sequences;
  * @author Marcel Martin
  * 
  */
-public class ProjectInfo {
+public class Project {
    Properties properties;
    final String projectName;
    final String projectFileName;
@@ -38,7 +37,7 @@ public class ProjectInfo {
     * @param projectName
     *           Name of the project. The file name for the project is constructed from this string.
     */
-   public ProjectInfo(String projectName) {
+   public Project(String projectName) {
       this.projectName = projectName;
       this.projectFileName = makeFileName(FileTypes.PRJ);
 
@@ -66,9 +65,9 @@ public class ProjectInfo {
     *           Name of the project.
     * @return a new ProjectInfo instance
     */
-   public static ProjectInfo createFromFile(String projectname) throws FileNotFoundException,
+   public static Project createFromFile(String projectname) throws FileNotFoundException,
          IOException {
-      ProjectInfo project = new ProjectInfo(projectname);
+      Project project = new Project(projectname);
       project.load();
       return project;
    }
@@ -131,10 +130,12 @@ public class ProjectInfo {
       return Integer.parseInt(properties.getProperty("qbckMax"));
    }
 
+   @Deprecated
    public String getQPositionsFileName() {
       return Globals.dir + projectName + FileNameExtensions.qpositions;
    }
 
+   @Deprecated
    public String getQBucketsFileName() {
       return Globals.dir + projectName + FileNameExtensions.qbuckets;
    }

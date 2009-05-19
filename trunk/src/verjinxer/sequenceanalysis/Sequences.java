@@ -5,9 +5,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import verjinxer.Project;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.FileTypes;
-import verjinxer.util.ProjectInfo;
 
 /**
  * @author Markus Kemmerling
@@ -24,7 +24,7 @@ public class Sequences {
    private ArrayList<String> descriptions = null;
    private byte[] qualityValues = null;
 
-   public Sequences(final ProjectInfo project) throws IOException {
+   public Sequences(final Project project) throws IOException {
       seqFilename = project.makeFileName(FileTypes.SEQ);
       sspFilename = project.makeFileName(FileTypes.SSP);
       descFilename = project.makeFileName(FileTypes.DESC);

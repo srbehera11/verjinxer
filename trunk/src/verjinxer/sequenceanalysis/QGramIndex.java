@@ -5,8 +5,8 @@ package verjinxer.sequenceanalysis;
 
 import java.io.IOException;
 
+import verjinxer.Project;
 import verjinxer.util.ArrayFile;
-import verjinxer.util.ProjectInfo;
 
 /**
  * The q-gram index. Currently, this class can only be used to <em>read</em> an index from disk. The
@@ -163,7 +163,7 @@ public class QGramIndex {
     * 
     * @throws IOException
     */
-   public QGramIndex(final ProjectInfo project) throws IOException {
+   public QGramIndex(final Project project) throws IOException {
       this(project.getQPositionsFileName(), project.getQBucketsFileName(),
             project.getMaximumBucketSize(), project.getIntProperty("q"), project.getStride());
    }

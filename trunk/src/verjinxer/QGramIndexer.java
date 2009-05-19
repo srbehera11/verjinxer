@@ -18,7 +18,6 @@ import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
 import verjinxer.util.PositionQCodePair;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -40,7 +39,7 @@ public class QGramIndexer {
    Globals g;
    
    /** Project info */
-   final ProjectInfo project;
+   final Project project;
    
    /** Length of q-gram */
    final int q;
@@ -69,7 +68,7 @@ public class QGramIndexer {
     *           Length of q-gram
     * @return New instance of QGramIndexer
     */
-   public static QGramIndexer generateQGramIndexer(Globals g, ProjectInfo project, int q) {
+   public static QGramIndexer generateQGramIndexer(Globals g, Project project, int q) {
       return new QGramIndexer(g, project, q);
    }
 
@@ -90,7 +89,7 @@ public class QGramIndexer {
     * @param filterparam
     * @return New instance of QGramIndexer
     */
-   public static QGramIndexer generateQGramIndexer(Globals g, ProjectInfo project, int q,
+   public static QGramIndexer generateQGramIndexer(Globals g, Project project, int q,
          boolean external, boolean bisulfiteIndex, int stride, String filterparam) {
 
       return new QGramIndexer(g, project, q, external, bisulfiteIndex, stride, filterparam);
@@ -103,7 +102,7 @@ public class QGramIndexer {
     * @param q
     *           Length of q-gram
     */
-   public QGramIndexer(Globals g, ProjectInfo project, int q) {
+   public QGramIndexer(Globals g, Project project, int q) {
       this(g, project, q, false, false, 1, null);
    }
 
@@ -121,7 +120,7 @@ public class QGramIndexer {
     *           Only store q-grams whose positions are divisible by stride
     * @param filterparam
     */
-   public QGramIndexer(Globals g, ProjectInfo project, int q, boolean external,
+   public QGramIndexer(Globals g, Project project, int q, boolean external,
          boolean bisulfiteIndex, int stride, String filterparam) {
       this.g = g;
       this.external = external;
@@ -644,7 +643,7 @@ public class QGramIndexer {
     *         which seems to be wrong (ie, the the q-gram at qpos[r] in the text seems to disagree
     *         with the opinion of the index.
     */
-   public int docheck(final String in, final ProjectInfo project) {
+   public int docheck(final String in, final Project project) {
       g.cmdname = "qgramcheck";
       // Parse prj -> q, asize
       int asize = 0;

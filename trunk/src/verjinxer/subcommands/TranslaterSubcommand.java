@@ -8,13 +8,13 @@ import com.spinn3r.log5j.Logger;
 
 import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
+import verjinxer.Project;
 import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -96,7 +96,7 @@ public class TranslaterSubcommand implements Subcommand {
          // take base name of first FASTA file
          projectname = FileUtils.extensionRemoved(filenames[0]);
       }
-      ProjectInfo project = new ProjectInfo(projectname);
+      Project project = new Project(projectname);
 
       project.setProperty("TranslateAction", "translate \"" + StringUtils.join("\" \"", args)
             + "\"");

@@ -19,7 +19,6 @@ import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -131,9 +130,9 @@ public class SuffixTrayBuilder {
       if (args.length > 1)
          log.warn("suffixtray: ignoring all arguments except first '%s'", args[0]);
 
-      ProjectInfo project;
+      Project project;
       try {
-         project = ProjectInfo.createFromFile(indexname);
+         project = Project.createFromFile(indexname);
       } catch (IOException ex) {
          log.warn("cannot read project file.");
          return 1;

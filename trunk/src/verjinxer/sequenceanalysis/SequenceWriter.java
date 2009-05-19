@@ -5,9 +5,9 @@ import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import verjinxer.Project;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.FileTypes;
-import verjinxer.util.ProjectInfo;
 
 /**
  * @author Markus Kemmerling
@@ -28,7 +28,7 @@ public class SequenceWriter {
    private ArrayList<Long> separatorPositions = new ArrayList<Long>();
    private ArrayFile qualityFile = null;
 
-   public SequenceWriter(final ProjectInfo project) throws IOException {
+   public SequenceWriter(final Project project) throws IOException {
       seqFilename = project.makeFileName(FileTypes.SEQ);
       sspFilename = project.makeFileName(FileTypes.SSP);
       descFilename = project.makeFileName(FileTypes.DESC);
