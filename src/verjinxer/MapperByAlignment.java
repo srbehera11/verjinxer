@@ -11,7 +11,6 @@ import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
-import verjinxer.util.ProjectInfo;
 
 /** Maps reads. */
 public class MapperByAlignment {
@@ -91,7 +90,7 @@ public class MapperByAlignment {
       Arrays.fill(seqbesterror, (int) longestsequence + 2);
 
       String[] iname = new String[inum];
-      ProjectInfo[] iprj = new ProjectInfo[inum];
+      Project[] iprj = new Project[inum];
       byte[][] itext = new byte[inum][];
       int[] ilength = new int[inum];
 
@@ -99,7 +98,7 @@ public class MapperByAlignment {
          // load idx-th q-gram index
          iname[idx] = indices.get(idx);
          try {
-            iprj[idx] = ProjectInfo.createFromFile(iname[idx]);
+            iprj[idx] = Project.createFromFile(iname[idx]);
          } catch (IOException ex) {
             log.error("could not read project file %s: %s", iname[idx], ex);
             g.terminate(1);

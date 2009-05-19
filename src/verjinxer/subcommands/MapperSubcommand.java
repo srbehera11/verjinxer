@@ -26,13 +26,13 @@ import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.MapperByAlignment;
 import verjinxer.MapperByQGrams;
+import verjinxer.Project;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.BitArray;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -205,9 +205,9 @@ public class MapperSubcommand implements Subcommand {
          filterstring = "0:0";
 
       // Read sequence project
-      final ProjectInfo tproject;
+      final Project tproject;
       try {
-         tproject = ProjectInfo.createFromFile(tname);
+         tproject = Project.createFromFile(tname);
       } catch (IOException ex) {
          log.error("could not read project file: %s", ex);
          return 1;

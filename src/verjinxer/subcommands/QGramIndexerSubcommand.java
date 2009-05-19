@@ -12,10 +12,10 @@ import com.spinn3r.log5j.Logger;
 
 import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
+import verjinxer.Project;
 import verjinxer.QGramIndexer;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 
 /**
@@ -112,9 +112,9 @@ public final class QGramIndexerSubcommand implements Subcommand {
          // If we only check index integrity, do that and continue with next index.
          // Otherwise, extend the properties and go on building the index.
          
-         ProjectInfo project;
+         Project project;
          try {
-            project = ProjectInfo.createFromFile(indexname);
+            project = Project.createFromFile(indexname);
          } catch (IOException ex) {
             log.error("qgram: cannot read project file.");
             return 1;

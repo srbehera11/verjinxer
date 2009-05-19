@@ -21,7 +21,6 @@ import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.FileUtils;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.FileTypes;
 
 import com.spinn3r.log5j.Logger;
@@ -75,7 +74,7 @@ public class Translater {
     * Translates all the given files. Writes .seq .alphabet and .desc. Essentially, this initializes
     * a new project. TODO should this method be really here? should it be called differently?
     */
-   public void createProject(ProjectInfo project, String[] filenames) {
+   public void createProject(Project project, String[] filenames) {
       project.setProperty("NumberSourceFiles", filenames.length);
       project.setProperty("TrimmedSequences", trim);
 

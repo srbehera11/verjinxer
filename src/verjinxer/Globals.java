@@ -17,7 +17,6 @@ import verjinxer.util.ArrayFile;
 import verjinxer.util.BitArray;
 import verjinxer.util.HugeByteArray;
 import verjinxer.util.HugeIntArray;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 
 import com.spinn3r.log5j.Logger;
@@ -83,11 +82,11 @@ public class Globals {
       }
    }
 
-   public void startProjectLogging(ProjectInfo project, boolean startnew) {
+   public void startProjectLogging(Project project, boolean startnew) {
       startProjectLogging(project.getName(), startnew);
    }
 
-   public void startProjectLogging(ProjectInfo project) {
+   public void startProjectLogging(Project project) {
       startProjectLogging(project.getName(), false);
    }
 

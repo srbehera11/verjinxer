@@ -26,13 +26,13 @@ import java.io.PrintWriter;
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.Globals;
+import verjinxer.Project;
 import verjinxer.QGramMatcher;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 
 /**
@@ -123,10 +123,10 @@ public class QGramMatcherSubcommand implements Subcommand {
       ds = g.dir + sname;
 
       // Read project data and determine asize, q; read alphabet map
-      ProjectInfo indexProject, queryProject;
+      Project indexProject, queryProject;
       try {
-         indexProject = ProjectInfo.createFromFile(sname);
-         queryProject = ProjectInfo.createFromFile(tname);
+         indexProject = Project.createFromFile(sname);
+         queryProject = Project.createFromFile(tname);
       } catch (IOException ex) {
          log.error("qmatch: cannot read project files.");
          return 1;

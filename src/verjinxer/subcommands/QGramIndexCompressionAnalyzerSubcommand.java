@@ -5,9 +5,9 @@ import static verjinxer.Globals.programname;
 import java.io.IOException;
 
 import verjinxer.Globals;
+import verjinxer.Project;
 import verjinxer.QGramIndexCompressionAnalyzer;
 import verjinxer.sequenceanalysis.QGramIndex;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.TicToc;
 import com.spinn3r.log5j.Logger;
 
@@ -45,9 +45,9 @@ public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
       }
 
       final String projectname = g.dir + args[0];
-      ProjectInfo project;
+      Project project;
       try {
-         project = ProjectInfo.createFromFile(args[0]);
+         project = Project.createFromFile(args[0]);
       } catch (IOException ex) {
          log.error("%s: cannot read project files.", command);
          return 1;

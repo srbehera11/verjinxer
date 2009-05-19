@@ -22,7 +22,6 @@ import verjinxer.util.HugeByteArray;
 import verjinxer.util.HugeLongArray;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -118,10 +117,10 @@ public class BigSuffixTrayBuilder {
     // Get indexname and di
     String indexname = args[0];
     if (args.length > 1) log.warn("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
-    ProjectInfo project;
+    Project project;
     String projectname = g.dir + indexname;
     try {
-       project = ProjectInfo.createFromFile(indexname);
+       project = Project.createFromFile(indexname);
     } catch (IOException ex) {
        log.error("could not read project file: %s%n", ex);
        return 1;

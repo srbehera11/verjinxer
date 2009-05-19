@@ -22,7 +22,6 @@ import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
-import verjinxer.util.ProjectInfo;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -126,9 +125,9 @@ public class NonUniqueProbeDesigner {
     double ufrac = ( opt.isGiven("f")? Double.parseDouble(opt.get("f")) : -1.0);
     
     // Read project data and determine asize, q; read alphabet map
-    ProjectInfo project;
+    Project project;
     try {
-       project = ProjectInfo.createFromFile(indexname);
+       project = Project.createFromFile(indexname);
     } catch (IOException ex) {
        log.error("could not read project file: %s", ex);
        return 1;
