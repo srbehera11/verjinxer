@@ -1,6 +1,9 @@
 To Do
 =====
 
+Don't write toomanyhits file when there cannot be any because no limit was given.
+
+
 General
 -------
 
@@ -29,6 +32,8 @@ Refactoring
 - move Globals.readAlphabet to ProjectInfo
 
 - how to handle -D command-line option? is it necessary?
+
+- Sequences.getSeparatorPosition(int i)
 
 Bugs
 ----
