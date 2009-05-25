@@ -9,6 +9,7 @@ import itertools
 import random
 
 ##########################################################################
+_DEBUG=False
 
 DNA  = "ACGTX"
 DNAx = DNA[:-1]
@@ -25,6 +26,7 @@ _COLORCodeTable = {'b':0, 'g':1, 'y':2, 'r':3, 'x':4, 0:0, 1:1, 2:2, 3:3, 4:4 }
 def ColorCode(col): return _COLORCodeTable[col]
 def ColorPairCode(cpair):
     """return an integer representing a pair of color values"""
+    if _DEBUG: print(cpair)
     return len(COLOR)*ColorCode(cpair[0]) + ColorCode(cpair[1])
 NCOLPAIRS = len(COLOR)*len(COLOR)
 
@@ -77,7 +79,8 @@ def scorematrices(match=1, mismatch=-1, indel=-1, goodmismatch=1, goodindel=0):
     for (i,s) in enumerate(_goodColorPairIndels()):
         for j in s: D2[i][j] = goodindel                   # good 2-indels
         
-    return (M1,D1,M2,D2)
+    minscore = min(mismatch,2*mismatch,2*indel,indel)
+    return (M1,D1,M2,D2, minscore)
 
 ##########################################################################        
     
@@ -93,7 +96,7 @@ def transpose(M):
 
 
 
-def qualign(read, genome, SM=None, readqual=None):
+def qualign(read, genome, scores=None, readquality=None, savememory=True):
     """cmopute quality-weighted alignment distance (edit distance)
     of a read against (a part of) a genome.
     Both read and genome must be given in color space format.
@@ -106,15 +109,26 @@ def qualign(read, genome, SM=None, readqual=None):
     """
     RL = len(read)
     GL = len(genome)
-    if SM==None: SM = scorematrices()
-    (M1,D1,M2,D2) = SM
-    if readqual==None: readqual = [1]*RL
+    if scores==None: scores = scorematrices()
+    (M1,D1,M2,D2, minscore) = scores
+    if readquality==None: readquality = [1]*RL
+    
+    # pre-compute read pair codes and quality values for read singletons and pairs
+    rpair = [NCOLPAIRS-1,NCOLPAIRS-1] + [ColorPairCode(read[i-1:i+1]) for i in range(2,RL)]
+    q2    = [0,0] + [minqual(readquality[i-1:i+1]) for i in range(2,RL)]
+    q1    = [0] + [minqual(readquality[i:i+1]) for i in range(1,RL)]
     
     # initialize RL x GL edit matrix, stored in column-major order
     # row/column 0 conveniently corresponds to explicit nucleotide
-    matrix = [[None]*RL for i in range(GL)]
+    if savememory:
+        GL3 = GL//3 + 1 # better safe than sorry: +1
+        matrix = [[None]*RL,[None]*RL,[None]*RL]*GL3 #repeat same 3 columns
+    else:
+        matrix = [[None]*RL for i in range(GL)]
     matrix[0] = [0]*RL # TODO -- but works for the moment
     matrix[1] = [0]*RL # TODO -- but works for the moment
+    best  = -2*(RL+1)*abs(minscore) # best score so far: -infinity
+    bestj = None                    # j-position of best score
     for j in range(2,GL):
         g     = ColorCode(genome[j])
         gpair = ColorPairCode(genome[j-1:j+1])
@@ -122,18 +136,17 @@ def qualign(read, genome, SM=None, readqual=None):
         matrix[j][1]=0 # TODO -- but works for the moment
         for i in range(2,RL):
             r     = ColorCode(read[i])
-            rpair = ColorPairCode(read[i-1:i+1])  # could be precomputed
-            q1    = minqual(readqual[i-1:i])      # could be precomputed
-            q2    = minqual(readqual[i-1:i+1])    # could be precomputed
-            scorem1 = matrix[j-1][i-1] + M1[g][r]*q1
-            scorem2 = matrix[j-2][i-2] + M2[gpair][rpair]*q2
-            scorel1 = matrix[j-1][i]   + D1*q1
-            scoreu1 = matrix[j][i-1]   + D1*q1
-            scorel2 = matrix[j-2][i-1] + D2[gpair][r]*q1
-            scoreu2 = matrix[j-1][i-2] + D2[rpair][g]*q2
+            scorem1 = matrix[j-1][i-1] + M1[g][r]*q1[i]
+            scorem2 = matrix[j-2][i-2] + M2[gpair][rpair[i]]*q2[i]
+            scorel1 = matrix[j-1][i]   + D1*q1[i]
+            scoreu1 = matrix[j][i-1]   + D1*q1[i]
+            scorel2 = matrix[j-2][i-1] + D2[gpair][r]*q1[i]
+            scoreu2 = matrix[j-1][i-2] + D2[rpair[i]][g]*q2[i]
             matrix[j][i] = max(scorem1,scorem2,scorel1,scorel2,scoreu1,scoreu2)
-    best = max(matrix[j][RL-1] for j in range(GL))
-    return [best, transpose(matrix)]
+        if matrix[j][RL-1] > best:
+            best  = matrix[j][RL-1]
+            bestj = j
+    return (best, bestj, matrix)
 
 ##########################################################################        
 
@@ -153,14 +166,12 @@ def test2():
     smat = scorematrices()
     r = [None] + list(map(int,read2[1:]))
     g = [None] + list(map(int,genome[1:]))
-    (opt,matrix) = qualign(r,r, smat)
-    (score,matrix) = qualign(r,g, smat)
-    #for m in matrix: print(m)
-    #print("---")
-    print(score, opt, len(r))
+    (opt,optj) = qualign(r,r, smat)
+    (score,endj) = qualign(r,g, smat)
+    print(score, endj, "| opt:", opt, optj, "| readlen:",len(r))
 
 
-def test3(Lread=35, Lgenome=71, err=1, iterations=1000):
+def test3(Lread=35, Lgenome=100, err=1, iterations=1000):
     smat = scorematrices()
 
     for tt in range(iterations):
@@ -183,14 +194,31 @@ def test3(Lread=35, Lgenome=71, err=1, iterations=1000):
 
         #print("".join(map(str,read)))
         #print("".join(map(str,genome)))
-        (opt,matrix) = qualign(read,read, smat, qual)
-        (score,matrix) = qualign(read, genome, smat, qual)
+        (opt,optj, mat) = qualign(read, read, smat, qual)
+        (score,endj, mat) = qualign(read, genome, smat, qual)
         delta = (opt-score)/_MAXQUAL
-        #print("score = {0}/{1}, delta = {2}".format(score,opt, delta))
-        print(delta)
+        print(score,opt, endj,optj, delta)
+        
                                                 
+##########################################################################        
+
+def lookAtQualityValues(fname):
+    with open(fname) as f:
+        for line in f:
+            if line[0] in "#>": continue
+            for q in line.split(): print(q)
+
+def lookAtQualityValuesbyPosition(fname):
+    with open(fname) as f:
+        for line in f:
+            if line[0] in "#>": continue
+            for q in enumerate(line.split()):
+                print(q, end=" ")
+
 ##########################################################################        
     
 if __name__=="__main__":
-    test3()
+    random.seed(17)
+    #test3()
+    lookAtQualityValues("/home2/bio/nb/ncrna/data/s0329_20090331_552to561_613to614_2_552_561_F3_QV.qual")
     
