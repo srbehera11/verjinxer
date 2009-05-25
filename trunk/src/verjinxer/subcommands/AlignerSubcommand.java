@@ -3,6 +3,7 @@ package verjinxer.subcommands;
 import static verjinxer.Globals.programname;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class AlignerSubcommand implements Subcommand {
       log.info("Aligns exact seeds from a .matches file between a reads and a reference.");
       log.info("Writes a .mapped file.");
       log.info("Options:");
-      log.info("  -o, --output <filename>  Output file (use # for stdout)");
+      log.info("  -o, --output <filename>  Output file (use # for stdout) (%s is appended)", FileTypes.MAPPED);
       log.info("  -q, --qualities          Use qualities while aligning.");
       log.info("  -e <rate>                Maximum error rate");
    }
@@ -84,18 +85,33 @@ public class AlignerSubcommand implements Subcommand {
          maximumErrorRate = Double.parseDouble(opt.get("e"));
       }
 
+      Project queriesProject, referencesProject;
+      try {
+         queriesProject = Project.createFromFile(readsProjectFileName);
+         referencesProject = Project.createFromFile(referenceProjectFileName);
+      } catch (IOException ex) {
+         log.error("Cannot read project file " + ex.getMessage());
+         return 1;
+      }
+      g.startProjectLogging(referencesProject);
 
       // --output
-      String outputFileName = FileUtils.extensionRemoved(matchesFileName) + FileNameExtensions.mapped;
-
+      String outputFileName = FileUtils.extensionRemoved(matchesFileName)
+            + FileNameExtensions.mapped;
+      outputFileName = queriesProject.getWorkingDirectory().getAbsolutePath() + File.separator
+            + outputFileName;
       if (opt.isGiven("o")) {
          if (outputFileName.length() == 0 || outputFileName.startsWith("#")) {
             outputFileName = null;
          }
          else {
             outputFileName = opt.get("o");
+            if (!outputFileName.endsWith(FileTypes.MAPPED.toString())) { //file extension should be .mapped
+               outputFileName += FileTypes.MAPPED;
+            }
          }
       }
+      
       PrintWriter out;
       if (outputFileName == null) {
          out = new PrintWriter(System.out);
@@ -108,16 +124,6 @@ public class AlignerSubcommand implements Subcommand {
             return 1;
          }
       }
-      
-      Project queriesProject, referencesProject;
-      try {
-         queriesProject = Project.createFromFile(readsProjectFileName);
-         referencesProject = Project.createFromFile(referenceProjectFileName);
-      } catch (IOException ex) {
-         log.error("Cannot read project file " + ex.getMessage());
-         return 1;
-      }
-      g.startProjectLogging(referencesProject);
 
       log.info("Will write results to %s", (outputFileName != null ? "'" + outputFileName + "'" : "stdout"));
       log.info("Maximum error rate set to %f", maximumErrorRate);

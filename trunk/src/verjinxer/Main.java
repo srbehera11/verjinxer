@@ -63,8 +63,6 @@ public class Main {
       log.info("  rmadapt      ...          remove adapters from sequences");
       log.info("Global options:");
       log.info("  -Q, --quiet               quiet mode, don't print messages to stdout");
-      log.info("  -D, --dir    <directory>  working directory");
-      log.info("  -O, --outdir <directory>  output directory (not recommended)");
       log.info("  -L, --log    <logfile>    add'l file to print diagnostic messages to");
       log.info("  -P, --noplog              DON'T write messages to project .log file");
       log.info("  -h, --help                show this help");
@@ -77,7 +75,7 @@ public class Main {
    public int run(String[] args) {
       g.action = args;
       Options opt = new Options(
-            "Q=quiet,D=dir:,O=outdir=outputdir:,L=log=logfile:,P=noplog=noprojectlog,h=help");
+            "Q=quiet,D=dir:,L=log=logfile:,P=noplog=noprojectlog,h=help");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -94,23 +92,10 @@ public class Main {
       if (opt.isGiven("Q"))
          log.setLevel(Level.WARN);
 
-      // Determine working and output directory
-      if (opt.isGiven("D")) {
-         g.dir = opt.get("D");
-         if (g.dir.charAt(g.dir.length() - 1) != File.separatorChar)
-            g.dir += File.separatorChar;
-      }
-      g.outdir = g.dir;
-      if (opt.isGiven("O")) {
-         g.outdir = opt.get("O");
-         if (g.outdir.charAt(g.outdir.length() - 1) != File.separatorChar)
-            g.outdir += File.separatorChar;
-      }
-
       // extra log file
       if (opt.isGiven("L")) {
          try {
-            log.addAppender(new FileAppender(new PatternLayout("%m%n"), g.dir + opt.get("L")));
+            log.addAppender(new FileAppender(new PatternLayout("%m%n"), opt.get("L")));
          } catch (IOException ex) {
             log.warn("%s", ex);
          }

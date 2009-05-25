@@ -15,6 +15,7 @@ import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.Sortable;
@@ -104,8 +105,6 @@ public class QGramFrequencer {
 
       // Get indexname and di
       String indexname = args[0];
-      String di = g.dir + indexname;
-      g.startProjectLogging(di);
       if (args.length > 1)
          log.warn("qfreq: ignoring all arguments except first '%s'", args[0]);
 
@@ -122,14 +121,15 @@ public class QGramFrequencer {
          log.error("qfreq: cannot read project file.");
          return 1;
       }
+      g.startProjectLogging(project);
       try {
          asize = project.getIntProperty("qAlphabetSize");
          q = project.getIntProperty("q");
       } catch (NumberFormatException ex) {
-         log.error("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)", di);
+         log.error("qfreq: q-grams for index '%s' not found. (Re-create the q-gram index!)", project.getName());
          return 1;
       }
-      alphabet = g.readAlphabet(di + FileNameExtensions.alphabet);
+      alphabet = project.readAlphabet();
       final QGramCoder coder = new QGramCoder(q, asize);
       final int aq = coder.numberOfQGrams;
 
@@ -174,9 +174,9 @@ public class QGramFrequencer {
 
       // Read the correct array!
       if (countseq)
-         f = g.slurpIntArray(di + FileNameExtensions.qseqfreq);
+         f = g.slurpIntArray(project.makeFileName(FileTypes.QSEQFREQ));
       else
-         f = g.slurpIntArray(di + FileNameExtensions.qfreq);
+         f = g.slurpIntArray(project.makeFileName(FileTypes.QFREQ));
       // TODO: read bck array if requested, also look at sequences bck-based!
 
       len = Hcode - Lcode;

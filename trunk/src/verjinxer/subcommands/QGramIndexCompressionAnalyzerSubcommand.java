@@ -36,7 +36,7 @@ public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
    @Override
    public int run(String[] args) {
       TicToc timer = new TicToc();
-      g.cmdname = command;
+      Globals.cmdname = command;
 
       if (args.length == 0) {
          help();
@@ -44,7 +44,6 @@ public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
          return 0;
       }
 
-      final String projectname = g.dir + args[0];
       Project project;
       try {
          project = Project.createFromFile(args[0]);

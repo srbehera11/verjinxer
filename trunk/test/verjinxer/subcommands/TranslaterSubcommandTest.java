@@ -51,7 +51,6 @@ public class TranslaterSubcommandTest {
          assert testdataDirectory.exists();
          assert testdataDirectory.isDirectory();
       }
-      Globals.dir = testdataDirectory.getAbsolutePath() + File.separator;
       translaterSubcommand = new TranslaterSubcommand(g);
    }
 
@@ -120,22 +119,22 @@ public class TranslaterSubcommandTest {
 
       System.out.println("Testing, that you cannot set an alphabet map with a CSFASTA file.");
       // test -a separately
-      args = new String[] { "-a", "../data/colorspace.alphabet", "xyz.csfa" }; // only one CSFASTA
+      args = new String[] { "-a", "data/colorspace.alphabet", "xyz.csfa" }; // only one CSFASTA
       assertEquals(1, translaterSubcommand.run(args));
       assertEquals(0, testdataDirectory.list().length); // no files in directory
 
-      args = new String[] { "-a", "../data/colorspace.alphabet", "agds.fa", "adfaflj.fasta",
+      args = new String[] { "-a", "data/colorspace.alphabet", "agds.fa", "adfaflj.fasta",
             "afljafljasl.fasta", "xyz.csfa", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA
                                                                                   // beneath some
                                                                                   // FASTA
       assertEquals(1, translaterSubcommand.run(args));
       assertEquals(0, testdataDirectory.list().length); // no files in directory
 
-      args = new String[] { "-a", "../data/colorspace.alphabet", "abc.csfasta" }; // only one CSFASTA
+      args = new String[] { "-a", "data/colorspace.alphabet", "abc.csfasta" }; // only one CSFASTA
       assertEquals(1, translaterSubcommand.run(args));
       assertEquals(0, testdataDirectory.list().length); // no files in directory
 
-      args = new String[] { "-a", "../data/colorspace.alphabet", "agds.fa", "adfaflj.fasta",
+      args = new String[] { "-a", "data/colorspace.alphabet", "agds.fa", "adfaflj.fasta",
             "afljafljasl.fasta", "xyz.csfasta", "zppldgoe.fa", "afafiilrwe.fasta" }; // one CSFASTA
                                                                                      // beneath some
                                                                                      // FASTA
@@ -202,7 +201,7 @@ public class TranslaterSubcommandTest {
     */
    @Test
    public void testRunFastaWithC() throws IOException {
-      String[] args = { "-c", "../data/colorspace.fa" };
+      String[] args = {"-i", testdataDirectory.getPath() + File.separator + "colorspace", "-c", "data/colorspace.fa" };
       int ret = translaterSubcommand.run(args);
       assertEquals(0, ret);
       assertEqualFiles("data" + File.separator + "colorspace.seq",
@@ -216,7 +215,7 @@ public class TranslaterSubcommandTest {
     */
    @Test
    public void testRunCSFASTA() throws IOException {
-      String[] args = { "../data/colorspace.csfasta" };
+      String[] args = {"-i", testdataDirectory.getPath() + File.separator + "colorspace", "data/colorspace.csfasta" };
       int ret = translaterSubcommand.run(args);
       assertEquals(0, ret);
       assertEqualFiles("data" + File.separator + "colorspace.seq",

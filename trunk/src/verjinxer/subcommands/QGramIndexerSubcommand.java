@@ -14,6 +14,7 @@ import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.QGramIndexer;
+import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.StringUtils;
@@ -105,8 +106,6 @@ public final class QGramIndexerSubcommand implements Subcommand {
       
       // Loop through all files
       for (String indexname : args) {
-         String di = g.dir + indexname;
-         String dout = g.outdir + indexname;
 
          // Read properties.
          // If we only check index integrity, do that and continue with next index.
@@ -122,34 +121,36 @@ public final class QGramIndexerSubcommand implements Subcommand {
          g.startProjectLogging(project);
          QGramIndexer qgramindexer = new QGramIndexer(g, project, q, external, bisulfite, stride, opt.get("F"));
          if (checkonly) {
-            if (qgramindexer.docheck(di, project) >= 0) returnvalue = 1;
+            if (qgramindexer.docheck(project) >= 0) {
+               returnvalue = 1;
+            }
             continue;
          }
          project.setProperty("QGramAction", action);
 
 
-         String sequenceFileName = di;
+         String sequenceFileName = project.makeFileName(FileTypes.SEQ);
          if (runs) {
-            sequenceFileName = di + FileNameExtensions.runseq;
+            sequenceFileName = project.makeFileName(FileTypes.RUNSEQ);
             project.setRunIndex(true);
             log.info("generating index for run-compressed sequence");
          }
          try {
-            final String freqfile = (freq ? dout + FileNameExtensions.qfreq : null);
-            final String sfreqfile = (sfreq ? dout + FileNameExtensions.qseqfreq : null);
+            final String freqfile = (freq ? project.makeFileName(FileTypes.QFREQ) : null);
+            final String sfreqfile = (sfreq ? project.makeFileName(FileTypes.QSEQFREQ) : null);
             qgramindexer.generateAndWriteIndex(sequenceFileName, 
-                  dout + FileNameExtensions.qbuckets, dout + FileNameExtensions.qpositions, freqfile, sfreqfile);
+                  project.makeFileName(FileTypes.QBUCKETS), project.makeFileName(FileTypes.QPOSITIONS), freqfile, sfreqfile);
          } catch (IOException ex) {
             ex.printStackTrace();
-            log.error("qgram: failed on %s: %s; continuing with remainder...", indexname, ex);
+            log.error("qgram: failed on %s: %s; continuing with remainder...", project.getName(), ex);
             g.stopplog();
             continue;
          }
          
          final double[] times = qgramindexer.getLastTimes();
-         log.info("qgram: time for %s: %.1f sec or %.2f min", indexname, times[0], times[0] / 60.0);
+         log.info("qgram: time for %s: %.1f sec or %.2f min", project.getName(), times[0], times[0] / 60.0);
 
-         if (check && qgramindexer.docheck(di, project) >= 0) returnvalue = 1;
+         if (check && qgramindexer.docheck(project) >= 0) returnvalue = 1;
          g.stopplog();
       } // end for each file
       

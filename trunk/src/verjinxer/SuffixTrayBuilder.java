@@ -17,6 +17,7 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
+import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.StringUtils;
@@ -125,8 +126,6 @@ public class SuffixTrayBuilder {
 
       // Get indexname and di
       String indexname = args[0];
-      String projectname = g.dir + indexname;
-      g.startProjectLogging(projectname);
       if (args.length > 1)
          log.warn("suffixtray: ignoring all arguments except first '%s'", args[0]);
 
@@ -137,14 +136,15 @@ public class SuffixTrayBuilder {
          log.warn("cannot read project file.");
          return 1;
       }
+      g.startProjectLogging(project);
       asize = project.getIntProperty("LargestSymbol") + 1;
 
       // load alphabet map and text
-      alphabet = g.readAlphabet(projectname + FileNameExtensions.alphabet);
-      s = g.slurpByteArray(projectname + FileNameExtensions.seq);
+      alphabet = project.readAlphabet();
+      s = g.slurpByteArray(project.makeFileName(FileTypes.SEQ));
       n = s.length;
       if (onlycheck) {
-         returnvalue = checkpos(projectname);
+         returnvalue = checkpos(project);
          g.stopplog();
          return returnvalue;
       }
@@ -199,7 +199,7 @@ public class SuffixTrayBuilder {
 
       if (returnvalue == 0) {
          timer.tic();
-         String fpos = projectname + FileNameExtensions.pos;
+         String fpos = project.makeFileName(FileTypes.POS);
          log.info("suffixtray: writing '%s'...", fpos);
          if (method.equals("L"))
             writepos_R(fpos);
@@ -219,7 +219,7 @@ public class SuffixTrayBuilder {
       // do lcp if desired
       if (dolcp > 0 && returnvalue == 0) {
          timer.tic();
-         String flcp = projectname + FileNameExtensions.lcp;
+         String flcp = project.makeFileName(FileTypes.LCP);
          log.info("suffixtray: computing lcp array...");
          if (method.equals("L"))
             lcp_L(flcp, dolcp);
@@ -914,20 +914,20 @@ public class SuffixTrayBuilder {
    }
 
    /**
-    * check correctnes of a suffix array on disk outputs warning messages if errors are found
+    * check correctness of a suffix array on disk outputs warning messages if errors are found
     * 
     * @param di
     *           path and name of the index to check
     *@return 0 on success, 1 on sorting error, 2 on count error
     */
-   public int checkpos(String di) {
+   public int checkpos(Project project) {
       int returnvalue = 0;
       TicToc ctimer = new TicToc();
       log.info("suffixcheck: checking pos...");
       ArrayFile fpos = null;
       IntBuffer pos = null;
       try {
-         fpos = new ArrayFile(di + FileNameExtensions.pos, 0);
+         fpos = new ArrayFile(project.makeFileName(FileTypes.POS), 0);
          pos = fpos.mapR().asIntBuffer();
       } catch (IOException ex) {
          g.terminate("suffixcheck: could not read .pos file; " + ex);

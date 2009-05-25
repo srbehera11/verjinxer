@@ -18,6 +18,7 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
+import verjinxer.util.FileTypes;
 import verjinxer.util.HugeByteArray;
 import verjinxer.util.HugeLongArray;
 import verjinxer.util.IllegalOptionException;
@@ -118,7 +119,6 @@ public class BigSuffixTrayBuilder {
     String indexname = args[0];
     if (args.length > 1) log.warn("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
     Project project;
-    String projectname = g.dir + indexname;
     try {
        project = Project.createFromFile(indexname);
     } catch (IOException ex) {
@@ -129,10 +129,10 @@ public class BigSuffixTrayBuilder {
     asize = project.getIntProperty("LargestSymbol") + 1;
 
     // load alphabet map and text
-    alphabet = g.readAlphabet(projectname+FileNameExtensions.alphabet);
-    s = g.slurpHugeByteArray(projectname+FileNameExtensions.seq);
+    alphabet = project.readAlphabet();
+    s = g.slurpHugeByteArray(project.makeFileName(FileTypes.SEQ));
     n = s.length;
-    if (onlycheck) { returnvalue =  checkpos(projectname); g.stopplog(); return returnvalue; }
+    if (onlycheck) { returnvalue =  checkpos(project.projectName); g.stopplog(); return returnvalue; }
     project.setProperty("SuffixAction", action);
     project.setProperty("LastAction", "suffixtray");
     project.setProperty("AlphabetSize", asize);    
@@ -169,7 +169,7 @@ public class BigSuffixTrayBuilder {
     
     if (returnvalue==0) {
       timer.tic();
-      String fpos = projectname+FileNameExtensions.pos;
+      String fpos = project.makeFileName(FileTypes.POS);
       log.info("suffixtray: writing '%s'...%n",fpos);
       if (method.equals("L"))            writepos_R(fpos);
       else if (method.equals("R"))       writepos_R(fpos);
@@ -183,7 +183,7 @@ public class BigSuffixTrayBuilder {
     // do lcp if desired
     if (dolcp>0 && returnvalue==0) {
       timer.tic();
-      String flcp = projectname+FileNameExtensions.lcp;
+      String flcp = project.makeFileName(FileTypes.LCP);
       log.info("suffixtray: computing lcp array...%n");
       if (method.equals("L"))            lcp_L(flcp, dolcp);
       else if (method.equals("R"))       lcp_L(flcp, dolcp);

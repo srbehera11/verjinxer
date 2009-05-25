@@ -137,7 +137,7 @@ public class TranslaterSubcommand implements Subcommand {
       }
       Alphabet alphabet = null;
       if (opt.isGiven("a"))
-         alphabet = Globals.readAlphabet(g.dir + opt.get("a"));
+         alphabet = Globals.readAlphabet(opt.get("a"));
       if (opt.isGiven("dna") || opt.isGiven("dnarc"))
          alphabet = opt.isGiven("masked") ? Alphabet.maskedDNA() : Alphabet.DNA();
 
@@ -226,7 +226,7 @@ public class TranslaterSubcommand implements Subcommand {
          log.info("translate: computing runs...");
          long runs = 0;
          try {
-            runs = translater.computeRuns(project.getName());
+            runs = translater.computeRuns(project);
          } catch (IOException ex) {
             log.error("translate: could not create run-related files; " + ex);
             return 1;

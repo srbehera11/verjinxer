@@ -15,6 +15,7 @@ import org.apache.log4j.PatternLayout;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.BitArray;
+import verjinxer.util.FileTypes;
 import verjinxer.util.HugeByteArray;
 import verjinxer.util.HugeIntArray;
 import verjinxer.util.StringUtils;
@@ -49,10 +50,6 @@ public class Globals {
    
    /** write to project log? */
    boolean logToFile = true;
-   
-   /** project (working) directory */
-   public static String dir = "";
-   public static String outdir = ""; // output dir -- do not use lightly!
 
    FileAppender projectlog = null;
 
@@ -65,33 +62,23 @@ public class Globals {
       return log;
    }
 
-   // TODO rename
-   public final void startProjectLogging(String projectname, boolean startnew) {
+   public void startProjectLogging(Project project, boolean startnew) {
       if (!logToFile)
          return;
       try {
-         projectlog = new FileAppender(new PatternLayout("%m%n"), dir + projectname
-               + FileNameExtensions.log, !startnew);
+         projectlog = new FileAppender(new PatternLayout("%m%n"), project.makeFileName(FileTypes.LOG), !startnew);
          log.addAppender(projectlog);
 
          // TODO previously, this was only logged to the project log file
          log.info("%s", new Date());
          log.info("command line: \"%s\"", StringUtils.join("\" \"", action));
       } catch (IOException ex) {
-         log.warn("%s: could not open project log '%s'; continuing...", programname, projectname);
+         log.warn("%s: could not open project log '%s'; continuing...", programname, project.getName());
       }
    }
 
-   public void startProjectLogging(Project project, boolean startnew) {
-      startProjectLogging(project.getName(), startnew);
-   }
-
    public void startProjectLogging(Project project) {
-      startProjectLogging(project.getName(), false);
-   }
-
-   public final void startProjectLogging(String fname) {
-      startProjectLogging(fname, false);
+      startProjectLogging(project, false);
    }
 
    @Deprecated
