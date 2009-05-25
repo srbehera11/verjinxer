@@ -24,6 +24,13 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    QUALITIY("quality"),
    MAPPED("mapped"),
    
+   CUT("cut"), // Cutter
+   ALLMAPPED("allmapped"), // MapperSubcommand
+   REPEAT_FILTER("repeat-filter"), // MapperSubcommand
+   TOOMANYHITS_FILTER("toomanyhits-filter"), // QGramMatcherSubcommand
+   NUPROBES("nuprobes"), // NonUniqueProbeDesigner
+   NUSTATS("nustats"), // NonUniqueProbeDesigner
+   
    FASTA("fasta"),
    CSFASTA("csfasta"),
    TEXT("txt");

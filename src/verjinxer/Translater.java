@@ -98,7 +98,7 @@ public class Translater {
 
       // process each file according to type
       for (int i = 0; i < filenames.length; i++) {
-         String fname = g.dir + filenames[i];
+         String fname = filenames[i];
          log.info("  processing '%s' (%s)...", fname, filetype[i]);
          //if (filetype[i] == FileType.FASTA && alphabet.getName().equals("color space"))
             //TODO should this action depend on filetype and alphabet???
@@ -424,8 +424,8 @@ public class Translater {
     * @return number of runs in the sequence file
     * @throws java.io.IOException
     */
-   public long computeRuns(final String fname) throws IOException {
-      return computeRunsAF(fname);
+   public long computeRuns(final Project project ) throws IOException {
+      return computeRunsAF(project);
    }
 
    /** compute runs using memory mapping where possible */
@@ -479,13 +479,13 @@ public class Translater {
    }
 
    /** compute runs using array files for writing, mmap only for reading */
-   private long computeRunsAF(final String fname) throws IOException {
+   private long computeRunsAF(final Project project) throws IOException {
       int run = -1;
-      ByteBuffer seq = new ArrayFile(fname + FileNameExtensions.seq, 0).mapR();
-      ArrayFile rseq = new ArrayFile(fname + FileNameExtensions.runseq).openW();
-      ArrayFile rlen = new ArrayFile(fname + FileNameExtensions.runlen).openW();
-      ArrayFile p2r = new ArrayFile(fname + FileNameExtensions.pos2run).openW();
-      ArrayFile r2p = new ArrayFile(fname + FileNameExtensions.run2pos).openW();
+      ByteBuffer seq = new ArrayFile(project.makeFileName(FileTypes.SEQ), 0).mapR();
+      ArrayFile rseq = new ArrayFile(project.makeFileName(FileTypes.RUNSEQ)).openW();
+      ArrayFile rlen = new ArrayFile(project.makeFileName(FileTypes.RUNLEN)).openW();
+      ArrayFile p2r = new ArrayFile(project.makeFileName(FileTypes.POS2RUN)).openW();
+      ArrayFile r2p = new ArrayFile(project.makeFileName(FileTypes.RUN2POS)).openW();
       final int n = seq.limit();
       byte current;
       byte prev = -1;

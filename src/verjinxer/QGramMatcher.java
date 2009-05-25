@@ -19,6 +19,7 @@ import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.BitArray;
+import verjinxer.util.FileTypes;
 import verjinxer.util.HugeByteArray;
 import verjinxer.util.TicToc;
 
@@ -110,7 +111,7 @@ public class QGramMatcher {
     *           may be null
     * @param project Project of ds
     */
-   public QGramMatcher(Globals g, Project tProject, Project project, String toomanyhitsfilename,
+   public QGramMatcher(Globals g, Project tproject, Project project, String toomanyhitsfilename,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
          final boolean selfcmp, final boolean c_matches_c) throws IOException {
@@ -125,9 +126,7 @@ public class QGramMatcher {
       
       if (c_matches_c && !bisulfiteIndex) throw new UnsupportedOperationException("c_matches_c for non-bisulfite index not supported");
       
-      final String dt = tProject.getName();
-      final String ds = project.getName();
-      alphabet = g.readAlphabet(ds + FileNameExtensions.alphabet);
+      alphabet = project.readAlphabet();
 
       // final BitSet thefilter = coder.createFilter(opt.get("F")); // empty filter if null
       if (minlen < q) {
@@ -147,22 +146,21 @@ public class QGramMatcher {
       // read sequence descriptions;
       // memory-map or read qpos.
       TicToc ttimer = new TicToc();
-      final String tfile = runs ? (dt + FileNameExtensions.runseq) : (dt + FileNameExtensions.seq);
-      final String tsspfile = dt + FileNameExtensions.ssp;
-      final String seqfile = runs ? (ds + FileNameExtensions.runseq) : (ds + FileNameExtensions.seq);
-      final String sspfile = ds + FileNameExtensions.ssp;
-      
-      Project tproject = Project.createFromFile(tProject.getName()); // FIXME tProject vs tproject
+      final String tfile = runs ? tproject.makeFileName(FileTypes.RUNSEQ) : tproject.makeFileName(FileTypes.SEQ);
+      final String tsspfile = tproject.makeFileName(FileTypes.SSP);
+      final String seqfile = runs ? project.makeFileName(FileTypes.RUNSEQ) : project.makeFileName(FileTypes.SEQ);
+      final String sspfile = project.makeFileName(FileTypes.SSP);
+
       t = new HugeByteArray(tproject.getLongProperty("Length"));
       t.read(tfile, 0, -1, 0);
       tssp = g.slurpLongArray(tsspfile);
-      final ArrayList<String> tdesc = g.slurpTextFile(dt + FileNameExtensions.desc, tssp.length);
+      final ArrayList<String> tdesc = Globals.slurpTextFile(tproject.makeFileName(FileTypes.DESC), tssp.length);
       assert tdesc.size() == tssp.length;
 
       final ArrayList<String> sdesc;
 		/** sequence separator positions in text t */
       final long[] ssp;
-      if (dt.equals(ds)) {
+      if (tproject.getName().equals(project.getName())) {
          s = g.slurpByteArray(tfile); //TODO inefficient, because reading the file 
          ssp = tssp;
          sm = tssp.length;
@@ -171,15 +169,15 @@ public class QGramMatcher {
          s = g.slurpByteArray(seqfile);
          ssp = g.slurpLongArray(sspfile);
          sm = ssp.length;
-         sdesc = g.slurpTextFile(ds + FileNameExtensions.desc, sm);
+         sdesc = Globals.slurpTextFile(project.makeFileName(FileTypes.DESC), sm);
          assert sdesc.size() == sm;
       }
 
       if (runs) {
          log.info("matching run-compressed index against run-compressed queries");
          // TODO change int[] to a memory-mapped ByteBuffer to avoid wasting (resident) memory
-         int[] queryRunToPos = g.slurpIntArray(dt + FileNameExtensions.run2pos);
-         int[] indexRunToPos = g.slurpIntArray(ds + FileNameExtensions.run2pos);
+         int[] queryRunToPos = g.slurpIntArray(tproject.makeFileName(FileTypes.RUN2POS));
+         int[] indexRunToPos = g.slurpIntArray(project.makeFileName(FileTypes.RUN2POS));
          
          if (sorted) {
             throw new UnsupportedOperationException("sorted matches and a run-compressed index: this is not supported");

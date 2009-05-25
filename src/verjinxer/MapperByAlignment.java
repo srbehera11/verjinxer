@@ -130,9 +130,9 @@ public class MapperByAlignment {
          if (tmapped.get(j) == 1 || trepeat.get(j) == 1)
             tselect.set(j, false);
       } // end for j
-      g.dumpIntArray(String.format("%s%s.mapbesterror", g.outdir, tname), seqbesterror);
-      g.dumpIntArray(String.format("%s%s.mapbesthits", g.outdir, tname), seqbesthits);
-      g.dumpIntArray(String.format("%s%s.mapallhits", g.outdir, tname), seqallhits);
+      g.dumpIntArray(String.format("%s%s.mapbesterror", tname), seqbesterror);
+      g.dumpIntArray(String.format("%s%s.mapbesthits", tname), seqbesthits);
+      g.dumpIntArray(String.format("%s%s.mapallhits", tname), seqallhits);
    }
 
    private final int doTheAlignment(final int currenti, final byte[] itext, final byte[] txt,

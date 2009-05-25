@@ -17,6 +17,7 @@ import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
+import verjinxer.util.FileTypes;
 import verjinxer.util.PositionQCodePair;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
@@ -340,9 +341,9 @@ public class QGramIndexer {
 
    public void generateAndWriteIndex() throws IOException {
 
-      final String seqfile = project.getName() + FileNameExtensions.seq;
-      final String qbucketsfile = project.getName() + FileNameExtensions.qbuckets;
-      final String qpositionsfile = project.getName() + FileNameExtensions.qpositions;
+      final String seqfile = project.makeFileName(FileTypes.SEQ);
+      final String qbucketsfile = project.makeFileName(FileTypes.QBUCKETS);
+      final String qpositionsfile = project.makeFileName(FileTypes.QPOSITIONS);
 
       generateAndWriteIndex(seqfile, qbucketsfile, qpositionsfile, null, null);
    }
@@ -643,7 +644,7 @@ public class QGramIndexer {
     *         which seems to be wrong (ie, the the q-gram at qpos[r] in the text seems to disagree
     *         with the opinion of the index.
     */
-   public int docheck(final String in, final Project project) {
+   public int docheck(final Project project) {
       g.cmdname = "qgramcheck";
       // Parse prj -> q, asize
       int asize = 0;
@@ -661,22 +662,22 @@ public class QGramIndexer {
       final boolean bisulfiteIndex = project.isBisulfiteIndex();
 
       // call checking routine
-      log.info("qgramcheck: checking %s... q=%d, asize=%d", in, q, asize);
+      log.info("qgramcheck: checking %s... q=%d, asize=%d", project.getName(), q, asize);
       log.info("qgramcheck: filter %d:%d filters %d q-grams", ffc, ffm, fff.cardinality());
       int result = 0;
       try {
-         result = checkQGramIndex(in + FileNameExtensions.seq, q, asize, in
-               + FileNameExtensions.qbuckets, in + FileNameExtensions.qpositions, fff,
-               bisulfiteIndex);
+         result = checkQGramIndex(project.makeFileName(FileTypes.SEQ), q, asize,
+               project.makeFileName(FileTypes.QBUCKETS),
+               project.makeFileName(FileTypes.QPOSITIONS), fff, bisulfiteIndex);
       } catch (IOException ex) {
-         log.warn("qgramcheck: error on %s: %s", in, ex);
+         log.warn("qgramcheck: error on %s: %s", project.getName(), ex);
       }
 
       // log result and return the result
       if (result < 0)
-         log.info("qgramcheck: %s is OK", in);
+         log.info("qgramcheck: %s is OK", project.getName());
       else
-         log.info("qgramcheck: %s has an error at qpos[%d]", in, result);
+         log.info("qgramcheck: %s has an error at qpos[%d]", project.getName(), result);
       return result;
    }
 }

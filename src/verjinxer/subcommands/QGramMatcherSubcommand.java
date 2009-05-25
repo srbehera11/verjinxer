@@ -18,6 +18,7 @@ package verjinxer.subcommands;
 import static verjinxer.Globals.programname;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,6 +32,7 @@ import verjinxer.QGramMatcher;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
+import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.TicToc;
@@ -104,7 +106,7 @@ public class QGramMatcherSubcommand implements Subcommand {
 
       // t: text to find
       // s: sequence in which to search
-      String tname, sname, dt, ds;
+      String tname, sname;
 
       if (args.length == 1) {
          assert selfcmp;
@@ -119,8 +121,6 @@ public class QGramMatcherSubcommand implements Subcommand {
          if (selfcmp && !tname.equals(sname))
             log.warn("qmatch: using --self, but %s != %s", tname, sname);
       }
-      dt = g.dir + tname;
-      ds = g.dir + sname;
 
       // Read project data and determine asize, q; read alphabet map
       Project indexProject, queryProject;
@@ -141,7 +141,7 @@ public class QGramMatcherSubcommand implements Subcommand {
          q = indexProject.getIntProperty("q");
       } catch (NumberFormatException ex) {
          log.error("qmatch: q-grams for index '%s' not found (Re-create the q-gram index!); %s",
-               ds, ex);
+               indexProject.getName(), ex);
          return 1;
       }
 
@@ -156,9 +156,9 @@ public class QGramMatcherSubcommand implements Subcommand {
       String toomanyhitsfilename = null;
       if (opt.isGiven("t")) {
          if (opt.get("t").startsWith("#")) {
-            toomanyhitsfilename = dt + ".toomanyhits-filter";
+            toomanyhitsfilename = queryProject.makeFileName(FileTypes.TOOMANYHITS_FILTER);
          } else {
-            toomanyhitsfilename = g.dir + opt.get("t");
+            toomanyhitsfilename = opt.get("t");
          }
       }
 
@@ -175,15 +175,15 @@ public class QGramMatcherSubcommand implements Subcommand {
          minseqmatches = 1;
       }
 
-      String outname = String.format("%s-%s-%dx%d", tname, sname, minseqmatches, minlen);
+      //TODO outname should be create by queryProject
+      String outname = String.format("%s-%s-%dx%d", queryProject.getName(), indexProject.getName(), minseqmatches, minlen);
+      outname = queryProject.getWorkingDirectory() + File.separator + outname + (sorted ? ".sorted-matches" : ".matches");
       if (opt.isGiven("o")) {
          if (outname.length() == 0 || outname.startsWith("#"))
             outname = null;
          else
-            outname = opt.get("o");
+            outname = opt.get("o") + (sorted ? ".sorted-matches" : ".matches");
       }
-      if (outname != null)
-         outname = g.outdir + outname + (sorted ? ".sorted-matches" : ".matches");
       log.info("qmatch: will write results to %s", (outname != null ? "'" + outname + "'"
             : "stdout"));
 
@@ -242,7 +242,7 @@ public class QGramMatcherSubcommand implements Subcommand {
          } else {
             qgrammatcher.match();
          }
-         qgrammatcher.tooManyHits(dt + ".toomanyhits-filter");
+         qgrammatcher.tooManyHits(queryProject.makeFileName(FileTypes.TOOMANYHITS_FILTER));
       } catch (IOException ex) {
          log.error("could not initialize qgrammatcher: " + ex.getMessage());
       }

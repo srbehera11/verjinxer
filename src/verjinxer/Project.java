@@ -2,6 +2,7 @@ package verjinxer;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -28,8 +29,7 @@ public class Project {
    Properties properties;
    final String projectName;
    final String projectFileName;
-
-   // final String workingDirectory; // TODO use instead of Globals.dir
+   private File workingDirectory;
 
    /**
     * Creates a new project in memory only. Call load() and store() to synchronize with files.
@@ -38,7 +38,22 @@ public class Project {
     *           Name of the project. The file name for the project is constructed from this string.
     */
    public Project(String projectName) {
-      this.projectName = projectName;
+      this(new File(projectName));
+   }
+   
+   /**
+    * @see Project(String)
+    */
+   public Project(File projectName) {
+      workingDirectory = projectName.getParentFile();
+      if (workingDirectory == null) {
+         workingDirectory = new File(System.getProperty("user.dir"));
+      }
+      if (!workingDirectory.exists()) {
+         workingDirectory.mkdirs();
+      }
+      assert workingDirectory.isDirectory();
+      this.projectName = projectName.getName();
       this.projectFileName = makeFileName(FileTypes.PRJ);
 
       Properties defaults = new Properties();
@@ -87,6 +102,35 @@ public class Project {
    }
 
    /**
+    * @return The working directory of this project.
+    */
+   public File getWorkingDirectory() {
+      return workingDirectory;
+   }
+
+   /**
+    * Sets the working directory for this project. All Files will be created or searched for here.
+    * The directory will be created if it does not exist.
+    * 
+    * @param workingDirectory
+    */
+   public void setWorkingDirectory(File workingDirectory) {
+      this.workingDirectory = workingDirectory;
+      if (!workingDirectory.exists()) {
+         workingDirectory.mkdirs();
+      }
+      assert workingDirectory.exists();
+      assert workingDirectory.isDirectory();
+   }
+
+   /**
+    * @see setWorkingDirectory(File)
+    */
+   public void setWorkingDirectory(String workingDirectory) {
+      setWorkingDirectory(new File(workingDirectory));
+   }
+
+   /**
     * Creates a path for a file depending on the working directory of the project, the name of the
     * project and the given file type.
     * 
@@ -95,7 +139,7 @@ public class Project {
     * @return The filename including the path.
     */
    public String makeFileName(FileTypes fileType) {
-      return Globals.dir + projectName + fileType;
+      return workingDirectory.getAbsolutePath() + File.separator + projectName + fileType;
    }
 
    /**
@@ -132,12 +176,12 @@ public class Project {
 
    @Deprecated
    public String getQPositionsFileName() {
-      return Globals.dir + projectName + FileNameExtensions.qpositions;
+      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileNameExtensions.qpositions;
    }
 
    @Deprecated
    public String getQBucketsFileName() {
-      return Globals.dir + projectName + FileNameExtensions.qbuckets;
+      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileNameExtensions.qbuckets;
    }
 
    public boolean isBisulfiteIndex() {

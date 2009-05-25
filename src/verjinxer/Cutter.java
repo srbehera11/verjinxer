@@ -7,6 +7,7 @@
 
 package verjinxer;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -85,9 +86,15 @@ public class Cutter {
     
     // set sequence file name, start log, read alphabet map
     String sname = args[0];
-    String projectname = g.dir + sname;
-    g.startProjectLogging(projectname);
-    Alphabet alphabet = g.readAlphabet(projectname + FileNameExtensions.alphabet);
+    Project project;
+    try {
+       project = Project.createFromFile(sname);
+    } catch (IOException ex) {
+       log.error("cut: cannot read project files.");
+       return 1;
+    }
+    g.startProjectLogging(project);
+    Alphabet alphabet = project.readAlphabet();
     
     // get patterns
     String[] pstrings = null;
@@ -129,7 +136,7 @@ public class Cutter {
 
     long[] ssp = null;
     if (!opt.isGiven("nossp") || opt.isGiven("i")) {
-      ssp = g.slurpLongArray(projectname+FileNameExtensions.ssp);
+      ssp = g.slurpLongArray(project.makeFileName(FileTypes.SSP));
     }
     if (!opt.isGiven("nossp")) {
       for (long i: ssp) { matchPositions.add((int)i); matchPositions.add((int)(i+1)); }
@@ -141,13 +148,13 @@ public class Cutter {
     // Read sequence
     ByteBuffer in = null;
     try {
-      in = new ArrayFile(projectname+FileNameExtensions.seq,0).mapR();
+      in = new ArrayFile(project.makeFileName(FileTypes.SEQ),0).mapR();
     } catch (IOException ex) {
       log.error("map: "+ex);
       return 1;
     }
     final int fsize = in.capacity();
-    log.info("cut: sequence file '%s' has length %d%n", projectname+FileNameExtensions.seq, fsize);
+    log.info("cut: sequence file '%s' has length %d%n", project.makeFileName(FileTypes.SEQ), fsize);
     
     for (int p=0; p<numpat; p++) {
       int numMatches = 0;
@@ -208,7 +215,7 @@ public class Cutter {
       mpout[written++]=recent;
     }
     assert(written==towrite);
-    final String outfile = projectname + ".cut";
+    final String outfile = project.makeFileName(FileTypes.CUT);
     g.dumpIntArray(outfile, mpout);
     log.info("cut: wrote %d cutpoints, %d less than expected.%n", written, totalMatches-written);
   
@@ -216,7 +223,7 @@ public class Cutter {
     // write FASTA if desired
     if (!writefasta) return returnvalue;
     String[] fparameters = opt.get("f").split("\\s*,\\s*");
-    String fname = g.outdir + fparameters[0];
+    String fname = project.getWorkingDirectory() + File.separator + fparameters[0];
     int fminlen = 0;
     int fmaxlen = Integer.MAX_VALUE;
     try {

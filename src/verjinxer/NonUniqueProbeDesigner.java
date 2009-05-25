@@ -20,6 +20,7 @@ import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.ArrayFile;
+import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.StringUtils;
@@ -57,7 +58,7 @@ public class NonUniqueProbeDesigner {
     log.info("  -d, --details              output detailed probe statistics (HUGE output!)");
     log.info("  -u, --unique   <number>    report only probes in <= number of seqs [all - 1]");
     log.info("  -f, --ufrac    <fraction>  report only probes in <= fraction of seqs");
-    log.info("  -o, --output   <filename>  output file name (.nuprobes/.nustats is appended)");
+    log.info("  -o, --output   <filename>  output file name (%s/%s is appended)", FileTypes.NUPROBES, FileTypes.NUSTATS);
     log.info("  --noskip                   output (don't skip) reverse complementary probes");
 //    log.info("  -x, --external             save memory at the cost of lower speed");
   }
@@ -108,7 +109,6 @@ public class NonUniqueProbeDesigner {
     if (args.length==0) {
       help(); log.error("nonunique: no index given"); return 0; }
     String indexname = args[0];
-    String projectname = g.dir+indexname;
     if (args.length>1) {
       log.warn("nonunique: ignoring all arguments except first '%s'", args[0]); }
         
@@ -119,8 +119,8 @@ public class NonUniqueProbeDesigner {
     c0 = (opt.isGiven("0")? Integer.parseInt(opt.get("0")) : 14);  // zero
     c1 = (opt.isGiven("1")? Integer.parseInt(opt.get("1")) : pl);  // one
     String  outname  = ( opt.isGiven("o")? opt.get("o") : (indexname + String.format(".%d-%d-%d",c0,c1,pl)) );
-    String  outfile  = g.outdir + outname + ".nuprobes";
-    String  statfile = g.outdir + outname + ".nustats";
+    String  outfile  = outname + FileTypes.NUPROBES;
+    String  statfile = outname + FileTypes.NUSTATS;
     int    m0    = ( opt.isGiven("u")? Integer.parseInt(opt.get("u")) : -1);
     double ufrac = ( opt.isGiven("f")? Double.parseDouble(opt.get("f")) : -1.0);
     
@@ -132,12 +132,13 @@ public class NonUniqueProbeDesigner {
        log.error("could not read project file: %s", ex);
        return 1;
     }
+    
     g.startProjectLogging(project);
     try {
       asize = project.getIntProperty("qAlphabetSize");
       q = project.getIntProperty("q");
     } catch (NumberFormatException ex) {
-      log.error("nonunique: q-grams for index '%s' not found. (Re-create the q-gram index!)", projectname);
+      log.error("nonunique: q-grams for index '%s' not found. (Re-create the q-gram index!)", project.getName());
       return 1;
     }
     if (!( (q-1)<=c0 && c0<c1 && c1<=pl )) {
@@ -146,12 +147,12 @@ public class NonUniqueProbeDesigner {
       return 1;
     }
     coder = new QGramCoder(q,asize);
-    alphabet = g.readAlphabet(projectname+FileNameExtensions.alphabet);
+    alphabet = project.readAlphabet();
     
     // Read seq, bck, ssp into arrays;  memory-map or read qpos
     TicToc timer = new TicToc();
-    String seqfile  = projectname+FileNameExtensions.seq;
-    String sspfile  = projectname+FileNameExtensions.ssp;
+    String seqfile  = project.makeFileName(FileTypes.SEQ);
+    String sspfile  = project.makeFileName(FileTypes.SSP);
     System.gc();
     log.info("nonunique: reading '%s', '%s'...", seqfile, sspfile);
     try {

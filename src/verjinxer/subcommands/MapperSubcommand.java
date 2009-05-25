@@ -31,6 +31,7 @@ import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.BitArray;
+import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.StringUtils;
@@ -115,7 +116,6 @@ public class MapperSubcommand implements Subcommand {
     */
    public int run(String[] args) {
       g.cmdname = "map";
-      String dt;
 
       Options opt = new Options(
             "m=method:,e=error=errorlevel:,b=blocksize:,r=rc=revcomp,s=select:,R=repeat=repeatthreshold:,Q=qcomplexity:,c=clip:,o=out:");
@@ -133,8 +133,6 @@ public class MapperSubcommand implements Subcommand {
          return 1;
       }
       final String tname = args[0];
-      dt = g.dir + tname;
-      g.startProjectLogging(dt);
 
       // Determine method
       method = null;
@@ -212,6 +210,7 @@ public class MapperSubcommand implements Subcommand {
          log.error("could not read project file: %s", ex);
          return 1;
       }
+      g.startProjectLogging(tproject);
       final int tm = tproject.getIntProperty("NumberSequences");
 
       final BitArray tselect;
@@ -219,9 +218,10 @@ public class MapperSubcommand implements Subcommand {
       // Select sequences
       if (opt.isGiven("s")) {
          if (opt.get("s").startsWith("#")) {
-            tselect = g.slurpBitArray(dt + FileNameExtensions.select);
+            tselect = g.slurpBitArray(tproject.makeFileName(FileTypes.SELECT));
          } else {
-            tselect = g.slurpBitArray(g.dir + opt.get("s"));
+            tselect = g.slurpBitArray(tproject.getWorkingDirectory().getAbsolutePath()
+                  + File.separator + opt.get("s"));
          }
       } else { // select all
          tselect = new BitArray(tm);
@@ -239,8 +239,7 @@ public class MapperSubcommand implements Subcommand {
          for (int i = 0; i < inum; i++) {
             String ix = args[i + 1];
             if (ix.startsWith("@")) {
-               BufferedReader br = new BufferedReader(new FileReader(new File(g.dir
-                     + ix.substring(1))));
+               BufferedReader br = new BufferedReader(new FileReader(new File(ix.substring(1))));
                String line;
                while ((line = br.readLine()) != null) {
                   int colon = line.indexOf(':');
@@ -251,7 +250,7 @@ public class MapperSubcommand implements Subcommand {
                }
                br.close();
             } else {
-               indices.add(g.dir + ix);
+               indices.add(ix);
             }
          }
       } catch (IOException ex) {
@@ -293,15 +292,15 @@ public class MapperSubcommand implements Subcommand {
          log.error("map: can only use reverse complement option with DNA sequences. Stop.");
          return 1;
       }
-      Alphabet alphabet = g.readAlphabet(g.dir + tname + FileNameExtensions.alphabet);
-      String tsspfile = dt + FileNameExtensions.ssp;
+      Alphabet alphabet = tproject.readAlphabet();
+      String tsspfile = tproject.makeFileName(FileTypes.SSP);
 
       final long[] tssp = g.slurpLongArray(tsspfile);
       assert tm == tssp.length;
-      final ArrayList<String> tdesc = g.slurpTextFile(dt + FileNameExtensions.desc, tm);
+      final ArrayList<String> tdesc = Globals.slurpTextFile(tproject.makeFileName(FileTypes.DESC), tm);
       long longestsequence = tproject.getLongProperty("LongestSequence");
       long shortestsequence = tproject.getLongProperty("ShortestSequence");
-      final byte[] tall = g.slurpByteArray(dt + FileNameExtensions.seq);
+      final byte[] tall = g.slurpByteArray(tproject.makeFileName(FileTypes.SEQ));
 
       int selected = tselect.cardinality();
       log.info("map: comparing %d/%d sequences against %d indices (%s) using method %s%s...",
@@ -326,10 +325,10 @@ public class MapperSubcommand implements Subcommand {
                allout = new PrintWriter(System.out);
                closeout = false;
             } else {
-               allout = new PrintWriter(g.outdir + opt.get("o") + ".allmapped");
+               allout = new PrintWriter(opt.get("o") + ".allmapped");
             }
          } else
-            allout = new PrintWriter(g.outdir + tname + ".allmapped");
+            allout = new PrintWriter(tproject.makeFileName(FileTypes.ALLMAPPED));
       } catch (IOException ex) {
          log.error("map: could not create output file; %s", ex);
          return 1;
@@ -353,8 +352,8 @@ public class MapperSubcommand implements Subcommand {
       log.info(
             "map: successfully mapped %d / %d selected (%d total) sequences;%n     found %d repeats, %d sequences remain.",
             tmapped.cardinality(), selected, tm, trepeat.cardinality(), tselect.cardinality());
-      g.dumpBitArray(dt + FileNameExtensions.select, tselect);
-      g.dumpBitArray(dt + ".repeat-filter", trepeat);
+      g.dumpBitArray(tproject.makeFileName(FileTypes.SELECT), tselect);
+      g.dumpBitArray(tproject.makeFileName(FileTypes.REPEAT_FILTER), trepeat);
       g.stopplog();
       if (closeout)
          allout.close();
@@ -390,7 +389,7 @@ public class MapperSubcommand implements Subcommand {
       // out has not yet been opened; open it for tabulating.
       if (qgramtabulate) {
          try {
-            out = new PrintWriter(String.format("%s%s.%d.qcomplexity", g.outdir, tname, qq));
+            out = new PrintWriter(String.format("%s.%d.qcomplexity", tname, qq));
          } catch (FileNotFoundException ex) {
             log.error("map: could not tabulate q-gram complexities; " + ex);
             g.terminate(1);
