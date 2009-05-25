@@ -96,6 +96,8 @@ public class Globals {
          projectlog.close();
    }
 
+   // TODO Please explain what to use / what to do instead of calling terminate().
+   // Thanks, -SR.
    @Deprecated
    public static void terminate(int exitcode) {
       System.exit(exitcode);
