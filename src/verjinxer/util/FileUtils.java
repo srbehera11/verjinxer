@@ -13,13 +13,14 @@ public class FileUtils {
    /**
     * Removes a file name extension from a string. If no extension is found, the name is returned
     * unchanged.
+    * If name is a path, the path parent will be removed. Only the the file name is returned.
     * 
     * @param name
     *           file name. For example, "hello.fa"
     * @return file name without extension. For example, "hello"
     */
    public static String extensionRemoved(String name) {
-      name = new File(name).getName(); // TODO is this necessary?
+      name = new File(name).getName(); // TODO is this necessary? - removes /qwer/asdf of /qwer/asdf/yxc
       int lastdot = name.lastIndexOf('.');
       if (lastdot >= 0) {
          return name.substring(0, lastdot);
