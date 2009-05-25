@@ -22,7 +22,6 @@ import java.util.Locale;
 
 import com.spinn3r.log5j.Logger;
 
-import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.MapperByAlignment;
 import verjinxer.MapperByQGrams;
@@ -140,13 +139,13 @@ public class MapperSubcommand implements Subcommand {
       if (opt.isGiven("m")) {
          if (opt.get("m").startsWith("q")) {
             method = Method.QGRAM;
-            mext = FileNameExtensions.qpositions;
+            mext = FileTypes.QPOSITIONS.toString();
          } else if (opt.get("m").startsWith("s")) {
             method = Method.SUFFIX;
-            mext = FileNameExtensions.pos;
+            mext = FileTypes.POS.toString();
          } else if (opt.get("m").startsWith("f")) {
             method = Method.FULL;
-            mext = FileNameExtensions.seq;
+            mext = FileTypes.SEQ.toString();
          } else {
             help();
             log.error("map: Unknown method '%s'.", opt.get("m"));
@@ -154,7 +153,7 @@ public class MapperSubcommand implements Subcommand {
          }
       } else {
          method = Method.QGRAM;
-         mext = FileNameExtensions.qpositions;
+         mext = FileTypes.QPOSITIONS.toString();
       }
 
       // Determine options
@@ -273,7 +272,7 @@ public class MapperSubcommand implements Subcommand {
             log.error("map: could not open index '%s'; %s.", fin, ex);
             return 1;
          }
-         fin = indices.get(i) + FileNameExtensions.seq;
+         fin = indices.get(i) + FileTypes.SEQ;
          try {
             final ArrayFile fi = new ArrayFile(fin, 0).openR().close();
             long filen = fi.length();

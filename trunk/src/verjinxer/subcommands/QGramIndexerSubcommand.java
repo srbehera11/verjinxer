@@ -10,7 +10,6 @@ import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
 
-import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.QGramIndexer;
@@ -45,19 +44,19 @@ public final class QGramIndexerSubcommand implements Subcommand {
       log.info("Usage:");
       log.info("%s qgram [options] Indexnames...", programname);
       log.info("Builds a q-gram index of .seq files; filters out low-complexity q-grams;");
-      log.info("writes %s, %s, %s, %s.", FileNameExtensions.qbuckets, FileNameExtensions.qpositions, FileNameExtensions.qfreq, FileNameExtensions.qseqfreq);
+      log.info("writes %s, %s, %s, %s.", FileTypes.QBUCKETS, FileTypes.QPOSITIONS, FileTypes.QFREQ, FileTypes.QSEQFREQ);
       log.info("Options:");
       log.info("  -q  <q>                 q-gram length [0=reasonable]");
       log.info("  -s, --stride <stride>   only store q-grams whose positions are divisible by stride (default: %d)", stride);
       log.info("  -b, --bisulfite         simulate bisulfite treatment");
       log.info("  -f, --allfreq           write (unfiltered) frequency files (--freq, --sfreq)");
-      log.info("  --freq                  write (unfiltered) q-gram frequencies (%s)", FileNameExtensions.qfreq);
-      log.info("  --seqfreq, --sfreq      write in how many sequences each qgram appears (%s)", FileNameExtensions.qseqfreq);
+      log.info("  --freq                  write (unfiltered) q-gram frequencies (%s)", FileTypes.QFREQ);
+      log.info("  --seqfreq, --sfreq      write in how many sequences each qgram appears (%s)", FileTypes.QSEQFREQ);
       log.info("  -c, --check             additionally check index integrity");
       log.info("  -C, --onlycheck         ONLY check index integrity");
-      log.info("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter to %s", FileNameExtensions.qbuckets);
+      log.info("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter to %s", FileTypes.QBUCKETS);
       log.info("  -X, --notexternal       DON'T save memory at the cost of lower speed");
-      log.info("  -r, --runs              build the index of the run-compressed sequence (%s)", FileNameExtensions.runseq);
+      log.info("  -r, --runs              build the index of the run-compressed sequence (%s)", FileTypes.RUNSEQ);
    }
 
    /** if run independently, call main
