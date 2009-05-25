@@ -198,6 +198,7 @@ public class Cutter {
     }
     
     // write output
+    recent = -1;
     int[] mpout = new int[towrite];
     int written=0;
     for (int i=0; i < mp.length; i++) {
