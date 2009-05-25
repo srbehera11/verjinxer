@@ -11,7 +11,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.sequenceanalysis.Aligner;
@@ -96,8 +95,7 @@ public class AlignerSubcommand implements Subcommand {
       g.startProjectLogging(referencesProject);
 
       // --output
-      String outputFileName = FileUtils.extensionRemoved(matchesFileName)
-            + FileNameExtensions.mapped;
+      String outputFileName = FileUtils.extensionRemoved(matchesFileName) + FileTypes.MAPPED;
       outputFileName = queriesProject.getWorkingDirectory().getAbsolutePath() + File.separator
             + outputFileName;
       if (opt.isGiven("o")) {

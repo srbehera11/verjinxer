@@ -48,8 +48,7 @@ public class SuffixTrayBuilder {
    public void help() {
       log.info("Usage:%n  %s suffix [options] Indexnames...", programname);
       log.info("Builds the suffix tray (tree plus array) of a .seq file;");
-      log.info("writes %s, %s (incl. variants 1,1x,2,2x).", FileNameExtensions.pos,
-            FileNameExtensions.lcp);
+      log.info("writes %s, %s (incl. variants 1,1x,2,2x).", FileTypes.POS, FileTypes.LCP);
       log.info("Options:");
       log.info("  -m, --method  <id>    select construction method, where <id> is one of:");
       log.info("      L%n" + "      R%n" + "      minLR%n" + "      bothLR%n" + "      bothLR2");

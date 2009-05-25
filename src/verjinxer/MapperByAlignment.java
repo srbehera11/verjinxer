@@ -11,6 +11,7 @@ import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
+import verjinxer.util.FileTypes;
 
 /** Maps reads. */
 public class MapperByAlignment {
@@ -106,7 +107,7 @@ public class MapperByAlignment {
          log.info("map: processing index '%s', reading .seq", iname[idx]);
          int as = iprj[idx].getIntProperty("LargestSymbol") + 1;
          assert asize == as;
-         itext[idx] = g.slurpByteArray(iname[idx] + FileNameExtensions.seq, 0, -1, null); // overwrite
+         itext[idx] = g.slurpByteArray(iname[idx] + FileTypes.SEQ, 0, -1, null); // overwrite
          ilength[idx] = iprj[idx].getIntProperty("Length");
          assert itext[idx].length == ilength[idx];
       }

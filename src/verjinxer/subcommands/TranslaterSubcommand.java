@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
 
-import verjinxer.FileNameExtensions;
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.Translater;
@@ -34,10 +33,10 @@ public class TranslaterSubcommand implements Subcommand {
    public void help() {
       log.info("Usage:  %s translate [options] <TextAndFastaFiles...>", programname);
       log.info("translates one or more text, CSFASTA or FASTA files, using an alphabet map;");
-      log.info("creates %s, %s, %s, %s, %s;", FileNameExtensions.seq, FileNameExtensions.desc,
-            FileNameExtensions.alphabet, FileNameExtensions.ssp, FileNameExtensions.prj);
-      log.info("with option -r, also creates %s, %s, %s, %s.", FileNameExtensions.runseq,
-            FileNameExtensions.runlen, FileNameExtensions.run2pos, FileNameExtensions.pos2run);
+      log.info("creates %s, %s, %s, %s, %s;", FileTypes.SEQ, FileTypes.DESC, FileTypes.ALPHABET,
+            FileTypes.SSP, FileTypes.PRJ);
+      log.info("with option -r, also creates %s, %s, %s, %s.", FileTypes.RUNSEQ, FileTypes.RUNLEN,
+            FileTypes.RUN2POS, FileTypes.POS2RUN);
       log.info("When translating CSFASTA files, an alphabet map must not be given.");
       log.info("Options:");
       log.info("  -i, --index <name>   name of index files [first filename]");

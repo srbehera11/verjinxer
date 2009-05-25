@@ -47,7 +47,7 @@ public class BigSuffixTrayBuilder {
   public void help() {
     log.info("Usage:%n  %s bigsuffix [options] Indexnames...%n", programname);
     log.info("Builds the 64-bit suffix tray of a .seq file;%n");
-    log.info("writes %s, %s (incl. variants 1,1x,2,2x).%n", FileNameExtensions.pos, FileNameExtensions.lcp);
+    log.info("writes %s, %s (incl. variants 1,1x,2,2x).%n", FileTypes.POS, FileTypes.LCP);
     log.info("Options:%n");
     log.info("  -m, --method  <id>    select construction method, where <id> is one of:%n");
     log.info("      L%n" +
@@ -775,7 +775,7 @@ public class BigSuffixTrayBuilder {
     ArrayFile fpos = null; 
     LongBuffer pos = null;
     try {
-      fpos = new ArrayFile(di+FileNameExtensions.pos,0);
+      fpos = new ArrayFile(di+FileTypes.POS,0);
       pos = fpos.mapR().asLongBuffer();
     } catch (IOException ex) {
       log.error("suffixcheck: could not read .pos file; " + ex);

@@ -431,11 +431,11 @@ public class Translater {
    /** compute runs using memory mapping where possible */
    private long computeRunsM(final String fname) throws IOException {
       int run = -1;
-      ByteBuffer seq = new ArrayFile(fname + FileNameExtensions.seq, 0).mapR();
-      ArrayFile rseq = new ArrayFile(fname + FileNameExtensions.runseq).openW();
-      ArrayFile rlen = new ArrayFile(fname + FileNameExtensions.runlen).openW();
-      IntBuffer p2r = new ArrayFile(fname + FileNameExtensions.pos2run, 0).mapRW().asIntBuffer();
-      ArrayFile r2p = new ArrayFile(fname + FileNameExtensions.run2pos).openW();
+      ByteBuffer seq = new ArrayFile(fname + FileTypes.SEQ, 0).mapR();
+      ArrayFile rseq = new ArrayFile(fname + FileTypes.RUNSEQ).openW();
+      ArrayFile rlen = new ArrayFile(fname + FileTypes.RUNLEN).openW();
+      IntBuffer p2r = new ArrayFile(fname + FileTypes.POS2RUN, 0).mapRW().asIntBuffer();
+      ArrayFile r2p = new ArrayFile(fname + FileTypes.RUN2POS).openW();
       final int n = seq.limit();
 
       byte current;

@@ -176,12 +176,12 @@ public class Project {
 
    @Deprecated
    public String getQPositionsFileName() {
-      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileNameExtensions.qpositions;
+      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileTypes.QPOSITIONS;
    }
 
    @Deprecated
    public String getQBucketsFileName() {
-      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileNameExtensions.qbuckets;
+      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileTypes.QBUCKETS;
    }
 
    public boolean isBisulfiteIndex() {
