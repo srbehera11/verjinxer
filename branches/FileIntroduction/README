@@ -1,0 +1,77 @@
+To run VerJInxer, you need to have log4j and log5j in your CLASSPATH. Both jar files can be found in the lib/ directory. I use something like this to simplify things:
+
+alias vji="java -ea -d64 -Xmx8G -cp $HOME/workspace/verjinxer/lib/log5j-1.2.jar:$HOME/workspace/verjinxer/lib/log4j-1.2.jar:$HOME/workspace/verjinxer/bin/ verjinxer.Main"
+
+To work with sequence data, it must first be translated from FASTA
+format.
+
+	vji tr --dna refseq.fa
+	vji tr --dna queries.fa
+
+This creates projects 'refseq' and 'queries'. All further commands use
+these names as parameter.
+
+Create a q-gram index of a reference sequence
+
+	vji qg refseq
+
+Create a bisulfite q-gram index of a reference sequence
+
+	vji qg --bisulfite refseq
+
+Match queries against a q-gram index. Also works for a bisulfite q-gram index.
+
+	vji qm queries refseq
+
+Same with minimum match length of 25 and a filter:
+
+	vji qm -l 25 -F 2:1 queries refseq
+
+The filter is specified as "2:1", which means that all q-grams
+are ignored for matching that consist of only two alphabet characters.
+The one means that one additional character is allowed that is different.
+
+Create a q-gram index of a query sequence
+
+	vji qg queries
+
+Match a reference sequence against a q-gram index of queries
+
+	vji qm refseq queries
+
+If the index contains bisulfite-treated sequences, then simulation of
+bisulfite treatment of the reference sequence should be requested:
+
+	vji qm --bisulfite refseq queries
+
+
+File formats
+============
+
+In the following, positions and sequence indices are 0-based (the first position in a sequence has index 0; the first sequence in a set of sequences has index 0).
+
+.matches files
+--------------
+
+This file is written during a 'qmatch' run. It contains all exact matches between a set of query and a set of reference sequences.
+Each line contains six integer numbers, separated by space, that represent a single exact match:
+
+query_number query_position reference_number reference_position length diagonal
+
+* query_number and reference_number give the index of the query sequence and the reference sequence in which the exact match was found.
+* query_position and reference_position give the position within the query sequence and within the reference sequence at which the exact match starts.
+* length gives the length of the exact match.
+* diagonal is the diagonal on which the the exact match is located. This is always equal to reference_position - query_position.
+
+.mapped files
+-------------
+
+This file is written during an 'align' run. It contains all matches between a set of query sequences and a set of reference sequences, where matches are those in which the entire query sequence could be aligned to a location on the reference sequence with a given maximum number of errors, or with a minimum score.
+
+Each line is as follows:
+
+query_number reference_number reference_start_position reference_stop_position errors/score
+
+* query_number and reference_number give the index of the query sequence and the reference sequence in which the inexact match was found.
+* reference_start_position and reference_stop_position give the interval on the reference sequence to which the query sequence was aligned. The stop position is exclusive: That is, the last character that belongs to the interval has index reference_stop_position-1 (and reference_stop_position - reference_start_position gives the length of the interval).
+* errors/score is either an integer with the number of errors of the alignment or it is a score which may be a floating-point number.
