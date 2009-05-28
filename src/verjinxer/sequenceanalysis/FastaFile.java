@@ -18,7 +18,7 @@ public class FastaFile {
       READ, WRITE
    };
 
-   private String fname;
+   private File file;
    private BufferedReader in;
    private PrintWriter out;
    private String nextHeader;
@@ -26,11 +26,11 @@ public class FastaFile {
    /**
     * Creates a new instance of FastaFile
     * 
-    * @param fname
-    *           the file name of the FASTA file
+    * @param file
+    *           the FASTA file
     */
-   public FastaFile(final String fname) {
-      this.fname = fname;
+   public FastaFile(final File file) {
+      this.file = file;
    }
 
    /**
@@ -45,10 +45,10 @@ public class FastaFile {
       if (in != null || out != null)
          throw new IOException("FastaFile already open");
       if (mode == FastaMode.READ) {
-         in = new BufferedReader(new FileReader(fname), 1024 * 1024);
+         in = new BufferedReader(new FileReader(file), 1024 * 1024);
          out = null;
       } else if (mode == FastaMode.WRITE) {
-         out = new PrintWriter(new FileWriter(fname));
+         out = new PrintWriter(new FileWriter(file));
          in = null;
       }
       this.nextHeader = null;

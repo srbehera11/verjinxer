@@ -7,6 +7,7 @@ package verjinxer;
 
 import static verjinxer.Globals.programname;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.IntBuffer;
@@ -124,7 +125,7 @@ public class SuffixTrayBuilder {
          dolcp += 1;
 
       // Get indexname and di
-      String indexname = args[0];
+      File indexname = new File(args[0]);
       if (args.length > 1)
          log.warn("suffixtray: ignoring all arguments except first '%s'", args[0]);
 
@@ -140,7 +141,7 @@ public class SuffixTrayBuilder {
 
       // load alphabet map and text
       alphabet = project.readAlphabet();
-      s = g.slurpByteArray(project.makeFileName(FileTypes.SEQ));
+      s = g.slurpByteArray(project.makeFile(FileTypes.SEQ));
       n = s.length;
       if (onlycheck) {
          returnvalue = checkpos(project);
@@ -198,7 +199,7 @@ public class SuffixTrayBuilder {
 
       if (returnvalue == 0) {
          timer.tic();
-         String fpos = project.makeFileName(FileTypes.POS);
+         File fpos = project.makeFile(FileTypes.POS);
          log.info("suffixtray: writing '%s'...", fpos);
          if (method.equals("L"))
             writepos_R(fpos);
@@ -218,7 +219,7 @@ public class SuffixTrayBuilder {
       // do lcp if desired
       if (dolcp > 0 && returnvalue == 0) {
          timer.tic();
-         String flcp = project.makeFileName(FileTypes.LCP);
+         File flcp = project.makeFile(FileTypes.LCP);
          log.info("suffixtray: computing lcp array...");
          if (method.equals("L"))
             lcp_L(flcp, dolcp);
@@ -245,7 +246,7 @@ public class SuffixTrayBuilder {
       try {
          project.store();
       } catch (IOException ex) {
-         log.warn("suffix: could not write %s (%s)!", project.getFileName(), ex);
+         log.warn("suffix: could not write %s (%s)!", project.getFile().getPath(), ex);
          g.terminate(1);
       }
       g.stopplog();
@@ -926,7 +927,7 @@ public class SuffixTrayBuilder {
       ArrayFile fpos = null;
       IntBuffer pos = null;
       try {
-         fpos = new ArrayFile(project.makeFileName(FileTypes.POS), 0);
+         fpos = new ArrayFile(project.makeFile(FileTypes.POS), 0);
          pos = fpos.mapR().asIntBuffer();
       } catch (IOException ex) {
          g.terminate("suffixcheck: could not read .pos file; " + ex);
@@ -964,20 +965,20 @@ public class SuffixTrayBuilder {
    /**
     * write pos array to file when lexnextpos is available
     * 
-    * @param fname
-    *           the full path and file name
+    * @param file
+    *           the file
     */
-   private void writepos_R(String fname) {
+   private void writepos_R(File file) {
       int chi, p;
       for (chi = 0; chi < 256 && lexfirstpos[chi] == -1; chi++) {
       }
       try {
-         final ArrayFile f = new ArrayFile(fname).openW();
+         final ArrayFile f = new ArrayFile(file).openW();
          for (p = lexfirstpos[chi]; p != -1; p = lexnextpos[p])
             f.writeInt(p);
          f.close();
       } catch (IOException ex) {
-         log.error("suffixtray: error writing '%s': %s", fname, ex);
+         log.error("suffixtray: error writing '%s': %s", file, ex);
          g.terminate(1);
       }
    }
@@ -985,16 +986,16 @@ public class SuffixTrayBuilder {
    /**
     * write pos array to file after walk-bothLR using the xor trick.
     * 
-    * @param fname
-    *           the full path and file name
+    * @param file
+    *           the file
     */
-   private void writepos_bothLR(String fname) {
+   private void writepos_bothLR(File file) {
       int chi, p, oldp, tmp;
       final int[] lexps = dll.lexps;
       for (chi = 0; chi < 256 && lexfirstpos[chi] == -1; chi++) {
       }
       try {
-         final ArrayFile f = new ArrayFile(fname).openW();
+         final ArrayFile f = new ArrayFile(file).openW();
          for (oldp = -1, p = lexfirstpos[chi]; p != -1;) {
             f.writeInt(p);
             tmp = p;
@@ -1003,7 +1004,7 @@ public class SuffixTrayBuilder {
          }
          f.close();
       } catch (IOException ex) {
-         log.warn("suffixtray: error writing '%s': %s", fname, ex);
+         log.warn("suffixtray: error writing '%s': %s", file, ex);
          g.terminate(1);
       }
    }
@@ -1035,12 +1036,12 @@ public class SuffixTrayBuilder {
    /**
     * lcp computation according to Kasai et al.'s algorithm when lexprevpos[] is available.
     * 
-    * @param fname
-    *           filename for lcp array
+    * @param file
+    *           file for lcp array
     *@param dolcp
     *           which lcp arrays to compute (0..7, any combination of 1+2+4)
     */
-   private void lcp_L(String fname, int dolcp) {
+   private void lcp_L(File file, int dolcp) {
       TicToc timer = new TicToc();
       int p, prev, h;
       h = 0;
@@ -1070,14 +1071,14 @@ public class SuffixTrayBuilder {
       ArrayFile f4 = null, f2 = null, f1 = null, f2x = null, f1x = null;
       try {
          if ((dolcp & 4) != 0)
-            f4 = new ArrayFile(fname).openW();
+            f4 = new ArrayFile(file).openW();
          if ((dolcp & 2) != 0) {
-            f2 = new ArrayFile(fname + "2").openW();
-            f2x = new ArrayFile(fname + "2x", 0).openW();
+            f2 = new ArrayFile(file + "2").openW();
+            f2x = new ArrayFile(file + "2x", 0).openW();
          }
          if ((dolcp & 1) != 0) {
-            f1 = new ArrayFile(fname + "1").openW();
-            f1x = new ArrayFile(fname + "1x", 0).openW();
+            f1 = new ArrayFile(file + "1").openW();
+            f1x = new ArrayFile(file + "1x", 0).openW();
          }
          for (r = 0, p = lexfirstpos[chi]; p != -1; p = lexnextpos[p], r++) {
             h = lexprevpos[p];
@@ -1123,12 +1124,12 @@ public class SuffixTrayBuilder {
     * lcp computation according to Kasai et al.'s algorithm after walk-bothLR suffix array
     * construction using the SPACE SAVING xor technique.
     * 
-    * @param fname
-    *           filename for lcp array
+    * @param file
+    *           file for lcp array
     *@param dolcp
     *           which lcp arrays to compute (1+2+4)
     */
-   private void lcp_bothLR(String fname, int dolcp) {
+   private void lcp_bothLR(File file, int dolcp) {
       throw new UnsupportedOperationException("Not yet implemented");
    }
 

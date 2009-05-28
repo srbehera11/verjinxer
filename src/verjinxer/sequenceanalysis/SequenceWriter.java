@@ -1,5 +1,6 @@
 package verjinxer.sequenceanalysis;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
@@ -14,10 +15,10 @@ import verjinxer.util.FileTypes;
  */
 public class SequenceWriter {
 
-   private final String seqFilename;
-   private final String sspFilename;
-   private final String descFilename;
-   private final String qualityFilename;
+   private final File seqFile;
+   private final File sspFile;
+   private final File descFile;
+   private final File qualityFile;
 
    private ArrayFile sequenceFile;
    private ArrayList<String> descriptions = new ArrayList<String>();
@@ -26,44 +27,44 @@ public class SequenceWriter {
    private long minSequenceLength = Long.MAX_VALUE;
    /** Sequence separator positions. */
    private ArrayList<Long> separatorPositions = new ArrayList<Long>();
-   private ArrayFile qualityFile = null;
+   private ArrayFile qualityArrayFile = null;
 
    public SequenceWriter(final Project project) throws IOException {
-      seqFilename = project.makeFileName(FileTypes.SEQ);
-      sspFilename = project.makeFileName(FileTypes.SSP);
-      descFilename = project.makeFileName(FileTypes.DESC);
-      qualityFilename = project.makeFileName(FileTypes.QUALITIY);
+      seqFile = project.makeFile(FileTypes.SEQ);
+      sspFile = project.makeFile(FileTypes.SSP);
+      descFile = project.makeFile(FileTypes.DESC);
+      qualityFile = project.makeFile(FileTypes.QUALITIY);
 
-      sequenceFile = new ArrayFile(seqFilename);
+      sequenceFile = new ArrayFile(seqFile);
       sequenceFile.openW();
    }
    
    /**
     * @return The filename of the Sequence.
     */
-   public String getSequenceFilename() {
-      return seqFilename;
+   public File getSequenceFile() {
+      return seqFile;
    }
 
    /**
     * @return The filename of the separator positions
     */
-   public String getSequencesSeparatorPositionsFilename() {
-      return sspFilename;
+   public File getSequencesSeparatorPositionsFile() {
+      return sspFile;
    }
 
    /**
     * @return The filename of the descriptions
     */
-   public String getDescriptionFilename() {
-      return descFilename;
+   public File getDescriptionFile() {
+      return descFile;
    }
 
    /**
     * @return The filename of the Qualityfile
     */
-   public String getQualityFilename() {
-      return qualityFilename;
+   public File getQualityFile() {
+      return qualityFile;
    }
 
    /**
@@ -79,10 +80,10 @@ public class SequenceWriter {
       int i = 0;
       for (long l : separatorPositions)
          sspArray[i++] = l;
-      new ArrayFile(sspFilename).writeArray(sspArray, 0, separatorPositions.size());
+      new ArrayFile(sspFile).writeArray(sspArray, 0, separatorPositions.size());
 
       // Write the descriptions
-      PrintWriter descfile = new PrintWriter(descFilename);
+      PrintWriter descfile = new PrintWriter(descFile);
       for (String s : descriptions)
          descfile.println(s);
       descfile.close();
@@ -161,11 +162,11 @@ public class SequenceWriter {
    }
 
    public void addQualityValues(ByteBuffer buffer) throws IOException {
-      if (qualityFile == null) {
-         qualityFile = new ArrayFile(qualityFilename);
-         qualityFile.openW();
+      if (qualityArrayFile == null) {
+         qualityArrayFile = new ArrayFile(qualityFile);
+         qualityArrayFile.openW();
       }
-      qualityFile.writeBuffer(buffer);
+      qualityArrayFile.writeBuffer(buffer);
    }
 
 }

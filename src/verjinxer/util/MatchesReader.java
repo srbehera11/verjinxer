@@ -1,6 +1,7 @@
 package verjinxer.util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -8,8 +9,8 @@ public class MatchesReader {
 
    private BufferedReader reader;
 
-   public MatchesReader(String matchesFileName) throws IOException {
-      reader = new BufferedReader(new FileReader(matchesFileName));
+   public MatchesReader(File matchesFile) throws IOException {
+      reader = new BufferedReader(new FileReader(matchesFile));
    }
 
    public Match readMatch() throws IOException, NumberFormatException {

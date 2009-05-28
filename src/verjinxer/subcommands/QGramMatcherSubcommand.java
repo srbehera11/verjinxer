@@ -106,27 +106,27 @@ public class QGramMatcherSubcommand implements Subcommand {
 
       // t: text to find
       // s: sequence in which to search
-      String tname, sname;
+      File queryProjectName, indexProjectName;
 
       if (args.length == 1) {
          assert selfcmp;
-         tname = args[0];
-         sname = tname;
+         queryProjectName = new File(args[0]);
+         indexProjectName = queryProjectName;
       } else {
          assert args.length >= 2;
          if (selfcmp)
             log.info("qmatch: using --self with indices will suppress symmetric matches");
-         tname = args[0];
-         sname = args[1];
-         if (selfcmp && !tname.equals(sname))
-            log.warn("qmatch: using --self, but %s != %s", tname, sname);
+         queryProjectName = new File(args[0]);
+         indexProjectName = new File(args[1]);
+         if (selfcmp && !queryProjectName.equals(indexProjectName))
+            log.warn("qmatch: using --self, but %s != %s", queryProjectName, indexProjectName);
       }
 
       // Read project data and determine asize, q; read alphabet map
       Project indexProject, queryProject;
       try {
-         indexProject = Project.createFromFile(sname);
-         queryProject = Project.createFromFile(tname);
+         indexProject = Project.createFromFile(indexProjectName);
+         queryProject = Project.createFromFile(queryProjectName);
       } catch (IOException ex) {
          log.error("qmatch: cannot read project files.");
          return 1;
@@ -153,12 +153,12 @@ public class QGramMatcherSubcommand implements Subcommand {
       if (opt.isGiven("M"))
          maxseqmatches = Integer.parseInt(opt.get("M"));
 
-      String toomanyhitsfilename = null;
+      File toomanyhitsfile = null;
       if (opt.isGiven("t")) {
          if (opt.get("t").startsWith("#")) {
-            toomanyhitsfilename = queryProject.makeFileName(FileTypes.TOOMANYHITS_FILTER);
+            toomanyhitsfile = queryProject.makeFile(FileTypes.TOOMANYHITS_FILTER);
          } else {
-            toomanyhitsfilename = opt.get("t");
+            toomanyhitsfile = new File(opt.get("t"));
          }
       }
 
@@ -234,7 +234,7 @@ public class QGramMatcherSubcommand implements Subcommand {
       }
 
       try {
-         QGramMatcher qgrammatcher = new QGramMatcher(g, queryProject, indexProject, toomanyhitsfilename,
+         QGramMatcher qgrammatcher = new QGramMatcher(g, queryProject, indexProject, toomanyhitsfile,
                maxseqmatches, minseqmatches, minlen, qgramcoder, qgramfilter, out, sorted, selfcmp,
                c_matches_c);
          if (bisulfiteQueries) {
@@ -242,7 +242,7 @@ public class QGramMatcherSubcommand implements Subcommand {
          } else {
             qgrammatcher.match();
          }
-         qgrammatcher.tooManyHits(queryProject.makeFileName(FileTypes.TOOMANYHITS_FILTER));
+         qgrammatcher.tooManyHits(queryProject.makeFile(FileTypes.TOOMANYHITS_FILTER));
       } catch (IOException ex) {
          log.error("could not initialize qgrammatcher: " + ex.getMessage());
       }

@@ -85,7 +85,7 @@ public class Cutter {
     }
     
     // set sequence file name, start log, read alphabet map
-    String sname = args[0];
+    File sname = new File(args[0]);
     Project project;
     try {
        project = Project.createFromFile(sname);
@@ -136,7 +136,7 @@ public class Cutter {
 
     long[] ssp = null;
     if (!opt.isGiven("nossp") || opt.isGiven("i")) {
-      ssp = g.slurpLongArray(project.makeFileName(FileTypes.SSP));
+      ssp = g.slurpLongArray(project.makeFile(FileTypes.SSP));
     }
     if (!opt.isGiven("nossp")) {
       for (long i: ssp) { matchPositions.add((int)i); matchPositions.add((int)(i+1)); }
@@ -148,13 +148,13 @@ public class Cutter {
     // Read sequence
     ByteBuffer in = null;
     try {
-      in = new ArrayFile(project.makeFileName(FileTypes.SEQ),0).mapR();
+      in = new ArrayFile(project.makeFile(FileTypes.SEQ),0).mapR();
     } catch (IOException ex) {
       log.error("map: "+ex);
       return 1;
     }
     final int fsize = in.capacity();
-    log.info("cut: sequence file '%s' has length %d%n", project.makeFileName(FileTypes.SEQ), fsize);
+    log.info("cut: sequence file '%s' has length %d%n", project.makeFile(FileTypes.SEQ), fsize);
     
     for (int p=0; p<numpat; p++) {
       int numMatches = 0;
@@ -215,7 +215,7 @@ public class Cutter {
       mpout[written++]=recent;
     }
     assert(written==towrite);
-    final String outfile = project.makeFileName(FileTypes.CUT);
+    final File outfile = project.makeFile(FileTypes.CUT);
     g.dumpIntArray(outfile, mpout);
     log.info("cut: wrote %d cutpoints, %d less than expected.%n", written, totalMatches-written);
   
@@ -223,7 +223,7 @@ public class Cutter {
     // write FASTA if desired
     if (!writefasta) return returnvalue;
     String[] fparameters = opt.get("f").split("\\s*,\\s*");
-    String fname = project.getWorkingDirectory() + File.separator + fparameters[0];
+    File file = project.makeFile(fparameters[0]);
     int fminlen = 0;
     int fmaxlen = Integer.MAX_VALUE;
     try {
@@ -236,7 +236,7 @@ public class Cutter {
     } catch (NumberFormatException ex) {
       fmaxlen = Integer.MAX_VALUE;
     }
-    log.info("cut: writing fragments with length in [%d,%d] to '%s'%n", fminlen, fmaxlen, fname);
+    log.info("cut: writing fragments with length in [%d,%d] to '%s'%n", fminlen, fmaxlen, file);
     
     int fcount=0;
     long flen=0;
@@ -245,7 +245,7 @@ public class Cutter {
     IntBuffer cutpoints = null;
     try {   
       cutpoints = new ArrayFile(outfile,0).mapR().asIntBuffer();
-      ffile = new FastaFile(fname).open(FastaFile.FastaMode.WRITE);
+      ffile = new FastaFile(file).open(FastaFile.FastaMode.WRITE);
     } catch (IOException ex) {
       log.error("cut: %s", ex);
       return 1;
@@ -262,9 +262,9 @@ public class Cutter {
       in.get(fragment,0,len);
       try {
         final String fstring = alphabet.preimage(fragment,0,len);
-        ffile.writeString(fstring, String.format("Fragment OK SRC=%s NUM=%d BEG=%d LEN=%d", sname, fcount, lastcp, len));
+        ffile.writeString(fstring, String.format("Fragment OK SRC=%s NUM=%d BEG=%d LEN=%d", sname.getPath(), fcount, lastcp, len));
       } catch (InvalidSymbolException ex) {
-        ffile.writeString("", String.format("Fragment !INVALID! SRC=%s NUM=%d BEG=%d LEN=%d", sname, -1, lastcp, len));
+        ffile.writeString("", String.format("Fragment !INVALID! SRC=%s NUM=%d BEG=%d LEN=%d", sname.getPath(), -1, lastcp, len));
         errors=true;
       }
       fcount++; flen+=len;

@@ -2,6 +2,7 @@
  */
 package verjinxer.util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -374,8 +375,8 @@ public class HugeByteArray {
     * file position if the given position is &ge;= 0. If the given position is negative, we read
     * from the current file position. If nItems is negative, we read till the end.
     * 
-    * @param fname
-    *           file name
+    * @param file
+    *           the file
     * @param start
     *           position in this array at which to start filling it
     * @param nItems
@@ -385,9 +386,9 @@ public class HugeByteArray {
     * @throws java.io.IOException
     *            if any I/O error occurs
     */
-   public final void read(final String fname, long start, long nItems, final long fpos)
+   public final void read(final File file, long start, long nItems, final long fpos)
          throws IOException {
-      final FileChannel channel = new FileInputStream(fname).getChannel();
+      final FileChannel channel = new FileInputStream(file).getChannel();
       if (fpos >= 0)
          channel.position(BYTESPERELEMENT * fpos);
       final ByteBuffer ib = _bb; // type depends on 'a'
@@ -418,18 +419,18 @@ public class HugeByteArray {
    /**
     * factory function for constructing a HugeByteArray from a binary file
     * 
-    * @param fname
-    *           the file name
+    * @param file
+    *           the file
     * @return a HugeByteArray with the file's contents
     * @throws java.io.IOException
     */
-   public static final HugeByteArray fromFile(final String fname) throws IOException {
-      final FileChannel channel = new FileInputStream(fname).getChannel();
+   public static final HugeByteArray fromFile(final File file) throws IOException {
+      final FileChannel channel = new FileInputStream(file).getChannel();
       final long flen = channel.size();
       if (flen % BYTESPERELEMENT != 0)
          throw new IOException("File size not compatible with HugeByteArray");
       final HugeByteArray a = new HugeByteArray(flen / BYTESPERELEMENT);
-      a.read(fname, 0, flen / BYTESPERELEMENT, 0);
+      a.read(file, 0, flen / BYTESPERELEMENT, 0);
       return a;
    }
 }

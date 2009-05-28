@@ -125,8 +125,7 @@ public class QGramIndexTest {
          int stride = 1;
 
          // generate QGramIndex
-         QGramIndex index = new QGramIndex(qposfile.getAbsolutePath(), qbckfile.getAbsolutePath(),
-               maximumBucketSize, q, stride);
+         QGramIndex index = new QGramIndex(qposfile, qbckfile, maximumBucketSize, q, stride);
          testIndex(index, maximumBucketSize, q, stride);
 
       } catch (IOException e) {

@@ -68,9 +68,9 @@ public class AlignerSubcommand implements Subcommand {
          log.error("Three parameters required!");
          return 1;
       }
-      String readsProjectFileName = args[0];
-      String referenceProjectFileName = args[1];
-      String matchesFileName = args[2];
+      File readsProjectFile = new File(args[0]);
+      File referenceProjectFile = new File(args[1]);
+      File matchesFile = new File(args[2]);
 
       // --qualities
       if (opt.isGiven("q")) {
@@ -86,8 +86,8 @@ public class AlignerSubcommand implements Subcommand {
 
       Project queriesProject, referencesProject;
       try {
-         queriesProject = Project.createFromFile(readsProjectFileName);
-         referencesProject = Project.createFromFile(referenceProjectFileName);
+         queriesProject = Project.createFromFile(readsProjectFile);
+         referencesProject = Project.createFromFile(referenceProjectFile);
       } catch (IOException ex) {
          log.error("Cannot read project file " + ex.getMessage());
          return 1;
@@ -95,35 +95,34 @@ public class AlignerSubcommand implements Subcommand {
       g.startProjectLogging(referencesProject);
 
       // --output
-      String outputFileName = FileUtils.extensionRemoved(matchesFileName) + FileTypes.MAPPED;
-      outputFileName = queriesProject.getWorkingDirectory().getAbsolutePath() + File.separator
-            + outputFileName;
+      File outputFile = queriesProject.makeFile(FileTypes.MAPPED, FileUtils.removeExtension(matchesFile).getName());
       if (opt.isGiven("o")) {
-         if (outputFileName.length() == 0 || outputFileName.startsWith("#")) {
-            outputFileName = null;
+         String option = opt.get("o");
+         if (option.length() == 0 || option.startsWith("#")) {
+            outputFile = null;
          }
          else {
-            outputFileName = opt.get("o");
-            if (!outputFileName.endsWith(FileTypes.MAPPED.toString())) { //file extension should be .mapped
-               outputFileName += FileTypes.MAPPED;
+            if (!option.endsWith(FileTypes.MAPPED.toString())) { //file extension should be .mapped
+               option += FileTypes.MAPPED;
+               outputFile = new File(option);
             }
          }
       }
       
       PrintWriter out;
-      if (outputFileName == null) {
+      if (outputFile == null) {
          out = new PrintWriter(System.out);
       } else {
          try {
             out = new PrintWriter(
-                  new BufferedOutputStream(new FileOutputStream(outputFileName), 32 * 1024), false);
+                  new BufferedOutputStream(new FileOutputStream(outputFile), 32 * 1024), false);
          } catch (FileNotFoundException ex) {
             log.error("could not create output file: " + ex.getMessage());
             return 1;
          }
       }
 
-      log.info("Will write results to %s", (outputFileName != null ? "'" + outputFileName + "'" : "stdout"));
+      log.info("Will write results to %s", (outputFile != null ? "'" + outputFile + "'" : "stdout"));
       log.info("Maximum error rate set to %f", maximumErrorRate);
 
       Sequences queries = queriesProject.readSequences();
@@ -140,7 +139,7 @@ public class AlignerSubcommand implements Subcommand {
 
       MatchesReader matchesReader;
       try {
-         matchesReader = new MatchesReader(matchesFileName);
+         matchesReader = new MatchesReader(matchesFile);
       } catch (IOException ex) {
          ex.printStackTrace();
          return 1;
@@ -185,7 +184,7 @@ public class AlignerSubcommand implements Subcommand {
          return 1;
       }
 
-      if (outputFileName != null) {
+      if (outputFile != null) {
          out.close();
       }
       log.info("done; total time was %.1f sec", totalTimer.tocs());

@@ -2,6 +2,7 @@ package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
+import java.io.File;
 import java.io.IOException;
 
 import verjinxer.Globals;
@@ -46,7 +47,7 @@ public class QGramIndexCompressionAnalyzerSubcommand implements Subcommand {
 
       Project project;
       try {
-         project = Project.createFromFile(args[0]);
+         project = Project.createFromFile(new File(args[0]));
       } catch (IOException ex) {
          log.error("%s: cannot read project files.", command);
          return 1;

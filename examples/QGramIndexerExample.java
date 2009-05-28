@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 
 import verjinxer.Globals;
@@ -15,7 +16,7 @@ public class QGramIndexerExample {
          System.out.println("one argument expected: name of the project");
          System.exit(1);
       }
-      String projectname = args[0];
+      File projectname = new File(args[0]);
       Project project = Project.createFromFile(projectname);
       int q = 0; // q=0 means that a good value for q is chosen automatically
       QGramIndexer qgramindexer = new QGramIndexer(new Globals(), project, q);

@@ -10,6 +10,7 @@ package verjinxer;
 import static verjinxer.Globals.programname;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -108,7 +109,7 @@ public class NonUniqueProbeDesigner {
       }
     if (args.length==0) {
       help(); log.error("nonunique: no index given"); return 0; }
-    String indexname = args[0];
+    File indexname = new File(args[0]);
     if (args.length>1) {
       log.warn("nonunique: ignoring all arguments except first '%s'", args[0]); }
         
@@ -151,14 +152,14 @@ public class NonUniqueProbeDesigner {
     
     // Read seq, bck, ssp into arrays;  memory-map or read qpos
     TicToc timer = new TicToc();
-    String seqfile  = project.makeFileName(FileTypes.SEQ);
-    String sspfile  = project.makeFileName(FileTypes.SSP);
+    File seqfile  = project.makeFile(FileTypes.SEQ);
+    File sspfile  = project.makeFile(FileTypes.SSP);
     System.gc();
     log.info("nonunique: reading '%s', '%s'...", seqfile, sspfile);
     try {
-      final ArrayFile arf = new ArrayFile(null);
-      s    = arf.setFilename(seqfile).readArray((byte[])null);
-      ssp  = arf.setFilename(sspfile).readArray((long[])null);
+      final ArrayFile arf = new ArrayFile((File)null);
+      s    = arf.setFile(seqfile).readArray((byte[])null);
+      ssp  = arf.setFile(sspfile).readArray((long[])null);
     } catch (IOException ex) {
       log.error("nonunique: reading '%s', '%s' failed. Stop.",
           seqfile, sspfile);

@@ -23,6 +23,7 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    LCP("lcp"),         // lcp values
    QUALITIY("quality"),
    MAPPED("mapped"),
+   NONMAPPABLE("nonmappable"),
    
    CUT("cut"), // Cutter
    ALLMAPPED("allmapped"), // MapperSubcommand
@@ -30,6 +31,10 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    TOOMANYHITS_FILTER("toomanyhits-filter"), // QGramMatcherSubcommand
    NUPROBES("nuprobes"), // NonUniqueProbeDesigner
    NUSTATS("nustats"), // NonUniqueProbeDesigner
+   
+   MAPBESTERROR("mapbesterror"), // MapperByAlignment
+   MAPBESTHITS("mapbesthits"), // MapperByAlignment
+   MAPALLHITS("mapallhits"), // MapperByAlignment
    
    FASTA("fasta"),
    CSFASTA("csfasta"),
