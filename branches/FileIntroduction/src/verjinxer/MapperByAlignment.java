@@ -1,5 +1,6 @@
 package verjinxer;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class MapperByAlignment {
    
    final BitArray tmapped;
    
-   final String tname;
+   final Project tProject;
    
    private int asize;
    
@@ -60,7 +61,7 @@ public class MapperByAlignment {
    private Globals g;
 
    public MapperByAlignment(Globals g, long longestsequence, int tm, int asize, PrintWriter allout, BitArray tselect,
-         BitArray trepeat, BitArray tmapped, byte[] tall, long[] tssp, String tname, ArrayList<String> indices) {
+         BitArray trepeat, BitArray tmapped, byte[] tall, long[] tssp, Project tProject, ArrayList<String> indices) {
 
       this.g = g;
       this.longestsequence = longestsequence;
@@ -77,7 +78,7 @@ public class MapperByAlignment {
       this.tmapped = tmapped;
       this.tall = tall;
       this.tssp = tssp;
-      this.tname = tname;
+      this.tProject = tProject;
       this.indices = indices;
    }
 
@@ -90,14 +91,14 @@ public class MapperByAlignment {
 
       Arrays.fill(seqbesterror, (int) longestsequence + 2);
 
-      String[] iname = new String[inum];
+      File[] iname = new File[inum];
       Project[] iprj = new Project[inum];
       byte[][] itext = new byte[inum][];
       int[] ilength = new int[inum];
 
       for (int idx = 0; idx < inum; idx++) {
          // load idx-th q-gram index
-         iname[idx] = indices.get(idx);
+         iname[idx] = new File(indices.get(idx));
          try {
             iprj[idx] = Project.createFromFile(iname[idx]);
          } catch (IOException ex) {
@@ -107,7 +108,7 @@ public class MapperByAlignment {
          log.info("map: processing index '%s', reading .seq", iname[idx]);
          int as = iprj[idx].getIntProperty("LargestSymbol") + 1;
          assert asize == as;
-         itext[idx] = g.slurpByteArray(iname[idx] + FileTypes.SEQ, 0, -1, null); // overwrite
+         itext[idx] = g.slurpByteArray(new File(iname[idx].getAbsolutePath() + FileTypes.SEQ), 0, -1, null); // overwrite
          ilength[idx] = iprj[idx].getIntProperty("Length");
          assert itext[idx].length == ilength[idx];
       }
@@ -131,9 +132,9 @@ public class MapperByAlignment {
          if (tmapped.get(j) == 1 || trepeat.get(j) == 1)
             tselect.set(j, false);
       } // end for j
-      g.dumpIntArray(String.format("%s%s.mapbesterror", tname), seqbesterror);
-      g.dumpIntArray(String.format("%s%s.mapbesthits", tname), seqbesthits);
-      g.dumpIntArray(String.format("%s%s.mapallhits", tname), seqallhits);
+      g.dumpIntArray(tProject.makeFile(FileTypes.MAPBESTERROR), seqbesterror);
+      g.dumpIntArray(tProject.makeFile(FileTypes.MAPBESTHITS), seqbesthits);
+      g.dumpIntArray(tProject.makeFile(FileTypes.MAPALLHITS), seqallhits);
    }
 
    private final int doTheAlignment(final int currenti, final byte[] itext, final byte[] txt,

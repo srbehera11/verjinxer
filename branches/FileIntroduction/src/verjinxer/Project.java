@@ -28,33 +28,25 @@ import verjinxer.util.FileTypes;
 public class Project {
    Properties properties;
    final String projectName;
-   final String projectFileName;
+   final File projectFile;
    private File workingDirectory;
-
+   
    /**
     * Creates a new project in memory only. Call load() and store() to synchronize with files.
     * 
     * @param projectName
-    *           Name of the project. The file name for the project is constructed from this string.
-    */
-   public Project(String projectName) {
-      this(new File(projectName));
-   }
-   
-   /**
-    * @see Project(String)
+    *           Name of the project inclusive the abstract path. The file name and working directory
+    *           for the project is constructed from it.
     */
    public Project(File projectName) {
-      workingDirectory = projectName.getParentFile();
-      if (workingDirectory == null) {
-         workingDirectory = new File(System.getProperty("user.dir"));
+      if (projectName.getParentFile() != null) {
+         setWorkingDirectory(projectName.getParentFile());
+      } else {
+         setWorkingDirectory(new File(System.getProperty("user.dir")));
       }
-      if (!workingDirectory.exists()) {
-         workingDirectory.mkdirs();
-      }
-      assert workingDirectory.isDirectory();
+      
       this.projectName = projectName.getName();
-      this.projectFileName = makeFileName(FileTypes.PRJ);
+      this.projectFile = makeFile(FileTypes.PRJ);
 
       Properties defaults = new Properties();
       defaults.setProperty("BisulfiteIndex", "false");
@@ -67,22 +59,22 @@ public class Project {
     * appending the appropriate file name extension to the project name.
     */
    public void load() throws FileNotFoundException, IOException {
-      BufferedReader projectFile = new BufferedReader(new FileReader(projectFileName));
-      properties.load(projectFile);
-      projectFile.close();
+      BufferedReader projectFileReader = new BufferedReader(new FileReader(projectFile));
+      properties.load(projectFileReader);
+      projectFileReader.close();
    }
-
+   
    /**
     * Creates a new ProjectInfo instance from a file. It constructs a new object and then calls
     * load() on it.
     * 
-    * @param projectname
-    *           Name of the project.
+    * @param projectFile
+    *           File composed of working directory and project name (no file extension).
     * @return a new ProjectInfo instance
     */
-   public static Project createFromFile(String projectname) throws FileNotFoundException,
+   public static Project createFromFile(File projectFile) throws FileNotFoundException,
          IOException {
-      Project project = new Project(projectname);
+      Project project = new Project(projectFile);
       project.load();
       return project;
    }
@@ -92,13 +84,16 @@ public class Project {
     * the appropriate extension to the project name.
     */
    public void store() throws IOException {
-      PrintWriter projectFile = new PrintWriter(new BufferedWriter(new FileWriter(projectFileName)));
-      properties.store(projectFile, null);
-      projectFile.close();
+      PrintWriter projectFileWriter = new PrintWriter(new BufferedWriter(new FileWriter(projectFile)));
+      properties.store(projectFileWriter, null);
+      projectFileWriter.close();
    }
-
-   public String getFileName() {
-      return projectFileName;
+   
+   /**
+    * @return File where informations about the project are stored.
+    */
+   public File getFile() {
+      return projectFile;
    }
 
    /**
@@ -122,24 +117,44 @@ public class Project {
       assert workingDirectory.exists();
       assert workingDirectory.isDirectory();
    }
-
+   
    /**
-    * @see setWorkingDirectory(File)
-    */
-   public void setWorkingDirectory(String workingDirectory) {
-      setWorkingDirectory(new File(workingDirectory));
-   }
-
-   /**
-    * Creates a path for a file depending on the working directory of the project, the name of the
-    * project and the given file type.
+    * Creates a File which name depends on the project name and the given file type. The files
+    * parent is the working directory. It does not create a file on disc, so the returned file does
+    * not necessarily exist.
     * 
     * @param fileType
-    *           Type of the file.
-    * @return The filename including the path.
+    *           Type of the file to create.
+    * @return The File.
     */
-   public String makeFileName(FileTypes fileType) {
-      return workingDirectory.getAbsolutePath() + File.separator + projectName + fileType;
+   public File makeFile(FileTypes fileType) {
+      return new File(workingDirectory, projectName + fileType);
+   }
+   
+   /**
+    * Creates a File with the given name and the given type as extension which parent is the working
+    * directory. It does not create a file on disc, so the returned file does not necessarily exist.
+    * 
+    * @param fileType
+    *           Type of the file to create.
+    * @param name
+    *           Name of the file to create.
+    * @return The File.
+    */
+   public File makeFile(FileTypes fileType, String name) {
+      return new File(workingDirectory, name + fileType);
+   }
+   
+   /**
+    * Creates a File with the given name in the working directory. No Extensions are added to the
+    * name. It does not create a file on disc, so the returned file does not necessarily exist.
+    * 
+    * @param name
+    *           Name of the file to create.
+    * @return The File.
+    */
+   public File makeFile(String name) {
+      return new File(workingDirectory, name);
    }
 
    /**
@@ -163,7 +178,7 @@ public class Project {
     * @return The alphabet.
     */
    public Alphabet readAlphabet() {
-      return Globals.readAlphabet(makeFileName(FileTypes.ALPHABET)); //TODO don't use Globals anywhere
+      return Globals.readAlphabet(makeFile(FileTypes.ALPHABET)); //TODO don't use Globals anywhere
    }
 
    public String getName() {
@@ -172,16 +187,6 @@ public class Project {
 
    public int getMaximumBucketSize() {
       return Integer.parseInt(properties.getProperty("qbckMax"));
-   }
-
-   @Deprecated
-   public String getQPositionsFileName() {
-      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileTypes.QPOSITIONS;
-   }
-
-   @Deprecated
-   public String getQBucketsFileName() {
-      return workingDirectory.getAbsolutePath() + File.separator + projectName + FileTypes.QBUCKETS;
    }
 
    public boolean isBisulfiteIndex() {

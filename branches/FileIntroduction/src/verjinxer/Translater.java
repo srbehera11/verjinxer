@@ -5,6 +5,7 @@
 package verjinxer;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -41,15 +42,15 @@ public class Translater {
    final boolean bisulfite;
    final String dnarcstring;
    final boolean colorspace;
-   final String csfastaQualityFilename;
+   final File csfastaQualityFile;
 
    /** 
-    * @param csfastaQualityFilename File with quality values for each character. Only has an effect
+    * @param csfastaQualityFile File with quality values for each character. Only has an effect
     *                        of CSFASTA files. May be null.
     */
    public Translater(Globals g, boolean trim, Alphabet alphabet, Alphabet amap2,
          boolean separateRCByWildcard, boolean reverse, boolean addrc, boolean bisulfite,
-         String dnarcstring, final boolean colorspace, final String csfastaQualityFilename) {
+         String dnarcstring, final boolean colorspace, final File csfastaQualityFile) {
 
       // for now, only print the message itself (%m), nothing else
 
@@ -63,7 +64,7 @@ public class Translater {
       this.dnarcstring = dnarcstring;
       this.addrc = addrc;
       this.colorspace = colorspace;
-      this.csfastaQualityFilename = csfastaQualityFilename;
+      this.csfastaQualityFile = csfastaQualityFile;
    }
 
    public Translater(Globals g, Alphabet alphabet) {
@@ -74,16 +75,16 @@ public class Translater {
     * Translates all the given files. Writes .seq .alphabet and .desc. Essentially, this initializes
     * a new project. TODO should this method be really here? should it be called differently?
     */
-   public void createProject(Project project, String[] filenames) {
-      project.setProperty("NumberSourceFiles", filenames.length);
+   public void createProject(Project project, File[] files) {
+      project.setProperty("NumberSourceFiles", files.length);
       project.setProperty("TrimmedSequences", trim);
 
       // determine the file types: FASTA or TEXT
       // FASTA 'f': First non-whitespace character is a '>''
       // TEXT 't': all others
-      FileTypes[] filetype = new FileTypes[filenames.length];
-      for (int i = 0; i < filenames.length; i++) {
-         filetype[i] = FileUtils.determineFileType(filenames[i]);
+      FileTypes[] filetype = new FileTypes[files.length];
+      for (int i = 0; i < files.length; i++) {
+         filetype[i] = FileUtils.determineFileType(files[i]);
       }
 
       // open the output file stream
@@ -93,31 +94,31 @@ public class Translater {
       try {
          sequence = new SequenceWriter(project);
       } catch (IOException ex) {
-         log.warn("translate: could not create output file '%s'; %s",project.makeFileName(FileTypes.SEQ), ex);
+         log.warn("translate: could not create output file '%s'; %s",project.makeFile(FileTypes.SEQ), ex);
       }
 
       // process each file according to type
-      for (int i = 0; i < filenames.length; i++) {
-         String fname = filenames[i];
-         log.info("  processing '%s' (%s)...", fname, filetype[i]);
+      for (int i = 0; i < files.length; i++) {
+         File file = files[i];
+         log.info("  processing '%s' (%s)...", file, filetype[i]);
          //if (filetype[i] == FileType.FASTA && alphabet.getName().equals("color space"))
             //TODO should this action depend on filetype and alphabet???
             //TODO translate to CSFASTA or in a sequence???
          if (filetype[i] == FileTypes.FASTA) {
             if (colorspace) {
-               translateFastaFromDNA2CS(fname, sequence);
+               translateFastaFromDNA2CS(file, sequence);
             } else {
-               translateFasta(fname, sequence);
+               translateFasta(file, sequence);
             }
          } else if (filetype[i] == FileTypes.CSFASTA)
-            translateCSFasta(fname, sequence);
+            translateCSFasta(file, sequence);
          else if (bisulfite && filetype[i] == FileTypes.FASTA) // TODO this is never executed
-            translateFastaBisulfite(fname, sequence);
+            translateFastaBisulfite(file, sequence);
          else if (filetype[i] == FileTypes.TEXT) {
             throw new UnsupportedOperationException("Translating a textfile is currently untested.");
             // translateText(fname, sequence); //TODO Test this case and use it again
          } else
-            g.terminate("translate: unsupported file type for file " + filenames[i]);
+            g.terminate("translate: unsupported file type for file " + files[i]);
       }
       // DONE processing all files.
       try {
@@ -141,7 +142,7 @@ public class Translater {
       // Write the alphabet
       PrintWriter alphabetfile = null;
       try {
-         alphabetfile = new PrintWriter(project.makeFileName(FileTypes.ALPHABET));
+         alphabetfile = new PrintWriter(project.makeFile(FileTypes.ALPHABET));
          alphabet.showSourceStrings(alphabetfile);
          alphabetfile.close();
       } catch (IOException ex) {
@@ -160,12 +161,12 @@ public class Translater {
    /**
     * @see translateFasta(String,Sequence)
     */
-   public void translateCSFasta(final String fname, final SequenceWriter sequence) {
+   public void translateCSFasta(final File file, final SequenceWriter sequence) {
       // nothing special
       // FastaFile.read() already ignores comment lines with #
       // so call translateFasta(String,Sequence)
-      assert FileUtils.determineFileType(fname) == FileTypes.CSFASTA;
-      translateFasta(fname, sequence, csfastaQualityFilename);
+      assert FileUtils.determineFileType(file) == FileTypes.CSFASTA;
+      translateFasta(file, sequence, csfastaQualityFile);
       // TODO maybe make some assertions like alphabet == CS???
    }
    
@@ -173,14 +174,14 @@ public class Translater {
     * Interprets a given FASTA file with the DNA alphabet and encodes it into colospace alphabet.
     * Afterwards the result is translated into the given sequence.
     * 
-    * @param fname
+    * @param file
     *           the FASTA file
     * @param sequence
     *           sequence to translate into
     * @see translateFasta(String,Sequence)
     */
-   public void translateFastaFromDNA2CS(final String fname, final SequenceWriter sequence) {
-      FastaFile f = new FastaFile(fname);
+   public void translateFastaFromDNA2CS(final File file, final SequenceWriter sequence) {
+      FastaFile f = new FastaFile(file);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
       final int appendforward = (addrc && separateRCByWildcard) ? 1 : 2;
@@ -189,7 +190,7 @@ public class Translater {
       try {
          f.open();
       } catch (IOException ex) {
-         log.warn("translate: skipping '%s': %s", fname, ex);
+         log.warn("translate: skipping '%s': %s", file, ex);
          return;
       }
       while (true) {
@@ -219,27 +220,27 @@ public class Translater {
       }
    }
 
-   public void translateFasta(final String fname, final SequenceWriter sequence) {
-      translateFasta(fname, sequence, null);
+   public void translateFasta(final File file, final SequenceWriter sequence) {
+      translateFasta(file, sequence, null);
    }
          
    /**
-    * @param qualityFilename File with FASTA-style quality information (one byte per character).
+    * @param qualityFile File with FASTA-style quality information (one byte per character).
     *                        May be null.
     */
-   public void translateFasta(final String fname, final SequenceWriter sequence, final String qualityFilename) {
+   public void translateFasta(final File file, final SequenceWriter sequence, final File qualityFile) {
       FastaFile qualityFasta = null;
-      if (qualityFilename!=null) {
-         qualityFasta = new FastaFile(qualityFilename);
+      if (qualityFile!=null) {
+         qualityFasta = new FastaFile(qualityFile);
          try {
             qualityFasta.open();
          } catch (IOException ex) {
-            log.warn("translate: quality file not found (%s), skipping. (%s)", qualityFilename, ex);
+            log.warn("translate: quality file not found (%s), skipping. (%s)", qualityFile, ex);
             return;
          }
          // qualityOutput = new ArrayFile(FileUtils.extensionRemoved(fname)+FileNameExtensions.quality);
       }
-      FastaFile f = new FastaFile(fname);
+      FastaFile f = new FastaFile(file);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
       final int appendforward = (addrc && separateRCByWildcard) ? 1 : 2;
@@ -249,7 +250,7 @@ public class Translater {
       try {
          f.open();
       } catch (IOException ex) {
-         log.warn("translate: skipping '%s': %s", fname, ex);
+         log.warn("translate: skipping '%s': %s", file, ex);
          return;
       }
       while (true) {
@@ -310,12 +311,12 @@ public class Translater {
    /**
     * something with bisulfite
     * 
-    * @param fname
+    * @param file
     * @param sequence
     * @deprecated
     */
-   void translateFastaBisulfite(final String fname, final SequenceWriter sequence) {
-      FastaFile f = new FastaFile(fname);
+   void translateFastaBisulfite(final File file, final SequenceWriter sequence) {
+      FastaFile f = new FastaFile(file);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
       long lastbyte = 0;
@@ -323,7 +324,7 @@ public class Translater {
       try {
          f.open();
       } catch (IOException ex) {
-         log.warn("translate: skipping '%s': %s", fname, ex);
+         log.warn("translate: skipping '%s': %s", file, ex);
          return;
       }
       while (true) {
@@ -481,11 +482,11 @@ public class Translater {
    /** compute runs using array files for writing, mmap only for reading */
    private long computeRunsAF(final Project project) throws IOException {
       int run = -1;
-      ByteBuffer seq = new ArrayFile(project.makeFileName(FileTypes.SEQ), 0).mapR();
-      ArrayFile rseq = new ArrayFile(project.makeFileName(FileTypes.RUNSEQ)).openW();
-      ArrayFile rlen = new ArrayFile(project.makeFileName(FileTypes.RUNLEN)).openW();
-      ArrayFile p2r = new ArrayFile(project.makeFileName(FileTypes.POS2RUN)).openW();
-      ArrayFile r2p = new ArrayFile(project.makeFileName(FileTypes.RUN2POS)).openW();
+      ByteBuffer seq = new ArrayFile(project.makeFile(FileTypes.SEQ), 0).mapR();
+      ArrayFile rseq = new ArrayFile(project.makeFile(FileTypes.RUNSEQ)).openW();
+      ArrayFile rlen = new ArrayFile(project.makeFile(FileTypes.RUNLEN)).openW();
+      ArrayFile p2r = new ArrayFile(project.makeFile(FileTypes.POS2RUN)).openW();
+      ArrayFile r2p = new ArrayFile(project.makeFile(FileTypes.RUN2POS)).openW();
       final int n = seq.limit();
       byte current;
       byte prev = -1;

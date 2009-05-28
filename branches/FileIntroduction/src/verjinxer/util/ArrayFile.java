@@ -63,6 +63,14 @@ public class ArrayFile {
       // Note 2: native byte order is not portable between different architectures, but crucial for efficiency.
       setFilename(filename);
    }
+   
+   /**
+    * @seeArrayFile(String, int)
+    */
+   public ArrayFile(final File file, int bufsize) {
+      this(file != null ? file.getAbsolutePath() : null,
+            (BUFBLOCKS - numbuf++ % BUFCYCLES) * BUFBLOCKSIZE);
+   }
 
    /**
     * Creates a new instance of ArrayFile with the given filename and default buffer size
@@ -71,6 +79,13 @@ public class ArrayFile {
     */
    public ArrayFile(final String filename) {
       this(filename, (BUFBLOCKS - numbuf++ % BUFCYCLES) * BUFBLOCKSIZE);
+   }
+   
+   /**
+    * @see ArrayFile(String)
+    */
+   public ArrayFile(final File file) {
+      this(file != null ? file.getAbsolutePath() : null);
    }
 
    /**
@@ -114,6 +129,13 @@ public class ArrayFile {
       if (internalBuffer!=null) internalBuffer.clear();
       file = (name!=null)? new File(name) : (File)null;
       return this;
+   }
+   
+   /**
+    * @see setFilename(String)
+    */
+   public ArrayFile setFile(File file) {
+      return setFilename(file != null ? file.getAbsolutePath() : null);
    }
 
    /** Returns the length of the ArrayFile in bytes

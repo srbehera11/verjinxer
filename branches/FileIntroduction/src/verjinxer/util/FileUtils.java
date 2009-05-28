@@ -9,41 +9,51 @@ import java.io.File;
  * @author Markus Kemmerling
  */
 public class FileUtils {
-
+   
    /**
-    * Removes a file name extension from a string. If no extension is found, the name is returned
-    * unchanged.
-    * If name is a path, the path parent will be removed. Only the the file name is returned.
+    * Creates a new File from the given file's path without its extension (/home/markus/test.ab ->
+    * /home/markus/test).
     * 
-    * @param name
-    *           file name. For example, "hello.fa"
-    * @return file name without extension. For example, "hello"
+    * @param file
+    * @return The File.
     */
-   public static String extensionRemoved(String name) {
-      name = new File(name).getName(); // TODO is this necessary? - removes /qwer/asdf of /qwer/asdf/yxc
-      int lastdot = name.lastIndexOf('.');
-      if (lastdot >= 0) {
-         return name.substring(0, lastdot);
-      } else {
-         return name;
-      }
+   public static File removeExtension(final File file) {
+      return new File(removeExtension(file.getPath()));
    }
 
+   /**
+    * Creates a new String from the given path without its extension (/home/markus/test.ab ->
+    * /home/markus/test).
+    * 
+    * @param path
+    * @return The String.
+    */
+   public static String removeExtension(final String path) {
+      int lastdot = path.lastIndexOf('.');
+      if (lastdot >= 0) {
+         return path.substring(0, lastdot); // substring creates a new String
+      } else {
+         return new String(path); // here a new String must be created cause of uniform treatment
+      }
+   }
+   
    /**
     * Determines the type by the suffix of the name.<br>
     * *.fa -> FASTA<br>
     * *csfa -> CSFASTA<br>
     * otherwise -> TEXT
     * 
-    * @param filename
+    * @param file
     * @return
     */
-   public static FileTypes determineFileType(final String filename) {
-      int suffixPosition = filename.lastIndexOf(".");
+   //TODO maybe better use FileTypes.valueOf(String) [must be overridden for that circumstances]
+   public static FileTypes determineFileType(final File file) {
+      String name = file.getName();
+      int suffixPosition = name.lastIndexOf(".");
       if (suffixPosition >= 0) {
-         if (filename.substring(suffixPosition + 1).startsWith("fa")) {
+         if (name.substring(suffixPosition + 1).startsWith("fa")) {
             return FileTypes.FASTA;
-         } else if (filename.substring(suffixPosition + 1).startsWith("csfa")) {
+         } else if (name.substring(suffixPosition + 1).startsWith("csfa")) {
             return FileTypes.CSFASTA;
          }
       }

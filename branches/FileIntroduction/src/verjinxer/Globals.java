@@ -1,6 +1,7 @@
 package verjinxer;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -66,7 +67,7 @@ public class Globals {
       if (!logToFile)
          return;
       try {
-         projectlog = new FileAppender(new PatternLayout("%m%n"), project.makeFileName(FileTypes.LOG), !startnew);
+         projectlog = new FileAppender(new PatternLayout("%m%n"), project.makeFile(FileTypes.LOG).getAbsolutePath(), !startnew);
          log.addAppender(projectlog);
 
          // TODO previously, this was only logged to the project log file
@@ -112,12 +113,12 @@ public class Globals {
    /**************************************************************************/
 
    /** read alphabet map file */
-   public static final Alphabet readAlphabet(String fname) {
+   public static final Alphabet readAlphabet(File file) {
       Alphabet alphabet = null;
       try {
-         alphabet = Alphabet.fromFile(fname);
+         alphabet = Alphabet.fromFile(file);
       } catch (IOException ex) {
-         log.error("%s: could not read alphabet '%s'. Stop.", cmdname, fname);
+         log.error("%s: could not read alphabet '%s'. Stop.", cmdname, file);
          terminate(1);
       }
       return alphabet;
@@ -130,14 +131,14 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @return the newly created byte[] with the file's contents
     */
-   public byte[] slurpByteArray(String file) {
+   public byte[] slurpByteArray(File file) {
       byte[] a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
-         a = arf.setFilename(file).readArray(a);
+         a = arf.setFile(file).readArray(a);
       } catch (IOException ex) {
          ex.printStackTrace();
          log.warn("%s: could not read '%s'. Stop.", cmdname, file);
@@ -151,7 +152,7 @@ public class Globals {
     * program when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @param startindex
     *           where to start reading the file (inclusive)
     * @param stopindex
@@ -162,10 +163,10 @@ public class Globals {
     *           Otherwise, a new array of the correct size is created.
     * @return the newly created byte[] or a with the file's contents.
     */
-   public byte[] slurpByteArray(String file, long startindex, long stopindex, byte[] a) {
+   public byte[] slurpByteArray(File file, long startindex, long stopindex, byte[] a) {
       // log.info("%s: reading '%s' [%d..%d] into memory...", cmdname, file, startindex, stopindex);
       try {
-         a = arf.setFilename(file).readArray(a, 0, (int) (stopindex - startindex), startindex);
+         a = arf.setFile(file).readArray(a, 0, (int) (stopindex - startindex), startindex);
       } catch (IOException ex) {
          ex.printStackTrace();
          log.warn("%s: could not read '%s'. Stop.", cmdname, file);
@@ -179,10 +180,10 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @return the newly created HugeByteArray with the file's contents
     */
-   public HugeByteArray slurpHugeByteArray(final String file) {
+   public HugeByteArray slurpHugeByteArray(final File file) {
       HugeByteArray a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
@@ -200,10 +201,10 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @return the newly created HugeByteArray with the file's contents
     */
-   public HugeIntArray slurpHugeIntArray(final String file) {
+   public HugeIntArray slurpHugeIntArray(final File file) {
       HugeIntArray a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
@@ -221,14 +222,14 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @return the newly created int[] with the file's contents
     */
-   public int[] slurpIntArray(String file) {
+   public int[] slurpIntArray(File file) {
       int[] a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
-         a = arf.setFilename(file).readArray(a);
+         a = arf.setFile(file).readArray(a);
       } catch (IOException ex) {
          ex.printStackTrace();
          log.warn("%s: could not read '%s'. Stop.", cmdname, file);
@@ -242,15 +243,15 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @param a
     *           an existing array to be used if large enough.
     * @return the int[] with the file's contents
     */
-   public int[] slurpIntArray(String file, int[] a) {
+   public int[] slurpIntArray(File file, int[] a) {
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
-         a = arf.setFilename(file).readArray(a);
+         a = arf.setFile(file).readArray(a);
       } catch (IOException ex) {
          ex.printStackTrace();
          log.warn("%s: could not read '%s'. Stop.", cmdname, file);
@@ -264,14 +265,14 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @return the newly created array with the file's contents
     */
-   public long[] slurpLongArray(String file) {
+   public long[] slurpLongArray(File file) {
       long[] a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
-         a = arf.setFilename(file).readArray(a);
+         a = arf.setFile(file).readArray(a);
       } catch (IOException ex) {
          ex.printStackTrace();
          log.warn("%s: could not read '%s'. Stop.", cmdname, file);
@@ -285,15 +286,15 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @param a
     *           an existing array to be used if large enough.
     * @return the int[] with the file's contents
     */
-   long[] slurpIntArray(String file, long[] a) {
+   long[] slurpIntArray(File file, long[] a) {
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
-         a = arf.setFilename(file).readArray(a);
+         a = arf.setFile(file).readArray(a);
       } catch (IOException ex) {
          ex.printStackTrace();
          log.warn("%s: could not read '%s'. Stop.", cmdname, file);
@@ -307,11 +308,11 @@ public class Globals {
     * when an error occurs.
     * 
     * @param file
-    *           the name of the file to be read
+    *           the file to be read
     * @return the ByteBuffer with the mapped file's contents
     * TODO outsourcing in other class
     */
-   public static ByteBuffer mapR(final String file) {
+   public static ByteBuffer mapR(final File file) {
       ByteBuffer b = null;
       log.info("%s: memory-mapping '%s'...", cmdname, file);
       try {
@@ -325,7 +326,7 @@ public class Globals {
 
    // ======================= text file readers =================================
 
-   public static ArrayList<String> slurpTextFile(String file, int ll) {
+   public static ArrayList<String> slurpTextFile(File file, int ll) {
       if (ll <= 0)
          ll = 32;
       log.info("%s: reading '%s'; expecting %d lines...", cmdname, file, ll);
@@ -356,7 +357,7 @@ public class Globals {
     * diagnostics. Terminate the program when an error occurs.
     * 
     * @param file
-    *           the name of the file to be written
+    *           the file to be written
     * @param a
     *           the array to be dumped
     * @param start
@@ -364,10 +365,10 @@ public class Globals {
     * @param len
     *           the number of elements to dump
     */
-   final void dumpIntArray(final String file, final int[] a, final int start, final int len) {
+   final void dumpIntArray(final File file, final int[] a, final int start, final int len) {
       log.info("%s: writing '%s'...", cmdname, file);
       try {
-         arf.setFilename(file).writeArray(a, start, len);
+         arf.setFile(file).writeArray(a, start, len);
       } catch (IOException ex) {
          log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
          terminate(1);
@@ -379,11 +380,11 @@ public class Globals {
     * an error occurs.
     * 
     * @param file
-    *           the name of the file to be written
+    *           the file to be written
     * @param a
     *           the array to be dumped
     */
-   public final void dumpIntArray(final String file, final int[] a) {
+   public final void dumpIntArray(final File file, final int[] a) {
       dumpIntArray(file, a, 0, a.length);
    }
 
@@ -392,7 +393,7 @@ public class Globals {
     * diagnostics. Terminate the program when an error occurs.
     * 
     * @param file
-    *           the name of the file to be written
+    *           the file to be written
     * @param a
     *           the array to be dumped
     * @param start
@@ -400,10 +401,10 @@ public class Globals {
     * @param len
     *           the number of elements to dump
     */
-   final void dumpLongArray(final String file, final long[] a, final int start, final int len) {
+   final void dumpLongArray(final File file, final long[] a, final int start, final int len) {
       log.info("%s: writing '%s'...", cmdname, file);
       try {
-         arf.setFilename(file).writeArray(a, start, len);
+         arf.setFile(file).writeArray(a, start, len);
       } catch (IOException ex) {
          log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
          terminate(1);
@@ -415,11 +416,11 @@ public class Globals {
     * an error occurs.
     * 
     * @param file
-    *           the name of the file to be written
+    *           the file to be written
     * @param a
     *           the array to be dumped
     */
-   final void dumpLongArray(final String file, final long[] a) {
+   final void dumpLongArray(final File file, final long[] a) {
       dumpLongArray(file, a, 0, a.length);
    }
 
@@ -428,7 +429,7 @@ public class Globals {
     * diagnostics. Terminate the program when an error occurs.
     * 
     * @param file
-    *           the name of the file to be written
+    *           the file to be written
     * @param a
     *           the array to be dumped
     * @param start
@@ -436,10 +437,10 @@ public class Globals {
     * @param len
     *           the number of elements to dump
     */
-   void dumpByteArray(final String file, final byte[] a, final int start, final int len) {
+   void dumpByteArray(final File file, final byte[] a, final int start, final int len) {
       log.info("%s: writing '%s'...", cmdname, file);
       try {
-         arf.setFilename(file).writeArray(a, start, len);
+         arf.setFile(file).writeArray(a, start, len);
       } catch (IOException ex) {
          log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
          terminate(1);
@@ -451,11 +452,11 @@ public class Globals {
     * an error occurs.
     * 
     * @param file
-    *           the name of the file to be written
+    *           the file to be written
     * @param a
     *           the array to be dumped
     */
-   void dumpByteArray(final String file, final byte[] a) {
+   void dumpByteArray(final File file, final byte[] a) {
       dumpByteArray(file, a, 0, a.length);
    }
 
@@ -463,17 +464,17 @@ public class Globals {
     * Write the given BitArray to a file, while printing diagnostics. Terminate the program when an
     * error occurs.
     * 
-    * @param filename
-    *           the name of the file
+    * @param file
+    *           the file
     * @param ba
     *           the bit array
     */
-   public void dumpBitArray(final String filename, BitArray ba) {
-      log.info("%s: writing '%s'...", cmdname, filename);
+   public void dumpBitArray(final File file, BitArray ba) {
+      log.info("%s: writing '%s'...", cmdname, file);
       try {
-         ba.writeTo(arf.setFilename(filename));
+         ba.writeTo(arf.setFile(file));
       } catch (IOException ex) {
-         log.warn("%s: could not write '%s'; %s", cmdname, filename, ex);
+         log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
          terminate(1);
       }
    }
@@ -482,17 +483,17 @@ public class Globals {
     * Read a BitArray from a file, while printing diagnostics. Terminate the program when an error
     * occurs.
     * 
-    * @param filename
-    *           the name of the file
+    * @param file
+    *           the file
     * @return the bit array
     */
-   public BitArray slurpBitArray(final String filename) {
-      log.info("%s: reading '%s'...", cmdname, filename);
+   public BitArray slurpBitArray(final File file) {
+      log.info("%s: reading '%s'...", cmdname, file);
       BitArray ba = null;
       try {
-         ba = BitArray.readFrom(arf.setFilename(filename));
+         ba = BitArray.readFrom(arf.setFile(file));
       } catch (IOException ex) {
-         log.warn("%s: could not read '%s'; %s", cmdname, filename, ex);
+         log.warn("%s: could not read '%s'; %s", cmdname, file, ex);
          terminate(1);
       }
       return ba;

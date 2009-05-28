@@ -3,6 +3,7 @@ package verjinxer;
 import static java.lang.Math.floor;
 import static java.lang.Math.log;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -188,7 +189,7 @@ public class QGramIndexer {
     *         TODO not only computes frequencies but also writes sequence frequencies TODO 64BIT
     */
    private int[] computeFrequencies(final ByteBuffer in, final QGramCoder coder,
-         final String qseqfreqfile, final byte separator) {
+         final File qseqfreqfile, final byte separator) {
 
       final TicToc timer = new TicToc();
       final int aq = coder.getNumberOfQGrams();
@@ -243,7 +244,7 @@ public class QGramIndexer {
 
    /** @see computeFrequencies(ByteBuffer,QGramCoder,String,byte) */
    private int[] computeFrequencies(final Sequences in, final QGramCoder coder,
-         final String qseqfreqfile, final byte separator) {
+         final File qseqfreqfile, final byte separator) {
 
       final TicToc timer = new TicToc();
       final int aq = coder.getNumberOfQGrams();
@@ -334,16 +335,16 @@ public class QGramIndexer {
       return result;
    }
 
-   public void generateAndWriteIndex(final String seqfile, final String bucketfile,
-         final String qposfile) throws IOException {
+   public void generateAndWriteIndex(final File seqfile, final File bucketfile,
+         final File qposfile) throws IOException {
       generateAndWriteIndex(seqfile, bucketfile, qposfile, null, null);
    }
 
    public void generateAndWriteIndex() throws IOException {
 
-      final String seqfile = project.makeFileName(FileTypes.SEQ);
-      final String qbucketsfile = project.makeFileName(FileTypes.QBUCKETS);
-      final String qpositionsfile = project.makeFileName(FileTypes.QPOSITIONS);
+      final File seqfile = project.makeFile(FileTypes.SEQ);
+      final File qbucketsfile = project.makeFile(FileTypes.QBUCKETS);
+      final File qpositionsfile = project.makeFile(FileTypes.QPOSITIONS);
 
       generateAndWriteIndex(seqfile, qbucketsfile, qpositionsfile, null, null);
    }
@@ -352,15 +353,15 @@ public class QGramIndexer {
     * Generates a q-gram index of a given file.
     * 
     * @param seqfile
-    *           name of the sequence file (i.e., of the translated text)
+    *           the sequence file (i.e., the translated text)
     * @param bucketfile
-    *           filename of the q-bucket file (can be null)
+    *           the q-bucket file (can be null)
     * @param qposfile
-    *           filename of the q-gram index (can be null)
+    *           the q-gram index (can be null)
     * @param qfreqfile
-    *           filename of the q-gram frequency file (can be null)
+    *           the q-gram frequency file (can be null)
     * @param qseqfreqfile
-    *           filename for q-gram sequence frequencies, i.e., in how many different sequences does
+    *           q-gram sequence frequencies, i.e., in how many different sequences does
     *           the q-gram appear?
     * @return the QGramIndex unless external and unless not enough memory. note that the index is
     *         both written to disk and returned.
@@ -374,8 +375,8 @@ public class QGramIndexer {
     * @throws java.lang.IllegalArgumentException
     *            if bisulfiteIndex is set, but asize is not 4 TODO 64Bit
     */
-   public void generateAndWriteIndex(final String seqfile, final String bucketfile,
-         final String qposfile, final String qfreqfile, final String qseqfreqfile)
+   public void generateAndWriteIndex(final File seqfile, final File bucketfile,
+         final File qposfile, final File qfreqfile, final File qseqfreqfile)
          throws IOException {
       final TicToc totalTimer = new TicToc();
       final Sequences in = project.readSequences();
@@ -517,15 +518,15 @@ public class QGramIndexer {
     * Checks the q-gram index of the given files for correctness.
     * 
     * @param seqfile
-    *           name of the sequence file
+    *           sequence file
     * @param q
     *           q-gram length
     * @param asize
     *           alphabet size
     * @param bucketfile
-    *           filename of the q-bucket file
+    *           q-bucket file
     * @param qposfile
-    *           filename of the q-gram index
+    *           q-gram index
     * @param thefilter
     *           a QGramFilter, filtered q-grams should not appear in the index
     * @param bisulfiteIndex
@@ -535,18 +536,18 @@ public class QGramIndexer {
     * @throws java.io.IOException
     *            TODO 64Bit
     */
-   public static int checkQGramIndex(final String seqfile, final int q, final int asize,
-         final String bucketfile, final String qposfile, final QGramFilter thefilter,
+   public static int checkQGramIndex(final File seqfile, final int q, final int asize,
+         final File bucketfile, final File qposfile, final QGramFilter thefilter,
          final boolean bisulfiteIndex) throws IOException {
       // Read sequence and bucketfile into arrays
       System.gc();
       TicToc timer = new TicToc();
       log.info("  reading %s and %s", seqfile, bucketfile);
-      final ArrayFile arf = new ArrayFile(null);
+      final ArrayFile arf = new ArrayFile((File)null);
       // TODO 64Bit HugeByteArray
-      byte[] sequence = arf.setFilename(seqfile).readArray((byte[]) null);
+      byte[] sequence = arf.setFile(seqfile).readArray((byte[]) null);
       // TODO 64Bit long
-      int[] bck = arf.setFilename(bucketfile).readArray((int[]) null);
+      int[] bck = arf.setFile(bucketfile).readArray((int[]) null);
       log.info("  reading finished after %.2f sec", timer.tocs());
 
       // TODO 64Bit long
@@ -616,12 +617,12 @@ public class QGramIndexer {
     * Reads a sequence file from disk into a ByteBuffer.
     * 
     * @param seqfile
-    *           name of the sequence file
+    *           the sequence file
     * @param memoryMapped
     *           whether to use memory mapping instead of reading the sequence
     * @return the sequence in a ByteBuffer TODO posible to write human gnome in ByteBuffer???
     */
-   private ByteBuffer readSequenceFile(final String seqfile, boolean memoryMapped)
+   private ByteBuffer readSequenceFile(final File seqfile, boolean memoryMapped)
          throws IOException {
       if (memoryMapped)
          return g.mapR(seqfile);
@@ -666,9 +667,9 @@ public class QGramIndexer {
       log.info("qgramcheck: filter %d:%d filters %d q-grams", ffc, ffm, fff.cardinality());
       int result = 0;
       try {
-         result = checkQGramIndex(project.makeFileName(FileTypes.SEQ), q, asize,
-               project.makeFileName(FileTypes.QBUCKETS),
-               project.makeFileName(FileTypes.QPOSITIONS), fff, bisulfiteIndex);
+         result = checkQGramIndex(project.makeFile(FileTypes.SEQ), q, asize,
+               project.makeFile(FileTypes.QBUCKETS),
+               project.makeFile(FileTypes.QPOSITIONS), fff, bisulfiteIndex);
       } catch (IOException ex) {
          log.warn("qgramcheck: error on %s: %s", project.getName(), ex);
       }
