@@ -26,6 +26,7 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    NONMAPPABLE("nonmappable"),
    
    CUT("cut"), // Cutter
+   QCOMPLEXITY("qcomplexity"), // MapperSubcommand
    ALLMAPPED("allmapped"), // MapperSubcommand
    REPEAT_FILTER("repeat-filter"), // MapperSubcommand
    TOOMANYHITS_FILTER("toomanyhits-filter"), // QGramMatcherSubcommand
@@ -35,6 +36,9 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    MAPBESTERROR("mapbesterror"), // MapperByAlignment
    MAPBESTHITS("mapbesthits"), // MapperByAlignment
    MAPALLHITS("mapallhits"), // MapperByAlignment
+   
+   SORTED_MATCHES("sorted-matches"), // QGramMatcherSubcommand
+   MATCHES("matches"), // QGramMatcherSubcommand
    
    FASTA("fasta"),
    CSFASTA("csfasta"),

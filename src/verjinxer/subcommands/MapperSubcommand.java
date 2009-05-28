@@ -387,8 +387,7 @@ public class MapperSubcommand implements Subcommand {
       // out has not yet been opened; open it for tabulating.
       if (qgramtabulate) {
          try {
-            out = new PrintWriter(String.format("%s.%d.qcomplexity", new File(
-                  tProject.getWorkingDirectory(), tProject.getName()), qq));
+            out = new PrintWriter(tProject.makeFile(tProject.getName() + qq + FileTypes.QCOMPLEXITY));
          } catch (FileNotFoundException ex) {
             log.error("map: could not tabulate q-gram complexities; " + ex);
             g.terminate(1);

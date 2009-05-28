@@ -104,8 +104,6 @@ public class QGramMatcherSubcommand implements Subcommand {
          return 1;
       }
 
-      // t: text to find
-      // s: sequence in which to search
       File queryProjectName, indexProjectName;
 
       if (args.length == 1) {
@@ -175,16 +173,16 @@ public class QGramMatcherSubcommand implements Subcommand {
          minseqmatches = 1;
       }
 
-      //TODO outname should be create by queryProject
-      String outname = String.format("%s-%s-%dx%d", queryProject.getName(), indexProject.getName(), minseqmatches, minlen);
-      outname = queryProject.getWorkingDirectory() + File.separator + outname + (sorted ? ".sorted-matches" : ".matches");
+      File outfile = queryProject.makeFile(sorted ? FileTypes.SORTED_MATCHES : FileTypes.MATCHES,
+            String.format("%s-%s-%dx%d", queryProject.getName(), indexProject.getName(),
+                  minseqmatches, minlen));
       if (opt.isGiven("o")) {
-         if (outname.length() == 0 || outname.startsWith("#"))
-            outname = null;
+         if (outfile.getName().length() == 0 || outfile.getName().startsWith("#"))
+            outfile = null;
          else
-            outname = opt.get("o") + (sorted ? ".sorted-matches" : ".matches");
+            outfile = new File(opt.get("o"));
       }
-      log.info("qmatch: will write results to %s", (outname != null ? "'" + outname + "'"
+      log.info("qmatch: will write results to %s", (outfile != null ? "'" + outfile + "'"
             : "stdout"));
 
       final boolean bisulfiteQueries = opt.isGiven("b");
@@ -216,10 +214,10 @@ public class QGramMatcherSubcommand implements Subcommand {
 
       // start output
       PrintWriter out = new PrintWriter(System.out);
-      if (outname != null) {
+      if (outfile != null) {
          try {
             out = new PrintWriter(
-                  new BufferedOutputStream(new FileOutputStream(outname), 32 * 1024), false);
+                  new BufferedOutputStream(new FileOutputStream(outfile), 32 * 1024), false);
          } catch (FileNotFoundException ex) {
             log.error("qmatch: could not create output file.");
             return 1;
