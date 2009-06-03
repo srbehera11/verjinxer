@@ -98,7 +98,8 @@ public class TranslaterSubcommand implements Subcommand {
          projectname = new File(opt.get("i"));
       else { 
          // take base name of first FASTA file
-         projectname = FileUtils.removeExtension(files[0]);
+         // creates the project in the current working directory of java and not where files[0] is located 
+         projectname = new File(FileUtils.removeExtension(files[0]).getName());
       }
       Project project = new Project(projectname);
 
