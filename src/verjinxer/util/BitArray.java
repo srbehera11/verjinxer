@@ -33,7 +33,7 @@ public class BitArray {
       this.bits = bits;
       final int bl = bits.length-1;
       size = bits[bl];
-      assert(bl*32 <= size);
+      assert(bl*32 <= size): String.format("bl: %d%nsize:%d", bl, size);
       assert(size < (bl+1)*32);
    }
 
