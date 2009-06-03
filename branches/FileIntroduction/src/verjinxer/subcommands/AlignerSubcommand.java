@@ -104,8 +104,8 @@ public class AlignerSubcommand implements Subcommand {
          else {
             if (!option.endsWith(FileTypes.MAPPED.toString())) { //file extension should be .mapped
                option += FileTypes.MAPPED;
-               outputFile = new File(option);
             }
+            outputFile = new File(option);
          }
       }
       
