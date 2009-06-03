@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 
 import verjinxer.Project;
@@ -11,7 +12,7 @@ public class QGramIndexExample {
          System.out.println("one argument expected: name of the project");
          System.exit(1);
       }
-      String projectname = args[0];
+      File projectname = new File(args[0]);
       Project project = Project.createFromFile(projectname);
       QGramIndex qgramindex = new QGramIndex(project);
       

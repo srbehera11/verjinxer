@@ -5,6 +5,7 @@
 package verjinxer.sequenceanalysis;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -127,17 +128,17 @@ public class Alphabet {
    } // end method 'init'
 
    /**
-    * Another method to iniialize an alphabet map. This method reads all lines from a given text
+    * Another method to initialize an alphabet map. This method reads all lines from a given text
     * file into a String[] and creates the alphabet map from these.
     * 
-    * @param fname
-    *           name of the text file
+    * @param file
+    *           the text file
     * @return the created alphabet map
     * @throws java.io.IOException
     */
-   public static Alphabet fromFile(final String fname) throws IOException {
+   public static Alphabet fromFile(final File file) throws IOException {
       ArrayList<String> lines = new ArrayList<String>();
-      BufferedReader inf = new BufferedReader(new FileReader(fname));
+      BufferedReader inf = new BufferedReader(new FileReader(file));
       String s;
       while ((s = inf.readLine()) != null)
          lines.add(s);
@@ -539,14 +540,14 @@ public class Alphabet {
    /**
     * indicates whether a given file can be translated by this AlphabetMap
     * 
-    * @param fname
-    *           the file name
+    * @param file
+    *           the file
     * @return true if the ArrayFile can be translated, false otherwise
     * @throws java.io.IOException
     *            if an IO error occurs
     */
-   public boolean isApplicableToFile(final String fname) throws IOException {
-      final ArrayFile arf = new ArrayFile(fname, 0); // uses only mapping -> buffer size 0 is ok
+   public boolean isApplicableToFile(final File file) throws IOException {
+      final ArrayFile arf = new ArrayFile(file, 0); // uses only mapping -> buffer size 0 is ok
       final long[] counts = arf.byteCounts();
       for (int i = 0; i < counts.length; i++)
          if (counts[i] > 0 && !this.isPreValid(i))
@@ -557,10 +558,10 @@ public class Alphabet {
    /**
     * translate one byte file to another, applying this alphabet map
     * 
-    * @param inname
-    *           name of input file
-    * @param outname
-    *           name of output file
+    * @param infile
+    *           input file
+    * @param outfile
+    *           output file
     * @param appendSeparator
     *           set true if you want to append a separator at the end
     * @throws java.io.IOException
@@ -568,13 +569,13 @@ public class Alphabet {
     * @throws verjinxer.sequenceanalysis.InvalidSymbolException
     *            if a symbol in the input file cannot be translated
     */
-   public void translateFileToFile(final String inname, final String outname,
+   public void translateFileToFile(final File infile, final File outfile,
          final boolean appendSeparator) throws IOException, InvalidSymbolException {
-      final ArrayFile afin = new ArrayFile(inname, 0); // mapping only -> buffer size 0 is ok
+      final ArrayFile afin = new ArrayFile(infile, 0); // mapping only -> buffer size 0 is ok
       final ByteBuffer in = afin.mapR();
       final long length = afin.length();
       final long ll = appendSeparator ? length + 1 : length;
-      final ArrayFile afout = new ArrayFile(outname, 0);
+      final ArrayFile afout = new ArrayFile(outfile, 0);
       final ByteBuffer out = afout.mapRW(0, ll);
       for (long i = 0; i < length; i++)
          out.put(this.code(in.get()));
@@ -585,8 +586,8 @@ public class Alphabet {
    /**
     * translate a byte file to a byte array, applying this alphabet map
     * 
-    * @param inname
-    *           name of input file
+    * @param infile
+    *           input file
     * @param translation
     *           the array where to store the translated string (must have large enough size). If
     *           null or too small, a new array with sufficient size is allocated.
@@ -596,9 +597,9 @@ public class Alphabet {
     * @throws java.io.IOException
     * @throws verjinxer.sequenceanalysis.InvalidSymbolException
     */
-   public byte[] translateFileToByteArray(final String inname, byte[] translation,
+   public byte[] translateFileToByteArray(final File infile, byte[] translation,
          final boolean appendSeparator) throws IOException, InvalidSymbolException {
-      final ArrayFile afin = new ArrayFile(inname, 0);
+      final ArrayFile afin = new ArrayFile(infile, 0);
       final ByteBuffer buf = afin.mapR();
       final long length = afin.length();
       final int ll = (int) length + (appendSeparator ? 1 : 0);
@@ -616,8 +617,8 @@ public class Alphabet {
     * 
     * @param s
     *           the string to be translated
-    * @param fname
-    *           the file name of the translated file
+    * @param file
+    *           the translated file
     * @param append
     *           whether to append to an existing file
     * @param writeSeparator
@@ -628,10 +629,10 @@ public class Alphabet {
     * @throws java.io.IOException
     * @throws verjinxer.sequenceanalysis.InvalidSymbolException
     */
-   public void translateStringToFile(final String s, final String fname, final boolean append,
+   public void translateStringToFile(final String s, final File file, final boolean append,
          final boolean writeSeparator) throws IOException, InvalidSymbolException {
       final int slen = s.length();
-      RandomAccessFile f = new RandomAccessFile(fname, "rw");
+      RandomAccessFile f = new RandomAccessFile(file, "rw");
       FileChannel fcout = f.getChannel();
       long flen = fcout.size();
       long start = append ? flen : 0;

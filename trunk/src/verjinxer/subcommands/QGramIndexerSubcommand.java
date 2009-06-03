@@ -6,6 +6,7 @@ package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
+import java.io.File;
 import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
@@ -104,7 +105,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
       log.info("qgram: stride length is %d", stride);
       
       // Loop through all files
-      for (String indexname : args) {
+      for (int i = 0; i < args.length; i++) {
 
          // Read properties.
          // If we only check index integrity, do that and continue with next index.
@@ -112,7 +113,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
          
          Project project;
          try {
-            project = Project.createFromFile(indexname);
+            project = Project.createFromFile(new File(args[i]));
          } catch (IOException ex) {
             log.error("qgram: cannot read project file.");
             return 1;
@@ -128,17 +129,17 @@ public final class QGramIndexerSubcommand implements Subcommand {
          project.setProperty("QGramAction", action);
 
 
-         String sequenceFileName = project.makeFileName(FileTypes.SEQ);
+         File sequenceFile = project.makeFile(FileTypes.SEQ);
          if (runs) {
-            sequenceFileName = project.makeFileName(FileTypes.RUNSEQ);
+            sequenceFile = project.makeFile(FileTypes.RUNSEQ);
             project.setRunIndex(true);
             log.info("generating index for run-compressed sequence");
          }
          try {
-            final String freqfile = (freq ? project.makeFileName(FileTypes.QFREQ) : null);
-            final String sfreqfile = (sfreq ? project.makeFileName(FileTypes.QSEQFREQ) : null);
-            qgramindexer.generateAndWriteIndex(sequenceFileName, 
-                  project.makeFileName(FileTypes.QBUCKETS), project.makeFileName(FileTypes.QPOSITIONS), freqfile, sfreqfile);
+            final File freqfile = (freq ? project.makeFile(FileTypes.QFREQ) : null);
+            final File sfreqfile = (sfreq ? project.makeFile(FileTypes.QSEQFREQ) : null);
+            qgramindexer.generateAndWriteIndex(sequenceFile, 
+                  project.makeFile(FileTypes.QBUCKETS), project.makeFile(FileTypes.QPOSITIONS), freqfile, sfreqfile);
          } catch (IOException ex) {
             ex.printStackTrace();
             log.error("qgram: failed on %s: %s; continuing with remainder...", project.getName(), ex);

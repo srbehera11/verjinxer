@@ -1,6 +1,7 @@
 package verjinxer.sequenceanalysis;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,10 +15,10 @@ import verjinxer.util.FileTypes;
  */
 public class Sequences {
 
-   protected final String seqFilename;
-   protected final String sspFilename;
-   protected final String descFilename;
-   protected final String qualityFilename;
+   protected final File seqFile;
+   protected final File sspFile;
+   protected final File descFile;
+   protected final File qualityFile;
 
    private byte[] sequence = null;
    private long[] separatorPositions = null;
@@ -25,39 +26,39 @@ public class Sequences {
    private byte[] qualityValues = null;
 
    public Sequences(final Project project) throws IOException {
-      seqFilename = project.makeFileName(FileTypes.SEQ);
-      sspFilename = project.makeFileName(FileTypes.SSP);
-      descFilename = project.makeFileName(FileTypes.DESC);
-      qualityFilename = project.makeFileName(FileTypes.QUALITIY);
+      seqFile = project.makeFile(FileTypes.SEQ);
+      sspFile = project.makeFile(FileTypes.SSP);
+      descFile = project.makeFile(FileTypes.DESC);
+      qualityFile = project.makeFile(FileTypes.QUALITIY);
       load();
    }
    
    /**
     * @return The filename of the Sequence.
     */
-   public String getSequenceFilename() {
-      return seqFilename;
+   public File getSequenceFile() {
+      return seqFile;
    }
 
    /**
     * @return The filename of the separator positions
     */
-   public String getSequencesSeparatorPositionsFilename() {
-      return sspFilename;
+   public File getSequencesSeparatorPositionsFile() {
+      return sspFile;
    }
 
    /**
     * @return The filename of the descriptions
     */
-   public String getDescriptionFilename() {
-      return descFilename;
+   public File getDescriptionFile() {
+      return descFile;
    }
 
    /**
     * @return The filename of the Qualityfile
     */
-   public String getQualityFilename() {
-      return qualityFilename;
+   public File getQualityFile() {
+      return qualityFile;
    }
 
    /**
@@ -69,10 +70,10 @@ public class Sequences {
       // TODO with runs, seqFile is f.e. chr22.runseq.seq, what is wrong
       try {
          // TODO: uuuooh. think about static methods!
-         sequence = new ArrayFile().setFilename(seqFilename).readArray(sequence);
-         separatorPositions = new ArrayFile().setFilename(sspFilename).readArray(separatorPositions);
-         assert sequence != null : String.format("No sequence for %s", seqFilename);
-         assert separatorPositions != null : String.format("No ssp for %s", sspFilename);
+         sequence = new ArrayFile().setFile(seqFile).readArray(sequence);
+         separatorPositions = new ArrayFile().setFile(sspFile).readArray(separatorPositions);
+         assert sequence != null : String.format("No sequence for %s", seqFile);
+         assert separatorPositions != null : String.format("No ssp for %s", sspFile);
       } catch (IOException ex) {
          ex.printStackTrace();
          System.exit(1);
@@ -85,7 +86,7 @@ public class Sequences {
    private void loadDescription() {
       descriptions = new ArrayList<String>();
       try {
-         BufferedReader in = new BufferedReader(new FileReader(descFilename));
+         BufferedReader in = new BufferedReader(new FileReader(descFile));
          String line;
          while ((line = in.readLine()) != null) {
             descriptions.add(line);
@@ -94,7 +95,7 @@ public class Sequences {
          ex.printStackTrace();
          System.exit(1);
       }
-      assert descriptions.size() > 0 : String.format("No description for %s", descFilename);
+      assert descriptions.size() > 0 : String.format("No description for %s", descFile);
    }
 
    /**
@@ -140,7 +141,7 @@ public class Sequences {
     */
    public byte[] getQualityValues() throws IOException {
       if (qualityValues == null) {
-         qualityValues = new ArrayFile().setFilename(qualityFilename).readArray(qualityValues);
+         qualityValues = new ArrayFile().setFile(qualityFile).readArray(qualityValues);
       }
       return qualityValues;
    }

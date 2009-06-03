@@ -66,7 +66,7 @@ public class MapperSubcommand implements Subcommand {
       log.info("Reports all occurrences of the sequences in the indices");
       log.info("in human-readable output format. One or more indices can be given");
       log.info("either by filename or in a file of filenames when preceded by @.");
-      log.info("Writes .mapped and .nonmappable.");
+      log.info("Writes %s and %s.", FileTypes.MAPPED, FileTypes.NONMAPPABLE);
       log.info("Options:");
       log.info("  -r, --rc                also map reverse complements (DNA only!)");
       log.info("  -e, --errorlevel <e>    error level for mapping [0.03]");
@@ -117,7 +117,7 @@ public class MapperSubcommand implements Subcommand {
       g.cmdname = "map";
 
       Options opt = new Options(
-            "m=method:,e=error=errorlevel:,b=blocksize:,r=rc=revcomp,s=select:,R=repeat=repeatthreshold:,Q=qcomplexity:,c=clip:,o=out:");
+            "atonce,m=method:,e=error=errorlevel:,b=blocksize:,r=rc=revcomp,s=select:,R=repeat=repeatthreshold:,Q=qcomplexity:,c=clip:,o=out:");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -131,21 +131,21 @@ public class MapperSubcommand implements Subcommand {
          log.error("map: both a sequence file and an index must be specified.");
          return 1;
       }
-      final String tname = args[0];
+      final File tProjectName = new File(args[0]);
 
       // Determine method
       method = null;
-      String mext = null;
+      FileTypes mext = null;
       if (opt.isGiven("m")) {
          if (opt.get("m").startsWith("q")) {
             method = Method.QGRAM;
-            mext = FileTypes.QPOSITIONS.toString();
+            mext = FileTypes.QPOSITIONS;
          } else if (opt.get("m").startsWith("s")) {
             method = Method.SUFFIX;
-            mext = FileTypes.POS.toString();
+            mext = FileTypes.POS;
          } else if (opt.get("m").startsWith("f")) {
             method = Method.FULL;
-            mext = FileTypes.SEQ.toString();
+            mext = FileTypes.SEQ;
          } else {
             help();
             log.error("map: Unknown method '%s'.", opt.get("m"));
@@ -153,7 +153,7 @@ public class MapperSubcommand implements Subcommand {
          }
       } else {
          method = Method.QGRAM;
-         mext = FileTypes.QPOSITIONS.toString();
+         mext = FileTypes.QPOSITIONS;
       }
 
       // Determine options
@@ -204,7 +204,7 @@ public class MapperSubcommand implements Subcommand {
       // Read sequence project
       final Project tproject;
       try {
-         tproject = Project.createFromFile(tname);
+         tproject = Project.createFromFile(tProjectName);
       } catch (IOException ex) {
          log.error("could not read project file: %s", ex);
          return 1;
@@ -217,10 +217,9 @@ public class MapperSubcommand implements Subcommand {
       // Select sequences
       if (opt.isGiven("s")) {
          if (opt.get("s").startsWith("#")) {
-            tselect = g.slurpBitArray(tproject.makeFileName(FileTypes.SELECT));
+            tselect = g.slurpBitArray(tproject.makeFile(FileTypes.SELECT));
          } else {
-            tselect = g.slurpBitArray(tproject.getWorkingDirectory().getAbsolutePath()
-                  + File.separator + opt.get("s"));
+            tselect = g.slurpBitArray(new File(opt.get("s")));
          }
       } else { // select all
          tselect = new BitArray(tm);
@@ -260,7 +259,7 @@ public class MapperSubcommand implements Subcommand {
       long longestpos = 0; // length of longest [q]pos
       long longestindexlen = 0; // length of longest index text
       for (int i = 0; i < inum; i++) {
-         String fin = indices.get(i) + mext;
+         File fin = new File(indices.get(i) + mext);
          try {
             final ArrayFile fi = new ArrayFile(fin, 0).openR().close();
             long filen = fi.length();
@@ -272,7 +271,7 @@ public class MapperSubcommand implements Subcommand {
             log.error("map: could not open index '%s'; %s.", fin, ex);
             return 1;
          }
-         fin = indices.get(i) + FileTypes.SEQ;
+         fin = new File(indices.get(i) + FileTypes.SEQ);
          try {
             final ArrayFile fi = new ArrayFile(fin, 0).openR().close();
             long filen = fi.length();
@@ -292,14 +291,14 @@ public class MapperSubcommand implements Subcommand {
          return 1;
       }
       Alphabet alphabet = tproject.readAlphabet();
-      String tsspfile = tproject.makeFileName(FileTypes.SSP);
+      File tsspfile = tproject.makeFile(FileTypes.SSP);
 
       final long[] tssp = g.slurpLongArray(tsspfile);
       assert tm == tssp.length;
-      final ArrayList<String> tdesc = Globals.slurpTextFile(tproject.makeFileName(FileTypes.DESC), tm);
+      final ArrayList<String> tdesc = Globals.slurpTextFile(tproject.makeFile(FileTypes.DESC), tm);
       long longestsequence = tproject.getLongProperty("LongestSequence");
       long shortestsequence = tproject.getLongProperty("ShortestSequence");
-      final byte[] tall = g.slurpByteArray(tproject.makeFileName(FileTypes.SEQ));
+      final byte[] tall = g.slurpByteArray(tproject.makeFile(FileTypes.SEQ));
 
       int selected = tselect.cardinality();
       log.info("map: comparing %d/%d sequences against %d indices (%s) using method %s%s...",
@@ -313,7 +312,7 @@ public class MapperSubcommand implements Subcommand {
       }
 
       if (qgramthreshold > 0 || qgramtabulate)
-         filtersequences(longestsequence, shortestsequence, tm, asize, tname, tall, trepeat, tssp);
+         filtersequences(longestsequence, shortestsequence, tm, asize, tproject, tall, trepeat, tssp);
 
       final PrintWriter allout;
       // open output file
@@ -324,10 +323,10 @@ public class MapperSubcommand implements Subcommand {
                allout = new PrintWriter(System.out);
                closeout = false;
             } else {
-               allout = new PrintWriter(opt.get("o") + ".allmapped");
+               allout = new PrintWriter(opt.get("o"));
             }
          } else
-            allout = new PrintWriter(tproject.makeFileName(FileTypes.ALLMAPPED));
+            allout = new PrintWriter(tproject.makeFile(FileTypes.ALLMAPPED));
       } catch (IOException ex) {
          log.error("map: could not create output file; %s", ex);
          return 1;
@@ -339,7 +338,7 @@ public class MapperSubcommand implements Subcommand {
          m.mapByQGram(blocksize);
       } else if (method == Method.FULL && atonce) {
          MapperByAlignment m = new MapperByAlignment(g, longestsequence, tm,
-               asize, allout, tselect, trepeat, tmapped, tall, tssp, tname, indices);
+               asize, allout, tselect, trepeat, tmapped, tall, tssp, tproject, indices);
          m.mapByAlignmentAtOnce(clip, errorlevel, revcomp);
 
       } else
@@ -351,8 +350,8 @@ public class MapperSubcommand implements Subcommand {
       log.info(
             "map: successfully mapped %d / %d selected (%d total) sequences;%n     found %d repeats, %d sequences remain.",
             tmapped.cardinality(), selected, tm, trepeat.cardinality(), tselect.cardinality());
-      g.dumpBitArray(tproject.makeFileName(FileTypes.SELECT), tselect);
-      g.dumpBitArray(tproject.makeFileName(FileTypes.REPEAT_FILTER), trepeat);
+      g.dumpBitArray(tproject.makeFile(FileTypes.SELECT), tselect);
+      g.dumpBitArray(tproject.makeFile(FileTypes.REPEAT_FILTER), trepeat);
       g.stopplog();
       if (closeout)
          allout.close();
@@ -366,7 +365,7 @@ public class MapperSubcommand implements Subcommand {
     * @param shortestsequence
     */
    final void filtersequences(long longestsequence, long shortestsequence, int tm, final int asize,
-         final String tname, byte[] tall, BitArray trepeat, long[] tssp) {
+         final Project tProject, byte[] tall, BitArray trepeat, long[] tssp) {
       PrintWriter out = null;
       final int as = asize;
       TicToc timer = new TicToc();
@@ -388,7 +387,7 @@ public class MapperSubcommand implements Subcommand {
       // out has not yet been opened; open it for tabulating.
       if (qgramtabulate) {
          try {
-            out = new PrintWriter(String.format("%s.%d.qcomplexity", tname, qq));
+            out = new PrintWriter(tProject.makeFile(tProject.getName() + qq + FileTypes.QCOMPLEXITY));
          } catch (FileNotFoundException ex) {
             log.error("map: could not tabulate q-gram complexities; " + ex);
             g.terminate(1);

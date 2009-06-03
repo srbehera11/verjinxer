@@ -1,6 +1,7 @@
 
 
 package verjinxer.util;
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -19,6 +20,14 @@ public class AnnotatedArrayFile extends ArrayFile
    {
       super(fname);
       info = new ArrayList<Info>(1024);
+   }
+   
+   /**
+    * @see AnnotatedArrayFile(String)
+    */
+   public AnnotatedArrayFile(File file)
+   {
+      this(file != null ? file.getAbsolutePath() : null);
    }
    
    

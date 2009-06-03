@@ -1,5 +1,6 @@
 
 
+import java.io.File;
 import java.io.IOException;
 import verjinxer.sequenceanalysis.FastaFile;
 import verjinxer.util.MathUtils;
@@ -23,16 +24,18 @@ public class WriteFibonacciString {
    */
   public static void main(String[] args) {
     long fmax = (args.length<1? defaultlength : Long.parseLong(args[0]));
-    String fname = (args.length<2? null : args[1]);
+    File file = (args.length < 2 ? null : new File(args[1]));
     int n = MathUtils.fibFind(fmax);
-    if (fname==null) fname = String.format("fib-%d.fa",n);
+    if (file == null) {
+         file = new File(String.format("fib-%d.fa", n));
+    }
     System.out.printf("Computing FS(%d) of length %d...%n", n, MathUtils.fib(n));
     String s = MathUtils.fibString(n);
-    FastaFile ff = new FastaFile(fname);
+    FastaFile ff = new FastaFile(file);
     System.out.printf("Writing file...%n");
     try {
       ff.open(FastaFile.FastaMode.WRITE);
-      ff.writeString(s,fname);
+      ff.writeString(s,file.getName());
       ff.close();
     } catch (IOException ex) {
       throw new RuntimeException(ex);
