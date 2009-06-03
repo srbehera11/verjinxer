@@ -901,9 +901,12 @@ public class BigSuffixTrayBuilder {
     ArrayFile f8=null, f4=null, f2=null, f1=null, f4x=null, f2x=null, f1x=null;
     try {
       if ((dolcp&8)!=0) f8 = new ArrayFile(file+"8").openW();
-      if ((dolcp&4)!=0) { f4 = new ArrayFile(file+"4").openW(); f4x = new ArrayFile(file+"4x",0).openW(); }
-      if ((dolcp&2)!=0) { f2 = new ArrayFile(file+"2").openW(); f2x = new ArrayFile(file+"2x",0).openW(); }
-      if ((dolcp&1)!=0) { f1 = new ArrayFile(file+"1").openW(); f1x = new ArrayFile(file+"1x",0).openW(); }
+      if ((dolcp&4)!=0) { f4 = new ArrayFile(file+"4").openW(); 
+                          f4x = new ArrayFile(file+"4x").openW(); } // TODO original calls was wis 0 as second parameter
+      if ((dolcp&2)!=0) { f2 = new ArrayFile(file+"2").openW(); 
+                          f2x = new ArrayFile(file+"2x").openW(); } // TODO original calls was wis 0 as second parameter
+      if ((dolcp&1)!=0) { f1 = new ArrayFile(file+"1").openW();
+                          f1x = new ArrayFile(file+"1x").openW(); } // TODO original calls was wis 0 as second parameter
       for (r=0, p=lexfirstpos[chi];   p!=-1;   p=lexnextpos.get(p), r++) {
         h = lexprevpos.get(p);
         assert(h>=0);
