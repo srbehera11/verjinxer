@@ -1074,11 +1074,11 @@ public class SuffixTrayBuilder {
             f4 = new ArrayFile(file).openW();
          if ((dolcp & 2) != 0) {
             f2 = new ArrayFile(file + "2").openW();
-            f2x = new ArrayFile(file + "2x", 0).openW();
+            f2x = new ArrayFile(file + "2x").openW(); // TODO original calls was wis 0 as second parameter
          }
          if ((dolcp & 1) != 0) {
             f1 = new ArrayFile(file + "1").openW();
-            f1x = new ArrayFile(file + "1x", 0).openW();
+            f1x = new ArrayFile(file + "1x").openW(); // TODO original calls was wis 0 as second parameter
          }
          for (r = 0, p = lexfirstpos[chi]; p != -1; p = lexnextpos[p], r++) {
             h = lexprevpos[p];
