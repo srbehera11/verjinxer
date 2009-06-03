@@ -368,7 +368,7 @@ public class Translater {
     * 
     * -- separator is appended (never the wildcard).
     */
-   void translateText(final String fname, final SequenceWriter out) {
+   void translateText(final File file, final SequenceWriter out) {
       ByteBuffer tr = null;
       long lastbyte = 0;
       byte appender;
@@ -377,7 +377,7 @@ public class Translater {
       BufferedReader br = null;
 
       try {
-         br = new BufferedReader(new FileReader(fname), 512 * 1024);
+         br = new BufferedReader(new FileReader(file), 512 * 1024);
          String next = br.readLine();
          while (next != null) {
             current = next;
@@ -391,9 +391,9 @@ public class Translater {
             }
          }
          lastbyte = out.writeBuffer(tr);
-         out.addInfo(fname, len, (int) (lastbyte - 1));
+         out.addInfo(file.getName(), len, (int) (lastbyte - 1));
       } catch (IOException ex) {
-         log.error("translate: error translating '%s': %s", fname, ex);
+         log.error("translate: error translating '%s': %s", file, ex);
          System.exit(1);
       } finally {
          try {
@@ -430,13 +430,13 @@ public class Translater {
    }
 
    /** compute runs using memory mapping where possible */
-   private long computeRunsM(final String fname) throws IOException {
+   private long computeRunsM(final Project project) throws IOException {
       int run = -1;
-      ByteBuffer seq = new ArrayFile(fname + FileTypes.SEQ, 0).mapR();
-      ArrayFile rseq = new ArrayFile(fname + FileTypes.RUNSEQ).openW();
-      ArrayFile rlen = new ArrayFile(fname + FileTypes.RUNLEN).openW();
-      IntBuffer p2r = new ArrayFile(fname + FileTypes.POS2RUN, 0).mapRW().asIntBuffer();
-      ArrayFile r2p = new ArrayFile(fname + FileTypes.RUN2POS).openW();
+      ByteBuffer seq = new ArrayFile(project.makeFile(FileTypes.SEQ), 0).mapR();
+      ArrayFile rseq = new ArrayFile(project.makeFile(FileTypes.RUNSEQ)).openW();
+      ArrayFile rlen = new ArrayFile(project.makeFile(FileTypes.RUNLEN)).openW();
+      IntBuffer p2r = new ArrayFile(project.makeFile(FileTypes.POS2RUN), 0).mapRW().asIntBuffer();
+      ArrayFile r2p = new ArrayFile(project.makeFile(FileTypes.RUN2POS)).openW();
       final int n = seq.limit();
 
       byte current;
