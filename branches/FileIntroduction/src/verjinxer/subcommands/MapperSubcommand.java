@@ -117,7 +117,7 @@ public class MapperSubcommand implements Subcommand {
       g.cmdname = "map";
 
       Options opt = new Options(
-            "m=method:,e=error=errorlevel:,b=blocksize:,r=rc=revcomp,s=select:,R=repeat=repeatthreshold:,Q=qcomplexity:,c=clip:,o=out:");
+            "atonce,m=method:,e=error=errorlevel:,b=blocksize:,r=rc=revcomp,s=select:,R=repeat=repeatthreshold:,Q=qcomplexity:,c=clip:,o=out:");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
