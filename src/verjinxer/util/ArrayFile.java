@@ -68,8 +68,7 @@ public class ArrayFile {
     * @seeArrayFile(String, int)
     */
    public ArrayFile(final File file, int bufsize) {
-      this(file != null ? file.getAbsolutePath() : null,
-            (BUFBLOCKS - numbuf++ % BUFCYCLES) * BUFBLOCKSIZE);
+      this(file != null ? file.getAbsolutePath() : null, bufsize);
    }
 
    /**
