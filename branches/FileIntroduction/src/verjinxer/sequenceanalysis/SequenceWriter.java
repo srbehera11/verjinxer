@@ -20,7 +20,7 @@ public class SequenceWriter {
    private final File descFile;
    private final File qualityFile;
 
-   private ArrayFile sequenceFile;
+   private ArrayFile sequenceArrayFile;
    private ArrayList<String> descriptions = new ArrayList<String>();
    private ArrayList<Long> sequenceLengths = new ArrayList<Long>();
    private long maxSequenceLength = 0;
@@ -35,8 +35,8 @@ public class SequenceWriter {
       descFile = project.makeFile(FileTypes.DESC);
       qualityFile = project.makeFile(FileTypes.QUALITIY);
 
-      sequenceFile = new ArrayFile(seqFile);
-      sequenceFile.openW();
+      sequenceArrayFile = new ArrayFile(seqFile);
+      sequenceArrayFile.openW();
    }
    
    /**
@@ -73,7 +73,7 @@ public class SequenceWriter {
     * @throws IOException
     */
    public void store() throws IOException {
-      sequenceFile.close();
+      sequenceArrayFile.close();
 
       // Write the ssp.
       long[] sspArray = new long[separatorPositions.size()];
@@ -97,7 +97,7 @@ public class SequenceWriter {
     * @throws IOException
     */
    public long writeBuffer(ByteBuffer tr) throws IOException {
-      return sequenceFile.writeBuffer(tr);
+      return sequenceArrayFile.writeBuffer(tr);
    }
 
    /**
@@ -126,7 +126,7 @@ public class SequenceWriter {
     * @return Accumulated length of all sequences (length of .seq file).
     */
    public long length() {
-      return sequenceFile.length();
+      return sequenceArrayFile.length();
    }
 
    /**
