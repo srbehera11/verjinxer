@@ -23,13 +23,22 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    LCP("lcp"),         // lcp values
    QUALITIY("quality"),
    MAPPED("mapped"),
+   NONMAPPABLE("nonmappable"),
    
    CUT("cut"), // Cutter
+   QCOMPLEXITY("qcomplexity"), // MapperSubcommand
    ALLMAPPED("allmapped"), // MapperSubcommand
    REPEAT_FILTER("repeat-filter"), // MapperSubcommand
    TOOMANYHITS_FILTER("toomanyhits-filter"), // QGramMatcherSubcommand
    NUPROBES("nuprobes"), // NonUniqueProbeDesigner
    NUSTATS("nustats"), // NonUniqueProbeDesigner
+   
+   MAPBESTERROR("mapbesterror"), // MapperByAlignment
+   MAPBESTHITS("mapbesthits"), // MapperByAlignment
+   MAPALLHITS("mapallhits"), // MapperByAlignment
+   
+   SORTED_MATCHES("sorted-matches"), // QGramMatcherSubcommand
+   MATCHES("matches"), // QGramMatcherSubcommand
    
    FASTA("fasta"),
    CSFASTA("csfasta"),

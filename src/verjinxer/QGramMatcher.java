@@ -5,6 +5,7 @@ import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_C;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_G;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_T;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -111,7 +112,7 @@ public class QGramMatcher {
     *           may be null
     * @param project Project of ds
     */
-   public QGramMatcher(Globals g, Project tproject, Project project, String toomanyhitsfilename,
+   public QGramMatcher(Globals g, Project tproject, Project project, File toomanyhitsfile,
          int maxseqmatches, int minseqmatches, int minlen, final QGramCoder qgramcoder,
          final QGramFilter qgramfilter, final PrintWriter out, final boolean sorted,
          final boolean selfcmp, final boolean c_matches_c) throws IOException {
@@ -146,15 +147,15 @@ public class QGramMatcher {
       // read sequence descriptions;
       // memory-map or read qpos.
       TicToc ttimer = new TicToc();
-      final String tfile = runs ? tproject.makeFileName(FileTypes.RUNSEQ) : tproject.makeFileName(FileTypes.SEQ);
-      final String tsspfile = tproject.makeFileName(FileTypes.SSP);
-      final String seqfile = runs ? project.makeFileName(FileTypes.RUNSEQ) : project.makeFileName(FileTypes.SEQ);
-      final String sspfile = project.makeFileName(FileTypes.SSP);
+      final File tfile = runs ? tproject.makeFile(FileTypes.RUNSEQ) : tproject.makeFile(FileTypes.SEQ);
+      final File tsspfile = tproject.makeFile(FileTypes.SSP);
+      final File seqfile = runs ? project.makeFile(FileTypes.RUNSEQ) : project.makeFile(FileTypes.SEQ);
+      final File sspfile = project.makeFile(FileTypes.SSP);
 
       t = new HugeByteArray(tproject.getLongProperty("Length"));
       t.read(tfile, 0, -1, 0);
       tssp = g.slurpLongArray(tsspfile);
-      final ArrayList<String> tdesc = Globals.slurpTextFile(tproject.makeFileName(FileTypes.DESC), tssp.length);
+      final ArrayList<String> tdesc = Globals.slurpTextFile(tproject.makeFile(FileTypes.DESC), tssp.length);
       assert tdesc.size() == tssp.length;
 
       final ArrayList<String> sdesc;
@@ -169,15 +170,15 @@ public class QGramMatcher {
          s = g.slurpByteArray(seqfile);
          ssp = g.slurpLongArray(sspfile);
          sm = ssp.length;
-         sdesc = Globals.slurpTextFile(project.makeFileName(FileTypes.DESC), sm);
+         sdesc = Globals.slurpTextFile(project.makeFile(FileTypes.DESC), sm);
          assert sdesc.size() == sm;
       }
 
       if (runs) {
          log.info("matching run-compressed index against run-compressed queries");
          // TODO change int[] to a memory-mapped ByteBuffer to avoid wasting (resident) memory
-         int[] queryRunToPos = g.slurpIntArray(tproject.makeFileName(FileTypes.RUN2POS));
-         int[] indexRunToPos = g.slurpIntArray(project.makeFileName(FileTypes.RUN2POS));
+         int[] queryRunToPos = g.slurpIntArray(tproject.makeFile(FileTypes.RUN2POS));
+         int[] indexRunToPos = g.slurpIntArray(project.makeFile(FileTypes.RUN2POS));
          
          if (sorted) {
             throw new UnsupportedOperationException("sorted matches and a run-compressed index: this is not supported");
@@ -194,17 +195,17 @@ public class QGramMatcher {
       qgramindex = new QGramIndex(project);
       log.info("qmatch: mapping and reading files took %.1f sec", ttimer.tocs());
 
-      if (toomanyhitsfilename != null) {
-         toomanyhits = g.slurpBitArray(toomanyhitsfilename);
+      if (toomanyhitsfile != null) {
+         toomanyhits = g.slurpBitArray(toomanyhitsfile);
       } else {
          toomanyhits = new BitArray(tssp.length); // if -t not given, start with a clean filter
       }
    }
 
-   public void tooManyHits(String filename) {
+   public void tooManyHits(File file) {
       log.info("qmatch: too many hits for %d/%d sequences (%.2f%%)", toomanyhits.cardinality(),
             tssp.length, toomanyhits.cardinality() * 100.0 / tssp.length);
-      g.dumpBitArray(filename, toomanyhits);
+      g.dumpBitArray(file, toomanyhits);
    }
 
    /**

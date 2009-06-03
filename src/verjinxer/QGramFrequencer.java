@@ -6,6 +6,7 @@ package verjinxer;
 
 import static verjinxer.Globals.programname;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -104,7 +105,7 @@ public class QGramFrequencer {
       }
 
       // Get indexname and di
-      String indexname = args[0];
+      File indexname = new File(args[0]);
       if (args.length > 1)
          log.warn("qfreq: ignoring all arguments except first '%s'", args[0]);
 
@@ -174,9 +175,9 @@ public class QGramFrequencer {
 
       // Read the correct array!
       if (countseq)
-         f = g.slurpIntArray(project.makeFileName(FileTypes.QSEQFREQ));
+         f = g.slurpIntArray(project.makeFile(FileTypes.QSEQFREQ));
       else
-         f = g.slurpIntArray(project.makeFileName(FileTypes.QFREQ));
+         f = g.slurpIntArray(project.makeFile(FileTypes.QFREQ));
       // TODO: read bck array if requested, also look at sequences bck-based!
 
       len = Hcode - Lcode;

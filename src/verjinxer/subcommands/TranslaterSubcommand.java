@@ -2,6 +2,7 @@ package verjinxer.subcommands;
 
 import static verjinxer.Globals.programname;
 
+import java.io.File;
 import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
@@ -70,30 +71,35 @@ public class TranslaterSubcommand implements Subcommand {
       TicToc gtimer = new TicToc();
       g.cmdname = "translate";
 
-      String filenames[];
+      File files[];
       Options opt = new Options(
             "i=index=indexname:,t=trim,a=amap=alphabet:,dna,rc=rconly,dnarc:,dnabi,masked,protein,r=run=runs,reverse,c=color=colorspace,q=quality:");
 
       try {
-         filenames = opt.parse(args);
+         String[] filenames = opt.parse(args);
+         files = new File[filenames.length];
+         for (int i = 0; i < filenames.length; i++) {
+            files[i] = new File(filenames[i]);
+         }
       } catch (IllegalOptionException ex) {
          log.warn("%s", ex);
          return 1;
       }
 
-      if (filenames.length == 0) {
+      if (files.length == 0) {
          help();
          log.info("translate: no files given");
          return 0;
       }
 
       // determine the name of the index
-      String projectname;
+      File projectname;
       if (opt.isGiven("i"))
-         projectname = opt.get("i");
+         projectname = new File(opt.get("i"));
       else { 
          // take base name of first FASTA file
-         projectname = FileUtils.extensionRemoved(filenames[0]);
+         // creates the project in the current working directory of java and not where files[0] is located 
+         projectname = new File(FileUtils.removeExtension(files[0]).getName());
       }
       Project project = new Project(projectname);
 
@@ -136,7 +142,7 @@ public class TranslaterSubcommand implements Subcommand {
       }
       Alphabet alphabet = null;
       if (opt.isGiven("a"))
-         alphabet = Globals.readAlphabet(opt.get("a"));
+         alphabet = Globals.readAlphabet(new File(opt.get("a")));
       if (opt.isGiven("dna") || opt.isGiven("dnarc"))
          alphabet = opt.isGiven("masked") ? Alphabet.maskedDNA() : Alphabet.DNA();
 
@@ -172,19 +178,19 @@ public class TranslaterSubcommand implements Subcommand {
       boolean colorspace = false;
       if (opt.isGiven("colorspace")) {
          alphabet = Alphabet.CS();
-         for (int i = 0; i < filenames.length; i++) {
+         for (int i = 0; i < files.length; i++) {
             // all files must be FASTA
-            if (FileUtils.determineFileType(filenames[i]) != FileTypes.FASTA) {
+            if (FileUtils.determineFileType(files[i]) != FileTypes.FASTA) {
                log.error("translate: The option --colorspace is only valid for FASTA files.");
                return 1;
             }
          }
          colorspace = true;
       }
-      String qualityFilename = null; 
+      File qualityFile = null; 
       if (opt.isGiven("quality")) {
-         qualityFilename = opt.get("quality");
-         if ((filenames.length!=1) || (FileUtils.determineFileType(filenames[0]) != FileTypes.CSFASTA)) {
+         qualityFile = new File(opt.get("quality"));
+         if ((files.length!=1) || (FileUtils.determineFileType(files[0]) != FileTypes.CSFASTA)) {
             log.error("translate: If option --quality is given, exactly one CSFASTA file is expected.");
             return 1;
          }
@@ -195,8 +201,8 @@ public class TranslaterSubcommand implements Subcommand {
       }
 
       if (alphabet == null) {
-         for (int i = 0; i < filenames.length; i++) {
-            if (FileUtils.determineFileType(filenames[i]) != FileTypes.CSFASTA) { // only for CSFASTA omitting alphabet map is allowed
+         for (int i = 0; i < files.length; i++) {
+            if (FileUtils.determineFileType(files[i]) != FileTypes.CSFASTA) { // only for CSFASTA omitting alphabet map is allowed
                log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
                return 1;
             }
@@ -205,8 +211,8 @@ public class TranslaterSubcommand implements Subcommand {
          alphabet = Alphabet.CS();
       } else {
          // A alphabet was set, test if all files are NOT CSFASTA
-         for (int i = 0; i < filenames.length; i++)
-            if (FileUtils.determineFileType(filenames[i]) == FileTypes.CSFASTA) { // invalid option for CSFASTA
+         for (int i = 0; i < files.length; i++)
+            if (FileUtils.determineFileType(files[i]) == FileTypes.CSFASTA) { // invalid option for CSFASTA
                log.error("translate: the options -a, --dna, --rconly, --dnarc, --dnabi, --protein and --colorspace are not valid for CSFASTA files.");
                return 1;
             }
@@ -214,9 +220,9 @@ public class TranslaterSubcommand implements Subcommand {
       g.startProjectLogging(project, true);
 
       Translater translater = new Translater(g, trim, alphabet, alphabet2, separateRCByWildcard,
-            reverse, addrc, bisulfite, dnarcstring, colorspace, qualityFilename);
+            reverse, addrc, bisulfite, dnarcstring, colorspace, qualityFile);
 
-      translater.createProject(project, filenames);
+      translater.translateFilesAndCreateProject(project, files);
 
       log.info("translate: finished translation after %.1f secs.", gtimer.tocs());
 

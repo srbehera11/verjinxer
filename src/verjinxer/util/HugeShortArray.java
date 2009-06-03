@@ -17,6 +17,7 @@
  */
 package verjinxer.util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -389,8 +390,8 @@ public class HugeShortArray {
     * file position if the given position is &ge;= 0. If the given position is negative, we read
     * from the current file position. If nItems is negative, we read till the end.
     * 
-    * @param fname
-    *           file name
+    * @param file
+    *           the file
     * @param start
     *           position in this array at which to start filling it
     * @param nItems
@@ -400,9 +401,9 @@ public class HugeShortArray {
     * @throws java.io.IOException
     *            if any I/O error occurs
     */
-   public final void read(final String fname, long start, long nItems, final long fpos)
+   public final void read(final File file, long start, long nItems, final long fpos)
          throws IOException {
-      final FileChannel channel = new FileInputStream(fname).getChannel();
+      final FileChannel channel = new FileInputStream(file).getChannel();
       if (fpos >= 0)
          channel.position(BYTESPERELEMENT * fpos);
       final ShortBuffer ib = _bb.asShortBuffer(); // type depends on 'a'
@@ -433,18 +434,18 @@ public class HugeShortArray {
    /**
     * factory function for constructing a HugeShortArray from a binary file
     * 
-    * @param fname
-    *           the file name
+    * @param file
+    *           the file
     * @return a HugeShortArray with the file's contents
     * @throws java.io.IOException
     */
-   public static final HugeShortArray fromFile(final String fname) throws IOException {
-      final FileChannel channel = new FileInputStream(fname).getChannel();
+   public static final HugeShortArray fromFile(final File file) throws IOException {
+      final FileChannel channel = new FileInputStream(file).getChannel();
       final long flen = channel.size();
       if (flen % BYTESPERELEMENT != 0)
          throw new IOException("File size not compatible with HugeShortArray");
       final HugeShortArray a = new HugeShortArray(flen / BYTESPERELEMENT);
-      a.read(fname, 0, flen / BYTESPERELEMENT, 0);
+      a.read(file, 0, flen / BYTESPERELEMENT, 0);
       return a;
    }
 }

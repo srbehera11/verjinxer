@@ -3,10 +3,12 @@
  */
 package verjinxer.sequenceanalysis;
 
+import java.io.File;
 import java.io.IOException;
 
 import verjinxer.Project;
 import verjinxer.util.ArrayFile;
+import verjinxer.util.FileTypes;
 
 /**
  * The q-gram index. Currently, this class can only be used to <em>read</em> an index from disk. The
@@ -74,7 +76,7 @@ public class QGramIndex {
     *           q
     * @throws IOException
     */
-   public QGramIndex(final String qposfile, final String qbckfile, int maximumBucketSize, int q,
+   public QGramIndex(final File qposfile, final File qbckfile, int maximumBucketSize, int q,
          int stride) throws IOException {
       assert q >= 5 : "Sorry, cannot work with a q<5 for now";
       ArrayFile af = new ArrayFile(qbckfile);
@@ -90,7 +92,7 @@ public class QGramIndex {
       // piecewise read of the qpos file into qpos array
       int start, end;
 
-      af.setFilename(qposfile);
+      af.setFile(qposfile);
 
       // read a superbucket (consisting of 2**BITS buckets) at a time
 //      for (int i = 0; i < ((buckets-1) >> BITS) + 1; ++i) {
@@ -164,7 +166,7 @@ public class QGramIndex {
     * @throws IOException
     */
    public QGramIndex(final Project project) throws IOException {
-      this(project.getQPositionsFileName(), project.getQBucketsFileName(),
+      this( project.makeFile(FileTypes.QPOSITIONS), project.makeFile(FileTypes.QBUCKETS),
             project.getMaximumBucketSize(), project.getIntProperty("q"), project.getStride());
    }
 

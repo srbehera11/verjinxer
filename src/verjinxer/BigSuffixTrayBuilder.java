@@ -8,6 +8,7 @@ package verjinxer;
 
 import static verjinxer.Globals.programname;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.LongBuffer;
@@ -116,7 +117,7 @@ public class BigSuffixTrayBuilder {
     if (opt.isGiven("lcp1")) dolcp+=1;
     
     // Get indexname and di
-    String indexname = args[0];
+    File indexname = new File(args[0]);
     if (args.length > 1) log.warn("suffixtray: ignoring all arguments except first '%s'%n", args[0]);
     Project project;
     try {
@@ -130,7 +131,7 @@ public class BigSuffixTrayBuilder {
 
     // load alphabet map and text
     alphabet = project.readAlphabet();
-    s = g.slurpHugeByteArray(project.makeFileName(FileTypes.SEQ));
+    s = g.slurpHugeByteArray(project.makeFile(FileTypes.SEQ));
     n = s.length;
     if (onlycheck) { returnvalue =  checkpos(project.projectName); g.stopplog(); return returnvalue; }
     project.setProperty("SuffixAction", action);
@@ -169,7 +170,7 @@ public class BigSuffixTrayBuilder {
     
     if (returnvalue==0) {
       timer.tic();
-      String fpos = project.makeFileName(FileTypes.POS);
+      File fpos = project.makeFile(FileTypes.POS);
       log.info("suffixtray: writing '%s'...%n",fpos);
       if (method.equals("L"))            writepos_R(fpos);
       else if (method.equals("R"))       writepos_R(fpos);
@@ -183,7 +184,7 @@ public class BigSuffixTrayBuilder {
     // do lcp if desired
     if (dolcp>0 && returnvalue==0) {
       timer.tic();
-      String flcp = project.makeFileName(FileTypes.LCP);
+      File flcp = project.makeFile(FileTypes.LCP);
       log.info("suffixtray: computing lcp array...%n");
       if (method.equals("L"))            lcp_L(flcp, dolcp);
       else if (method.equals("R"))       lcp_L(flcp, dolcp);
@@ -204,7 +205,7 @@ public class BigSuffixTrayBuilder {
     try { 
        project.store(); } 
     catch (IOException ex) { 
-      log.error("suffix: could not write %s (%s)!%n", project.getFileName(), ex); 
+      log.error("suffix: could not write %s (%s)!%n", project.getFile().getPath(), ex); 
       g.terminate(1);
     }
     g.stopplog();
@@ -811,33 +812,33 @@ public class BigSuffixTrayBuilder {
   
   
   /** write pos array to file when lexnextpos is available
-   *@param fname  the full path and file name
+   *@param file  the file
    */
-  private void writepos_R(final String fname) {
+  private void writepos_R(final File file) {
     int chi;
     long p;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      final ArrayFile f = new ArrayFile(fname).openW();
+      final ArrayFile f = new ArrayFile(file).openW();
       for (p=lexfirstpos[chi]; p!=-1; p=lexnextpos.get(p))
         f.writeLong(p);
       f.close();
     } catch (IOException ex) {
-      log.error("suffixtray: error writing '%s': %s%n", fname, ex);
+      log.error("suffixtray: error writing '%s': %s%n", file, ex);
       g.terminate(1);
     }
   }
  
   /** write pos array to file after walk-bothLR using the xor trick.
-   *@param fname  the full path and file name
+   *@param file  the file
    */
-  private void writepos_bothLR(final String fname) {
+  private void writepos_bothLR(final File file) {
     int chi;
     long p, oldp, tmp;
     final HugeLongArray lexps = dll.lexps;
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     try {
-      final ArrayFile f = new ArrayFile(fname).openW();
+      final ArrayFile f = new ArrayFile(file).openW();
       for (oldp=-1, p=lexfirstpos[chi];  p!=-1;  ) {
         f.writeLong(p);
         tmp = p;
@@ -846,7 +847,7 @@ public class BigSuffixTrayBuilder {
       }
       f.close();
     } catch (IOException ex) {
-      log.error("suffixtray: error writing '%s': %s%n",fname, ex);
+      log.error("suffixtray: error writing '%s': %s%n",file, ex);
       g.terminate(1);
     }
   }
@@ -873,10 +874,10 @@ public class BigSuffixTrayBuilder {
 
   /** lcp computation according to Kasai et al.'s algorithm
    * when lexprevpos[] is available.
-   *@param fname filename for lcp array
+   *@param file file for lcp array
    *@param dolcp which lcp arrays to compute (0..15, any combination of 1+2+4+8)
    */
-  private void lcp_L(String fname, int dolcp) {
+  private void lcp_L(File file, int dolcp) {
     TicToc timer = new TicToc();
     long p, prev, h;
     h=0;
@@ -899,10 +900,13 @@ public class BigSuffixTrayBuilder {
     for (chi=0; chi<256 && lexfirstpos[chi]==-1; chi++)  {}
     ArrayFile f8=null, f4=null, f2=null, f1=null, f4x=null, f2x=null, f1x=null;
     try {
-      if ((dolcp&8)!=0) f8 = new ArrayFile(fname+"8").openW();
-      if ((dolcp&4)!=0) { f4 = new ArrayFile(fname+"4").openW(); f4x = new ArrayFile(fname+"4x",0).openW(); }
-      if ((dolcp&2)!=0) { f2 = new ArrayFile(fname+"2").openW(); f2x = new ArrayFile(fname+"2x",0).openW(); }
-      if ((dolcp&1)!=0) { f1 = new ArrayFile(fname+"1").openW(); f1x = new ArrayFile(fname+"1x",0).openW(); }
+      if ((dolcp&8)!=0) f8 = new ArrayFile(file+"8").openW();
+      if ((dolcp&4)!=0) { f4 = new ArrayFile(file+"4").openW(); 
+                          f4x = new ArrayFile(file+"4x").openW(); } // TODO original calls was wis 0 as second parameter
+      if ((dolcp&2)!=0) { f2 = new ArrayFile(file+"2").openW(); 
+                          f2x = new ArrayFile(file+"2x").openW(); } // TODO original calls was wis 0 as second parameter
+      if ((dolcp&1)!=0) { f1 = new ArrayFile(file+"1").openW();
+                          f1x = new ArrayFile(file+"1x").openW(); } // TODO original calls was wis 0 as second parameter
       for (r=0, p=lexfirstpos[chi];   p!=-1;   p=lexnextpos.get(p), r++) {
         h = lexprevpos.get(p);
         assert(h>=0);
@@ -934,10 +938,10 @@ public class BigSuffixTrayBuilder {
   /** lcp computation according to Kasai et al.'s algorithm
    * after walk-bothLR suffix array construction 
    * using the SPACE SAVING xor technique.
-   *@param fname filename for lcp array
+   *@param file filen for lcp array
    *@param dolcp which lcp arrays to compute (1+2+4+8)
    */
-  private void lcp_bothLR(String fname, int dolcp) {
+  private void lcp_bothLR(File file, int dolcp) {
     throw new UnsupportedOperationException("Not yet implemented");
   }
     

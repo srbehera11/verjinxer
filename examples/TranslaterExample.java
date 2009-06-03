@@ -1,28 +1,13 @@
+import java.io.File;
 import java.io.IOException;
 
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.util.FileUtils;
 
 public class TranslaterExample {
-
-   /**
-    * Removes a file name extension from a string. If no extension is found, the name is returned
-    * unchanged.
-    * 
-    * @param name
-    *           file name. For example, "hello.fa"
-    * @return file name without extension. For example, "hello"
-    */
-   public static String extensionRemoved(String name) {
-      int lastdot = name.lastIndexOf('.');
-      if (lastdot >= 0) {
-         return name.substring(0, lastdot);
-      } else {
-         return name;
-      }
-   }
 
    /**
     * @param args
@@ -32,14 +17,20 @@ public class TranslaterExample {
          System.out.println("one argument expected: name of a FASTA file");
          System.exit(1);
       }
-      String fastaname = args[0];
+      
+      File[] files = new File[args.length];
+      for (int i = 0; i < args.length; i++) {
+         files[i] = new File(args[i]);
+      }
+      
+      File fastaname = files[0];
 
-      String projectname = extensionRemoved(fastaname);
+      File projectname = FileUtils.removeExtension(fastaname);
       Project project = new Project(projectname);
       Translater translater = new Translater(new Globals(), Alphabet.DNA());
       
       // TODO the way to create a new project is very likely to change
-      translater.createProject(project, args);
+      translater.translateFilesAndCreateProject(project, files);
       project.store();
    }
 }
