@@ -78,6 +78,15 @@ public class FastaSequence {
    public String getSequence() {
       return sequence.toString();
    }
+   
+   /**
+    * Cuts the first n Characters from the sequence head.
+    * 
+    * @param n
+    */
+   public void cutOfSequenceHead(int n) {
+      sequence = new StringBuilder(sequence.substring(n));
+   }
 
    public String getReverseSequence() {
       return ((new StringBuilder(sequence)).reverse().toString());
