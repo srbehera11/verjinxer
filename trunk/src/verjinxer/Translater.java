@@ -278,6 +278,16 @@ public class Translater {
                if (!qualitySequence.getHeader().equals(fseq.getHeader())) {
                   throw new IllegalArgumentException(String.format("Annotations from CSFASTA and quality files do not match (\"%s\" != \"%s\").", qualitySequence.getHeader(), fseq.getHeader()));
                }
+               
+               if (alphabet.isWildcard(alphabet.code((byte) fseq.getSequence().charAt(0)))) {
+                  // CSFASTA begins with A,C,G or T
+                  fseq.cutOfSequenceHead(2); // T32312131100... -> 2312131100...
+                  int gap = qualitySequence.getSequence().indexOf(' '); // find gap between first
+                                                                        // and second value
+                  qualitySequence.cutOfSequenceHead(gap + 1); // 25 27 27 2 29 30 25 ... -> 27 27 2 29
+                                                            // 30 25...
+               }
+               
                String qs = qualitySequence.getSequence();
                byte[] qualityArray = new byte[qs.length()/2+2];
                int n = 0;
