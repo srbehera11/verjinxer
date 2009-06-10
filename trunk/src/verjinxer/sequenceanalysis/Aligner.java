@@ -302,6 +302,7 @@ public class Aligner {
     * 
     * @param s1
     * @param s2
+    * @author Markus Kemmerling
     */
    public static SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final byte[] s2) {
       /*            s2 (column:1..n)
@@ -328,11 +329,11 @@ public class Aligner {
 
       for (row = 0; row < table.length; ++row) {
          table[row][0].score = 0;
-         table[row][0].backtrack = Direction.LEFT; // TODO never read
+         //table[row][0].backtrack is not set cause it is never read
       }
       for (column = 0; column < table[0].length; ++column) {
          table[0][column].score = 0;
-         table[0][column].backtrack = Direction.UP; // TODO never read
+         //table[0][column].backtrack is not set cause it is never read
       }
 
       // calculate alignment (using unit costs)
@@ -365,15 +366,14 @@ public class Aligner {
       int bestColumn = 1, bestRow = m;
       for (column = 2; column < table[m].length; ++column) { // start by 2 cause bestEntry is
                                                              // already set to table[m][1]
-         if (table[m][column].score >= bestEntry.score) {
+         if (table[m][column].score >= bestEntry.score) { // must be >= cause better to start near corner
             bestColumn = column;
             bestEntry = table[m][column];
          }
       }
 
-      for (row = 1; row < table.length - 1; ++row) { // go to table.length-2 cause table[m][n] was
-                                                     // checked in last loop
-         if (table[row][n].score >= bestEntry.score) {
+      for (row = 1; row < table.length ; ++row) { // must be so, cause align.py was coded so and the test cases are from that code
+         if (table[row][n].score >= bestEntry.score) { // must be >= cause better to start near corner
             bestRow = row;
             bestColumn = n;
             bestEntry = table[row][n];
@@ -426,7 +426,7 @@ public class Aligner {
             alignment2[p2++] = s2[--column];
          } else if (direction == Direction.UP) {
             alignment1[p1++] = s1[--row];
-            alignment1[p2++] = GAP;
+            alignment2[p2++] = GAP;
             errors++;
          }
       }
@@ -434,7 +434,7 @@ public class Aligner {
       // compute the length of the actual alignment (ignoring ends)
       int length = p1 - rlen;
 
-      int begin = row; //TODO maybe -1?
+      int begin = row;
       if (column > row)
          begin = column;
 
@@ -460,6 +460,10 @@ public class Aligner {
       return new SemiglobalAlignmentResult(alignment1, alignment2, begin, length, errors);
    }
    
+   /**
+    * 
+    * @author Markus Kemmerling
+    */
    public static class SemiglobalAlignmentResult {
       private final byte[] sequence1, sequence2;
 
