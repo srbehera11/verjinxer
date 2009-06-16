@@ -40,6 +40,24 @@ public class SequenceWriter {
    }
    
    /**
+    * Creates a new SequenceWriter that files have not the name of the project but the given
+    * fileName.
+    * 
+    * @param project
+    * @param fileName
+    * @throws IOException
+    */
+   public SequenceWriter(final Project project, String fileName) throws IOException {
+      seqFile = project.makeFile(FileTypes.SEQ, fileName);
+      sspFile = project.makeFile(FileTypes.SSP, fileName);
+      descFile = project.makeFile(FileTypes.DESC, fileName);
+      qualityFile = project.makeFile(FileTypes.QUALITIY, fileName);
+
+      sequenceArrayFile = new ArrayFile(seqFile);
+      sequenceArrayFile.openW();
+   }
+   
+   /**
     * @return The filename of the Sequence.
     */
    public File getSequenceFile() {
