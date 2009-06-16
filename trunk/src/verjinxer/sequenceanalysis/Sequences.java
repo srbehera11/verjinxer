@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import verjinxer.Project;
 import verjinxer.util.ArrayFile;
@@ -33,6 +34,21 @@ public class Sequences {
       load();
    }
    
+   /**
+    * Creates a new sequences from files with the given name depending to the given project
+    * 
+    * @param project
+    * @param name
+    * @throws IOException
+    */
+   public Sequences(Project project, String name) throws IOException {
+      seqFile = project.makeFile(FileTypes.SEQ, name);
+      sspFile = project.makeFile(FileTypes.SSP, name);
+      descFile = project.makeFile(FileTypes.DESC, name);
+      qualityFile = project.makeFile(FileTypes.QUALITIY, name);
+      load();
+   }
+
    /**
     * @return The filename of the Sequence.
     */
@@ -124,6 +140,23 @@ public class Sequences {
     */
    public int getNumberSequences() {
       return separatorPositions.length;
+   }
+   
+   /**
+    * Returns the n-th of the underlying sequences.
+    * 
+    * @param n
+    *           Number of the sequence to return.
+    * @return The n-th sequence.
+    */
+   public byte[] getSequence(int n) {
+      if (n == 0) {
+         return Arrays.copyOfRange(sequence, 0, (int) separatorPositions[0]);
+      } else {
+         return Arrays.copyOfRange(sequence, (int) separatorPositions[n - 1] + 1,
+               (int) separatorPositions[n]);
+      }
+      // TODO why is separatorPositions of type long[]?
    }
 
    // /**

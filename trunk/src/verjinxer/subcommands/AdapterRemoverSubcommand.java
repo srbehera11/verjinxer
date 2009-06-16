@@ -8,6 +8,10 @@ import com.spinn3r.log5j.Logger;
 import static verjinxer.Globals.programname;
 import verjinxer.Globals;
 import verjinxer.Project;
+import verjinxer.Translater;
+import verjinxer.sequenceanalysis.Aligner;
+import verjinxer.sequenceanalysis.SequenceWriter;
+import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 
@@ -31,7 +35,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
    public void help() {
       log.info("Usage:  %s rmadapt [options] <sequence> <outProject> <adapters as FASTA files>", programname); // TODO verbalize usage better
                                                                                                                // TODO FASTA files must be translated with alphabet of project
-                                                                                                               // TODO if sequence has quality files, this must be copied into putProject and cut like the sequence. For colorspace one more value must be cut (see python code).
+                                                                                                               // TODO if sequence has quality files, this must be copied into outProject and cut like the sequence. For colorspace one more value must be cut (see python code).
       log.info("Reads a FASTA file, finds and removes adapters,");
       log.info("and writes the changed sequence to outfile.");
       log.info("When finished, statistics are printed to standard output.");
@@ -52,7 +56,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
 
    @Override
    public int run(String[] args) {
-      Options opt = new Options("e:,o:,p:,a:,c,n:,r:,reverse,m:,q:");
+      Options opt = new Options("e:,p:,c,n:");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -67,24 +71,104 @@ public class AdapterRemoverSubcommand implements Subcommand {
       }
       
       int min_print_align_length = -1;
-      boolean show_progress = false;
       double max_error_rate = -1;
       boolean colorspace = false;
-      int times = 1; //TODO Parameter?
-      
-      Project sequenceProject = null;
-      try {
-         sequenceProject = Project.createFromFile(new File(args[0]));
-      } catch (IOException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
+      int times = 1;
       
       if (opt.isGiven("p")) {
          min_print_align_length = Integer.parseInt(opt.get("p"));
       }
       if (opt.isGiven("c")) {
          colorspace = true;
+      }
+      if (opt.isGiven("n")) {
+         times = Integer.parseInt(opt.get("n"));
+      }
+      if (opt.isGiven("e")) {
+         String[] tmp = opt.get("e").split("/");
+         if ( tmp.length == 1 ) {
+            max_error_rate = Double.parseDouble(tmp[0]);
+         } else {
+            max_error_rate = Double.parseDouble(tmp[0]) / Double.parseDouble(tmp[1]); 
+         }
+         System.out.println(max_error_rate);
+      }
+      
+      Project sequenceProject = null, targetProject = null;
+      final File sequenceProjectFile = new File(args[0]);
+      final File targetProjectFile = new File(args[1]);
+      final File[] adapterFiles = new File[args.length-2];
+      for(int i = 0; i < adapterFiles.length; i++) {
+         adapterFiles[i] = new File (args[i+2]);
+      }
+      try {
+         sequenceProject = Project.createFromFile(sequenceProjectFile);
+         targetProject = Project.createFlatCopy(sequenceProjectFile, targetProjectFile);
+      } catch (IOException e) {
+         log.error("rmadapt: cannot read project files; %s", e);
+         return 1;
+      }
+      
+      //translate adapters
+      SequenceWriter adapterSequenceWriter = null;
+      try {
+         adapterSequenceWriter = new SequenceWriter(targetProject, "adapters");
+      } catch (IOException ex) {
+         log.error("rmadapt: could not create output files for translated adapters; %s", ex);
+         return 1;
+      }
+      Translater translater = new Translater(null, targetProject.readAlphabet());
+      for (int i = 0; i < adapterFiles.length; i++) {
+         translater.translateFasta(adapterFiles[i], adapterSequenceWriter);
+      }
+      try {
+         adapterSequenceWriter.store(); // stores seq, ssp and desc
+      } catch (IOException ex) {
+         log.error("rmadapt: could not store translated adapters; %s", ex);
+         return 1;
+      }
+      
+      Sequences sequences = sequenceProject.readSequences();
+      Sequences adapters = targetProject.readSequences("adapters");
+      byte[] sequence = null;
+      byte[] adapter = null;
+      
+      //TODO use times
+      for(int i = 0; i < sequences.getNumberSequences(); i++) {
+         sequence = sequences.getSequence(i);
+         //TODO cut in case of colorspace
+         //TODO handle quality file
+
+         Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult(null, null, 0,Integer.MIN_VALUE,0);
+         for(int j = 0; j < adapters.getNumberSequences(); j++) {
+            adapter = adapters.getSequence(j);
+            Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(adapter, sequence);
+            if (result.getLength()-result.getErrors() > bestResult.getLength()-bestResult.getErrors()) {
+               bestResult = result;
+            }
+         }
+         
+         if (bestResult.getLength() > 0 && (double)bestResult.getErrors() / bestResult.getLength() <= max_error_rate) {
+            final byte[] adapterAlignment = bestResult.getSequence1();
+            if(adapterAlignment[0] != Aligner.GAP && adapterAlignment[adapterAlignment.length-1] != Aligner.GAP) {
+               // The adapter or parts of it covers the entire read
+               //TODO what now?
+            } else if (adapterAlignment[0] == Aligner.GAP) {
+               // The adapter is at the end of the read
+               if (adapterAlignment[adapterAlignment.length-1] == Aligner.GAP) {
+                  // The adapter is in the middle of the read
+                  //TODO what now?
+               } else {
+                  //TODO cut
+               }
+            } else if (adapterAlignment[adapterAlignment.length-1] == Aligner.GAP) {
+               // The adapter is in the beginning of the read
+               //TODO cut
+            } else {
+               // This should not happen!
+            }
+         }
+         
       }
       
       

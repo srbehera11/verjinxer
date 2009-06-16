@@ -78,6 +78,41 @@ public class Project {
       project.load();
       return project;
    }
+   
+   /**
+    * Creates a new project from targetProjectFile as flat copy of the source project. Flat copy
+    * means that the target project has the same properties as the source project. Further is the
+    * alphabet file copied.
+    * 
+    * @param sourceProjectFile
+    *           File composed of working directory and project name (no file extension).
+    * @param targetProjectFile
+    *           File composed of working directory and project name (no file extension).
+    * @return a new ProjectInfo instance
+    * @throws FileNotFoundException
+    *            If sourceProjectFile does not exist.
+    * @throws IOException
+    *            If the target project can not be stored.
+    * @throws IOException
+    *            If the alphabet file of the target project can not be stored.
+    */
+   public static Project createFlatCopy(File sourceProjectFile, File targetProjectFile)
+         throws FileNotFoundException, IOException {
+      Project sourceProject = createFromFile(sourceProjectFile);
+      Project targetProject = new Project(targetProjectFile);
+      targetProject.properties = sourceProject.properties; // TODO okay to copy all properties?
+      targetProject.store();
+
+      // copy alphabet file
+      Alphabet alphabet = sourceProject.readAlphabet();
+      PrintWriter alphabetfile = null;
+      alphabetfile = new PrintWriter(targetProject.makeFile(FileTypes.ALPHABET));
+      alphabet.showSourceStrings(alphabetfile);
+      alphabetfile.close();
+
+      // TODO what else must be copied?
+      return targetProject;
+   }
 
    /**
     * Writes a project file to disk. As for load(), the actual file name is constructed by appending
@@ -165,6 +200,21 @@ public class Project {
    public Sequences readSequences() {
       try {
          return new Sequences(this);
+      } catch (IOException e) {
+         System.err.printf("%s: could not read sequence. Stop.%n", Globals.cmdname);
+         System.exit(1);
+         return null;
+      }
+   }
+   
+   /**
+    * Reads the sequences from of this project with the given name from disc.
+    * 
+    * @return The sequences.
+    */
+   public Sequences readSequences(String name) {
+      try {
+         return new Sequences(this, name);
       } catch (IOException e) {
          System.err.printf("%s: could not read sequence. Stop.%n", Globals.cmdname);
          System.exit(1);
