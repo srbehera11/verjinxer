@@ -379,6 +379,9 @@ public class Aligner {
             bestEntry = table[row][n];
          }
       }
+      //both can be 0, if one of the sequences has length 0
+      assert bestRow >= 0 && bestRow < table.length: String.format("bestRow: %s%n max is %s", bestRow, m);
+      assert bestColumn >= 0 && bestColumn < table[bestRow].length: String.format("bestColumn: %s%n max is %s", bestColumn,n);
 
       // now track back
       byte[] alignment1 = new byte[m + n];
@@ -447,7 +450,7 @@ public class Aligner {
          alignment2[p2++] = GAP;
       }
       assert row == 0 && column == 0;
-      assert table[bestColumn][bestRow].score == length - 2 * errors;
+      assert table[bestRow][bestColumn].score == length - 2 * errors;
 
       // reverse result
       ArrayUtils.reverseArray(alignment1, p1);
