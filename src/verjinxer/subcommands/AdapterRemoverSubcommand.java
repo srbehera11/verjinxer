@@ -3,6 +3,9 @@ package verjinxer.subcommands;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.spinn3r.log5j.Logger;
 import static verjinxer.Globals.programname;
@@ -12,6 +15,7 @@ import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 
@@ -129,20 +133,28 @@ public class AdapterRemoverSubcommand implements Subcommand {
       }
       
       Sequences sequences = sequenceProject.readSequences();
+      ArrayList<String> descriptions = sequences.getDescriptions();
       Sequences adapters = targetProject.readSequences("adapters");
-      byte[] sequence = null;
-      byte[] adapter = null;
+     
+      SequenceWriter sequenceWriter = null;
+      long lastbyte = 0;
+      try {
+         sequenceWriter = new SequenceWriter(targetProject);
+      } catch (IOException ex) {
+         log.error("rmadapt: could not create output files for cutted sequences; %s", ex);
+         return 1;
+      }
       
       //TODO use times
       for(int i = 0; i < sequences.getNumberSequences(); i++) {
-         sequence = sequences.getSequence(i);
+         byte[] sequence = sequences.getSequence(i);
          //TODO cut in case of colorspace
          //TODO handle quality file
 
          Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult(null, null, 0,Integer.MIN_VALUE,0);
+         assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
          for(int j = 0; j < adapters.getNumberSequences(); j++) {
-            adapter = adapters.getSequence(j);
-            Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(adapter, sequence);
+            Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(adapters.getSequence(j), sequence);
             if (result.getLength()-result.getErrors() > bestResult.getLength()-bestResult.getErrors()) {
                bestResult = result;
             }
@@ -158,19 +170,54 @@ public class AdapterRemoverSubcommand implements Subcommand {
                if (adapterAlignment[adapterAlignment.length-1] == Aligner.GAP) {
                   // The adapter is in the middle of the read
                   //TODO what now?
+               }
+               
+               //TODO maybe this should only be done if the adapter is not in the middle of the read (else to the upper if).
+               if (colorspace) {
+                  sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin()-1);
+                  //TODO handle quality file
                } else {
-                  //TODO cut
+                  sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin());
                }
             } else if (adapterAlignment[adapterAlignment.length-1] == Aligner.GAP) {
                // The adapter is in the beginning of the read
-               //TODO cut
+               sequence = Arrays.copyOfRange(sequence, bestResult.getLength(), sequence.length);
+               //TODO handle quality file
             } else {
                // This should not happen!
             }
          }
          
+         //write cutted sequence to target project
+         try {
+            lastbyte = sequenceWriter.writeBuffer(ByteBuffer.wrap(sequence));
+            sequenceWriter.addInfo(descriptions.get(i), sequence.length, (int) (lastbyte - 1));
+            //TODO descriptions must be transformed, when length stands in
+         } catch (IOException ex) {
+            log.error("rmadapt: could not write cutted sequences; %s", ex);
+            return 1;
+         }
+         
+         //TODO write cutted quality file to target project
+         
       }
       
+      //store the whole target project
+      try {
+         sequenceWriter.store(); // stores seq, ssp and desc
+      } catch (IOException ex) {
+         log.error("rmadapt: could not store cutted sequences; %s", ex);
+         return 1;
+      }
+      long totallength = sequenceWriter.length();
+      targetProject.setProperty("Length", totallength);
+      targetProject.setProperty("NumberSequences", sequenceWriter.getNumberSequences());
+
+      // Write sequence length statistics.
+      targetProject.setProperty("LongestSequence", sequenceWriter.getMaximumLength());
+      targetProject.setProperty("ShortestSequence", sequenceWriter.getMinimumLength());
+      
+      targetProject.setProperty("LastAction", "rmadapt");
       
       return 0;
    }
