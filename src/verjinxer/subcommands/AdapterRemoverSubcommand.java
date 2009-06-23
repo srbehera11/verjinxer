@@ -1,7 +1,6 @@
 package verjinxer.subcommands;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
-import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 
@@ -37,17 +35,17 @@ public class AdapterRemoverSubcommand implements Subcommand {
     */
    @Override
    public void help() {
-      log.info("Usage:  %s rmadapt [options] <sequence> <outProject> <adapters as FASTA files>", programname); // TODO verbalize usage better
-                                                                                                               // TODO FASTA files must be translated with alphabet of project
-                                                                                                               // TODO if sequence has quality files, this must be copied into outProject and cut like the sequence. For colorspace one more value must be cut (see python code).
+      log.info("Usage:  %s rmadapt [options] <sequence> <outProject> <adapters as FASTA file>", programname); // TODO verbalize usage better
+                                                                                                              // TODO FASTA files must be translated with alphabet of project
+                                                                                                              // TODO if sequence has quality files, this must be copied into outProject and cut like the sequence. For colorspace one more value must be cut (see python code).
       log.info("Reads a FASTA file, finds and removes adapters,");
-      log.info("and writes the changed sequence to outfile.");
-      log.info("When finished, statistics are printed to standard output.");
+      log.info("and writes the changed sequence to outProject.");
+      log.info("When finished, statistics are printed to standard output (not yet implemented)."); // TODO
       log.info("");
       log.info("  -e error_rate   Maximum error rate (errors divided by length of matching region)");
-      log.info("  -p length       Print the found alignments if they are longer than length.");
+      log.info("  -p length       Print the found alignments if they are longer than length (not yet implemented)."); // TODO
       log.info("  -c              Colorspace mode: Removes first nucleotide; trims adapter correctly.");
-      log.info("  -n <count>      Try to remove adapters at most <count> times");
+      log.info("  -n <count>      Try to remove adapters at most <count> times (not yet implemented)"); // TODO
    }
 
    /**
@@ -75,7 +73,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
       }
       
       int min_print_align_length = -1;
-      double max_error_rate = -1;
+      double max_error_rate = 2.2/18;
       boolean colorspace = false;
       int times = 1;
       
@@ -145,12 +143,16 @@ public class AdapterRemoverSubcommand implements Subcommand {
          return 1;
       }
       
-      //TODO use times
       for(int i = 0; i < sequences.getNumberSequences(); i++) {
          byte[] sequence = sequences.getSequence(i);
-         //TODO cut in case of colorspace
-         //TODO handle quality file
 
+         if (colorspace) {
+            sequence = Arrays.copyOfRange(sequence, 2, sequence.length);
+            //TODO handle quality file
+         }
+         
+         //TODO use times
+         
          Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult(null, null, 0,Integer.MIN_VALUE,0);
          assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
          for(int j = 0; j < adapters.getNumberSequences(); j++) {
@@ -188,7 +190,12 @@ public class AdapterRemoverSubcommand implements Subcommand {
             }
          }
          
-         //write cutted sequence to target project
+         // Add a separator at the end of the sequence
+         final byte separator = (byte) (targetProject.getIntProperty("Separator"));
+         sequence = Arrays.copyOf(sequence, sequence.length+1);
+         sequence[sequence.length-1] = separator;
+
+         // Write cuted sequence to target project
          try {
             lastbyte = sequenceWriter.writeBuffer(ByteBuffer.wrap(sequence));
             sequenceWriter.addInfo(descriptions.get(i), sequence.length, (int) (lastbyte - 1));
@@ -198,11 +205,11 @@ public class AdapterRemoverSubcommand implements Subcommand {
             return 1;
          }
          
-         //TODO write cutted quality file to target project
+         //TODO write cuted quality file to target project
          
       }
       
-      //store the whole target project
+      // Store the whole target project
       try {
          sequenceWriter.store(); // stores seq, ssp and desc
       } catch (IOException ex) {
