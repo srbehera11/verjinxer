@@ -145,67 +145,98 @@ public class AdapterRemoverSubcommand implements Subcommand {
       
       for(int i = 0; i < sequences.getNumberSequences(); i++) {
          byte[] sequence = sequences.getSequence(i);
+         byte[] qualityValues = null;
+         try {
+            qualityValues = sequences.getQualityValuesForSequence(i);
+         } catch (IOException e) {
+            // do nothing
+         }
 
-         if (colorspace) {
+         if (colorspace && qualityValues == null) {
             sequence = Arrays.copyOfRange(sequence, 2, sequence.length);
-            //TODO handle quality file
+//            if (qualityValues != null) {
+//               qualityValues = Arrays.copyOfRange(qualityValues, 1, sequence.length);
+//               assert qualityValues.length == sequence.length;
+//            }
          }
          
-         //TODO use times
-         
-         Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult(null, null, 0,Integer.MIN_VALUE,0);
-         assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
-         for(int j = 0; j < adapters.getNumberSequences(); j++) {
-            Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(adapters.getSequence(j), sequence);
-            if (result.getLength()-result.getErrors() > bestResult.getLength()-bestResult.getErrors()) {
-               bestResult = result;
-            }
-         }
-         
-         if (bestResult.getLength() > 0 && (double)bestResult.getErrors() / bestResult.getLength() <= max_error_rate) {
-            final byte[] adapterAlignment = bestResult.getSequence1();
-            if(adapterAlignment[0] != Aligner.GAP && adapterAlignment[adapterAlignment.length-1] != Aligner.GAP) {
-               // The adapter or parts of it covers the entire read
-               //TODO what now?
-            } else if (adapterAlignment[0] == Aligner.GAP) {
-               // The adapter is at the end of the read
-               if (adapterAlignment[adapterAlignment.length-1] == Aligner.GAP) {
-                  // The adapter is in the middle of the read
-                  //TODO what now?
+         for (int k = 0; k < times; k++) { //maybe try several times to remove an adapter
+
+            Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult(
+                  null, null, 0, Integer.MIN_VALUE, 0);
+            assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
+            for (int j = 0; j < adapters.getNumberSequences(); j++) {
+               Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(
+                     adapters.getSequence(j), sequence);
+               if (result.getLength() - result.getErrors() > bestResult.getLength()
+                     - bestResult.getErrors()) {
+                  bestResult = result;
                }
-               
-               //TODO maybe this should only be done if the adapter is not in the middle of the read (else to the upper if).
-               if (colorspace) {
-                  sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin()-1);
-                  //TODO handle quality file
+            }
+
+            if (bestResult.getLength() > 0
+                  && (double) bestResult.getErrors() / bestResult.getLength() <= max_error_rate) {
+               assert bestResult.getLength() - bestResult.getErrors() > 0;
+               final byte[] adapterAlignment = bestResult.getSequence1();
+               if (adapterAlignment[0] != Aligner.GAP
+                     && adapterAlignment[adapterAlignment.length - 1] != Aligner.GAP) {
+                  // The adapter or parts of it covers the entire read
+                  // TODO what now?
+               } else if (adapterAlignment[0] == Aligner.GAP) {
+                  // The adapter is at the end of the read
+                  if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
+                     // The adapter is in the middle of the read
+                     // TODO what now?
+                  }
+
+                  // TODO maybe this should only be done if the adapter is not in the middle of the
+                  // read (else to the upper if).
+                  if (colorspace) {
+                     sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin() - 1);
+                     if (qualityValues != null) {
+                        qualityValues = Arrays.copyOfRange(qualityValues, 0, bestResult.getBegin() - 1);
+                        assert qualityValues.length == sequence.length;
+                     }
+                  } else {
+                     sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin());
+                  }
+               } else if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
+                  // The adapter is in the beginning of the read
+                  sequence = Arrays.copyOfRange(sequence, bestResult.getLength(), sequence.length);
+                  if (qualityValues != null) {
+                     qualityValues = Arrays.copyOfRange(qualityValues, bestResult.getLength(), qualityValues.length);
+                     assert qualityValues.length == sequence.length;
+                  }
                } else {
-                  sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin());
+                  // This should not happen!
                }
-            } else if (adapterAlignment[adapterAlignment.length-1] == Aligner.GAP) {
-               // The adapter is in the beginning of the read
-               sequence = Arrays.copyOfRange(sequence, bestResult.getLength(), sequence.length);
-               //TODO handle quality file
             } else {
-               // This should not happen!
+               break; // If no gratifying adapter was found, there is no need to try it again.
             }
+
          }
          
          // Add a separator at the end of the sequence
          final byte separator = (byte) (targetProject.getIntProperty("Separator"));
          sequence = Arrays.copyOf(sequence, sequence.length+1);
          sequence[sequence.length-1] = separator;
+         if (qualityValues != null) {
+            qualityValues = Arrays.copyOf(qualityValues, qualityValues.length+1);
+            qualityValues[sequence.length -1] = Byte.MIN_VALUE;
+         }
 
          // Write cuted sequence to target project
          try {
             lastbyte = sequenceWriter.writeBuffer(ByteBuffer.wrap(sequence));
+            if (qualityValues != null) {
+               sequenceWriter.addQualityValues(ByteBuffer.wrap(qualityValues));
+            }
             sequenceWriter.addInfo(descriptions.get(i), sequence.length, (int) (lastbyte - 1));
             //TODO descriptions must be transformed, when length stands in
          } catch (IOException ex) {
             log.error("rmadapt: could not write cutted sequences; %s", ex);
             return 1;
          }
-         
-         //TODO write cuted quality file to target project
          
       }
       

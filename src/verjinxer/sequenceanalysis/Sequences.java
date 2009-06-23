@@ -178,6 +178,26 @@ public class Sequences {
       }
       return qualityValues;
    }
+   
+   /**
+    * Returns the quality values for the n-th of the underlying sequences.
+    * 
+    * @param n
+    *           Number of the Sequence for the quality values.
+    * @return Quality values for the n-th sequence or null if not available.
+    * @throws IOException
+    */
+   public byte[] getQualityValuesForSequence(int n) throws IOException {
+      if (qualityValues == null) {
+         qualityValues = new ArrayFile().setFile(qualityFile).readArray(qualityValues);
+      }
+      if (n == 0) {
+         return Arrays.copyOfRange(qualityValues, 0, (int) separatorPositions[0]);
+      } else {
+         return Arrays.copyOfRange(qualityValues, (int) separatorPositions[n - 1] + 1,
+               (int) separatorPositions[n]);
+      }
+   }
 
    /**
     * @return The positions of the separators between the sequences.
