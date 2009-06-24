@@ -21,6 +21,7 @@ import verjinxer.subcommands.MapperSubcommand;
 import verjinxer.subcommands.QGramIndexCompressionAnalyzerSubcommand;
 import verjinxer.subcommands.QGramIndexerSubcommand;
 import verjinxer.subcommands.QGramMatcherSubcommand;
+import verjinxer.subcommands.Sequence2FastqSubcommand;
 import verjinxer.subcommands.Subcommand;
 import verjinxer.subcommands.TranslaterSubcommand;
 import verjinxer.util.IllegalOptionException;
@@ -61,6 +62,7 @@ public class Main {
       log.info("  align        ...          aligns sequences using results from qmatch");
       log.info("  nonunique    ...          find non-unique specific probes in an index");
       log.info("  rmadapt      ...          remove adapters from sequences");
+      log.info("  seq2fastq    ...          converts a sequence into a fastq file");
       log.info("Global options:");
       log.info("  -Q, --quiet               quiet mode, don't print messages to stdout");
       log.info("  -L, --log    <logfile>    add'l file to print diagnostic messages to");
@@ -156,6 +158,8 @@ public class Main {
          new NonUniqueProbeDesigner(g).run(rest);
       } else if (command.startsWith("rm")) {
          subcommand = new AdapterRemoverSubcommand(g);
+      } else if (command.startsWith("seq2fastq")) {
+         subcommand = new Sequence2FastqSubcommand(g);
       } else {
          usage();
          log.error("Unrecognized command: '%s'", command);
