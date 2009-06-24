@@ -213,6 +213,7 @@ public class TranslaterSubcommand implements Subcommand {
          }
          // all files are CSFASTA -> go on
          alphabet = Alphabet.CS();
+         colorspace = true;
       } else {
          // A alphabet was set, test if all files are NOT CSFASTA
          for (int i = 0; i < files.length; i++)
