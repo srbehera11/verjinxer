@@ -65,18 +65,18 @@ public class AdapterRemoverSubcommand implements Subcommand {
          log.error("%s", ex);
          return 1;
       }
-      
+
       if (args.length < 1) {
          help();
          log.error("rmadapt: sequence file must be specified.");
          return 1;
       }
-      
+
       int min_print_align_length = -1;
-      double max_error_rate = 2.2/18;
+      double max_error_rate = 2.2 / 18;
       boolean colorspace = false;
       int times = 1;
-      
+
       if (opt.isGiven("p")) {
          min_print_align_length = Integer.parseInt(opt.get("p"));
       }
@@ -88,20 +88,20 @@ public class AdapterRemoverSubcommand implements Subcommand {
       }
       if (opt.isGiven("e")) {
          String[] tmp = opt.get("e").split("/");
-         if ( tmp.length == 1 ) {
+         if (tmp.length == 1) {
             max_error_rate = Double.parseDouble(tmp[0]);
          } else {
-            max_error_rate = Double.parseDouble(tmp[0]) / Double.parseDouble(tmp[1]); 
+            max_error_rate = Double.parseDouble(tmp[0]) / Double.parseDouble(tmp[1]);
          }
          System.out.println(max_error_rate);
       }
-      
+
       Project sequenceProject = null, targetProject = null;
       final File sequenceProjectFile = new File(args[0]);
       final File targetProjectFile = new File(args[1]);
-      final File[] adapterFiles = new File[args.length-2];
-      for(int i = 0; i < adapterFiles.length; i++) {
-         adapterFiles[i] = new File (args[i+2]);
+      final File[] adapterFiles = new File[args.length - 2];
+      for (int i = 0; i < adapterFiles.length; i++) {
+         adapterFiles[i] = new File(args[i + 2]);
       }
       try {
          sequenceProject = Project.createFromFile(sequenceProjectFile);
@@ -110,8 +110,8 @@ public class AdapterRemoverSubcommand implements Subcommand {
          log.error("rmadapt: cannot read project files; %s", e);
          return 1;
       }
-      
-      //translate adapters
+
+      // translate adapters
       SequenceWriter adapterSequenceWriter = null;
       try {
          adapterSequenceWriter = new SequenceWriter(targetProject, "adapters");
@@ -129,11 +129,11 @@ public class AdapterRemoverSubcommand implements Subcommand {
          log.error("rmadapt: could not store translated adapters; %s", ex);
          return 1;
       }
-      
+
       Sequences sequences = sequenceProject.readSequences();
       ArrayList<String> descriptions = sequences.getDescriptions();
       Sequences adapters = targetProject.readSequences("adapters");
-     
+
       SequenceWriter sequenceWriter = null;
       long lastbyte = 0;
       try {
@@ -142,8 +142,8 @@ public class AdapterRemoverSubcommand implements Subcommand {
          log.error("rmadapt: could not create output files for cutted sequences; %s", ex);
          return 1;
       }
-      
-      for(int i = 0; i < sequences.getNumberSequences(); i++) {
+
+      for (int i = 0; i < sequences.getNumberSequences(); i++) {
          byte[] sequence = sequences.getSequence(i);
          byte[] qualityValues = null;
          try {
@@ -154,13 +154,13 @@ public class AdapterRemoverSubcommand implements Subcommand {
 
          if (colorspace && qualityValues == null) {
             sequence = Arrays.copyOfRange(sequence, 2, sequence.length);
-//            if (qualityValues != null) {
-//               qualityValues = Arrays.copyOfRange(qualityValues, 1, sequence.length);
-//               assert qualityValues.length == sequence.length;
-//            }
+            // if (qualityValues != null) {
+            // qualityValues = Arrays.copyOfRange(qualityValues, 1, sequence.length);
+            // assert qualityValues.length == sequence.length;
+            // }
          }
-         
-         for (int k = 0; k < times; k++) { //maybe try several times to remove an adapter
+
+         for (int k = 0; k < times; k++) { // maybe try several times to remove an adapter
 
             Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult(
                   null, null, 0, Integer.MIN_VALUE, 0);
@@ -194,7 +194,8 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   if (colorspace) {
                      sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin() - 1);
                      if (qualityValues != null) {
-                        qualityValues = Arrays.copyOfRange(qualityValues, 0, bestResult.getBegin() - 1);
+                        qualityValues = Arrays.copyOfRange(qualityValues, 0,
+                              bestResult.getBegin() - 1);
                         assert qualityValues.length == sequence.length;
                      }
                   } else {
@@ -204,7 +205,8 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   // The adapter is in the beginning of the read
                   sequence = Arrays.copyOfRange(sequence, bestResult.getLength(), sequence.length);
                   if (qualityValues != null) {
-                     qualityValues = Arrays.copyOfRange(qualityValues, bestResult.getLength(), qualityValues.length);
+                     qualityValues = Arrays.copyOfRange(qualityValues, bestResult.getLength(),
+                           qualityValues.length);
                      assert qualityValues.length == sequence.length;
                   }
                } else {
@@ -215,14 +217,14 @@ public class AdapterRemoverSubcommand implements Subcommand {
             }
 
          }
-         
+
          // Add a separator at the end of the sequence
          final byte separator = (byte) (targetProject.getIntProperty("Separator"));
-         sequence = Arrays.copyOf(sequence, sequence.length+1);
-         sequence[sequence.length-1] = separator;
+         sequence = Arrays.copyOf(sequence, sequence.length + 1);
+         sequence[sequence.length - 1] = separator;
          if (qualityValues != null) {
-            qualityValues = Arrays.copyOf(qualityValues, qualityValues.length+1);
-            qualityValues[sequence.length -1] = Byte.MIN_VALUE;
+            qualityValues = Arrays.copyOf(qualityValues, qualityValues.length + 1);
+            qualityValues[sequence.length - 1] = Byte.MIN_VALUE;
          }
 
          // Write cuted sequence to target project
@@ -232,14 +234,14 @@ public class AdapterRemoverSubcommand implements Subcommand {
                sequenceWriter.addQualityValues(ByteBuffer.wrap(qualityValues));
             }
             sequenceWriter.addInfo(descriptions.get(i), sequence.length, (int) (lastbyte - 1));
-            //TODO descriptions must be transformed, when length stands in
+            // TODO descriptions must be transformed, when length stands in
          } catch (IOException ex) {
             log.error("rmadapt: could not write cutted sequences; %s", ex);
             return 1;
          }
-         
+
       }
-      
+
       // Store the whole target project
       try {
          sequenceWriter.store(); // stores seq, ssp and desc
@@ -254,9 +256,9 @@ public class AdapterRemoverSubcommand implements Subcommand {
       // Write sequence length statistics.
       targetProject.setProperty("LongestSequence", sequenceWriter.getMaximumLength());
       targetProject.setProperty("ShortestSequence", sequenceWriter.getMinimumLength());
-      
+
       targetProject.setProperty("LastAction", "rmadapt");
-      
+
       return 0;
    }
 }

@@ -44,9 +44,10 @@ public class Translater {
    final boolean colorspace;
    final File csfastaQualityFile;
 
-   /** 
-    * @param csfastaQualityFile File with quality values for each character. Only has an effect
-    *                        of CSFASTA files. May be null.
+   /**
+    * @param csfastaQualityFile
+    *           File with quality values for each character. Only has an effect of CSFASTA files.
+    *           May be null.
     */
    public Translater(Globals g, boolean trim, Alphabet alphabet, Alphabet amap2,
          boolean separateRCByWildcard, boolean reverse, boolean addrc, boolean bisulfite,
@@ -94,16 +95,17 @@ public class Translater {
       try {
          sequence = new SequenceWriter(project);
       } catch (IOException ex) {
-         log.warn("translate: could not create output file '%s'; %s",project.makeFile(FileTypes.SEQ), ex);
+         log.warn("translate: could not create output file '%s'; %s",
+               project.makeFile(FileTypes.SEQ), ex);
       }
 
       // process each file according to type
       for (int i = 0; i < files.length; i++) {
          File file = files[i];
          log.info("  processing '%s' (%s)...", file, filetype[i]);
-         //if (filetype[i] == FileType.FASTA && alphabet.getName().equals("color space"))
-            //TODO should this action depend on filetype and alphabet???
-            //TODO translate to CSFASTA or in a sequence???
+         // if (filetype[i] == FileType.FASTA && alphabet.getName().equals("color space"))
+         // TODO should this action depend on filetype and alphabet???
+         // TODO translate to CSFASTA or in a sequence???
          if (filetype[i] == FileTypes.FASTA) {
             if (colorspace) {
                translateFastaFromDNA2CS(file, sequence);
@@ -157,7 +159,7 @@ public class Translater {
       }
       project.setProperty("LastAction", "translate");
    }
-   
+
    /**
     * @see translateFasta(String,Sequence)
     */
@@ -169,7 +171,7 @@ public class Translater {
       translateFasta(file, sequence, csfastaQualityFile);
       // TODO maybe make some assertions like alphabet == CS???
    }
-   
+
    /**
     * Interprets a given FASTA file with the DNA alphabet and encodes it into colospace alphabet.
     * Afterwards the result is translated into the given sequence.
@@ -223,14 +225,14 @@ public class Translater {
    public void translateFasta(final File file, final SequenceWriter sequence) {
       translateFasta(file, sequence, null);
    }
-         
+
    /**
-    * @param qualityFile File with FASTA-style quality information (one byte per character).
-    *                        May be null.
+    * @param qualityFile
+    *           File with FASTA-style quality information (one byte per character). May be null.
     */
    public void translateFasta(final File file, final SequenceWriter sequence, final File qualityFile) {
       FastaFile qualityFasta = null;
-      if (qualityFile!=null) {
+      if (qualityFile != null) {
          qualityFasta = new FastaFile(qualityFile);
          try {
             qualityFasta.open();
@@ -238,7 +240,8 @@ public class Translater {
             log.warn("translate: quality file not found (%s), skipping. (%s)", qualityFile, ex);
             return;
          }
-         // qualityOutput = new ArrayFile(FileUtils.extensionRemoved(fname)+FileNameExtensions.quality);
+         // qualityOutput = new
+         // ArrayFile(FileUtils.extensionRemoved(fname)+FileNameExtensions.quality);
       }
       FastaFile f = new FastaFile(file);
       FastaSequence fseq = null;
@@ -273,30 +276,36 @@ public class Translater {
             } else { // no reverse complement
                sequence.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
             }
-            if (qualityFasta!=null) {
+            if (qualityFasta != null) {
                FastaSequence qualitySequence = qualityFasta.read();
                if (!qualitySequence.getHeader().equals(fseq.getHeader())) {
-                  throw new IllegalArgumentException(String.format("Annotations from CSFASTA and quality files do not match (\"%s\" != \"%s\").", qualitySequence.getHeader(), fseq.getHeader()));
+                  throw new IllegalArgumentException(
+                        String.format(
+                              "Annotations from CSFASTA and quality files do not match (\"%s\" != \"%s\").",
+                              qualitySequence.getHeader(), fseq.getHeader()));
                }
-               
+
                if (alphabet.isWildcard(alphabet.code((byte) fseq.getSequence().charAt(0)))) {
                   // CSFASTA begins with A,C,G or T
-                  fseq.cutOfSequenceHead(2); // T32312131100... -> 2312131100...
+                  fseq.cutOffSequenceHead(2); // T32312131100... -> 2312131100...
                   int gap = qualitySequence.getSequence().indexOf(' '); // find gap between first
                                                                         // and second value
-                  qualitySequence.cutOfSequenceHead(gap + 1); // 25 27 27 2 29 30 25 ... -> 27 27 2 29
-                                                            // 30 25...
+                  qualitySequence.cutOffSequenceHead(gap + 1); // 25 27 27 2 29 30 25 ... -> 27 27 2 29 30 25...
                }
-               
+
                String qs = qualitySequence.getSequence();
-               byte[] qualityArray = new byte[qs.length()/2+2];
+               byte[] qualityArray = new byte[qs.length() / 2 + 2];
                int n = 0;
                StringTokenizer st = new StringTokenizer(qs, " ", false);
-               while (st.hasMoreTokens()) qualityArray[n++] = Byte.parseByte(st.nextToken());
-               if (n!=fseq.length()) {
-                  throw new IllegalArgumentException(String.format("Length mismatch between CSFASTA (%d) and quality files (%d) (sequence name: \"%s\").", fseq.length(), n, fseq.getHeader()));
+               while (st.hasMoreTokens())
+                  qualityArray[n++] = Byte.parseByte(st.nextToken());
+               if (n != fseq.length()) {
+                  throw new IllegalArgumentException(
+                        String.format(
+                              "Length mismatch between CSFASTA (%d) and quality files (%d) (sequence name: \"%s\").",
+                              fseq.length(), n, fseq.getHeader()));
                }
-               qualityArray[n++]=Byte.MIN_VALUE;
+               qualityArray[n++] = Byte.MIN_VALUE;
                sequence.addQualityValues(ByteBuffer.wrap(qualityArray, 0, n));
             }
          } catch (InvalidSymbolException ex) {
@@ -435,7 +444,7 @@ public class Translater {
     * @return number of runs in the sequence file
     * @throws java.io.IOException
     */
-   public long computeRuns(final Project project ) throws IOException {
+   public long computeRuns(final Project project) throws IOException {
       return computeRunsAF(project);
    }
 

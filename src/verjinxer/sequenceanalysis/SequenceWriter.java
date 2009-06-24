@@ -38,7 +38,7 @@ public class SequenceWriter {
       sequenceArrayFile = new ArrayFile(seqFile);
       sequenceArrayFile.openW();
    }
-   
+
    /**
     * Creates a new SequenceWriter that files have not the name of the project but the given
     * fileName.
@@ -56,7 +56,7 @@ public class SequenceWriter {
       sequenceArrayFile = new ArrayFile(seqFile);
       sequenceArrayFile.openW();
    }
-   
+
    /**
     * @return The filename of the Sequence.
     */
