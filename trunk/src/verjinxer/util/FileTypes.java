@@ -42,7 +42,11 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    
    FASTA("fasta"),
    CSFASTA("csfasta"),
-   TEXT("txt");
+   TEXT("txt"), 
+   
+   CSFASTQ("csfastq"), // Sequence2Fastq
+   FASTQ("fastq"),  // Sequence2Fastq
+   DECSFASTQ("decsfastq"); // Sequence2Fastq
    
    private final String extension;
 
