@@ -48,7 +48,8 @@ public class TranslaterSubcommand implements Subcommand {
       log.info("  --dnarc     <desc>   combines --dna and --rconly;");
       log.info("     if <desc> is empty or '#', concatenate rc with dna; otherwise,");
       log.info("     generate new rc sequences and add <desc> to their headers.");
-//      log.info("  -b, --bisulfite      translates DNA to a three-letter alphabet"); // FIXME only for C->T currently
+      // log.info("  -b, --bisulfite      translates DNA to a three-letter alphabet"); // FIXME only
+      // for C->T currently
       log.info("  --dnabi              translate to bisulfite-treated DNA");
       log.info("  --protein            use standard protein alphabet");
       log.info("  -c, --colorspace     translate DNA to color space sequence");
@@ -96,9 +97,10 @@ public class TranslaterSubcommand implements Subcommand {
       File projectname;
       if (opt.isGiven("i"))
          projectname = new File(opt.get("i"));
-      else { 
+      else {
          // take base name of first FASTA file
-         // creates the project in the current working directory of java and not where files[0] is located 
+         // creates the project in the current working directory of java and not where files[0] is
+         // located
          projectname = new File(FileUtils.removeExtension(files[0]).getName());
       }
       Project project = new Project(projectname);
@@ -187,14 +189,14 @@ public class TranslaterSubcommand implements Subcommand {
          }
          colorspace = true;
       }
-      File qualityFile = null; 
+      File qualityFile = null;
       if (opt.isGiven("quality")) {
          qualityFile = new File(opt.get("quality"));
-         if ((files.length!=1) || (FileUtils.determineFileType(files[0]) != FileTypes.CSFASTA)) {
+         if ((files.length != 1) || (FileUtils.determineFileType(files[0]) != FileTypes.CSFASTA)) {
             log.error("translate: If option --quality is given, exactly one CSFASTA file is expected.");
             return 1;
          }
-         if (addrc||reverse) {
+         if (addrc || reverse) {
             log.error("translate: Option --quality forbids use of reverse (complement).");
             return 1;
          }
@@ -202,7 +204,9 @@ public class TranslaterSubcommand implements Subcommand {
 
       if (alphabet == null) {
          for (int i = 0; i < files.length; i++) {
-            if (FileUtils.determineFileType(files[i]) != FileTypes.CSFASTA) { // only for CSFASTA omitting alphabet map is allowed
+            if (FileUtils.determineFileType(files[i]) != FileTypes.CSFASTA) { // only for CSFASTA
+                                                                              // omitting alphabet
+                                                                              // map is allowed
                log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
                return 1;
             }
@@ -212,7 +216,8 @@ public class TranslaterSubcommand implements Subcommand {
       } else {
          // A alphabet was set, test if all files are NOT CSFASTA
          for (int i = 0; i < files.length; i++)
-            if (FileUtils.determineFileType(files[i]) == FileTypes.CSFASTA) { // invalid option for CSFASTA
+            if (FileUtils.determineFileType(files[i]) == FileTypes.CSFASTA) { // invalid option for
+                                                                              // CSFASTA
                log.error("translate: the options -a, --dna, --rconly, --dnarc, --dnabi, --protein and --colorspace are not valid for CSFASTA files.");
                return 1;
             }

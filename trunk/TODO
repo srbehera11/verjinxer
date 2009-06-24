@@ -1,8 +1,9 @@
 To Do
 =====
 
+- maybe always cut first 2 values of CSFASTA  
+- ssp -> separatorPositions
 Don't write toomanyhits file when there cannot be any because no limit was given.
-
 
 General
 -------
