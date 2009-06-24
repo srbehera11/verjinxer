@@ -79,6 +79,7 @@ public class Translater {
    public void translateFilesAndCreateProject(Project project, File[] files) {
       project.setProperty("NumberSourceFiles", files.length);
       project.setProperty("TrimmedSequences", trim);
+      project.setProperty("ColorSpaceAlphabet", colorspace);
 
       // determine the file types: FASTA or TEXT
       // FASTA 'f': First non-whitespace character is a '>''
