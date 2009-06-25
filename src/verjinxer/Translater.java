@@ -260,23 +260,12 @@ public class Translater {
       while (true) {
          try {
             fseq = f.read(); // reads one fasta sequence from file f
-            if (fseq == null)
+            if (fseq == null) {
                break;
-            tr = fseq.translateTo(tr, trim, alphabet, reverse, appendforward);
-            lastbyte = sequence.writeBuffer(tr);
-            if (addrc) {
-               if (!separateRCByWildcard)
-                  sequence.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
-               tr = fseq.translateTo(tr, trim, alphabet2, true, appendreverse);
-               lastbyte = sequence.writeBuffer(tr);
-               if (separateRCByWildcard)
-                  sequence.addInfo(fseq.getHeader(), 2 * fseq.length() + 1, (int) (lastbyte - 1));
-               else
-                  sequence.addInfo(fseq.getHeader() + " " + dnarcstring, fseq.length(),
-                        (int) (lastbyte - 1));
-            } else { // no reverse complement
-               sequence.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
             }
+            
+            //first check for quality files, cause the sequence may be cuted.
+            //it is necessary to cut bevor translating cause of separator positions. 
             if (qualityFasta != null) {
                FastaSequence qualitySequence = qualityFasta.read();
                if (!qualitySequence.getHeader().equals(fseq.getHeader())) {
@@ -309,6 +298,23 @@ public class Translater {
                qualityArray[n++] = Byte.MIN_VALUE;
                sequence.addQualityValues(ByteBuffer.wrap(qualityArray, 0, n));
             }
+            
+            tr = fseq.translateTo(tr, trim, alphabet, reverse, appendforward);
+            lastbyte = sequence.writeBuffer(tr);
+            if (addrc) {
+               if (!separateRCByWildcard)
+                  sequence.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
+               tr = fseq.translateTo(tr, trim, alphabet2, true, appendreverse);
+               lastbyte = sequence.writeBuffer(tr);
+               if (separateRCByWildcard)
+                  sequence.addInfo(fseq.getHeader(), 2 * fseq.length() + 1, (int) (lastbyte - 1));
+               else
+                  sequence.addInfo(fseq.getHeader() + " " + dnarcstring, fseq.length(),
+                        (int) (lastbyte - 1));
+            } else { // no reverse complement
+               sequence.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
+            }
+            
          } catch (InvalidSymbolException ex) {
             log.error("translate: %s", ex);
             break;
