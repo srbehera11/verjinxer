@@ -264,8 +264,8 @@ public class Translater {
                break;
             }
             
-            //first check for quality files, cause the sequence may be cuted.
-            //it is necessary to cut bevor translating cause of separator positions. 
+            //first check for quality files, cause the sequence may be cut.
+            //it is necessary to cut before translating cause of separator positions. 
             if (qualityFasta != null) {
                FastaSequence qualitySequence = qualityFasta.read();
                if (!qualitySequence.getHeader().equals(fseq.getHeader())) {
