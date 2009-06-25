@@ -44,7 +44,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
       log.info("");
       log.info("  -e error_rate   Maximum error rate (errors divided by length of matching region)");
       log.info("  -p length       Print the found alignments if they are longer than length (not yet implemented)."); // TODO
-      log.info("  -c              Colorspace mode: Removes first nucleotide; trims adapter correctly.");
+      log.info("  -c              Colorspace mode: Removes first nucleotide; trims adapter correctly."); // TODO is this option necessary? Can be determined by project properties
       log.info("  -n <count>      Try to remove adapters at most <count> times (not yet implemented)"); // TODO
    }
 
