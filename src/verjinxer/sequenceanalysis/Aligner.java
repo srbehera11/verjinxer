@@ -468,11 +468,20 @@ public class Aligner {
     * @author Markus Kemmerling
     */
    public static class SemiglobalAlignmentResult {
-      private final byte[] sequence1, sequence2;
+      private byte[] sequence1, sequence2;
 
-      private final int begin, length, errors;
+      private int begin, length, errors;
+
+      public SemiglobalAlignmentResult() {
+         // all attributes are initialized by default
+      }
 
       public SemiglobalAlignmentResult(byte[] sequence1, byte[] sequence2, int begin, int length,
+            int errors) {
+         setAllAttributes(sequence1, sequence2, begin, length, errors);
+      }
+
+      public void setAllAttributes(byte[] sequence1, byte[] sequence2, int begin, int length,
             int errors) {
          this.sequence1 = sequence1;
          this.sequence2 = sequence2;

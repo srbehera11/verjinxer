@@ -16,6 +16,7 @@ import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.sequenceanalysis.Aligner.SemiglobalAlignmentResult;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.TicToc;
@@ -173,24 +174,11 @@ public class AdapterRemoverSubcommand implements Subcommand {
          }
 
          for (int k = 0; k < times; k++) { // maybe try several times to remove an adapter
-
-            Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult(
-                  null, null, 0, Integer.MIN_VALUE, 0);
-            assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
             
             // Build alignment for each adapter
-            int bestAdapter = -1;
-            for (int j = 0; j < adapters.getNumberSequences(); j++) {
-               Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(
-                     adapters.getSequence(j), sequence);
-               
-               if (result.getLength() - result.getErrors() > bestResult.getLength()
-                     - bestResult.getErrors()) {
-                  bestResult = result;
-                  bestAdapter = j;
-               }
-            }
-            assert bestAdapter >= 0;
+            Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult();
+            int bestAdapter = findBestAlignment(bestResult, adapters, sequence);
+            assert bestResult != null;
             
             if (bestResult.getLength() > 0
                   && (double) bestResult.getErrors() / bestResult.getLength() <= max_error_rate) {
@@ -207,6 +195,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
                final byte[] adapterAlignment = bestResult.getSequence1();
                if (adapterAlignment[0] != Aligner.GAP
                      && adapterAlignment[adapterAlignment.length - 1] != Aligner.GAP) {
+                  
                   // The adapter or parts of it covers the entire read
                   log.info("read %s is covered entirely by the adapter %s:",
                         descriptions.get(i).split(" ")[0], bestAdapter);
@@ -214,7 +203,9 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   log.info("");
                   log.info("");
                   // TODO what now?
+                  
                } else if (adapterAlignment[0] == Aligner.GAP) {
+                  
                   // The adapter is at the end of the read
                   if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
                      // The adapter is in the middle of the read
@@ -364,6 +355,27 @@ public class AdapterRemoverSubcommand implements Subcommand {
       
 
       return 0;
+   }
+
+   private int findBestAlignment(Aligner.SemiglobalAlignmentResult bestResult,
+         final Sequences adapters, final byte[] sequence) {
+
+      bestResult.setAllAttributes(null, null, 0, Integer.MIN_VALUE, 0);
+      assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
+      int bestAdapter = -1;
+      for (int j = 0; j < adapters.getNumberSequences(); j++) {
+         Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(
+               adapters.getSequence(j), sequence);
+
+         if (result.getLength() - result.getErrors() > bestResult.getLength()
+               - bestResult.getErrors()) {
+            bestResult.setAllAttributes(result.getSequence1(), result.getSequence2(),
+                  result.getBegin(), result.getLength(), result.getErrors());
+            bestAdapter = j;
+         }
+      }
+      assert bestAdapter >= 0;
+      return bestAdapter;
    }
 }
 
