@@ -305,6 +305,32 @@ public class Aligner {
     * @author Markus Kemmerling
     */
    public static SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final byte[] s2) {
+      return semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length);
+   }
+   
+   /**
+    * Computes an end-gap free alignment. Also called free-shift alignment or semiglobal alignment.
+    * The alignment is only computed for specified ranges within the given sequences. Particular,
+    * the alignment is computed of s1[start1:end1] and s2[start2:end2] (a[x:y] denotes the subarray
+    * of an array a with initial index x (inclusive) and final index y (exclusive)).
+    * 
+    * @param s1
+    *           first sequence.
+    * @param start1
+    *           first index in s1 to compute the alignment from.
+    * @param end1
+    *           final index in s1 to compute the alignment from, exclusive. (This index may lie
+    *           outside the array.)
+    * @param s2
+    *           second sequence.
+    * @param start2
+    *           first index in s2 to compute the alignment from.
+    * @param end2
+    *           final index in s2 to compute the alignment from, exclusive. (This index may lie
+    *           outside the array.)
+    * @return
+    */
+   public static SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2) {
       /*            s2 (column:1..n)
             --------------->
            |
@@ -313,8 +339,8 @@ public class Aligner {
            V
       */
       
-      final int m = s1.length;
-      final int n = s2.length;
+      final int m = end1 - start1;
+      final int n = end2 - start2;
 
       // the DP table row x column
       Entry[][] table = new Entry[m + 1][n + 1];
@@ -343,7 +369,8 @@ public class Aligner {
          for (column = 1; column < table[0].length; ++column) {
             // look diagonal
             bt = Direction.DIAG;
-            score = table[row - 1][column - 1].score + ((s1[row - 1] == s2[column - 1]) ? 1 : -1);
+            score = table[row - 1][column - 1].score
+                  + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? 1 : -1);
             // look up
             int tmp = table[row - 1][column].score - 1;
             if (tmp > score) {
@@ -400,11 +427,11 @@ public class Aligner {
       if (table.length - 1 == bestRow) { // we are in the last row
          while (column > bestColumn) {
             alignment1[p1++] = GAP;
-            alignment2[p2++] = s2[--column];
+            alignment2[p2++] = s2[start2 + --column];
          }
       } else { // we are in the last column
          while (row > bestRow) {
-            alignment1[p1++] = s1[--row];
+            alignment1[p1++] = s1[start1 + --row];
             alignment2[p2++] = GAP;
          }
       }
@@ -419,16 +446,16 @@ public class Aligner {
       while (row > 0 && column > 0) {
          direction = table[row][column].backtrack;
          if (direction == Direction.DIAG) {
-            if (s1[--row] != s2[--column])
+            if (s1[start1 + --row] != s2[start2 + --column])
                errors++;
-            alignment1[p1++] = s1[row];
-            alignment2[p2++] = s2[column];
+            alignment1[p1++] = s1[start1 + row];
+            alignment2[p2++] = s2[start2 + column];
          } else if (direction == Direction.LEFT) {
             errors++;
             alignment1[p1++] = GAP;
-            alignment2[p2++] = s2[--column];
+            alignment2[p2++] = s2[start2 + --column];
          } else if (direction == Direction.UP) {
-            alignment1[p1++] = s1[--row];
+            alignment1[p1++] = s1[start1 + --row];
             alignment2[p2++] = GAP;
             errors++;
          }
@@ -443,10 +470,10 @@ public class Aligner {
 
       while (column > 0) {
          alignment1[p1++] = GAP;
-         alignment2[p2++] = s2[--column];
+         alignment2[p2++] = s2[start2 + --column];
       }
       while (row > 0) {
-         alignment1[p1++] = s1[--row];
+         alignment1[p1++] = s1[start1 + --row];
          alignment2[p2++] = GAP;
       }
       assert row == 0 && column == 0;
