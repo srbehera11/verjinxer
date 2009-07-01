@@ -162,6 +162,8 @@ public class AdapterRemoverSubcommand implements Subcommand {
       log.info("rmadapt: start to cut the reads.");
       for (int i = 0; i < sequences.getNumberSequences(); i++) {
          byte[] sequence = sequences.getSequence(i);
+         int beginSequence = 0;
+         int endSequence = sequence.length;
          byte[] qualityValues = null;
          try {
             qualityValues = sequences.getQualityValuesForSequence(i);
@@ -170,14 +172,15 @@ public class AdapterRemoverSubcommand implements Subcommand {
          }
 
          if (colorspace && qualityValues == null) {
-            sequence = Arrays.copyOfRange(sequence, 2, sequence.length);
+            beginSequence = 2;
          }
 
          for (int k = 0; k < times; k++) { // maybe try several times to remove an adapter
             
             // Build alignment for each adapter
             Aligner.SemiglobalAlignmentResult bestResult = new Aligner.SemiglobalAlignmentResult();
-            int bestAdapter = findBestAlignment(bestResult, adapters, sequence);
+            int bestAdapter = findBestAlignment(bestResult, adapters, sequence, beginSequence,
+                  endSequence);
             assert bestResult != null;
             
             if (bestResult.getLength() > 0
@@ -223,14 +226,9 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   // TODO maybe this should only be done if the adapter is not in the middle of the
                   // read (else to the upper if).
                   if (colorspace) {
-                     sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin() - 1);
-                     if (qualityValues != null) {
-                        qualityValues = Arrays.copyOfRange(qualityValues, 0,
-                              bestResult.getBegin() - 1);
-                        assert qualityValues.length == sequence.length;
-                     }
+                     endSequence = beginSequence + bestResult.getBegin() - 1;
                   } else {
-                     sequence = Arrays.copyOfRange(sequence, 0, bestResult.getBegin());
+                     endSequence = beginSequence + bestResult.getBegin();
                   }
                   
                   // Statistics
@@ -243,12 +241,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   }
                } else if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
                   // The adapter is in the beginning of the read
-                  sequence = Arrays.copyOfRange(sequence, bestResult.getLength(), sequence.length);
-                  if (qualityValues != null) {
-                     qualityValues = Arrays.copyOfRange(qualityValues, bestResult.getLength(),
-                           qualityValues.length);
-                     assert qualityValues.length == sequence.length;
-                  }
+                  beginSequence += bestResult.getLength();
                   
                   // Statistics
                   if (lengths_front.get(bestAdapter).containsKey(bestResult.getLength())) {
@@ -269,25 +262,38 @@ public class AdapterRemoverSubcommand implements Subcommand {
 
          // Add a separator at the end of the sequence
          final byte separator = (byte) (targetProject.getIntProperty("Separator"));
-         sequence = Arrays.copyOf(sequence, sequence.length + 1);
-         sequence[sequence.length - 1] = separator;
-         if (qualityValues != null) {
-            qualityValues = Arrays.copyOf(qualityValues, qualityValues.length + 1);
-            qualityValues[sequence.length - 1] = Byte.MIN_VALUE;
+         if (endSequence < sequence.length) {
+            sequence[endSequence] = separator;
+            if (qualityValues != null) {
+               qualityValues[endSequence] = Byte.MIN_VALUE;
+            }
+            endSequence++;
+         } else {
+            assert endSequence == sequence.length;
+            sequence = Arrays.copyOfRange(sequence, beginSequence, endSequence + 1);
+            sequence[sequence.length - 1] = separator;
+            if (qualityValues != null) {
+               qualityValues = Arrays.copyOfRange(qualityValues, beginSequence, endSequence + 1);
+               qualityValues[sequence.length - 1] = Byte.MIN_VALUE;
+            }
+            beginSequence = 0;
+            endSequence = sequence.length;
          }
 
          // Write cuted sequence to target project
          try {
-            lastbyte = sequenceWriter.writeBuffer(ByteBuffer.wrap(sequence));
+            lastbyte = sequenceWriter.writeBuffer(ByteBuffer.wrap(sequence, beginSequence,
+                  endSequence - beginSequence));
             if (qualityValues != null) {
-               sequenceWriter.addQualityValues(ByteBuffer.wrap(qualityValues));
+               sequenceWriter.addQualityValues(ByteBuffer.wrap(qualityValues, beginSequence,
+                     endSequence - beginSequence));
             }
 
             // Sequence contains as last element a separator. So its length in proper meaning is
             // sequence.length-1.
             final String newDescription = descriptions.get(i).replaceAll("length=[0-9]*",
-                  "length=" + (sequence.length - 1));
-            sequenceWriter.addInfo(newDescription, sequence.length - 1, (int) (lastbyte - 1));
+                  "length=" + (endSequence-beginSequence - 1));
+            sequenceWriter.addInfo(newDescription, endSequence-beginSequence - 1, (int) (lastbyte - 1));
             
          } catch (IOException ex) {
             log.error("rmadapt: could not write cutted sequences; %s", ex);
@@ -358,14 +364,16 @@ public class AdapterRemoverSubcommand implements Subcommand {
    }
 
    private int findBestAlignment(Aligner.SemiglobalAlignmentResult bestResult,
-         final Sequences adapters, final byte[] sequence) {
+         final Sequences adapters, final byte[] sequence, final int beginSequence,
+         final int endSequence) {
 
       bestResult.setAllAttributes(null, null, 0, Integer.MIN_VALUE, 0);
       assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
       int bestAdapter = -1;
       for (int j = 0; j < adapters.getNumberSequences(); j++) {
          Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(
-               adapters.getSequence(j), sequence);
+               adapters.getSequence(j), 0, adapters.getSequence(j).length, sequence, beginSequence,
+               endSequence);
 
          if (result.getLength() - result.getErrors() > bestResult.getLength()
                - bestResult.getErrors()) {
