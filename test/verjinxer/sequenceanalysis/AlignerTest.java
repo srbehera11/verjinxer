@@ -335,6 +335,24 @@ public class AlignerTest {
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
+   
+   
+   @Test
+   public void testSemiglobalAlign17() {
+      byte[] s1 = new byte[] { 'C', 'G', 'T', 'G', 'A', 'A', 'C', 'C', 'C', 'G', 'G', 'G', 'G', 'G', 'T', 'G', 'G', 'A', 'G', 'C', 'T', 'T', 'G', 'C', 'A', 'G', 'T', 'G' };
+      byte[] s2 = new byte[] {};
+      byte[] r1 = new byte[] { 'C', 'G', 'T', 'G', 'A', 'A', 'C', 'C', 'C', 'G', 'G', 'G', 'G', 'G', 'T', 'G', 'G', 'A', 'G', 'C', 'T', 'T', 'G', 'C', 'A', 'G', 'T', 'G' };
+      byte[] r2 = new byte[] { GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP };
+      int error = 0;
+      int length = 0;
+      int begin = 28;
+      Aligner.SemiglobalAlignmentResult result = Aligner.semiglobalAlign(s1, s2);
+      assertArrayEquals(result.getSequence1(), r1);
+      assertArrayEquals(result.getSequence2(), r2);
+      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getLength(), length);
+      assertEquals(result.getErrors(), error);
+   }
 
 
 
