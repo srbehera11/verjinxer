@@ -143,7 +143,8 @@ public class Sequences {
    }
    
    /**
-    * Returns the n-th of the underlying sequences.
+    * Returns the n-th of the underlying sequences. Be aware, that the last element in the returned
+    * array is the separator.
     * 
     * @param n
     *           Number of the sequence to return.
@@ -151,10 +152,10 @@ public class Sequences {
     */
    public byte[] getSequence(int n) {
       if (n == 0) {
-         return Arrays.copyOfRange(sequence, 0, (int) separatorPositions[0]);
+         return Arrays.copyOfRange(sequence, 0, (int) separatorPositions[0] + 1);
       } else {
          return Arrays.copyOfRange(sequence, (int) separatorPositions[n - 1] + 1,
-               (int) separatorPositions[n]);
+               (int) separatorPositions[n] + 1);
       }
       // TODO why is separatorPositions of type long[]?
    }
@@ -180,7 +181,8 @@ public class Sequences {
    }
    
    /**
-    * Returns the quality values for the n-th of the underlying sequences.
+    * Returns the quality values for the n-th of the underlying sequences. Be aware, that the last
+    * element in the returned array is the separator.
     * 
     * @param n
     *           Number of the Sequence for the quality values.
@@ -192,10 +194,10 @@ public class Sequences {
          qualityValues = new ArrayFile().setFile(qualityFile).readArray(qualityValues);
       }
       if (n == 0) {
-         return Arrays.copyOfRange(qualityValues, 0, (int) separatorPositions[0]);
+         return Arrays.copyOfRange(qualityValues, 0, (int) separatorPositions[0] + 1);
       } else {
          return Arrays.copyOfRange(qualityValues, (int) separatorPositions[n - 1] + 1,
-               (int) separatorPositions[n]);
+               (int) separatorPositions[n] + 1);
       }
    }
 
@@ -204,6 +206,28 @@ public class Sequences {
     */
    public long[] getSeparatorPositions() {
       return separatorPositions;
+   }
+   
+   /**
+    * Returns the start and end indices for the n-th sequence within the underlying array (all
+    * sequences concatenated). The start index points to the first value of the n-th sequence. The
+    * end index points to the separator after the n-th sequence and so points at the first position
+    * after the sequence.
+    * 
+    * @param n
+    *           Number of the sequence
+    * @return An array of length 2 with a[0] = start index and a[1] = end index.
+    */
+   public int[] getSequenceBoundaries(final int n) {
+      int[] boundaries = new int[2];
+      if (n == 0) {
+         boundaries[0] = 0;
+         boundaries[1] = (int) separatorPositions[0];
+      } else {
+         boundaries[0] = (int) separatorPositions[n - 1] + 1;
+         boundaries[1] = (int) (int) separatorPositions[n];
+      }
+      return boundaries;
    }
 
    /**
