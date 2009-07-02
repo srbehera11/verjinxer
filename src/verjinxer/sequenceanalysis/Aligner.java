@@ -341,6 +341,20 @@ public class Aligner {
       
       final int m = end1 - start1;
       final int n = end2 - start2;
+      
+      if (m == 0) {
+         // s1 is empty
+         byte[] alignment2 = Arrays.copyOfRange(s2, start2, end2);
+         byte[] alignment1 = new byte[alignment2.length];
+         Arrays.fill(alignment1, GAP);
+         return new SemiglobalAlignmentResult(alignment1, alignment2, alignment2.length, 0, 0);
+      } else if (n == 0) {
+         // s2 is empty
+         byte[] alignment1 = Arrays.copyOfRange(s1, start1, end1);
+         byte[] alignment2 = new byte[alignment1.length];
+         Arrays.fill(alignment2, GAP);
+         return new SemiglobalAlignmentResult(alignment1, alignment2, alignment1.length, 0, 0);
+      }
 
       // the DP table row x column
       Entry[][] table = new Entry[m + 1][n + 1];
