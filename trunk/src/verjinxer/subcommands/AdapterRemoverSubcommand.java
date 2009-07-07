@@ -136,15 +136,10 @@ public class AdapterRemoverSubcommand implements Subcommand {
       ArrayList<String> descriptions = sequences.getDescriptions();
       Sequences adapters = targetProject.readSequences("adapters");
       int middle = 0; // number of times an adapter is in the middle of an read
-      Vector<HashMap<Integer, Integer>> lengths_front = new Vector<HashMap<Integer, Integer>>(adapters.getNumberSequences());
-      Vector<HashMap<Integer, Integer>> lengths_back  = new Vector<HashMap<Integer, Integer>>(adapters.getNumberSequences());
-      for(int i = 0; i < adapters.getNumberSequences(); i++) {
-         lengths_front.add(new HashMap<Integer, Integer>());
-         lengths_back.add(new HashMap<Integer, Integer>());
-      }
-      assert lengths_front.size() == adapters.getNumberSequences(): lengths_front.size();
-      assert lengths_back.size()  == adapters.getNumberSequences(): lengths_back.size();
-
+      int[][] lengths_front = new int[adapters.getNumberSequences()][(int) adapterSequenceWriter.getMaximumLength() + 1];
+      int[][] lengths_back = new int[adapters.getNumberSequences()][(int) adapterSequenceWriter.getMaximumLength() + 1];
+      int[] sequencesLengthAfterCutting = new int[sequenceProject.getIntProperty("LongestSequence")+1];
+      
       SequenceWriter sequenceWriter = null;
       long lastbyte = 0;
       try {
@@ -203,26 +198,16 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   log.info(bestResult.toString());
                   log.info("");
                   log.info("");
-                  // TODO what now?
+                  // TODO set read to length 0
                   
                } else if (adapterAlignment[0] == Aligner.GAP) {
                   
                   // The adapter is at the end of the read
                   if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
                      // The adapter is in the middle of the read
-                     if (min_print_align_length >= 0) {
-                        log.info("adapter %s is in the middle of read %s:", bestAdapter,
-                              descriptions.get(i).split(" ")[0]);
-                        log.info(bestResult.toString());
-                        log.info("");
-                        log.info("");
-                     }
                      middle++;
-                     // TODO what now?
                   }
 
-                  // TODO maybe this should only be done if the adapter is not in the middle of the
-                  // read (else to the upper if).
                   if (colorspace) {
                      endSequence = beginSequence + bestResult.getBegin() - 1;
                   } else {
@@ -230,25 +215,15 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   }
                   
                   // Statistics
-                  if (lengths_back.get(bestAdapter).containsKey(bestResult.getLength())) {
-                     final int oldCounter = lengths_back.get(bestAdapter).get(
-                           bestResult.getLength());
-                     lengths_back.get(bestAdapter).put(bestResult.getLength(), oldCounter + 1);
-                  } else {
-                     lengths_back.get(bestAdapter).put(bestResult.getLength(), 1);
-                  }
+                  lengths_back[bestAdapter][bestResult.getLength()]++;
+
                } else if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
                   // The adapter is in the beginning of the read
                   beginSequence += bestResult.getLength();
-                  
+
                   // Statistics
-                  if (lengths_front.get(bestAdapter).containsKey(bestResult.getLength())) {
-                     final int oldCounter = lengths_front.get(bestAdapter).get(
-                           bestResult.getLength());
-                     lengths_front.get(bestAdapter).put(bestResult.getLength(), oldCounter + 1);
-                  } else {
-                     lengths_front.get(bestAdapter).put(bestResult.getLength(), 1);
-                  }
+                  lengths_front[bestAdapter][bestResult.getLength()]++;
+                  
                } else {
                   // This should not happen!
                }
@@ -257,6 +232,9 @@ public class AdapterRemoverSubcommand implements Subcommand {
             }
 
          }
+         
+         // Statistics: how long are the sequences after cutting
+         sequencesLengthAfterCutting[endSequence - beginSequence]++;
 
          // Add a separator at the end of the sequence
          final byte separator = (byte) (targetProject.getIntProperty("Separator"));
@@ -311,6 +289,12 @@ public class AdapterRemoverSubcommand implements Subcommand {
       
       // print statistics
       log.info("# There are %7d sequences in this data set.", sequences.getNumberSequences());
+      log.info("# length\tnumber");
+      for (int length = 0; length < sequencesLengthAfterCutting.length; length++) {
+         if (sequencesLengthAfterCutting[length] > 0) {
+            log.info("%d\t%d", length, sequencesLengthAfterCutting[length]);
+         }
+      }
       log.info("");
       log.info("middle: %s", middle);
       final byte[] adaptersArray = adapters.array();
@@ -326,10 +310,11 @@ public class AdapterRemoverSubcommand implements Subcommand {
          log.info("# adapter found in the beginning of the sequence");
          log.info("# length\tnumber");
          int total = 0;
-         for (Integer key : lengths_front.get(j).keySet()) {
-            final Integer value = lengths_front.get(j).get(key);
-            log.info("%d\t%d", key, value);
-            total += value;
+         for (int length = 1; length < lengths_front[j].length; length++) {
+            if (lengths_front[j][length] > 0) {
+               log.info("%d\t%d", length, lengths_front[j][length]);
+               total += lengths_front[j][length];
+            }
          }
          log.info("total: %s", total);
          log.info("");
@@ -337,10 +322,11 @@ public class AdapterRemoverSubcommand implements Subcommand {
          log.info("# adapter found at the end of the sequence");
          log.info("# length\tnumber");
          total = 0;
-         for (Integer key : lengths_back.get(j).keySet()) {
-            final Integer value = lengths_back.get(j).get(key);
-            log.info("%d\t%d", key, value);
-            total += value;
+         for (int length = 1; length < lengths_back[j].length; length++) {
+            if (lengths_back[j][length] > 0) {
+               log.info("%d\t%d", length, lengths_back[j][length]);
+               total += lengths_back[j][length];
+            }
          }
          log.info("total: %s", total);
          log.info("");
