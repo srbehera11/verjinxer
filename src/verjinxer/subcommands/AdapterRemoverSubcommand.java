@@ -46,7 +46,6 @@ public class AdapterRemoverSubcommand implements Subcommand {
       log.info("");
       log.info("  -e error_rate   Maximum error rate (errors divided by length of matching region)");
       log.info("  -p length       Print the found alignments if they are longer than length (not yet implemented).");
-      log.info("  -c              Colorspace mode: Removes first nucleotide; trims adapter correctly."); // TODO is this option necessary? Can be determined by project properties
       log.info("  -n <count>      Try to remove adapters at most <count> times (not yet implemented)");
    }
 
@@ -61,7 +60,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
    @Override
    public int run(String[] args) {
       TicToc totalTimer = new TicToc();
-      Options opt = new Options("e:,p:,c,n:");
+      Options opt = new Options("e:,p:,n:");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -77,14 +76,10 @@ public class AdapterRemoverSubcommand implements Subcommand {
 
       int min_print_align_length = -1;
       double max_error_rate = 2.2 / 18;
-      boolean colorspace = false;
       int times = 1;
 
       if (opt.isGiven("p")) {
          min_print_align_length = Integer.parseInt(opt.get("p"));
-      }
-      if (opt.isGiven("c")) {
-         colorspace = true;
       }
       if (opt.isGiven("n")) {
          times = Integer.parseInt(opt.get("n"));
@@ -136,6 +131,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
       }
       log.info("rmadapt: done; time for adapter translation was %.1f secs.", subTimer.tocs());
 
+      final boolean colorspace = sequenceProject.getBooleanProperty("ColorSpaceAlphabet");
       Sequences sequences = sequenceProject.readSequences();
       ArrayList<String> descriptions = sequences.getDescriptions();
       Sequences adapters = targetProject.readSequences("adapters");
@@ -174,7 +170,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
          int endSequence = sequenceBoundaries[1];
 
          if (colorspace && qualityValues == null) {
-            beginSequence = 2;
+            beginSequence += 2;   // if qualityValues were given, this was already done while translation
          }
 
          for (int k = 0; k < times; k++) { // maybe try several times to remove an adapter
