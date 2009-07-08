@@ -198,7 +198,8 @@ public class AdapterRemoverSubcommand implements Subcommand {
                   log.info(bestResult.toString());
                   log.info("");
                   log.info("");
-                  // TODO set read to length 0
+                  endSequence = beginSequence; // set read to length 0
+                  break; // read can not be cut again
                   
                } else if (adapterAlignment[0] == Aligner.GAP) {
                   
