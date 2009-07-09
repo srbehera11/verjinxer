@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Vector;
 
 import com.spinn3r.log5j.Logger;
 import static verjinxer.Globals.programname;
@@ -16,7 +13,6 @@ import verjinxer.Translater;
 import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
-import verjinxer.sequenceanalysis.Aligner.SemiglobalAlignmentResult;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.TicToc;
@@ -112,35 +108,22 @@ public class AdapterRemoverSubcommand implements Subcommand {
       TicToc subTimer = new TicToc();
       log.info("rmadapt: start adapter translation.");
       // translate adapters
-      SequenceWriter adapterSequenceWriter = null;
-      try {
-         adapterSequenceWriter = new SequenceWriter(targetProject, "adapters");
-      } catch (IOException ex) {
-         log.error("rmadapt: could not create output files for translated adapters; %s", ex);
-         return 1;
-      }
+      Sequences adapters = Sequences.createEmptySequencesInMemory();
       Translater translater = new Translater(null, targetProject.readAlphabet());
       for (int i = 0; i < adapterFiles.length; i++) {
-         translater.translateFasta(adapterFiles[i], adapterSequenceWriter);
-      }
-      try {
-         adapterSequenceWriter.store(); // stores seq, ssp and desc
-      } catch (IOException ex) {
-         log.error("rmadapt: could not store translated adapters; %s", ex);
-         return 1;
+         translater.translateFasta(adapterFiles[i], adapters);
       }
       log.info("rmadapt: done; time for adapter translation was %.1f secs.", subTimer.tocs());
 
       final boolean colorspace = sequenceProject.getBooleanProperty("ColorSpaceAlphabet");
       Sequences sequences = sequenceProject.readSequences();
       ArrayList<String> descriptions = sequences.getDescriptions();
-      Sequences adapters = targetProject.readSequences("adapters");
       int middle = 0; // number of times an adapter is in the middle of an read
-      final long maxAlignment = Math.max(adapterSequenceWriter.getMaximumLength(),
+      final long maxAlignment = Math.max(adapters.getMaximumLength(),
             sequenceProject.getLongProperty("LongestSequence")) + 1;
       int[][] lengths_front = new int[adapters.getNumberSequences()][(int) maxAlignment];
       int[][] lengths_back = new int[adapters.getNumberSequences()][(int) maxAlignment];
-      int[] sequencesLengthAfterCutting = new int[sequenceProject.getIntProperty("LongestSequence")+1];
+      int[] sequencesLengthAfterCutting = new int[sequenceProject.getIntProperty("LongestSequence") + 1];
       
       SequenceWriter sequenceWriter = null;
       long lastbyte = 0;
@@ -253,7 +236,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
 
          // Write cuted sequence to target project
          try {
-            lastbyte = sequenceWriter.writeBuffer(ByteBuffer.wrap(sequence, beginSequence,
+            lastbyte = sequenceWriter.addSequence(ByteBuffer.wrap(sequence, beginSequence,
                   endSequence - beginSequence));
             if (qualityValues != null) {
                sequenceWriter.addQualityValues(ByteBuffer.wrap(qualityValues, beginSequence,

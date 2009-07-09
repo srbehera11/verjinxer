@@ -17,6 +17,7 @@ import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.FastaFile;
 import verjinxer.sequenceanalysis.FastaFormatException;
 import verjinxer.sequenceanalysis.FastaSequence;
+import verjinxer.sequenceanalysis.ISequenceCreation;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
@@ -164,7 +165,7 @@ public class Translater {
    /**
     * @see translateFasta(String,Sequence)
     */
-   public void translateCSFasta(final File file, final SequenceWriter sequence) {
+   public void translateCSFasta(final File file, final ISequenceCreation sequence) {
       // nothing special
       // FastaFile.read() already ignores comment lines with #
       // so call translateFasta(String,Sequence)
@@ -183,7 +184,7 @@ public class Translater {
     *           sequence to translate into
     * @see translateFasta(String,Sequence)
     */
-   public void translateFastaFromDNA2CS(final File file, final SequenceWriter sequence) {
+   public void translateFastaFromDNA2CS(final File file, final ISequenceCreation sequence) {
       FastaFile f = new FastaFile(file);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
@@ -202,7 +203,7 @@ public class Translater {
             if (fseq == null)
                break;
             tr = fseq.translateDNAtoCS(tr, trim, appendforward);
-            lastbyte = sequence.writeBuffer(tr);
+            lastbyte = sequence.addSequence(tr);
             sequence.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
          } catch (InvalidSymbolException ex) {
             log.error("translate: %s", ex);
@@ -223,7 +224,7 @@ public class Translater {
       }
    }
 
-   public void translateFasta(final File file, final SequenceWriter sequence) {
+   public void translateFasta(final File file, final ISequenceCreation sequence) {
       translateFasta(file, sequence, null);
    }
 
@@ -231,7 +232,7 @@ public class Translater {
     * @param qualityFile
     *           File with FASTA-style quality information (one byte per character). May be null.
     */
-   public void translateFasta(final File file, final SequenceWriter sequence, final File qualityFile) {
+   public void translateFasta(final File file, final ISequenceCreation sequence, final File qualityFile) {
       FastaFile qualityFasta = null;
       if (qualityFile != null) {
          qualityFasta = new FastaFile(qualityFile);
@@ -300,12 +301,12 @@ public class Translater {
             }
             
             tr = fseq.translateTo(tr, trim, alphabet, reverse, appendforward);
-            lastbyte = sequence.writeBuffer(tr);
+            lastbyte = sequence.addSequence(tr);
             if (addrc) {
                if (!separateRCByWildcard)
                   sequence.addInfo(fseq.getHeader(), fseq.length(), (int) (lastbyte - 1));
                tr = fseq.translateTo(tr, trim, alphabet2, true, appendreverse);
-               lastbyte = sequence.writeBuffer(tr);
+               lastbyte = sequence.addSequence(tr);
                if (separateRCByWildcard)
                   sequence.addInfo(fseq.getHeader(), 2 * fseq.length() + 1, (int) (lastbyte - 1));
                else
@@ -341,7 +342,7 @@ public class Translater {
     * @param sequence
     * @deprecated
     */
-   void translateFastaBisulfite(final File file, final SequenceWriter sequence) {
+   void translateFastaBisulfite(final File file, final ISequenceCreation sequence) {
       FastaFile f = new FastaFile(file);
       FastaSequence fseq = null;
       ByteBuffer tr = null;
@@ -359,15 +360,15 @@ public class Translater {
             if (fseq == null)
                break;
             tr = fseq.translateDNABiTo(tr, trim, false, false, 1); // nonmeth-bis-#
-            lastbyte = sequence.writeBuffer(tr);
+            lastbyte = sequence.addSequence(tr);
             tr = fseq.translateDNABiTo(tr, trim, false, true, 2); // nonmeth-cbis-$
-            lastbyte = sequence.writeBuffer(tr);
+            lastbyte = sequence.addSequence(tr);
             sequence.addInfo(fseq.getHeader() + " /nonmeth-bis+cbis", 2 * fseq.length() + 1,
                   (int) (lastbyte - 1));
             tr = fseq.translateDNABiTo(tr, trim, true, false, 1); // meth-bis-#
-            lastbyte = sequence.writeBuffer(tr);
+            lastbyte = sequence.addSequence(tr);
             tr = fseq.translateDNABiTo(tr, trim, true, true, 2); // meth-cbis-$
-            lastbyte = sequence.writeBuffer(tr);
+            lastbyte = sequence.addSequence(tr);
             sequence.addInfo(fseq.getHeader() + " /meth-bis+cbis", 2 * fseq.length() + 1,
                   (int) (lastbyte - 1));
          } catch (Exception ex) {
@@ -394,7 +395,7 @@ public class Translater {
     * 
     * -- separator is appended (never the wildcard).
     */
-   void translateText(final File file, final SequenceWriter out) {
+   void translateText(final File file, final ISequenceCreation out) {
       ByteBuffer tr = null;
       long lastbyte = 0;
       byte appender;
@@ -416,7 +417,7 @@ public class Translater {
                throw new IOException(ex);
             }
          }
-         lastbyte = out.writeBuffer(tr);
+         lastbyte = out.addSequence(tr);
          out.addInfo(file.getName(), len, (int) (lastbyte - 1));
       } catch (IOException ex) {
          log.error("translate: error translating '%s': %s", file, ex);

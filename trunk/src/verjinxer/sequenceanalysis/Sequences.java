@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -14,7 +15,7 @@ import verjinxer.util.FileTypes;
 /**
  * @author Markus Kemmerling
  */
-public class Sequences {
+public class Sequences implements ISequenceCreation {
 
    protected final File seqFile;
    protected final File sspFile;
@@ -25,13 +26,55 @@ public class Sequences {
    private long[] separatorPositions = null;
    private ArrayList<String> descriptions = null;
    private byte[] qualityValues = null;
+   
+   /**
+    * TODO
+    * 
+    * @param project
+    * @return
+    * @throws IOException
+    */
+   public static Sequences readSequencesFromDisc(final Project project) throws IOException {
+      Sequences sequences = new Sequences(project);
+      sequences.load();
+      return sequences;
+   }
 
-   public Sequences(final Project project) throws IOException {
+   /**
+    * TODO
+    * 
+    * @param project
+    * @param name
+    * @return
+    * @throws IOException
+    */
+   public static Sequences readSequencesFromDisc(final Project project, final String name)
+         throws IOException {
+      Sequences sequences = new Sequences(project, name);
+      sequences.load();
+      return sequences;
+   }
+
+   /**
+    * TODO
+    * 
+    * @param project
+    * @return
+    */
+   public static Sequences createEmptySequencesInMemory() {
+      return new Sequences();
+   }
+
+   /**
+    * TODO
+    * 
+    * @param project
+    */
+   private Sequences(final Project project) {
       seqFile = project.makeFile(FileTypes.SEQ);
       sspFile = project.makeFile(FileTypes.SSP);
       descFile = project.makeFile(FileTypes.DESC);
       qualityFile = project.makeFile(FileTypes.QUALITIY);
-      load();
    }
    
    /**
@@ -41,12 +84,24 @@ public class Sequences {
     * @param name
     * @throws IOException
     */
-   public Sequences(Project project, String name) throws IOException {
+   private Sequences(final Project project, final String name) {
       seqFile = project.makeFile(FileTypes.SEQ, name);
       sspFile = project.makeFile(FileTypes.SSP, name);
       descFile = project.makeFile(FileTypes.DESC, name);
       qualityFile = project.makeFile(FileTypes.QUALITIY, name);
-      load();
+   }
+
+   /**
+    * TODO
+    */
+   private Sequences() {
+      seqFile = null; // TODO warn in the getter
+      sspFile = null;
+      descFile = null;
+      qualityFile = null;
+
+      sequence = new byte[0];
+      separatorPositions = new long[0];
    }
 
    /**
@@ -128,13 +183,6 @@ public class Sequences {
       return sequence;
    }
 
-   // /**
-   // * Rewinds this sequence. The position is set to zero.
-   // */
-   // public void rewind() {
-   // //TODO
-   // }
-
    /**
     * @return Number of concatenated sequences.
     */
@@ -159,13 +207,6 @@ public class Sequences {
       }
       // TODO why is separatorPositions of type long[]?
    }
-
-   // /**
-   // * @return Array containing the length of each sequence.
-   // */
-   // public long[] getLengths() {
-   // //TODO creat infos from separatorPositions
-   // }
 
    /**
     * Returns array of quality values (concatenated, with separators); i.e. for each k,
@@ -225,7 +266,7 @@ public class Sequences {
          boundaries[1] = (int) separatorPositions[0];
       } else {
          boundaries[0] = (int) separatorPositions[n - 1] + 1;
-         boundaries[1] = (int) (int) separatorPositions[n];
+         boundaries[1] = (int) separatorPositions[n];
       }
       return boundaries;
    }
@@ -238,6 +279,66 @@ public class Sequences {
          loadDescription();
       }
       return descriptions;
+      
+   }
+
+   @Override
+   public void addInfo(String header, long length, long ssp) {
+      if (descriptions == null) {
+         descriptions = new ArrayList<String>();
+      }
+      descriptions.add(header);
+
+      separatorPositions = Arrays.copyOf(separatorPositions, separatorPositions.length + 1);
+      separatorPositions[separatorPositions.length - 1] = ssp;
+   }
+
+   @Override
+   public void addQualityValues(ByteBuffer buffer) throws IOException {
+      if (qualityValues == null) {
+         qualityValues = new byte[0];
+      }
+      final int end = qualityValues.length;
+      qualityValues = Arrays.copyOf(qualityValues, qualityValues.length + buffer.remaining());
+      buffer.get(qualityValues, end, buffer.remaining());
+   }
+
+   @Override
+   public long addSequence(ByteBuffer buffer) throws IOException {
+      final int end = sequence.length;
+      sequence = Arrays.copyOf(sequence, sequence.length + buffer.remaining());
+      buffer.get(sequence, end, buffer.remaining());
+      return sequence.length;
+   }
+
+   @Override
+   public long getMinimumLength() {
+      if (separatorPositions.length < 1) {
+         return 0;
+      }
+
+      long min = separatorPositions[0];
+      for (int i = 1; i < separatorPositions.length; i++) {
+         if (separatorPositions[i] - separatorPositions[i - 1] < min) {
+            min = separatorPositions[i] - separatorPositions[i - 1];
+         }
+      }
+      return min;
+   }
+
+   @Override
+   public long getMaximumLength() {
+      if (separatorPositions.length < 1) {
+         return 0;
+      }
+
+      long max = separatorPositions[0];
+      for (int i = 1; i < separatorPositions.length; i++) {
+         if (separatorPositions[i] - separatorPositions[i - 1] > max) {
+            max = separatorPositions[i] - separatorPositions[i - 1];
+         }
+      }
+      return max;
    }
 
 }
