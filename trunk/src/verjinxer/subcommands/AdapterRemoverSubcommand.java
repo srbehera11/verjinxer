@@ -136,8 +136,10 @@ public class AdapterRemoverSubcommand implements Subcommand {
       ArrayList<String> descriptions = sequences.getDescriptions();
       Sequences adapters = targetProject.readSequences("adapters");
       int middle = 0; // number of times an adapter is in the middle of an read
-      int[][] lengths_front = new int[adapters.getNumberSequences()][(int) adapterSequenceWriter.getMaximumLength() + 1];
-      int[][] lengths_back = new int[adapters.getNumberSequences()][(int) adapterSequenceWriter.getMaximumLength() + 1];
+      final long maxAlignment = Math.max(adapterSequenceWriter.getMaximumLength(),
+            sequenceProject.getLongProperty("LongestSequence")) + 1;
+      int[][] lengths_front = new int[adapters.getNumberSequences()][(int) maxAlignment];
+      int[][] lengths_back = new int[adapters.getNumberSequences()][(int) maxAlignment];
       int[] sequencesLengthAfterCutting = new int[sequenceProject.getIntProperty("LongestSequence")+1];
       
       SequenceWriter sequenceWriter = null;
