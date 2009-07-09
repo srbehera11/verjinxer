@@ -326,6 +326,26 @@ public class AdapterRemoverSubcommand implements Subcommand {
       return 0;
    }
 
+   /**
+    * This method calculates for each adapter and the given part of the sequence the semiglobal
+    * alignment. The relevant part of the sequence for that the alignment is build is specified with
+    * beginSequence and endSequence. The longest alignment will be stored in bestResult and
+    * additionally the index of the adapter with that the longest alignment was build will be
+    * returned.
+    * 
+    * @param bestResult
+    *           The longest alignment will be stored in it.
+    * @param adapters
+    *           The adapters the alignment is calculated with.
+    * @param sequence
+    *           A array with many sequences, where one of them (depending on beginSequence and
+    *           endSequence) is used for calculating the alignment.
+    * @param beginSequence
+    *           The index where the relevant sequence starts in sequences.
+    * @param endSequence
+    *           The first index behind the relevant sequence in sequences.
+    * @return The index of the adapter with that the longest alignment was build.
+    */
    private int findBestAlignment(Aligner.SemiglobalAlignmentResult bestResult,
          final Sequences adapters, final byte[] sequence, final int beginSequence,
          final int endSequence) {

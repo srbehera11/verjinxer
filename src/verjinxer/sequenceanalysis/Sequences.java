@@ -13,6 +13,10 @@ import verjinxer.util.ArrayFile;
 import verjinxer.util.FileTypes;
 
 /**
+ * This class is a set for sequences. They can be loaded from disc (previously created and written
+ * with the class SequenceWriter) or created from scratch in memory. There is no possibility to
+ * store changes on disc.
+ * 
  * @author Markus Kemmerling
  */
 public class Sequences implements ISequenceCreation {
@@ -28,10 +32,10 @@ public class Sequences implements ISequenceCreation {
    private byte[] qualityValues = null;
    
    /**
-    * TODO
+    * Creates an instance of Sequences by reading the .sec and .ssp files of the given project.
     * 
     * @param project
-    * @return
+    * @return An instance of Sequences.
     * @throws IOException
     */
    public static Sequences readSequencesFromDisc(final Project project) throws IOException {
@@ -41,11 +45,12 @@ public class Sequences implements ISequenceCreation {
    }
 
    /**
-    * TODO
+    * Creates an instance of Sequences by reading the .sec and .ssp files of the given project with
+    * the given name.
     * 
     * @param project
     * @param name
-    * @return
+    * @return An instance of Sequences.
     * @throws IOException
     */
    public static Sequences readSequencesFromDisc(final Project project, final String name)
@@ -56,17 +61,17 @@ public class Sequences implements ISequenceCreation {
    }
 
    /**
-    * TODO
+    * Creates a new and empty Sequences in memory.
     * 
-    * @param project
-    * @return
+    * @return An instance of Sequences.
     */
    public static Sequences createEmptySequencesInMemory() {
       return new Sequences();
    }
 
    /**
-    * TODO
+    * Constructs a new instance of Sequences and determines the files to be load from according to
+    * the given project.
     * 
     * @param project
     */
@@ -78,7 +83,8 @@ public class Sequences implements ISequenceCreation {
    }
    
    /**
-    * Creates a new sequences from files with the given name depending to the given project
+    * Creates a new sequences and determines the files to be load from according to the given
+    * project and the given name.
     * 
     * @param project
     * @param name
@@ -92,10 +98,10 @@ public class Sequences implements ISequenceCreation {
    }
 
    /**
-    * TODO
+    * Constructs a new and empty instance of Sequences with no files to load from.
     */
    private Sequences() {
-      seqFile = null; // TODO warn in the getter
+      seqFile = null; 
       sspFile = null;
       descFile = null;
       qualityFile = null;
@@ -105,28 +111,28 @@ public class Sequences implements ISequenceCreation {
    }
 
    /**
-    * @return The filename of the Sequence.
+    * @return The filename of the Sequence (can be null if the Sequences were not load from disc).
     */
    public File getSequenceFile() {
       return seqFile;
    }
 
    /**
-    * @return The filename of the separator positions
+    * @return The filename of the separator positions (can be null if the Sequences were not load from disc).
     */
    public File getSequencesSeparatorPositionsFile() {
       return sspFile;
    }
 
    /**
-    * @return The filename of the descriptions
+    * @return The filename of the descriptions (can be null if the Sequences were not load from disc).
     */
    public File getDescriptionFile() {
       return descFile;
    }
 
    /**
-    * @return The filename of the Qualityfile
+    * @return The filename of the Qualityfile (can be null if the Sequences were not load from disc).
     */
    public File getQualityFile() {
       return qualityFile;
@@ -170,7 +176,7 @@ public class Sequences implements ISequenceCreation {
    }
 
    /**
-    * @return Accumulated length of all sequences (length of .seq file).
+    * @return Accumulated length of all sequences.
     */
    public long length() {
       return sequence.length;
@@ -212,7 +218,7 @@ public class Sequences implements ISequenceCreation {
     * Returns array of quality values (concatenated, with separators); i.e. for each k,
     * getQualityValues()[k] contains the quality of the character arrar()[k].
     * 
-    * @return Returns null of qualities are not available.
+    * @return Returns null if qualities are not available.
     */
    public byte[] getQualityValues() throws IOException {
       if (qualityValues == null) {
