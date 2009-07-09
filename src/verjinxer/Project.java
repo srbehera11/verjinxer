@@ -199,14 +199,14 @@ public class Project {
     */
    public Sequences readSequences() {
       try {
-         return new Sequences(this);
+         return Sequences.readSequencesFromDisc(this);
       } catch (IOException e) {
          System.err.printf("%s: could not read sequence. Stop.%n", Globals.cmdname);
          System.exit(1);
          return null;
       }
    }
-   
+
    /**
     * Reads the sequences from of this project with the given name from disc.
     * 
@@ -214,7 +214,7 @@ public class Project {
     */
    public Sequences readSequences(String name) {
       try {
-         return new Sequences(this, name);
+         return Sequences.readSequencesFromDisc(this, name);
       } catch (IOException e) {
          System.err.printf("%s: could not read sequence. Stop.%n", Globals.cmdname);
          System.exit(1);

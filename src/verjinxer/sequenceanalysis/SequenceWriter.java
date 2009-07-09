@@ -13,7 +13,7 @@ import verjinxer.util.FileTypes;
 /**
  * @author Markus Kemmerling
  */
-public class SequenceWriter {
+public class SequenceWriter implements ISequenceCreation {
 
    private final File seqFile;
    private final File sspFile;
@@ -57,29 +57,29 @@ public class SequenceWriter {
       sequenceArrayFile.openW();
    }
 
-   /**
-    * @return The filename of the Sequence.
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#getSequenceFile()
     */
    public File getSequenceFile() {
       return seqFile;
    }
 
-   /**
-    * @return The filename of the separator positions
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#getSequencesSeparatorPositionsFile()
     */
    public File getSequencesSeparatorPositionsFile() {
       return sspFile;
    }
 
-   /**
-    * @return The filename of the descriptions
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#getDescriptionFile()
     */
    public File getDescriptionFile() {
       return descFile;
    }
 
-   /**
-    * @return The filename of the Qualityfile
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#getQualityFile()
     */
    public File getQualityFile() {
       return qualityFile;
@@ -107,26 +107,15 @@ public class SequenceWriter {
       descfile.close();
    }
 
-   /**
-    * Appends the content of the given buffer to the concatenated sequences.
-    * 
-    * @param tr
-    * @return Accumulated length of all sequences (length of .seq file) after writing.
-    * @throws IOException
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#writeBuffer(java.nio.ByteBuffer)
     */
-   public long writeBuffer(ByteBuffer tr) throws IOException {
+   public long addSequence(ByteBuffer tr) throws IOException {
       return sequenceArrayFile.writeBuffer(tr);
    }
 
-   /**
-    * Adds a new info the one of the sequences.
-    * 
-    * @param header
-    *           Sequenceheader
-    * @param length
-    *           Sequencelength
-    * @param ssp
-    *           Separator position after sequence.
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#addInfo(java.lang.String, long, long)
     */
    public void addInfo(String header, long length, long ssp) {
       descriptions.add(header);
@@ -140,15 +129,15 @@ public class SequenceWriter {
       this.separatorPositions.add(ssp);
    }
 
-   /**
-    * @return Accumulated length of all sequences (length of .seq file).
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#length()
     */
    public long length() {
       return sequenceArrayFile.length();
    }
 
-   /**
-    * @return Number of concatenated sequences.
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#getNumberSequences()
     */
    public int getNumberSequences() {
       return separatorPositions.size();
@@ -165,20 +154,23 @@ public class SequenceWriter {
       return lengths;
    }
 
-   /**
-    * @return Maximum length of sequences.
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#getMaximumLength()
     */
    public long getMaximumLength() {
       return maxSequenceLength;
    }
 
-   /**
-    * @return Minimum length of sequences.
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#getMinimumLength()
     */
    public long getMinimumLength() {
       return minSequenceLength;
    }
 
+   /* (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISequenceWriter#addQualityValues(java.nio.ByteBuffer)
+    */
    public void addQualityValues(ByteBuffer buffer) throws IOException {
       if (qualityArrayFile == null) {
          qualityArrayFile = new ArrayFile(qualityFile);
