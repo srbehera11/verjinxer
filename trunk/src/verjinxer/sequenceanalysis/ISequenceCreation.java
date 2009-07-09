@@ -36,13 +36,13 @@ public interface ISequenceCreation {
     * Appends the content of the given buffer to the concatenated sequences.
     * 
     * @param tr
-    * @return Accumulated length of all sequences (length of .seq file) after writing.
+    * @return Accumulated length of all sequences.
     * @throws IOException
     */
    public abstract long addSequence(ByteBuffer tr) throws IOException;
 
    /**
-    * Adds a new info the one of the sequences.
+    * Adds a new info for the last added sequence.
     * 
     * @param header
     *           Sequenceheader
@@ -54,7 +54,7 @@ public interface ISequenceCreation {
    public abstract void addInfo(String header, long length, long ssp);
 
    /**
-    * @return Accumulated length of all sequences (length of .seq file).
+    * @return Accumulated length of all sequences.
     */
    public abstract long length();
 
@@ -63,6 +63,13 @@ public interface ISequenceCreation {
     */
    public abstract int getNumberSequences();
 
+   /**
+    * Adds quality values for the last added sequence.
+    * 
+    * @param buffer
+    *           Quality values.
+    * @throws IOException
+    */
    public abstract void addQualityValues(ByteBuffer buffer) throws IOException;
 
    /**

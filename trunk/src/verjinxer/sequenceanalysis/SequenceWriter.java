@@ -11,6 +11,9 @@ import verjinxer.util.ArrayFile;
 import verjinxer.util.FileTypes;
 
 /**
+ * This class is a set for sequences. It should not be used to create and represent sequences in
+ * memory but to create and write them efficiently to disc.
+ * 
  * @author Markus Kemmerling
  */
 public class SequenceWriter implements ISequenceCreation {
@@ -86,7 +89,7 @@ public class SequenceWriter implements ISequenceCreation {
    }
 
    /**
-    * Writes concatenated sequences, separator positions and descriptions into files.
+    * Writes separator positions and descriptions into files.
     * 
     * @throws IOException
     */
@@ -107,8 +110,13 @@ public class SequenceWriter implements ISequenceCreation {
       descfile.close();
    }
 
-   /* (non-Javadoc)
-    * @see verjinxer.sequenceanalysis.ISequenceWriter#writeBuffer(java.nio.ByteBuffer)
+   /**
+    * Appends the content of the given buffer to the concatenated sequences. This is done by
+    * writing it direct into file.
+    * 
+    * @param tr
+    * @return Accumulated length of all sequences (length of .seq file after writing to disc).
+    * @throws IOException
     */
    public long addSequence(ByteBuffer tr) throws IOException {
       return sequenceArrayFile.writeBuffer(tr);
@@ -129,8 +137,8 @@ public class SequenceWriter implements ISequenceCreation {
       this.separatorPositions.add(ssp);
    }
 
-   /* (non-Javadoc)
-    * @see verjinxer.sequenceanalysis.ISequenceWriter#length()
+   /**
+    * @return Accumulated length of all sequences (length of .seq file).
     */
    public long length() {
       return sequenceArrayFile.length();
