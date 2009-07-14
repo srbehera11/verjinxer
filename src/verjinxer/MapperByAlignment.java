@@ -8,8 +8,8 @@ import java.util.Arrays;
 
 import com.spinn3r.log5j.Logger;
 
-import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.sequenceanalysis.alignment.Aligner;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
 import verjinxer.util.FileTypes;
