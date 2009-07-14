@@ -13,9 +13,9 @@ import java.util.Arrays;
 
 import verjinxer.Globals;
 import verjinxer.Project;
-import verjinxer.sequenceanalysis.Aligner;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.sequenceanalysis.alignment.Aligner;
 import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;

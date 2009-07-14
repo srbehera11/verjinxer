@@ -1,7 +1,9 @@
-package verjinxer.sequenceanalysis;
+package verjinxer.sequenceanalysis.alignment;
 
 import java.util.Arrays;
 
+import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.sequenceanalysis.alignment.IAligner.Direction;
 import verjinxer.util.ArrayUtils;
 
 /**
@@ -10,29 +12,6 @@ import verjinxer.util.ArrayUtils;
  * 
  */
 public class Aligner {
-   /** direction constants for traceback table */
-   private enum Direction {
-      LEFT, UP, DIAG
-   }
-
-   private static class COSTS {
-      public static int INDEL = 1;
-      public static int MISMATCH = 1;
-   }
-
-   public static final byte GAP = -1; // TODO
-
-   /** DP table entry */
-   private static class Entry {
-      public int score;
-      public Direction backtrack;
-   }
-
-   private static class CostEntry {
-      public int cost;
-      public Direction backtrack;
-   }
-
    public static class ForwardAlignmentResult {
       private final byte[] sequence1, sequence2;
 
@@ -117,11 +96,11 @@ public class Aligner {
       // that are really necessary.
       // Where you would access DP[i][j] in a full DP table, you now have to access
       // columns[j][i-j+e].
-      CostEntry[][] columns = new CostEntry[n + 1][2 * e + 1];
+      IAligner.CostEntry[][] columns = new IAligner.CostEntry[n + 1][2 * e + 1];
 
       for (int i = 0; i < columns.length; ++i) {
          for (int j = 0; j < columns[i].length; ++j) {
-            columns[i][j] = new CostEntry();
+            columns[i][j] = new IAligner.CostEntry();
          }
       }
 
@@ -143,8 +122,8 @@ public class Aligner {
 
       // calculate alignment
       // outer loop goes over columns
-      CostEntry[] cur_column;
-      CostEntry[] prev_column = columns[0];
+      IAligner.CostEntry[] cur_column;
+      IAligner.CostEntry[] prev_column = columns[0];
       for (j = 1; j < n + 1; ++j) {
          cur_column = columns[j];
 
@@ -169,7 +148,7 @@ public class Aligner {
 
             // switch (costtype) {
             // case REGULAR:
-            cost += (c1 != c2) ? COSTS.MISMATCH : 0;
+            cost += (c1 != c2) ? IAligner.COSTS.MISMATCH : 0;
             // break;
             // case BISULFITE_CT_CMC:
             // cost += cost_bisulfite_CT_cmc(c1, c2);
@@ -187,7 +166,7 @@ public class Aligner {
 
             // we can only have a deletion (UP in backtrack table) if we are not at the top
             if (d != 0) {
-               int tmp = cur_column[d - 1].cost + COSTS.INDEL;
+               int tmp = cur_column[d - 1].cost + IAligner.COSTS.INDEL;
                // avoid aligning "CG" to "C-G"
                // if (costtype > REGULAR && c2 == 'C' && c1 == 'G' && p1 == 'C' && n2 == 'G') {
                // tmp += 1;
@@ -199,7 +178,7 @@ public class Aligner {
             }
             // we can only have an insertion (LEFT in backtrack table) if we are not at the bottom
             if (d != 2 * e) {
-               int tmp = prev_column[d + 1].cost + COSTS.INDEL;
+               int tmp = prev_column[d + 1].cost + IAligner.COSTS.INDEL;
 
                // avoid aligning "C-G" to "CG"
                // if (costtype > REGULAR && c1 == 'C' && c2 == 'G' && p2 == 'C' && n1 == 'G') {
@@ -268,11 +247,11 @@ public class Aligner {
             alignment1[p1++] = s1[--i];
             alignment2[p2++] = s2[--j];
          } else if (direction == Direction.LEFT) {
-            alignment1[p1++] = GAP;
+            alignment1[p1++] = IAligner.GAP;
             alignment2[p2++] = s2[--j];
          } else if (direction == Direction.UP) {
             alignment1[p1++] = s1[--i];
-            alignment2[p2++] = GAP;
+            alignment2[p2++] = IAligner.GAP;
          } else {
             assert false;
          }
@@ -295,299 +274,6 @@ public class Aligner {
 
    public static void printAlignment(ForwardAlignmentResult alignment, Alphabet alphabet) {
 
-   }
-
-   /**
-    * Computes an end-gap free alignment. Also called free-shift alignment or semiglobal alignment.
-    * 
-    * @param s1
-    * @param s2
-    * @author Markus Kemmerling
-    */
-   public static SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final byte[] s2) {
-      return semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length);
-   }
-   
-   /**
-    * Computes an end-gap free alignment. Also called free-shift alignment or semiglobal alignment.
-    * The alignment is only computed for specified ranges within the given sequences. Particular,
-    * the alignment is computed of s1[start1:end1] and s2[start2:end2] (a[x:y] denotes the subarray
-    * of an array a with initial index x (inclusive) and final index y (exclusive)).
-    * 
-    * @param s1
-    *           first sequence.
-    * @param start1
-    *           first index in s1 to compute the alignment from.
-    * @param end1
-    *           final index in s1 to compute the alignment from, exclusive. (This index may lie
-    *           outside the array.)
-    * @param s2
-    *           second sequence.
-    * @param start2
-    *           first index in s2 to compute the alignment from.
-    * @param end2
-    *           final index in s2 to compute the alignment from, exclusive. (This index may lie
-    *           outside the array.)
-    * @return
-    */
-   public static SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2) {
-      /*            s2 (column:1..n)
-            --------------->
-           |
-        s1 | (row:1..m)
-           |
-           V
-      */
-      
-      final int m = end1 - start1;
-      final int n = end2 - start2;
-      
-      if (m == 0) {
-         // s1 is empty
-         byte[] alignment2 = Arrays.copyOfRange(s2, start2, end2);
-         byte[] alignment1 = new byte[alignment2.length];
-         Arrays.fill(alignment1, GAP);
-         return new SemiglobalAlignmentResult(alignment1, alignment2, alignment2.length, 0, 0);
-      } else if (n == 0) {
-         // s2 is empty
-         byte[] alignment1 = Arrays.copyOfRange(s1, start1, end1);
-         byte[] alignment2 = new byte[alignment1.length];
-         Arrays.fill(alignment2, GAP);
-         return new SemiglobalAlignmentResult(alignment1, alignment2, alignment1.length, 0, 0);
-      }
-
-      // the DP table row x column
-      Entry[][] table = new Entry[m + 1][n + 1];
-
-      int row, column;
-
-      for (row = 0; row < table.length; ++row) {
-         for (column = 0; column < table[row].length; ++column) {
-            table[row][column] = new Entry();
-         }
-      }
-
-      for (row = 0; row < table.length; ++row) {
-         table[row][0].score = 0;
-         //table[row][0].backtrack is not set cause it is never read
-      }
-      for (column = 0; column < table[0].length; ++column) {
-         table[0][column].score = 0;
-         //table[0][column].backtrack is not set cause it is never read
-      }
-
-      // calculate alignment (using unit costs)
-      Direction bt;
-      int score;
-      for (row = 1; row < table.length; ++row) {
-         for (column = 1; column < table[0].length; ++column) {
-            // look diagonal
-            bt = Direction.DIAG;
-            score = table[row - 1][column - 1].score
-                  + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? 1 : -1);
-            // look up
-            int tmp = table[row - 1][column].score - 1;
-            if (tmp > score) {
-               bt = Direction.UP;
-               score = tmp;
-            }
-            // look left
-            tmp = table[row][column - 1].score - 1;
-            if (tmp > score) {
-               bt = Direction.LEFT;
-               score = tmp;
-            }
-            table[row][column].score = score;
-            table[row][column].backtrack = bt;
-         }
-      }
-
-      // find position with highest score in last column or last row
-      Entry bestEntry = table[m][1];
-      int bestColumn = 1, bestRow = m;
-      for (column = 2; column < table[m].length; ++column) { // start by 2 cause bestEntry is
-                                                             // already set to table[m][1]
-         if (table[m][column].score >= bestEntry.score) { // must be >= cause better to start near corner
-            bestColumn = column;
-            bestEntry = table[m][column];
-         }
-      }
-
-      for (row = 1; row < table.length ; ++row) { // must be so, cause align.py was coded so and the test cases are from that code
-         if (table[row][n].score >= bestEntry.score) { // must be >= cause better to start near corner
-            bestRow = row;
-            bestColumn = n;
-            bestEntry = table[row][n];
-         }
-      }
-      //both can be 0, if one of the sequences has length 0
-      assert bestRow >= 0 && bestRow < table.length: String.format("bestRow: %s%n max is %s", bestRow, m);
-      assert bestColumn >= 0 && bestColumn < table[bestRow].length: String.format("bestColumn: %s%n max is %s", bestColumn,n);
-
-      // now track back
-      byte[] alignment1 = new byte[m + n];
-      byte[] alignment2 = new byte[m + n];
-
-      int p1 = 0;
-      int p2 = 0;
-
-      row = m;
-      column = n;
-
-      assert bestRow == table.length - 1 || bestColumn == table[0].length - 1;
-
-      // first, walk from the lower right corner to the
-      // position where we found the maximum score
-      if (table.length - 1 == bestRow) { // we are in the last row
-         while (column > bestColumn) {
-            alignment1[p1++] = GAP;
-            alignment2[p2++] = s2[start2 + --column];
-         }
-      } else { // we are in the last column
-         while (row > bestRow) {
-            alignment1[p1++] = s1[start1 + --row];
-            alignment2[p2++] = GAP;
-         }
-      }
-      int rlen = p1;
-
-      int errors = 0;
-
-      // now, the actual backtracking.
-      // we build reverse sequences while backtracking and
-      // reverse them afterwards.
-      Direction direction;
-      while (row > 0 && column > 0) {
-         direction = table[row][column].backtrack;
-         if (direction == Direction.DIAG) {
-            if (s1[start1 + --row] != s2[start2 + --column])
-               errors++;
-            alignment1[p1++] = s1[start1 + row];
-            alignment2[p2++] = s2[start2 + column];
-         } else if (direction == Direction.LEFT) {
-            errors++;
-            alignment1[p1++] = GAP;
-            alignment2[p2++] = s2[start2 + --column];
-         } else if (direction == Direction.UP) {
-            alignment1[p1++] = s1[start1 + --row];
-            alignment2[p2++] = GAP;
-            errors++;
-         }
-      }
-
-      // compute the length of the actual alignment (ignoring ends)
-      int length = p1 - rlen;
-
-      int begin = row;
-      if (column > row)
-         begin = column;
-
-      while (column > 0) {
-         alignment1[p1++] = GAP;
-         alignment2[p2++] = s2[start2 + --column];
-      }
-      while (row > 0) {
-         alignment1[p1++] = s1[start1 + --row];
-         alignment2[p2++] = GAP;
-      }
-      assert row == 0 && column == 0;
-      assert table[bestRow][bestColumn].score == length - 2 * errors;
-
-      // reverse result
-      ArrayUtils.reverseArray(alignment1, p1);
-      ArrayUtils.reverseArray(alignment2, p2);
-      
-      //cut unused fields in alignments
-      alignment1 = Arrays.copyOf(alignment1, p1);
-      alignment2 = Arrays.copyOf(alignment2, p2);
-
-      return new SemiglobalAlignmentResult(alignment1, alignment2, begin, length, errors);
-   }
-   
-   /**
-    * 
-    * @author Markus Kemmerling
-    */
-   public static class SemiglobalAlignmentResult {
-      private byte[] sequence1, sequence2;
-
-      private int begin, length, errors;
-
-      public SemiglobalAlignmentResult() {
-         // all attributes are initialized by default
-      }
-
-      public SemiglobalAlignmentResult(byte[] sequence1, byte[] sequence2, int begin, int length,
-            int errors) {
-         setAllAttributes(sequence1, sequence2, begin, length, errors);
-      }
-
-      public void setAllAttributes(byte[] sequence1, byte[] sequence2, int begin, int length,
-            int errors) {
-         this.sequence1 = sequence1;
-         this.sequence2 = sequence2;
-         this.begin = begin;
-         this.length = length;
-         this.errors = errors;
-      }
-
-      public byte[] getSequence1() {
-         return sequence1;
-      }
-
-      public byte[] getSequence2() {
-         return sequence2;
-      }
-
-      public int getBegin() {
-         return begin;
-      }
-
-      public int getLength() {
-         return length;
-      }
-
-      public int getErrors() {
-         return errors;
-      }
-
-      @Override
-      public String toString() {
-         StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
-         for (byte b : sequence1) {
-            if (b == GAP) {
-               sb.append(' ');
-            } else {
-               sb.append(b);
-            }
-         }
-
-         sb.append('\n');
-
-         for (int i = 0; i < sequence1.length; i++) {
-            if (i >= begin && i < begin + length) {
-               if (sequence1[i] == sequence2[i]) {
-                  sb.append('|');
-               } else {
-                  sb.append('x');
-               }
-            } else {
-               sb.append(' ');
-            }
-         }
-
-         sb.append('\n');
-
-         for (byte b : sequence2) {
-            if (b == GAP) {
-               sb.append(' ');
-            } else {
-               sb.append(b);
-            }
-         }
-
-         return sb.toString();
-      }
    }
 
    // TODO perhaps remove static
