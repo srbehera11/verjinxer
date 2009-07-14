@@ -2,6 +2,7 @@ package verjinxer.sequenceanalysis.alignment;
 
 import java.util.Arrays;
 
+import verjinxer.sequenceanalysis.alignment.EndLocations.MatrixPosition;
 import verjinxer.sequenceanalysis.alignment.IAligner.Direction;
 import verjinxer.util.ArrayUtils;
 
@@ -126,7 +127,7 @@ public class SemiglobalAligner {
     *           outside the array.)
     * @return
     */
-   public static SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2) {
+   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2) {
       /*            s2 (column:1..n)
             --------------->
            |
@@ -155,22 +156,9 @@ public class SemiglobalAligner {
       // the DP table row x column
       IAligner.Entry[][] table = new IAligner.Entry[m + 1][n + 1];
    
+      beginLocation.initMatrix(table);
+      
       int row, column;
-   
-      for (row = 0; row < table.length; ++row) {
-         for (column = 0; column < table[row].length; ++column) {
-            table[row][column] = new IAligner.Entry();
-         }
-      }
-   
-      for (row = 0; row < table.length; ++row) {
-         table[row][0].score = 0;
-         //table[row][0].backtrack is not set cause it is never read
-      }
-      for (column = 0; column < table[0].length; ++column) {
-         table[0][column].score = 0;
-         //table[0][column].backtrack is not set cause it is never read
-      }
    
       // calculate alignment (using unit costs)
       Direction bt;
@@ -198,27 +186,16 @@ public class SemiglobalAligner {
          }
       }
    
-      // find position with highest score in last column or last row
-      IAligner.Entry bestEntry = table[m][1];
-      int bestColumn = 1, bestRow = m;
-      for (column = 2; column < table[m].length; ++column) { // start by 2 cause bestEntry is
-                                                             // already set to table[m][1]
-         if (table[m][column].score >= bestEntry.score) { // must be >= cause better to start near corner
-            bestColumn = column;
-            bestEntry = table[m][column];
-         }
-      }
-   
-      for (row = 1; row < table.length ; ++row) { // must be so, cause align.py was coded so and the test cases are from that code
-         if (table[row][n].score >= bestEntry.score) { // must be >= cause better to start near corner
-            bestRow = row;
-            bestColumn = n;
-            bestEntry = table[row][n];
-         }
-      }
-      //both can be 0, if one of the sequences has length 0
-      assert bestRow >= 0 && bestRow < table.length: String.format("bestRow: %s%n max is %s", bestRow, m);
-      assert bestColumn >= 0 && bestColumn < table[bestRow].length: String.format("bestColumn: %s%n max is %s", bestColumn,n);
+      // find position where to start trace back
+      final MatrixPosition bestPosition = endLocation.getEndPosition(table);
+
+      final int bestRow = bestPosition.row;
+      final int bestColumn = bestPosition.column;
+
+      // both must be greater than 0, cause the case that one of the sequences has length 0 is
+      // caught at the beginning
+      assert bestRow > 0 && bestRow < table.length : String.format("bestRow: %s%n max is %s", bestRow, m);
+      assert bestColumn > 0 && bestColumn < table[bestRow].length : String.format("bestColumn: %s%n max is %s", bestColumn, n);
    
       // now track back
       byte[] alignment1 = new byte[m + n];
@@ -307,8 +284,8 @@ public class SemiglobalAligner {
     * @param s2
     * @author Markus Kemmerling
     */
-   public static SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final byte[] s2) {
-      return SemiglobalAligner.semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length);
+   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final byte[] s2) {
+      return semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length);
    }
    
    

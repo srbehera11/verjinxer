@@ -12,8 +12,10 @@ import verjinxer.Project;
 import verjinxer.Translater;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.sequenceanalysis.alignment.BottomAndRightEdges;
 import verjinxer.sequenceanalysis.alignment.IAligner;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
+import verjinxer.sequenceanalysis.alignment.TopAndLeftEdges;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.TicToc;
@@ -134,8 +136,6 @@ public class AdapterRemoverSubcommand implements Subcommand {
          log.error("rmadapt: could not create output files for cutted sequences; %s", ex);
          return 1;
       }
-
-      subTimer.tic();
       
       byte[] sequence = sequences.array();
       byte[] qualityValues = null;
@@ -144,6 +144,12 @@ public class AdapterRemoverSubcommand implements Subcommand {
       } catch (IOException e) {
          // do nothing
       }
+      
+      SemiglobalAligner aligner = new SemiglobalAligner();
+      aligner.setBeginLocations(new TopAndLeftEdges());
+      aligner.setEndLocations(new BottomAndRightEdges());
+      
+      subTimer.tic();
       log.info("rmadapt: start to cut the reads.");
       for (int i = 0; i < sequences.getNumberSequences(); i++) {
          final int[] sequenceBoundaries = sequences.getSequenceBoundaries(i);
@@ -158,7 +164,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
             
             // Build alignment for each adapter
             SemiglobalAligner.SemiglobalAlignmentResult bestResult = new SemiglobalAligner.SemiglobalAlignmentResult();
-            int bestAdapter = findBestAlignment(bestResult, adapters, sequence, beginSequence,
+            int bestAdapter = findBestAlignment(aligner, bestResult, adapters, sequence, beginSequence,
                   endSequence);
             assert bestResult != null;
             
@@ -347,7 +353,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
     *           The first index behind the relevant sequence in sequences.
     * @return The index of the adapter with that the longest alignment was build.
     */
-   private int findBestAlignment(SemiglobalAligner.SemiglobalAlignmentResult bestResult,
+   private int findBestAlignment(SemiglobalAligner aligner, SemiglobalAligner.SemiglobalAlignmentResult bestResult,
          final Sequences adapters, final byte[] sequence, final int beginSequence,
          final int endSequence) {
 
@@ -357,7 +363,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
       final byte[] adapterArrays = adapters.array();
       for (int j = 0; j < adapters.getNumberSequences(); j++) {
          final int[] boundaries = adapters.getSequenceBoundaries(j);
-         SemiglobalAligner.SemiglobalAlignmentResult result = SemiglobalAligner.semiglobalAlign(adapterArrays,
+         SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(adapterArrays,
                boundaries[0], boundaries[1], sequence, beginSequence, endSequence);
 
          if (result.getLength() - result.getErrors() > bestResult.getLength()
