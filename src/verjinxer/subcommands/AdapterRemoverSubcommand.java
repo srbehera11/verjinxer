@@ -2,8 +2,6 @@ package verjinxer.subcommands;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import com.spinn3r.log5j.Logger;
 import static verjinxer.Globals.programname;
@@ -14,15 +12,15 @@ import verjinxer.Translater;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.BottomAndRightEdges;
-import verjinxer.sequenceanalysis.alignment.IAligner;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
 import verjinxer.sequenceanalysis.alignment.TopAndLeftEdges;
+import verjinxer.util.FileTypes;
+import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.TicToc;
 
 /**
- * 
  * @author Markus Kemmerling
  */
 public class AdapterRemoverSubcommand implements Subcommand {
@@ -39,14 +37,14 @@ public class AdapterRemoverSubcommand implements Subcommand {
     */
    @Override
    public void help() {
-      log.info("Usage:  %s rmadapt [options] <sequence> <outProject> <adapters as FASTA file>", programname); // TODO verbalize usage better
-      log.info("Reads a FASTA file, finds and removes adapters,");
-      log.info("and writes the changed sequence to outProject.");
-      log.info("When finished, statistics are printed to standard output (not yet implemented).");
-      log.info("");
+      log.info("Usage:  %s rmadapt [options] <inProject> <outProject> <adapters>", programname);
+      log.info("Reads adapters from FASTA files, finds and removes them from the sequences in inProject");
+      log.info("and writes the resulting sequences to outProject.");
+      log.info("When finished, statistics are printed to standard output.");
+      log.info("Options:");
       log.info("  -e error_rate   Maximum error rate (errors divided by length of matching region)");
-      log.info("  -p length       Print the found alignments if they are longer than length (not yet implemented).");
-      log.info("  -n <count>      Try to remove adapters at most <count> times (not yet implemented)");
+      log.info("  -p length       Print the found alignments if they are longer than length.");
+      log.info("  -n <count>      Try to remove adapters at most <count> times");
    }
 
    /**
@@ -68,9 +66,9 @@ public class AdapterRemoverSubcommand implements Subcommand {
          return 1;
       }
 
-      if (args.length < 1) {
+      if (args.length < 3) {
          help();
-         log.error("rmadapt: sequence file must be specified.");
+         log.error("rmadapt: input Project, output Project and at least one FASTA file with adapters must be specified.");
          return 1;
       }
 
@@ -100,6 +98,10 @@ public class AdapterRemoverSubcommand implements Subcommand {
       final File[] adapterFiles = new File[args.length - 2];
       for (int i = 0; i < adapterFiles.length; i++) {
          adapterFiles[i] = new File(args[i + 2]);
+         if (FileUtils.determineFileType(adapterFiles[i]) != FileTypes.FASTA) {
+            log.error("rmadapt: adapters must be given as FASTA files.");
+            return 1;
+         }
       }
       try {
          sequenceProject = Project.createFromFile(sequenceProjectFile);

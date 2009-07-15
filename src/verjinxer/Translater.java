@@ -20,7 +20,6 @@ import verjinxer.sequenceanalysis.FastaSequence;
 import verjinxer.sequenceanalysis.ISequenceCreation;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.SequenceWriter;
-import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.FileUtils;
 import verjinxer.util.FileTypes;
@@ -122,7 +121,7 @@ public class Translater {
             throw new UnsupportedOperationException("Translating a textfile is currently untested.");
             // translateText(fname, sequence); //TODO Test this case and use it again
          } else
-            g.terminate("translate: unsupported file type for file " + files[i]);
+            Globals.terminate("translate: unsupported file type for file " + files[i]);
       }
       // DONE processing all files.
       try {
@@ -150,7 +149,7 @@ public class Translater {
          alphabet.showSourceStrings(alphabetfile);
          alphabetfile.close();
       } catch (IOException ex) {
-         g.terminate("translate: could not write alphabet: " + ex);
+         Globals.terminate("translate: could not write alphabet: " + ex);
       }
       project.setProperty("SmallestSymbol", alphabet.smallestSymbol());
       project.setProperty("LargestSymbol", alphabet.largestSymbol());
