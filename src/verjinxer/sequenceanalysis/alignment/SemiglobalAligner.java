@@ -168,15 +168,16 @@ public class SemiglobalAligner {
             // look diagonal
             bt = Direction.DIAG;
             score = table[row - 1][column - 1].score
-                  + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? 1 : -1);
+                  + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? IAligner.SCORE_MATCH
+                        : IAligner.SCORE_MISMATCH);
             // look up
-            int tmp = table[row - 1][column].score - 1;
+            int tmp = table[row - 1][column].score + IAligner.SCORE_INSERTION;
             if (tmp > score) {
                bt = Direction.UP;
                score = tmp;
             }
             // look left
-            tmp = table[row][column - 1].score - 1;
+            tmp = table[row][column - 1].score + IAligner.SCORE_DELETION;
             if (tmp > score) {
                bt = Direction.LEFT;
                score = tmp;
