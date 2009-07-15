@@ -70,7 +70,7 @@ public class TranslaterSubcommand implements Subcommand {
    @Override
    public int run(final String[] args) {
       TicToc gtimer = new TicToc();
-      g.cmdname = "translate";
+      Globals.cmdname = "translate";
 
       File files[];
       Options opt = new Options(
