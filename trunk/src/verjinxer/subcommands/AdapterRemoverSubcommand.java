@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import com.spinn3r.log5j.Logger;
 import static verjinxer.Globals.programname;
+import verjinxer.AdapterRemover;
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.Translater;
@@ -119,17 +120,13 @@ public class AdapterRemoverSubcommand implements Subcommand {
       log.info("rmadapt: done; time for adapter translation was %.1f secs.", subTimer.tocs());
 
       final boolean colorspace = sequenceProject.getBooleanProperty("ColorSpaceAlphabet");
-      Sequences sequences = sequenceProject.readSequences();
-      ArrayList<String> descriptions = sequences.getDescriptions();
-      int middle = 0; // number of times an adapter is in the middle of an read
-      final long maxAlignment = Math.max(adapters.getMaximumLength(),
-            sequenceProject.getLongProperty("LongestSequence")) + 1;
-      int[][] lengths_front = new int[adapters.getNumberSequences()][(int) maxAlignment];
-      int[][] lengths_back = new int[adapters.getNumberSequences()][(int) maxAlignment];
-      int[] sequencesLengthAfterCutting = new int[sequenceProject.getIntProperty("LongestSequence") + 1];
+      
+      // create the aligner to use
+      SemiglobalAligner aligner = new SemiglobalAligner();
+      aligner.setBeginLocations(new TopAndLeftEdges());
+      aligner.setEndLocations(new BottomAndRightEdges());
       
       SequenceWriter sequenceWriter = null;
-      long lastbyte = 0;
       try {
          sequenceWriter = new SequenceWriter(targetProject);
       } catch (IOException ex) {
@@ -137,131 +134,12 @@ public class AdapterRemoverSubcommand implements Subcommand {
          return 1;
       }
       
-      byte[] sequence = sequences.array();
-      byte[] qualityValues = null;
-      try {
-         qualityValues = sequences.getQualityValues();
-      } catch (IOException e) {
-         // do nothing
-      }
-      
-      SemiglobalAligner aligner = new SemiglobalAligner();
-      aligner.setBeginLocations(new TopAndLeftEdges());
-      aligner.setEndLocations(new BottomAndRightEdges());
-      
       subTimer.tic();
       log.info("rmadapt: start to cut the reads.");
-      for (int i = 0; i < sequences.getNumberSequences(); i++) {
-         final int[] sequenceBoundaries = sequences.getSequenceBoundaries(i);
-         int beginSequence = sequenceBoundaries[0];
-         int endSequence = sequenceBoundaries[1];
-
-         if (colorspace && qualityValues == null) {
-            beginSequence += 2;   // if qualityValues were given, this was already done while translation
-         }
-
-         for (int k = 0; k < times; k++) { // maybe try several times to remove an adapter
-            
-            // Build alignment for each adapter
-            SemiglobalAligner.SemiglobalAlignmentResult bestResult = new SemiglobalAligner.SemiglobalAlignmentResult();
-            int bestAdapter = findBestAlignment(aligner, bestResult, adapters, sequence, beginSequence,
-                  endSequence);
-            assert bestResult != null;
-            
-            if (bestResult.getLength() > 0
-                  && (double) bestResult.getErrors() / bestResult.getLength() <= max_error_rate) {
-               
-               assert bestResult.getLength() - bestResult.getErrors() > 0;
-               
-               if (min_print_align_length >= 0 && bestResult.getLength() >= min_print_align_length) {
-                  log.info("read no %d (%s):", i + 1, descriptions.get(i));
-                  log.info(bestResult.toString());
-                  log.info("");
-                  log.info("");
-               }
-               
-               final byte[] adapterAlignment = bestResult.getSequence1();
-               if (adapterAlignment[0] != IAligner.GAP
-                     && adapterAlignment[adapterAlignment.length - 1] != IAligner.GAP) {
-                  
-                  // The adapter or parts of it covers the entire read
-                  log.info("read %s is covered entirely by the adapter %s:",
-                        descriptions.get(i).split(" ")[0], bestAdapter);
-                  log.info(bestResult.toString());
-                  log.info("");
-                  log.info("");
-                  endSequence = beginSequence; // set read to length 0
-                  break; // read can not be cut again
-                  
-               } else if (adapterAlignment[0] == IAligner.GAP) {
-                  
-                  // The adapter is at the end of the read
-                  if (adapterAlignment[adapterAlignment.length - 1] == IAligner.GAP) {
-                     // The adapter is in the middle of the read
-                     middle++;
-                  }
-
-                  if (colorspace) {
-                     endSequence = beginSequence + bestResult.getBegin() - 1;
-                  } else {
-                     endSequence = beginSequence + bestResult.getBegin();
-                  }
-                  
-                  // Statistics
-                  lengths_back[bestAdapter][bestResult.getLength()]++;
-
-               } else if (adapterAlignment[adapterAlignment.length - 1] == IAligner.GAP) {
-                  // The adapter is in the beginning of the read
-                  beginSequence += bestResult.getLength();
-
-                  // Statistics
-                  lengths_front[bestAdapter][bestResult.getLength()]++;
-                  
-               } else {
-                  // This should not happen!
-               }
-            } else {
-               break; // If no gratifying adapter was found, there is no need to try it again.
-            }
-
-         }
-         
-         // Statistics: how long are the sequences after cutting
-         sequencesLengthAfterCutting[endSequence - beginSequence]++;
-
-         // Add a separator at the end of the sequence
-         final byte separator = (byte) (targetProject.getIntProperty("Separator"));
-         if (endSequence < sequenceBoundaries[1]) {
-            sequence[endSequence] = separator;
-            if (qualityValues != null) {
-               qualityValues[endSequence] = Byte.MIN_VALUE;
-            }
-         }
-         assert endSequence < sequence.length: String.format("endSequence: %d%nsequence.length:%d", endSequence, sequence.length);
-         assert sequence[endSequence] == separator;
-         endSequence++;
-
-         // Write cuted sequence to target project
-         try {
-            lastbyte = sequenceWriter.addSequence(ByteBuffer.wrap(sequence, beginSequence,
-                  endSequence - beginSequence));
-            if (qualityValues != null) {
-               sequenceWriter.addQualityValues(ByteBuffer.wrap(qualityValues, beginSequence,
-                     endSequence - beginSequence));
-            }
-
-            // Sequence contains as last element a separator. So its length in proper meaning is
-            // sequence.length-1.
-            final String newDescription = descriptions.get(i).replaceAll("length=[0-9]*",
-                  "length=" + (endSequence-beginSequence - 1));
-            sequenceWriter.addInfo(newDescription, endSequence-beginSequence - 1, (int) (lastbyte - 1));
-            
-         } catch (IOException ex) {
-            log.error("rmadapt: could not write cutted sequences; %s", ex);
-            return 1;
-         }
-
-      }
+      AdapterRemover adapterRemover = new AdapterRemover(colorspace, times, max_error_rate,
+            min_print_align_length, aligner);
+      adapterRemover.cutAndWriteSequences(sequenceProject, adapters, sequenceWriter);
+      log.info("rmadapt: done; time to cut the reads was %.1f secs.", subTimer.tocs());
 
       // Store the whole target project
       try {
@@ -279,102 +157,11 @@ public class AdapterRemoverSubcommand implements Subcommand {
       targetProject.setProperty("ShortestSequence", sequenceWriter.getMinimumLength());
 
       targetProject.setProperty("LastAction", "rmadapt");
-      
-      // print statistics
-      log.info("# There are %7d sequences in this data set.", sequences.getNumberSequences());
-      log.info("# length\tnumber");
-      for (int length = 0; length < sequencesLengthAfterCutting.length; length++) {
-         if (sequencesLengthAfterCutting[length] > 0) {
-            log.info("%d\t%d", length, sequencesLengthAfterCutting[length]);
-         }
-      }
-      log.info("");
-      log.info("middle: %s", middle);
-      final byte[] adaptersArray = adapters.array();
-      for (int j = 0; j < adapters.getNumberSequences(); j++) {
-         final int[] adapterBoundaries = adapters.getSequenceBoundaries(j);
-         final int adapterLength = adapterBoundaries[1] - adapterBoundaries[0];
-         StringBuilder adapterString = new StringBuilder(adapterLength);
-         for (int i = adapterBoundaries[0]; i < adapterBoundaries[1]; i++) {
-            adapterString.append(adaptersArray[i]);
-         }
-         log.info("# Statistics for adapter %s (%s, length %d)", j, adapterString, adapterLength);
-         log.info("#");
-         log.info("# adapter found in the beginning of the sequence");
-         log.info("# length\tnumber");
-         int total = 0;
-         for (int length = 1; length < lengths_front[j].length; length++) {
-            if (lengths_front[j][length] > 0) {
-               log.info("%d\t%d", length, lengths_front[j][length]);
-               total += lengths_front[j][length];
-            }
-         }
-         log.info("total: %s", total);
-         log.info("");
-         log.info("");
-         log.info("# adapter found at the end of the sequence");
-         log.info("# length\tnumber");
-         total = 0;
-         for (int length = 1; length < lengths_back[j].length; length++) {
-            if (lengths_back[j][length] > 0) {
-               log.info("%d\t%d", length, lengths_back[j][length]);
-               total += lengths_back[j][length];
-            }
-         }
-         log.info("total: %s", total);
-         log.info("");
-         log.info("");
          
-         log.info("rmadapt: done; time to cut the reads was %.1f secs.", subTimer.tocs());
-         log.info("rmadapt: done; total time was %.1f secs.", totalTimer.tocs());
-      }
+      log.info("rmadapt: done; total time was %.1f secs.", totalTimer.tocs());
       
-
       return 0;
    }
 
-   /**
-    * This method calculates for each adapter and the given part of the sequence the semiglobal
-    * alignment. The relevant part of the sequence for that the alignment is build is specified with
-    * beginSequence and endSequence. The longest alignment will be stored in bestResult and
-    * additionally the index of the adapter with that the longest alignment was build will be
-    * returned.
-    * 
-    * @param bestResult
-    *           The longest alignment will be stored in it.
-    * @param adapters
-    *           The adapters the alignment is calculated with.
-    * @param sequence
-    *           A array with many sequences, where one of them (depending on beginSequence and
-    *           endSequence) is used for calculating the alignment.
-    * @param beginSequence
-    *           The index where the relevant sequence starts in sequences.
-    * @param endSequence
-    *           The first index behind the relevant sequence in sequences.
-    * @return The index of the adapter with that the longest alignment was build.
-    */
-   private int findBestAlignment(SemiglobalAligner aligner, SemiglobalAligner.SemiglobalAlignmentResult bestResult,
-         final Sequences adapters, final byte[] sequence, final int beginSequence,
-         final int endSequence) {
-
-      bestResult.setAllAttributes(null, null, 0, Integer.MIN_VALUE, 0);
-      assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
-      int bestAdapter = -1;
-      final byte[] adapterArrays = adapters.array();
-      for (int j = 0; j < adapters.getNumberSequences(); j++) {
-         final int[] boundaries = adapters.getSequenceBoundaries(j);
-         SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(adapterArrays,
-               boundaries[0], boundaries[1], sequence, beginSequence, endSequence);
-
-         if (result.getLength() - result.getErrors() > bestResult.getLength()
-               - bestResult.getErrors()) {
-            bestResult.setAllAttributes(result.getSequence1(), result.getSequence2(),
-                  result.getBegin(), result.getLength(), result.getErrors());
-            bestAdapter = j;
-         }
-      }
-      assert bestAdapter >= 0;
-      return bestAdapter;
-   }
 }
 
