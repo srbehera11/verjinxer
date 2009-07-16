@@ -8,16 +8,20 @@ public class TopLeftCorner extends BeginLocations {
    public void initMatrix(Entry[][] table) {
       super.initMatrix(table);
       
-      int score = 0;
+      int score = 0;   
+      // init left edge
       for (int row = 0; row < table.length; ++row) {
          table[row][0].score = score--;
-         //table[row][0].backtrack is not set cause it is never read
       }
       score = 0;
+      // init top edge
       for (int column = 0; column < table[0].length; ++column) {
          table[0][column].score = score--;
-         //table[0][column].backtrack is not set cause it is never read
       }
+   }
+   
+   public boolean isValid(int row, int column) {
+      return column == 0 && row == 0; // only top left corner
    }
 
 }

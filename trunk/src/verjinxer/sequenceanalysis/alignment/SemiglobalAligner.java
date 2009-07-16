@@ -171,13 +171,13 @@ public class SemiglobalAligner {
                   + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? IAligner.SCORE_MATCH
                         : IAligner.SCORE_MISMATCH);
             // look up
-            int tmp = table[row - 1][column].score + IAligner.SCORE_INSERTION;
+            int tmp = table[row - 1][column].score + IAligner.SCORE_DELETION;
             if (tmp > score) {
                bt = Direction.UP;
                score = tmp;
             }
             // look left
-            tmp = table[row][column - 1].score + IAligner.SCORE_DELETION;
+            tmp = table[row][column - 1].score + IAligner.SCORE_INSERTION;
             if (tmp > score) {
                bt = Direction.LEFT;
                score = tmp;
@@ -231,7 +231,7 @@ public class SemiglobalAligner {
       // we build reverse sequences while backtracking and
       // reverse them afterwards.
       Direction direction;
-      while (row > 0 && column > 0) {
+      while (!beginLocation.isValid(row, column)) { // while not a valid starting position
          direction = table[row][column].backtrack;
          if (direction == Direction.DIAG) {
             if (s1[start1 + --row] != s2[start2 + --column])

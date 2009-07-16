@@ -9,15 +9,19 @@ public class TopEdge extends BeginLocations {
       super.initMatrix(table);
       
       int score = 0;
+      // init left edge
       for (int row = 0; row < table.length; ++row) {
          table[row][0].score = score--;
-         //table[row][0].backtrack is not set cause it is never read
       }
+      // init top edge
       for (int column = 0; column < table[0].length; ++column) {
          table[0][column].score = 0;
-         //table[0][column].backtrack is not set cause it is never read
       }
 
+   }
+   
+   public boolean isValid(int row, int column) {
+      return row == 0; // complete top edge
    }
 
 }
