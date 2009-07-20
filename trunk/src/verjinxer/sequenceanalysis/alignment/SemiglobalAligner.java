@@ -96,6 +96,7 @@ public class SemiglobalAligner {
 
    private BeginLocations beginLocation;
    private EndLocations endLocation;
+   private boolean debug = false; 
    
    public void setBeginLocations(BeginLocations beginLocation) {
       this.beginLocation = beginLocation;
@@ -103,6 +104,10 @@ public class SemiglobalAligner {
    
    public void setEndLocations(EndLocations endLocation) {
       this.endLocation = endLocation;
+   }
+   
+   public void debug() {
+      debug = true;
    }
 
    /**
@@ -274,6 +279,10 @@ public class SemiglobalAligner {
       //cut unused fields in alignments
       alignment1 = Arrays.copyOf(alignment1, p1);
       alignment2 = Arrays.copyOf(alignment2, p2);
+      
+      if (debug) {
+         printDebug(table, null);
+      }
    
       return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2, begin, length, errors);
    }
@@ -289,5 +298,20 @@ public class SemiglobalAligner {
       return semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length);
    }
    
-   
+   private static void printDebug(IAligner.Entry[][] table, SemiglobalAligner.SemiglobalAlignmentResult result) {
+      for (int i = 0; i < table.length; i++) {
+         for(IAligner.Entry entry: table[i]) {
+            System.out.print(entry.score + ":");
+            if (entry.backtrack != null) {
+               switch (entry.backtrack) {
+               case DIAG: System.out.print("D"); break;
+               case LEFT: System.out.print("L"); break;
+               case UP: System.out.print("U"); break;
+               }
+            }
+            System.out.print("\t");
+         }
+         System.out.println();
+      }
+   }
 }
