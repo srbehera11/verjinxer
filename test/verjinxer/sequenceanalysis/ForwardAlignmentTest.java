@@ -77,12 +77,15 @@ public class ForwardAlignmentTest {
       int begin =  3 ;
       
       SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
+      aligner.debug();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
-      
+      System.out.println();
+      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
+      System.out.println();
       System.out.println(Arrays.toString(result.getSequence1()));
       System.out.println(Arrays.toString(result.getSequence2()));
       System.out.println(result.getErrors());
-      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
+      
       System.out.println(Arrays.toString(fResult.getSequence1()));
       System.out.println(Arrays.toString(fResult.getSequence2()));
       System.out.println(fResult.getErrors());
@@ -107,12 +110,16 @@ public class ForwardAlignmentTest {
       int begin =  58 ;
 
       SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
+      aligner.debug();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
+      System.out.println();
+      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100, true);
+      System.out.println();
       
       System.out.println(Arrays.toString(result.getSequence1()));
       System.out.println(Arrays.toString(result.getSequence2()));
       System.out.println(result.getErrors());
-      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
+      
       System.out.println(Arrays.toString(fResult.getSequence1()));
       System.out.println(Arrays.toString(fResult.getSequence2()));
       System.out.println(fResult.getErrors());
@@ -137,12 +144,16 @@ public class ForwardAlignmentTest {
       int begin =  50 ;
 
       SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
+      aligner.debug();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
+      System.out.println();
+      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100, true);
+      System.out.println();
       
       System.out.println(Arrays.toString(result.getSequence1()));
       System.out.println(Arrays.toString(result.getSequence2()));
       System.out.println(result.getErrors());
-      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
+      
       System.out.println(Arrays.toString(fResult.getSequence1()));
       System.out.println(Arrays.toString(fResult.getSequence2()));
       System.out.println(fResult.getErrors());
@@ -197,12 +208,16 @@ public class ForwardAlignmentTest {
       int begin =  10 ;
 
       SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
+      aligner.debug();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
+      System.out.println();
+      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100, true);
+      System.out.println();
       
       System.out.println(Arrays.toString(result.getSequence1()));
       System.out.println(Arrays.toString(result.getSequence2()));
       System.out.println(result.getErrors());
-      Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
+      
       System.out.println(Arrays.toString(fResult.getSequence1()));
       System.out.println(Arrays.toString(fResult.getSequence2()));
       System.out.println(fResult.getErrors());

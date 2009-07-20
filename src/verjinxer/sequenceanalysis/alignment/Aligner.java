@@ -45,6 +45,10 @@ public class Aligner {
          return errors;
       }
    }
+   
+   public static ForwardAlignmentResult forwardAlign(byte[] s1, byte[] s2, int e) {
+      return forwardAlign( s1,  s2, e, false);
+   }
 
    /**
     * 
@@ -55,7 +59,7 @@ public class Aligner {
     * @param e
     * @return
     */
-   public static ForwardAlignmentResult forwardAlign(byte[] s1, byte[] s2, int e) {
+   public static ForwardAlignmentResult forwardAlign(byte[] s1, byte[] s2, int e, boolean debug) {
       /* 
                 s2 (n, j)
             --------------->
@@ -269,7 +273,57 @@ public class Aligner {
       // return (r1, r2, begin, length, errors)
       // PyObject* o = Py_BuildValue("ssii", alignment1, alignment2, errors, best_j);
 
+      if (debug) {
+         printDebugForwardAligner(columns, e, m, n);
+      }
       return new ForwardAlignmentResult(alignment1, alignment2, errors, best_j);
+   }
+   
+   private static void printDebugForwardAligner(IAligner.CostEntry[][] table, final int e, final int m, final int n) {
+   // Where you would access DP[i][j] in a full DP table, you now have to access
+      // columns[j][i-j+e].
+      
+      for (int i = 0; i <= m; i++) {
+         for (int j = 0; j <= n; j++) {
+            if (i-j+e >= table[j].length) break;
+            if (i - j + e >= 0) {
+               IAligner.CostEntry entry = table[j][i - j + e];
+               System.out.print(entry.cost + ":");
+               if (entry.backtrack != null) {
+                  switch (entry.backtrack) {
+                  case DIAG:
+                     System.out.print("D");
+                     break;
+                  case LEFT:
+                     System.out.print("L");
+                     break;
+                  case UP:
+                     System.out.print("U");
+                     break;
+                  }
+               }
+            }
+            System.out.print("\t");
+         }
+         System.out.println();
+      }
+      
+//      System.out.println();
+//      
+//      for (int i = 0; i < table.length; i++) {
+//         for (IAligner.CostEntry entry : table[i]) {
+//            System.out.print(entry.cost + ":");
+//            if (entry.backtrack != null) {
+//               switch (entry.backtrack) {
+//               case DIAG: System.out.print("D"); break;
+//               case LEFT: System.out.print("L"); break;
+//               case UP: System.out.print("U"); break;
+//               }
+//            }
+//            System.out.print("\t");
+//         }
+//         System.out.println();
+//      }
    }
 
    public static void printAlignment(ForwardAlignmentResult alignment, Alphabet alphabet) {
