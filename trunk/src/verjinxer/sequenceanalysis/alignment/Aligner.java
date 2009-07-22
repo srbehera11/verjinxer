@@ -211,12 +211,28 @@ public class Aligner {
 
       // TODO last_column!
 
-      // TODO actually, shouldn't we take the entry closest to the diagonal?
+      /*
+       * The Alignment ends at the bottom edge. There, the rightmost entry is taken.
+       * The base for the decision to take the rightmost entry is illustrated by the following example:
+       * 
+       * query: Hallo
+       * reference: Hella
+       * 
+       * By taken the rightmost entry at the bottom, we get this alignment that we intuitive expected:
+       * Hallo
+       * |x||x
+       * Hella
+       * 
+       * If we would take the leftmost entry at the bottom edge, we would get that less intuitive alignment:
+       * Hallo
+       * |x||x
+       * Hell-
+       */
 
       int best = m + n + 1;
       int best_j = -1;
       for (j = Math.max(0, m - e); j < Math.min(m + e + 1, n + 1); ++j) {
-         if (columns[j][m - j + e].cost < best) {
+         if (columns[j][m - j + e].cost <= best) { // <= is necessary to take the rightmost entry 
             best_j = j;
             best = columns[j][m - j + e].cost;
          }

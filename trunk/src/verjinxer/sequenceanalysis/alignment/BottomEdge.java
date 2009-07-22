@@ -4,6 +4,23 @@ import verjinxer.sequenceanalysis.alignment.IAligner.Entry;
 
 public class BottomEdge extends EndLocations {
 
+   /*
+    * The Alignment ends at the bottom edge. There, the rightmost entry is taken.
+    * The base for the decision to take the rightmost entry is illustrated by the following example:
+    * 
+    * query: Hallo
+    * reference: Hella
+    * 
+    * By taken the rightmost entry at the bottom, we get this alignment that we intuitive expected:
+    * Hallo
+    * |x||x
+    * Hella
+    * 
+    * If we would take the leftmost entry at the bottom edge, we would get that less intuitive alignment:
+    * Hallo
+    * |x||x
+    * Hell-
+    */
    @Override
    MatrixPosition getEndPosition(Entry[][] table) {
 

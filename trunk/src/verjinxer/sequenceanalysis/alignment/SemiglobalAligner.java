@@ -7,6 +7,9 @@ import verjinxer.sequenceanalysis.alignment.IAligner.Direction;
 import verjinxer.util.ArrayUtils;
 
 /**
+ * This is a flexible Aligner. Depending on the begin and end locations ( {@link #beginLocation},
+ * {@link #endLocation}), different kinds of alignment are calculated.
+ * 
  * @author Markus Kemmerling
  */
 public class SemiglobalAligner {
@@ -98,14 +101,25 @@ public class SemiglobalAligner {
    private EndLocations endLocation;
    private boolean debug = false; 
    
+   /**
+    * TODO
+    * @param beginLocation
+    */
    public void setBeginLocations(BeginLocations beginLocation) {
       this.beginLocation = beginLocation;
    }
    
+   /**
+    * TODO
+    * @param endLocation
+    */
    public void setEndLocations(EndLocations endLocation) {
       this.endLocation = endLocation;
    }
    
+   /**
+    * TODO
+    */
    public void debug() {
       debug = true;
    }
@@ -145,13 +159,13 @@ public class SemiglobalAligner {
       final int n = end2 - start2;
       
       if (m == 0) {
-         // s1 is empty
+         // s1 is empty //TODO number errors depend on strategies
          byte[] alignment2 = Arrays.copyOfRange(s2, start2, end2);
          byte[] alignment1 = new byte[alignment2.length];
          Arrays.fill(alignment1, IAligner.GAP);
          return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2, alignment2.length, 0, 0);
       } else if (n == 0) {
-         // s2 is empty
+         // s2 is empty //TODO number errors depend on strategies
          byte[] alignment1 = Arrays.copyOfRange(s1, start1, end1);
          byte[] alignment2 = new byte[alignment1.length];
          Arrays.fill(alignment2, IAligner.GAP);
