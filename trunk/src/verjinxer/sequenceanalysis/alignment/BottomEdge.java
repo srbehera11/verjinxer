@@ -22,7 +22,7 @@ public class BottomEdge extends EndLocations {
     * Hell-
     */
    @Override
-   MatrixPosition getEndPosition(Entry[][] table) {
+   IAligner.MatrixPosition getEndPosition(Entry[][] table) {
 
       final int m = table.length-1;
       
@@ -36,7 +36,7 @@ public class BottomEdge extends EndLocations {
          }
       }
       
-      return new MatrixPosition(m, bestColumn);
+      return new IAligner.MatrixPosition(m, bestColumn);
    }
 
 }

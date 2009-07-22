@@ -2,8 +2,8 @@ package verjinxer.sequenceanalysis.alignment;
 
 import java.util.Arrays;
 
-import verjinxer.sequenceanalysis.alignment.EndLocations.MatrixPosition;
 import verjinxer.sequenceanalysis.alignment.IAligner.Direction;
+import verjinxer.sequenceanalysis.alignment.IAligner.MatrixPosition;
 import verjinxer.util.ArrayUtils;
 
 /**
@@ -17,47 +17,57 @@ public class SemiglobalAligner {
    
    public static class SemiglobalAlignmentResult {
       private byte[] sequence1, sequence2;
-   
-      private int begin, length, errors;
-   
+
+      private int length, errors;
+      private IAligner.MatrixPosition begin, end;
+
       public SemiglobalAlignmentResult() {
          // all attributes are initialized by default
       }
-   
-      public SemiglobalAlignmentResult(byte[] sequence1, byte[] sequence2, int begin, int length,
-            int errors) {
-         setAllAttributes(sequence1, sequence2, begin, length, errors);
+
+      public SemiglobalAlignmentResult(byte[] sequence1, byte[] sequence2, MatrixPosition begin,
+            MatrixPosition end, int length, int errors) {
+         setAllAttributes(sequence1, sequence2, begin, end, length, errors);
       }
-   
-      public void setAllAttributes(byte[] sequence1, byte[] sequence2, int begin, int length,
-            int errors) {
+
+      public void setAllAttributes(byte[] sequence1, byte[] sequence2, MatrixPosition begin,
+            MatrixPosition end, int length, int errors) {
          this.sequence1 = sequence1;
          this.sequence2 = sequence2;
          this.begin = begin;
          this.length = length;
          this.errors = errors;
+         this.end = end;
       }
-   
+
       public byte[] getSequence1() {
          return sequence1;
       }
-   
+
       public byte[] getSequence2() {
          return sequence2;
       }
-   
+
       public int getBegin() {
+         return Math.max(begin.row, begin.column); // TODO ?
+      }
+
+      public MatrixPosition getBeginPosition() {
          return begin;
       }
-   
+
+      public MatrixPosition getEndPosition() {
+         return end;
+      }
+
       public int getLength() {
          return length;
       }
-   
+
       public int getErrors() {
          return errors;
       }
-   
+
       @Override
       public String toString() {
          StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
@@ -68,11 +78,11 @@ public class SemiglobalAligner {
                sb.append(b);
             }
          }
-   
+
          sb.append('\n');
-   
+
          for (int i = 0; i < sequence1.length; i++) {
-            if (i >= begin && i < begin + length) {
+            if (i >= getBegin() && i < getBegin() + length) {
                if (sequence1[i] == sequence2[i]) {
                   sb.append('|');
                } else {
@@ -82,9 +92,9 @@ public class SemiglobalAligner {
                sb.append(' ');
             }
          }
-   
+
          sb.append('\n');
-   
+
          for (byte b : sequence2) {
             if (b == IAligner.GAP) {
                sb.append(' ');
@@ -92,7 +102,7 @@ public class SemiglobalAligner {
                sb.append(b);
             }
          }
-   
+
          return sb.toString();
       }
    }
@@ -163,13 +173,17 @@ public class SemiglobalAligner {
          byte[] alignment2 = Arrays.copyOfRange(s2, start2, end2);
          byte[] alignment1 = new byte[alignment2.length];
          Arrays.fill(alignment1, IAligner.GAP);
-         return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2, alignment2.length, 0, 0);
+         return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2,
+               new IAligner.MatrixPosition(0, alignment2.length), new IAligner.MatrixPosition(0,
+                     alignment2.length), 0, 0);
       } else if (n == 0) {
          // s2 is empty //TODO number errors depend on strategies
          byte[] alignment1 = Arrays.copyOfRange(s1, start1, end1);
          byte[] alignment2 = new byte[alignment1.length];
          Arrays.fill(alignment2, IAligner.GAP);
-         return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2, alignment1.length, 0, 0);
+         return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2,
+               new IAligner.MatrixPosition(alignment1.length, 0), new IAligner.MatrixPosition(
+                     alignment1.length, 0), 0, 0);
       }
    
       // the DP table row x column
@@ -207,10 +221,10 @@ public class SemiglobalAligner {
       }
    
       // find position where to start trace back
-      final MatrixPosition bestPosition = endLocation.getEndPosition(table);
+      final IAligner.MatrixPosition endPosition = endLocation.getEndPosition(table);
 
-      final int bestRow = bestPosition.row;
-      final int bestColumn = bestPosition.column;
+      final int bestRow = endPosition.row;
+      final int bestColumn = endPosition.column;
 
       // both must be greater than 0, cause the case that one of the sequences has length 0 is
       // caught at the beginning
@@ -271,9 +285,7 @@ public class SemiglobalAligner {
       // compute the length of the actual alignment (ignoring ends)
       int length = p1 - rlen;
    
-      int begin = row;
-      if (column > row)
-         begin = column;
+      IAligner.MatrixPosition beginPosition = new IAligner.MatrixPosition(row, column);
    
       while (column > 0) {
          alignment1[p1++] = IAligner.GAP;
@@ -298,7 +310,8 @@ public class SemiglobalAligner {
          printDebug(table, null);
       }
    
-      return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2, begin, length, errors);
+      return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2, beginPosition,
+            endPosition, length, errors);
    }
 
    /**

@@ -10,6 +10,7 @@ import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.IAligner;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
+import verjinxer.sequenceanalysis.alignment.IAligner.MatrixPosition;
 
 /**
  * @author Markus Kemmerling
@@ -284,20 +285,22 @@ public class AdapterRemover {
    private int findBestAlignment(SemiglobalAligner.SemiglobalAlignmentResult bestResult,
          final Sequences adapters, final byte[] sequence, final int beginSequence,
          final int endSequence) {
-   
-      bestResult.setAllAttributes(null, null, 0, Integer.MIN_VALUE, 0);
+
+      bestResult.setAllAttributes(null, null, new MatrixPosition(0, 0), new MatrixPosition(0, 0),
+            Integer.MIN_VALUE, 0);
       assert bestResult.getLength() - bestResult.getErrors() == Integer.MIN_VALUE;
       int bestAdapter = -1;
       final byte[] adapterArrays = adapters.array();
       for (int j = 0; j < adapters.getNumberSequences(); j++) {
          final int[] boundaries = adapters.getSequenceBoundaries(j);
-         SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(adapterArrays,
-               boundaries[0], boundaries[1], sequence, beginSequence, endSequence);
-   
+         SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(
+               adapterArrays, boundaries[0], boundaries[1], sequence, beginSequence, endSequence);
+
          if (result.getLength() - result.getErrors() > bestResult.getLength()
                - bestResult.getErrors()) {
             bestResult.setAllAttributes(result.getSequence1(), result.getSequence2(),
-                  result.getBegin(), result.getLength(), result.getErrors());
+                  result.getBeginPosition(), result.getEndPosition(), result.getLength(),
+                  result.getErrors());
             bestAdapter = j;
          }
       }

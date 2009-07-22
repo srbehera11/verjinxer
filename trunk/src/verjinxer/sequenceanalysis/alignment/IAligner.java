@@ -26,6 +26,14 @@ public interface IAligner {
       LEFT, UP, DIAG
    }
 
+   public static class MatrixPosition {
+      public final int row, column;
+   
+      public MatrixPosition(int row, int column) {
+         this.row = row;
+         this.column = column;
+      }
+   }
    public static final byte GAP = -1; // TODO
    public static final int SCORE_INSERTION = -1;
    public static final int SCORE_DELETION = -1;

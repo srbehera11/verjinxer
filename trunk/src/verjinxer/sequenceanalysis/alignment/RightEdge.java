@@ -9,7 +9,7 @@ public class RightEdge extends EndLocations {
     * to BottomEdge.getEndPosition(Entry[][]).
     */
    @Override
-   MatrixPosition getEndPosition(Entry[][] table) {
+   IAligner.MatrixPosition getEndPosition(Entry[][] table) {
 
       final int n = table[0].length-1;
       
@@ -23,7 +23,7 @@ public class RightEdge extends EndLocations {
          }
       }
       
-      return new MatrixPosition(bestRow, n);
+      return new IAligner.MatrixPosition(bestRow, n);
    }
 
 }
