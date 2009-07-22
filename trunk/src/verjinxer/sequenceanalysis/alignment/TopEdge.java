@@ -11,7 +11,8 @@ public class TopEdge extends BeginLocations {
       int score = 0;
       // init left edge
       for (int row = 0; row < table.length; ++row) {
-         table[row][0].score = score--;
+         table[row][0].score = score;
+         score += IAligner.SCORE_DELETION;
       }
       // init top edge
       for (int column = 0; column < table[0].length; ++column) {

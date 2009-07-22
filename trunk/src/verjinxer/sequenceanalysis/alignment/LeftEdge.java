@@ -15,7 +15,8 @@ public class LeftEdge extends BeginLocations {
       }
       // init top edge
       for (int column = 0; column < table[0].length; ++column) {
-         table[0][column].score = score--;
+         table[0][column].score = score;
+         score += IAligner.SCORE_INSERTION;
       }
    }
 

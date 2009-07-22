@@ -11,12 +11,14 @@ public class TopLeftCorner extends BeginLocations {
       int score = 0;   
       // init left edge
       for (int row = 0; row < table.length; ++row) {
-         table[row][0].score = score--;
+         table[row][0].score = score;
+         score += IAligner.SCORE_DELETION;
       }
       score = 0;
       // init top edge
       for (int column = 0; column < table[0].length; ++column) {
-         table[0][column].score = score--;
+         table[0][column].score = score;
+         score += IAligner.SCORE_INSERTION;
       }
    }
    
