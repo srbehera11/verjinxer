@@ -25,7 +25,7 @@ public class BottomAndRightEdges extends EndLocations {
     * If it ends et the right edge, the bottommost entry is taken cause of symmetry.
     */
    @Override
-   MatrixPosition getEndPosition(Entry[][] table) {
+   IAligner.MatrixPosition getEndPosition(Entry[][] table) {
       
       final int m = table.length-1;
       final int n = table[0].length-1;
@@ -48,7 +48,7 @@ public class BottomAndRightEdges extends EndLocations {
          }
       }
       
-      return new MatrixPosition(bestRow, bestColumn);
+      return new IAligner.MatrixPosition(bestRow, bestColumn);
    }
 
 }
