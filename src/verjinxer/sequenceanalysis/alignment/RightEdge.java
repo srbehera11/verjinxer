@@ -4,6 +4,10 @@ import verjinxer.sequenceanalysis.alignment.IAligner.Entry;
 
 public class RightEdge extends EndLocations {
 
+   /*
+    * The Alignment ends at the right edge. There, the bottommost entry is taken, cause of symmetry
+    * to BottomEdge.getEndPosition(Entry[][]).
+    */
    @Override
    MatrixPosition getEndPosition(Entry[][] table) {
 
