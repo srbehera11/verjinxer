@@ -102,7 +102,7 @@ public class ForwardAlignmentTest {
 //      int error = 0;
       
       SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
-      aligner.debug();
+      //aligner.debug();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertEquals("Alingment begins in wrong row.", 0, result.getBeginPosition().row); //left top corner
@@ -115,13 +115,10 @@ public class ForwardAlignmentTest {
       assertEquals(countErrorsAndTestEnd(result.getSequence1(), result.getSequence2(), s2.length + 1 - result.getEndPosition().column), result.getErrors());
       
       
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
-      System.out.println(result.getErrors());
       System.out.println(result.toString());
+      System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsBytes());
       System.out.println(fResult.getErrors());
       System.out.println();
       
@@ -155,12 +152,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -189,13 +184,12 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
+      System.out.println(fResult.getLengthOnReference());
       System.out.println();
    }
 
@@ -224,12 +218,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
       
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -258,12 +250,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -292,12 +282,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -326,12 +314,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -360,12 +346,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -394,12 +378,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -428,12 +410,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -462,12 +442,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -496,12 +474,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -530,12 +506,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -564,12 +538,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -598,12 +570,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -632,12 +602,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -666,12 +634,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -700,12 +666,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -734,12 +698,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }
@@ -768,12 +730,10 @@ public class ForwardAlignmentTest {
       // assertArrayEquals(result.getSequence2(), r2);
       // assertEquals(result.getErrors(), error);
 
-      System.out.println(Arrays.toString(result.getSequence1()));
-      System.out.println(Arrays.toString(result.getSequence2()));
+      System.out.println(result.printAsChars());
       System.out.println(result.getErrors());
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
-      System.out.println(Arrays.toString(fResult.getSequence1()));
-      System.out.println(Arrays.toString(fResult.getSequence2()));
+      System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
       System.out.println();
    }

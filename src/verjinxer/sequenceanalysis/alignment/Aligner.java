@@ -44,6 +44,76 @@ public class Aligner {
       public int getErrors() {
          return errors;
       }
+      
+      public String printAsBytes() {
+         StringBuilder s1 = new StringBuilder(lengthOnReference * 3 + 2);
+         StringBuilder s2 = new StringBuilder(lengthOnReference);
+         StringBuilder m = new StringBuilder(lengthOnReference + 1);
+
+         for (int i = 0; i < lengthOnReference; i++) {
+            if (sequence1[i] == IAligner.GAP) {
+               s1.append(' ');
+            } else {
+               s1.append(sequence1[i]);
+            }
+
+            if (sequence2[i] == IAligner.GAP) {
+               s2.append(' ');
+            } else {
+               s2.append(sequence1[i]);
+            }
+
+            if (sequence1[i] == sequence2[i]) {
+               m.append('|');
+            } else {
+               m.append('x');
+            }
+         }
+
+         s1.append('\n');
+         m.append('\n');
+
+         s1.append(m);
+         s1.append(s2);
+
+         return s1.toString();
+      }
+
+      public String printAsChars() {
+         StringBuilder s1 = new StringBuilder(lengthOnReference * 3 + 2);
+         StringBuilder s2 = new StringBuilder(lengthOnReference);
+         StringBuilder m = new StringBuilder(lengthOnReference + 1);
+
+         // TODO lengthOnReference is related to the origin reference and not to the alignment
+         // stored here.
+         for (int i = 0; i < lengthOnReference; i++) {
+            if (sequence1[i] == IAligner.GAP) {
+               s1.append(' ');
+            } else {
+               s1.append((char) sequence1[i]);
+            }
+
+            if (sequence2[i] == IAligner.GAP) {
+               s2.append(' ');
+            } else {
+               s2.append((char) sequence2[i]);
+            }
+
+            if (sequence1[i] == sequence2[i]) {
+               m.append('|');
+            } else {
+               m.append('x');
+            }
+         }
+
+         s1.append('\n');
+         m.append('\n');
+
+         s1.append(m);
+         s1.append(s2);
+
+         return s1.toString();
+      }
    }
    
    public static ForwardAlignmentResult forwardAlign(byte[] s1, byte[] s2, int e) {

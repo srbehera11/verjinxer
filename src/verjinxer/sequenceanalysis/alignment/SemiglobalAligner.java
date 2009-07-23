@@ -70,6 +70,15 @@ public class SemiglobalAligner {
 
       @Override
       public String toString() {
+         return printAsBytes();
+      }
+
+      /**
+       * TODO
+       * 
+       * @return
+       */
+      public String printAsBytes() {
          StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
          for (byte b : sequence1) {
             if (b == IAligner.GAP) {
@@ -100,6 +109,48 @@ public class SemiglobalAligner {
                sb.append(' ');
             } else {
                sb.append(b);
+            }
+         }
+
+         return sb.toString();
+      }
+
+      /**
+       * TODO
+       * 
+       * @return
+       */
+      public String printAsChars() {
+         StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
+         for (byte b : sequence1) {
+            if (b == IAligner.GAP) {
+               sb.append(' ');
+            } else {
+               sb.append((char) b);
+            }
+         }
+
+         sb.append('\n');
+
+         for (int i = 0; i < sequence1.length; i++) {
+            if (i >= getBegin() && i < getBegin() + length) {
+               if (sequence1[i] == sequence2[i]) {
+                  sb.append('|');
+               } else {
+                  sb.append('x');
+               }
+            } else {
+               sb.append(' ');
+            }
+         }
+
+         sb.append('\n');
+
+         for (byte b : sequence2) {
+            if (b == IAligner.GAP) {
+               sb.append(' ');
+            } else {
+               sb.append((char) b);
             }
          }
 
