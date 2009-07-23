@@ -2,35 +2,18 @@ package verjinxer.sequenceanalysis;
 
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import verjinxer.sequenceanalysis.alignment.AlignerFactory;
 import verjinxer.sequenceanalysis.alignment.IAligner;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
 
+/**
+ * @author Markus Kemmerling
+ */
 public class SemiglobalAlignerTest {
    
-   public static final byte GAP = IAligner.GAP; 
-
-   @BeforeClass
-   public static void setUpBeforeClass() throws Exception {
-   }
-
-   @AfterClass
-   public static void tearDownAfterClass() throws Exception {
-   }
-
-   @Before
-   public void setUp() throws Exception {
-   }
-
-   @After
-   public void tearDown() throws Exception {
-   }
+   public static final byte GAP = IAligner.GAP;
 
    @Test
    public void testSemiglobalAlign() {
