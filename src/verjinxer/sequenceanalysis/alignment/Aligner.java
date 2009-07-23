@@ -45,28 +45,39 @@ public class Aligner {
          return errors;
       }
       
+      /**
+       * Prints the contrast of the two sequences considered as bytes.
+       * 
+       * @return A visualization of the alignment
+       */
       public String printAsBytes() {
-         StringBuilder s1 = new StringBuilder(lengthOnReference * 3 + 2);
-         StringBuilder s2 = new StringBuilder(lengthOnReference);
-         StringBuilder m = new StringBuilder(lengthOnReference + 1);
+         StringBuilder s1 = new StringBuilder(lengthOnReference * 6 + 2);
+         StringBuilder s2 = new StringBuilder(lengthOnReference * 2);
+         StringBuilder m = new StringBuilder(lengthOnReference * 2 + 1);
 
-         for (int i = 0; i < lengthOnReference; i++) {
-            if (sequence1[i] == IAligner.GAP) {
+         // lengthOnReference is related to the origin reference and not to the sequence stored
+         // here where gaps may be inserted.
+         // Therefore i counts the normal values in sequence2 and gapCounter the gaps.
+         int gapCounter = 0;
+         for (int i = 0; i < lengthOnReference;) { // i is incremented in last if statement
+            if (sequence1[i + gapCounter] == IAligner.GAP) {
                s1.append(' ');
             } else {
-               s1.append(sequence1[i]);
+               s1.append(sequence1[i + gapCounter]);
             }
 
-            if (sequence2[i] == IAligner.GAP) {
-               s2.append(' ');
-            } else {
-               s2.append(sequence1[i]);
-            }
-
-            if (sequence1[i] == sequence2[i]) {
+            if (sequence1[i + gapCounter] == sequence2[i + gapCounter]) {
                m.append('|');
             } else {
                m.append('x');
+            }
+
+            if (sequence2[i + gapCounter] == IAligner.GAP) {
+               s2.append(' ');
+               gapCounter++;
+            } else {
+               s2.append(sequence2[i + gapCounter]);
+               i++;
             }
          }
 
@@ -78,31 +89,40 @@ public class Aligner {
 
          return s1.toString();
       }
-
+      
+      /**
+       * Prints the contrast of the two sequences considered as characters.
+       * 
+       * @return A visualization of the alignment
+       */
       public String printAsChars() {
-         StringBuilder s1 = new StringBuilder(lengthOnReference * 3 + 2);
-         StringBuilder s2 = new StringBuilder(lengthOnReference);
-         StringBuilder m = new StringBuilder(lengthOnReference + 1);
+         StringBuilder s1 = new StringBuilder(lengthOnReference * 6 + 2);
+         StringBuilder s2 = new StringBuilder(lengthOnReference * 2);
+         StringBuilder m = new StringBuilder(lengthOnReference * 2 + 1);
 
-         // TODO lengthOnReference is related to the origin reference and not to the alignment
-         // stored here.
-         for (int i = 0; i < lengthOnReference; i++) {
-            if (sequence1[i] == IAligner.GAP) {
+         // lengthOnReference is related to the origin reference and not to the sequence stored
+         // here where gaps may be inserted.
+         // Therefore i counts the normal values in sequence2 and gapCounter the gaps.
+         int gapCounter = 0;
+         for (int i = 0; i < lengthOnReference;) { // i is incremented in last if statement
+            if (sequence1[i + gapCounter] == IAligner.GAP) {
                s1.append(' ');
             } else {
-               s1.append((char) sequence1[i]);
+               s1.append((char) sequence1[i + gapCounter]);
             }
 
-            if (sequence2[i] == IAligner.GAP) {
-               s2.append(' ');
-            } else {
-               s2.append((char) sequence2[i]);
-            }
-
-            if (sequence1[i] == sequence2[i]) {
+            if (sequence1[i + gapCounter] == sequence2[i + gapCounter]) {
                m.append('|');
             } else {
                m.append('x');
+            }
+
+            if (sequence2[i + gapCounter] == IAligner.GAP) {
+               s2.append(' ');
+               gapCounter++;
+            } else {
+               s2.append((char) sequence2[i + gapCounter]);
+               i++;
             }
          }
 
@@ -116,8 +136,16 @@ public class Aligner {
       }
    }
    
+   /**
+    * Uses a banded alignment.
+    * 
+    * @param s1
+    * @param s2
+    * @param e
+    * @return
+    */
    public static ForwardAlignmentResult forwardAlign(byte[] s1, byte[] s2, int e) {
-      return forwardAlign( s1,  s2, e, false);
+      return forwardAlign(s1, s2, e, false);
    }
 
    /**
@@ -127,6 +155,8 @@ public class Aligner {
     * @param s1
     * @param s2
     * @param e
+    * @param debug
+    *           Whether to print the alignment table.
     * @return
     */
    public static ForwardAlignmentResult forwardAlign(byte[] s1, byte[] s2, int e, boolean debug) {

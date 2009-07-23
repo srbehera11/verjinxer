@@ -189,7 +189,6 @@ public class ForwardAlignmentTest {
       Aligner.ForwardAlignmentResult fResult = Aligner.forwardAlign(s1, s2, 100);
       System.out.println(fResult.printAsChars());
       System.out.println(fResult.getErrors());
-      System.out.println(fResult.getLengthOnReference());
       System.out.println();
    }
 
