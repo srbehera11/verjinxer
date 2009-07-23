@@ -74,9 +74,9 @@ public class SemiglobalAligner {
       }
 
       /**
-       * TODO
+       * Prints the contrast of the two sequences considered as bytes.
        * 
-       * @return
+       * @return A visualization of the alignment
        */
       public String printAsBytes() {
          StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
@@ -116,9 +116,9 @@ public class SemiglobalAligner {
       }
 
       /**
-       * TODO
+       * Prints the contrast of the two sequences considered as characters.
        * 
-       * @return
+       * @return A visualization of the alignment
        */
       public String printAsChars() {
          StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
@@ -163,23 +163,23 @@ public class SemiglobalAligner {
    private boolean debug = false; 
    
    /**
-    * TODO
     * @param beginLocation
+    *           Where to start in the table with the alignment.
     */
    public void setBeginLocations(BeginLocations beginLocation) {
       this.beginLocation = beginLocation;
    }
-   
+
    /**
-    * TODO
     * @param endLocation
+    *           Where to end in the table with the alignment.
     */
    public void setEndLocations(EndLocations endLocation) {
       this.endLocation = endLocation;
    }
-   
+
    /**
-    * TODO
+    * Invoke this method before calculating the alignment to print the alignment table.
     */
    public void debug() {
       debug = true;
