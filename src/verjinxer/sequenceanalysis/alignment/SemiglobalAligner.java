@@ -48,10 +48,6 @@ public class SemiglobalAligner {
          return sequence2;
       }
 
-      public int getBegin() {
-         return Math.max(begin.row, begin.column); // TODO ?
-      }
-
       public MatrixPosition getBeginPosition() {
          return begin;
       }
@@ -89,9 +85,11 @@ public class SemiglobalAligner {
          }
 
          sb.append('\n');
+         
+         int beginIndex = Math.max(begin.row, begin.column);
 
          for (int i = 0; i < sequence1.length; i++) {
-            if (i >= getBegin() && i < getBegin() + length) {
+            if (i >= beginIndex && i < beginIndex + length) {
                if (sequence1[i] == sequence2[i]) {
                   sb.append('|');
                } else {
@@ -131,9 +129,11 @@ public class SemiglobalAligner {
          }
 
          sb.append('\n');
+         
+         int beginIndex = Math.max(begin.row, begin.column);
 
          for (int i = 0; i < sequence1.length; i++) {
-            if (i >= getBegin() && i < getBegin() + length) {
+            if (i >= beginIndex && i < beginIndex + length) {
                if (sequence1[i] == sequence2[i]) {
                   sb.append('|');
                } else {
