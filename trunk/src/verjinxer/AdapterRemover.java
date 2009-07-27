@@ -133,9 +133,9 @@ public class AdapterRemover {
                   }
 
                   if (colorspace) {
-                     endSequence = beginSequence + bestResult.getBegin() - 1;
+                     endSequence = beginSequence + bestResult.getBeginPosition().column - 1;
                   } else {
-                     endSequence = beginSequence + bestResult.getBegin();
+                     endSequence = beginSequence + bestResult.getBeginPosition().column;
                   }
                   
                   // Statistics
@@ -150,6 +150,7 @@ public class AdapterRemover {
                   
                } else {
                   // This should not happen!
+                  assert false;
                }
             } else {
                break; // If no gratifying adapter was found, there is no need to try it again.

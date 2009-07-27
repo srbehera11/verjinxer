@@ -23,7 +23,6 @@ public class SemiglobalAlignerTest {
       byte[] r1 = {GAP,GAP,GAP,3,0,3,3,0,GAP,GAP,GAP}; // [GAP, GAP, GAP, 'S', 'I', 'S', 'S', 'I', GAP, GAP, GAP]
       byte[] r2 = {1,0,3,3,0,3,3,0,2,2,0}; // [ 'M',  'I',  'S', 'S', 'I', 'S', 'S', 'I',  'P',  'P',  'I']
       
-      int begin = 3;
       int length = 5;
       int error = 0;
       
@@ -32,7 +31,10 @@ public class SemiglobalAlignerTest {
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 3);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 8);
+      assertEquals(result.getEndPosition().row, 5);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -45,14 +47,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'M', 'I', 'S', 'S', 'I', 'S', 'S', 'I', 'P', 'P', 'I'};
       int error =  0 ;
       int length =  5 ;
-      int begin =  3 ;
       
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 3);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 8);
+      assertEquals(result.getEndPosition().row, 5);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -66,14 +70,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'S', 'e', 'h', 'r', ' ', 'g', 'e', 'e', 'h', 'r', 't', 'e', ' ', 'D', 'a', 'm', 'e', 'n', ' ', 'u', 'n', 'd', ' ', 'h', 'e', 'r', 'r', 'e', 'n', '.', ' ', 'W', 'i', 'r', ' ', 'h', 'a', 'b', 'e', 'n', ' ', 'u', 'n', 's', ' ', 'h', 'e', 'u', 't', 'e', ' ', 'h', 'i', 'e', 'r', ' ', 'i', 'n', ' ', 'K', 'a', 'm', 'e', 'n', ' ', 'v', 'e', 'r', 's', 'a', 'm', 'm', 'e', 'l', 't', '.'};
       int error =  1 ;
       int length =  6 ;
-      int begin =  58 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 58);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 64);
+      assertEquals(result.getEndPosition().row, 6);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -87,14 +93,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'A', 'A', 'T', 'T', 'T', 'A', 'T', 'T', 'T', 'T', 'A', 'T', 'T', 'G', 'T', 'G', 'A', 'T', 'T', 'T', 'T', 'T', 'T', 'G', 'G', 'A', 'G', 'G', 'T', 'T', 'T', 'G', 'G', 'A', 'A', 'G', 'C', 'C', 'A', 'C', 'T', 'A', 'A', 'G', 'C', 'T', 'A', 'T', 'A', 'C', 'T', 'G', 'A', 'G', 'A', 'C', 'A', 'C', 'G', 'C', 'A', 'A', 'C', 'A', 'G', 'G', 'G', 'G', 'A', 'A', 'A', 'G', 'G', 'C', 'A', 'A', 'G', 'G', 'C', 'A', 'C', 'A', GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP};
       int error =  1 ;
       int length =  32 ;
-      int begin =  50 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 50);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 82);
+      assertEquals(result.getEndPosition().row, 32);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -108,14 +116,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, 'T', 'T', 'T', 'T', 'A', 'G', 'G', 'A', 'A', 'A', 'T', 'A', 'C', 'G', 'C', 'C', 'T', 'G', 'G', 'T', 'G', 'G', 'G', 'G', 'T', 'T', 'T', 'G', 'G', 'A', 'G', 'T', 'A', 'T', 'A', 'G', 'T', 'G', 'A', 'A', 'A', 'G', 'A', 'T', 'A', 'G', 'G', 'T', 'G', 'A', 'G', 'T', 'T', 'G', 'G', 'T', 'C', 'G', 'G', 'G', 'T', 'G'};
       int error =  2 ;
       int length =  5 ;
-      int begin =  39 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().row, 39);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getEndPosition().column, 5);
+      assertEquals(result.getEndPosition().row, 44);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -129,14 +139,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'T', 'T', 'T', 'T', 'A', 'G', 'G', 'A', 'A', 'A', 'T', 'A', 'C', GAP, 'G', GAP, GAP, 'C', 'C', GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP};
       int error =  4 ;
       int length =  9 ;
-      int begin =  10 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 10);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 16);
+      assertEquals(result.getEndPosition().row, 8);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -150,14 +162,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'A', 'A', 'T', 'T', 'T', 'T', 'A', 'T', 'T', 'T', 'G', 'A', 'T', 'G', 'A', 'T', 'G', 'A', 'T', 'T', 'T', 'T', 'A', 'T', 'T', 'C', 'G', 'A', 'G', 'T', 'A', 'T', 'A', 'T', 'T', 'C', 'G', 'A', 'T', 'G', 'A', 'T', 'T', 'T', 'T', 'A', 'T', 'T', 'T', 'G', 'A', 'T', 'T', 'T', 'C', 'A', 'T', 'T', 'T', 'G', 'A', 'T', 'G', 'A', 'T', 'G', 'A', 'T', 'T', 'T', 'T', 'A', 'T', 'T', 'C', 'G', 'A', 'T', 'T', 'T', 'T', 'A', 'T', 'T', 'T', 'G', 'A', 'T', 'G', 'A', 'A', 'G', 'A', 'T', 'T', 'T', 'T', 'A', 'T', 'T', 'C', 'G', 'A', 'G', 'A', 'T', 'T', 'A', 'T', 'T', 'T', 'G', 'A', 'T', 'G', 'A', 'T', 'T', 'T', 'A', 'A', 'T', 'T', GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP};
       int error =  0 ;
       int length =  1 ;
-      int begin =  122 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 122);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 123);
+      assertEquals(result.getEndPosition().row, 1);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -171,14 +185,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'A', 'x', 'B', 'C', 'D', 'E', 'G', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
       int error =  2 ;
       int length =  7 ;
-      int begin =  0 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 7);
+      assertEquals(result.getEndPosition().row, 6);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -192,14 +208,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'T', 'G', 'A', 'G', 'G', 'G', 'A', 'T', 'A', 'A', 'A', 'T', 'A', 'T', 'T', 'T', 'A', 'G', 'A', 'A', 'T', 'T', 'T', 'A', 'G', 'T', 'A', 'G', 'T', 'A', 'G', 'T', 'G', GAP, 'T', 'T', GAP, GAP, GAP};
       int error =  3 ;
       int length =  6 ;
-      int begin =  30 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 30);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 35);
+      assertEquals(result.getEndPosition().row, 5);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -213,14 +231,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'b', 'r', ' ', 'a', 'b', 'b', 'e', 'l', 'r', 'a', 'b', 'a', 'b', 'b', 'e', 'l'};
       int error =  2 ;
       int length =  7 ;
-      int begin =  9 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 9);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 16);
+      assertEquals(result.getEndPosition().row, 7);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -234,14 +254,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'B', 'R', 'a', 'b', 'b', 'e', 'l'};
       int error =  0 ;
       int length =  7 ;
-      int begin =  0 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 7);
+      assertEquals(result.getEndPosition().row, 7);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -255,14 +277,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'T', 'C', 'T', 'G', 'C', 'T', 'C', 'C', 'T', 'G', 'G', 'C', 'C', 'C', 'A', 'T', 'G', 'A', 'T', 'C', 'G', 'T', 'A', 'T', 'A', 'A', 'C', 'T', 'T', 'T', 'C', 'A', 'A', 'A', 'T', 'T', 'T'};
       int error =  0 ;
       int length =  1 ;
-      int begin =  33 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 33);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 34);
+      assertEquals(result.getEndPosition().row, 1);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -276,14 +300,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'C', 'G', 'T', 'G', 'A', 'A', 'C', 'C', 'C', 'G', 'G', 'G', 'G', 'G', 'T', 'G', 'G', 'A', 'G', 'C', 'T', 'T', 'G', 'C', 'A', 'G', 'T', 'G'};
       int error =  0 ;
       int length =  0 ;
-      int begin =  28 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 28);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 28);
+      assertEquals(result.getEndPosition().row, 0);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -297,14 +323,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'C', 'A', 'C', 'T', 'T', 'T', 'G', 'G', 'G', 'A', 'G', 'G', 'C', 'C', 'A', 'A', 'G', 'G', 'C', 'G', 'G', 'G', 'C', 'G', 'G', 'A', 'T', 'C', 'A', 'C', 'G', 'A', 'G', 'G', 'T', 'C', 'A', 'G', 'G', 'A', 'G', 'A', 'T', 'C', 'G', 'A', 'G', 'A', 'C', 'C', 'A', 'T', 'C', 'C', 'T', 'G', 'G', 'C', 'T', 'A', 'G'};
       int error =  15 ;
       int length =  61 ;
-      int begin =  0 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 61);
+      assertEquals(result.getEndPosition().row, 61);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -318,14 +346,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'A', 'A', 'A', 'A', 'C', 'C', 'T', 'A', 'T', 'C', 'C', 'C', 'G', 'G', 'G', 'A', 'G', 'G', 'T', 'C', 'G', 'A', 'G', 'G', 'T', 'A', 'G', 'G', 'C', 'G', 'G', 'A', 'T', 'T', 'A', 'C', 'G', 'A', 'G', 'G', 'T', 'T', 'A', 'G', 'G', 'A', 'G', 'A', 'T', 'C', 'G', 'A', 'G', 'A', 'T', 'T', 'A', 'T', 'T', 'T', 'T', 'G', 'A', 'T', 'T', 'A', 'A'};
       int error =  0 ;
       int length =  26 ;
-      int begin =  0 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 26);
+      assertEquals(result.getEndPosition().row, 26);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -339,14 +369,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'C', 'C', 'T', 'G', 'C', 'A', 'A', 'T', 'C', 'C', 'C', 'C', 'G', 'C', 'T', 'A', 'C', 'T', 'C', 'G', 'G', 'G', 'A', 'G', 'G', 'C', 'T', 'G', 'A', 'G', 'G', 'C', 'A', 'G', 'G', 'T', 'G', 'A', 'A', 'T', 'C', 'G', 'C', 'T', 'T', 'G', 'A', 'A', 'C', 'C', 'C', 'G', 'G', 'G', 'A', 'G', 'G', 'C', 'A', 'G', 'A', 'G', 'G', 'T', 'T', 'G'};
       int error =  15 ;
       int length =  66 ;
-      int begin =  0 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 66);
+      assertEquals(result.getEndPosition().row, 66);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -360,14 +392,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[]{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'};
       int error =  0 ;
       int length =  3 ;
-      int begin =  0 ;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getBeginPosition().row, 0);
+      assertEquals(result.getEndPosition().column, 3);
+      assertEquals(result.getEndPosition().row, 3);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
@@ -381,14 +415,16 @@ public class SemiglobalAlignerTest {
       byte[] r2 = new byte[] { GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP };
       int error = 0;
       int length = 0;
-      int begin = 28;
 
       SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
       SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
-      assertEquals(result.getBegin(), begin);
+      assertEquals(result.getBeginPosition().column, 0);
+      assertEquals(result.getBeginPosition().row, 28);
+      assertEquals(result.getEndPosition().column, 0);
+      assertEquals(result.getEndPosition().row, 28);
       assertEquals(result.getLength(), length);
       assertEquals(result.getErrors(), error);
    }
