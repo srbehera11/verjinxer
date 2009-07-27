@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import verjinxer.sequenceanalysis.alignment.IAligner.Direction;
 import verjinxer.sequenceanalysis.alignment.IAligner.MatrixPosition;
-import verjinxer.util.ArrayUtils;
 
 /**
  * This is a flexible Aligner. Depending on the begin and end locations ( {@link #beginLocation},
