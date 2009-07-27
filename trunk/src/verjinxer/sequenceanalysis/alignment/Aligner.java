@@ -486,10 +486,23 @@ public class Aligner {
    public final static AlignmentResult align(final byte[] txt, final int start, final int len,
          final byte[] index, final int bstart, final int bend, final int giventol,
          final int[] storage, int asize) {
+      // tries to find an appearance of txt in index.
+      // Simplified, for each position in index a forward alignment is calculated with txt als query and
+      // the rest of index as reference. Thereby the maximum error rate is the tol.
+      // In other words, this method calculates an alignment from the top edge to the bottom edge.
+      //       index
+      //    +---------
+      //  t |                The table is calculated column for column.
+      //  x |                When calculated the i-th column, the results of column (i-1)
+      //  t |                is stored in storage. When calculating position (j,i) and you want to look
+      //    |                left, you must look in storage[j]. The calculated result of position (j,i) is
+      //                     stored immediately in storage[j]. The old value is remembered in dul cause it 
+      //                     is needed when calculating position (j+1,i) for looking diagonal.
+      // 
       final int tol = giventol < len ? giventol : len;
-      int bestpos = -1;
-      int bestd = 2 * (len + 1); // as good as infinity
-      final int as = asize;
+      int bestpos = -1; // position in index where best alignment of txt exists
+      int bestd = 2 * (len + 1); // as good as infinity - number of errors for best alignment
+      final int as = asize; // assumption: each element of index is between 0 and as (exclusiv)
 
       for (int k = 0; k < tol; k++)
          storage[k] = k + 1;
