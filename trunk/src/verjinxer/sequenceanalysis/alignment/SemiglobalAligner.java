@@ -267,8 +267,8 @@ public class SemiglobalAligner {
       byte[] alignment1 = new byte[m + n];
       byte[] alignment2 = new byte[m + n];
    
-      int p1 = 0;
-      int p2 = 0;
+      int p1 = alignment1.length-1;
+      int p2 = alignment2.length-1;
    
       row = m;
       column = n;
@@ -279,13 +279,13 @@ public class SemiglobalAligner {
       // position where we found the maximum score
       if (table.length - 1 == bestRow) { // we are in the last row
          while (column > bestColumn) {
-            alignment1[p1++] = IAligner.GAP;
-            alignment2[p2++] = s2[start2 + --column];
+            alignment1[p1--] = IAligner.GAP;
+            alignment2[p2--] = s2[start2 + --column];
          }
       } else { // we are in the last column
          while (row > bestRow) {
-            alignment1[p1++] = s1[start1 + --row];
-            alignment2[p2++] = IAligner.GAP;
+            alignment1[p1--] = s1[start1 + --row];
+            alignment2[p2--] = IAligner.GAP;
          }
       }
       int rlen = p1;
@@ -301,42 +301,38 @@ public class SemiglobalAligner {
          if (direction == Direction.DIAG) {
             if (s1[start1 + --row] != s2[start2 + --column])
                errors++;
-            alignment1[p1++] = s1[start1 + row];
-            alignment2[p2++] = s2[start2 + column];
+            alignment1[p1--] = s1[start1 + row];
+            alignment2[p2--] = s2[start2 + column];
          } else if (direction == Direction.LEFT) {
             errors++;
-            alignment1[p1++] = IAligner.GAP;
-            alignment2[p2++] = s2[start2 + --column];
+            alignment1[p1--] = IAligner.GAP;
+            alignment2[p2--] = s2[start2 + --column];
          } else if (direction == Direction.UP) {
-            alignment1[p1++] = s1[start1 + --row];
-            alignment2[p2++] = IAligner.GAP;
+            alignment1[p1--] = s1[start1 + --row];
+            alignment2[p2--] = IAligner.GAP;
             errors++;
          }
       }
    
       // compute the length of the actual alignment (ignoring ends)
-      int length = p1 - rlen;
+      int length = rlen - p1;
    
       IAligner.MatrixPosition beginPosition = new IAligner.MatrixPosition(row, column);
    
       while (column > 0) {
-         alignment1[p1++] = IAligner.GAP;
-         alignment2[p2++] = s2[start2 + --column];
+         alignment1[p1--] = IAligner.GAP;
+         alignment2[p2--] = s2[start2 + --column];
       }
       while (row > 0) {
-         alignment1[p1++] = s1[start1 + --row];
-         alignment2[p2++] = IAligner.GAP;
+         alignment1[p1--] = s1[start1 + --row];
+         alignment2[p2--] = IAligner.GAP;
       }
       assert row == 0 && column == 0;
       assert table[bestRow][bestColumn].score == length - 2 * errors;
-   
-      // reverse result
-      ArrayUtils.reverseArray(alignment1, p1);
-      ArrayUtils.reverseArray(alignment2, p2);
       
       //cut unused fields in alignments
-      alignment1 = Arrays.copyOf(alignment1, p1);
-      alignment2 = Arrays.copyOf(alignment2, p2);
+      alignment1 = Arrays.copyOfRange(alignment1, p1+1, alignment1.length);
+      alignment2 = Arrays.copyOfRange(alignment2, p2+1, alignment2.length);
       
       if (debug) {
          printDebug(table, null);
