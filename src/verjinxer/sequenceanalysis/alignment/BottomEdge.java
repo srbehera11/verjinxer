@@ -26,10 +26,10 @@ public class BottomEdge extends EndLocations {
 
       final int m = table.length-1;
       
-      IAligner.Entry bestEntry = table[m][1];
-      int bestColumn = 1;
-      for (int column = 2; column < table[m].length; ++column) { // start by 2 cause bestEntry is
-                                                             // already set to table[m][1]
+      IAligner.Entry bestEntry = table[m][0];
+      int bestColumn = 0;
+      for (int column = 1; column < table[m].length; ++column) { // start by 0 cause bestEntry is
+                                                             // already set to table[m][0]
          if (table[m][column].score >= bestEntry.score) { // must be >= cause better to start near corner
             bestColumn = column;
             bestEntry = table[m][column];

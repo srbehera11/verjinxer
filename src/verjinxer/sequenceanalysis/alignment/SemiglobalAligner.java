@@ -218,24 +218,6 @@ public class SemiglobalAligner {
       
       final int m = end1 - start1;
       final int n = end2 - start2;
-      
-      if (m == 0) {
-         // s1 is empty //TODO number errors depend on strategies
-         byte[] alignment2 = Arrays.copyOfRange(s2, start2, end2);
-         byte[] alignment1 = new byte[alignment2.length];
-         Arrays.fill(alignment1, IAligner.GAP);
-         return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2,
-               new IAligner.MatrixPosition(0, alignment2.length), new IAligner.MatrixPosition(0,
-                     alignment2.length), 0, 0);
-      } else if (n == 0) {
-         // s2 is empty //TODO number errors depend on strategies
-         byte[] alignment1 = Arrays.copyOfRange(s1, start1, end1);
-         byte[] alignment2 = new byte[alignment1.length];
-         Arrays.fill(alignment2, IAligner.GAP);
-         return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2,
-               new IAligner.MatrixPosition(alignment1.length, 0), new IAligner.MatrixPosition(
-                     alignment1.length, 0), 0, 0);
-      }
    
       // the DP table row x column
       IAligner.Entry[][] table = new IAligner.Entry[m + 1][n + 1];
@@ -277,10 +259,9 @@ public class SemiglobalAligner {
       final int bestRow = endPosition.row;
       final int bestColumn = endPosition.column;
 
-      // both must be greater than 0, cause the case that one of the sequences has length 0 is
-      // caught at the beginning
-      assert bestRow > 0 && bestRow < table.length : String.format("bestRow: %s%n max is %s", bestRow, m);
-      assert bestColumn > 0 && bestColumn < table[bestRow].length : String.format("bestColumn: %s%n max is %s", bestColumn, n);
+      // both must be greater or equal than 0, cause one of the sequences can have length 0
+      assert bestRow >= 0 && bestRow < table.length : String.format("bestRow: %s%n max is %s", bestRow, m);
+      assert bestColumn >= 0 && bestColumn < table[bestRow].length : String.format("bestColumn: %s%n max is %s", bestColumn, n);
    
       // now track back
       byte[] alignment1 = new byte[m + n];
