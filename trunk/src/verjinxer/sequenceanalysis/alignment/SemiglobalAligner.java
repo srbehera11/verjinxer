@@ -159,6 +159,7 @@ public class SemiglobalAligner {
 
    private BeginLocations beginLocation;
    private EndLocations endLocation;
+   private Scores scores = new Scores(); // initialization with default scores;
    private boolean debug = false; 
    
    /**
@@ -175,6 +176,16 @@ public class SemiglobalAligner {
     */
    public void setEndLocations(EndLocations endLocation) {
       this.endLocation = endLocation;
+   }
+   
+   /**
+    * Sets the scores to use for insertion, deletion, mismatch and match.
+    * 
+    * @param scores
+    *           Scores to use to build the alignment.
+    */
+   public void setScores(Scores scores) {
+      this.scores = scores;
    }
 
    /**
@@ -221,7 +232,7 @@ public class SemiglobalAligner {
       // the DP table row x column
       IAligner.Entry[][] table = new IAligner.Entry[m + 1][n + 1];
    
-      beginLocation.initMatrix(table);
+      beginLocation.initMatrix(table, scores);
       
       int row, column;
    
@@ -233,16 +244,16 @@ public class SemiglobalAligner {
             // look diagonal
             bt = Direction.DIAG;
             score = table[row - 1][column - 1].score
-                  + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? IAligner.SCORE_MATCH
-                        : IAligner.SCORE_MISMATCH);
+                  + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? scores.getMatchScore()
+                        : scores.getMismatchScore());
             // look up
-            int tmp = table[row - 1][column].score + IAligner.SCORE_DELETION;
+            int tmp = table[row - 1][column].score + scores.getDeletionScore();
             if (tmp > score) {
                bt = Direction.UP;
                score = tmp;
             }
             // look left
-            tmp = table[row][column - 1].score + IAligner.SCORE_INSERTION;
+            tmp = table[row][column - 1].score + scores.getInsertionScore();
             if (tmp > score) {
                bt = Direction.LEFT;
                score = tmp;
@@ -327,7 +338,6 @@ public class SemiglobalAligner {
          alignment2[p2--] = IAligner.GAP;
       }
       assert row == 0 && column == 0;
-      assert table[bestRow][bestColumn].score == length - 2 * errors;
       
       //cut unused fields in alignments
       alignment1 = Arrays.copyOfRange(alignment1, p1+1, alignment1.length);

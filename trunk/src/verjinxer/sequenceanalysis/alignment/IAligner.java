@@ -34,10 +34,7 @@ public interface IAligner {
          this.column = column;
       }
    }
+   
    public static final byte GAP = -1; // TODO
-   public static final int SCORE_INSERTION = -1;
-   public static final int SCORE_DELETION = -1;
-   public static final int SCORE_MATCH = 1;
-   public static final int SCORE_MISMATCH = -1;
 
 }

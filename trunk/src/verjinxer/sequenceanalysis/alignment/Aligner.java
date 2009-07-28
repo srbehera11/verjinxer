@@ -90,6 +90,49 @@ public class Aligner {
          return s1.toString();
       }
       
+      public String printForJUnit() {
+         StringBuilder s1 = new StringBuilder(lengthOnReference * 6 + 2);
+         StringBuilder s2 = new StringBuilder(lengthOnReference * 2);
+
+         s1.append("byte[] r1 = {");
+         s2.append("byte[] r2 = {");
+         
+         for (int i = 0; i < sequence1.length; i++) { // i is incremented in last if statement
+            if (sequence1[i] == IAligner.GAP) {
+               s1.append("GAP");
+            } else {
+               s1.append("\'");
+               s1.append((char)sequence1[i]);
+               s1.append("\'");
+            }
+
+            if (sequence2[i] == IAligner.GAP) {
+               s2.append("GAP");
+            } else {
+               s2.append("\'");
+               s2.append((char)sequence2[i]);
+               s2.append("\'");
+            }
+            
+            if (i < sequence1.length-1) {
+               s1.append(",");
+               s2.append(",");
+            }
+         }
+
+         s1.append("};\n");
+         s2.append("};");
+         s1.append(s2);
+         s1.append('\n');
+         s1.append("assertArrayEquals(result.getSequence1(), r1);\n");
+         s1.append("assertArrayEquals(result.getSequence2(), r2);\n");
+         s1.append("assertEquals(result.getErrors(), ");
+         s1.append(this.errors);
+         s1.append(");");
+
+         return s1.toString();
+      }
+      
       /**
        * Prints the contrast of the two sequences considered as characters.
        * 
@@ -104,25 +147,25 @@ public class Aligner {
          // here where gaps may be inserted.
          // Therefore i counts the normal values in sequence2 and gapCounter the gaps.
          int gapCounter = 0;
-         for (int i = 0; i < lengthOnReference;) { // i is incremented in last if statement
-            if (sequence1[i + gapCounter] == IAligner.GAP) {
+         for (int i = 0; i < sequence1.length; i++) { // i is incremented in last if statement
+            if (sequence1[i /*+ gapCounter*/] == IAligner.GAP) {
                s1.append(' ');
             } else {
-               s1.append((char) sequence1[i + gapCounter]);
+               s1.append((char) sequence1[i /*+ gapCounter*/]);
             }
 
-            if (sequence1[i + gapCounter] == sequence2[i + gapCounter]) {
+            if (sequence1[i /*+ gapCounter*/] == sequence2[i /*+ gapCounter*/]) {
                m.append('|');
             } else {
                m.append('x');
             }
 
-            if (sequence2[i + gapCounter] == IAligner.GAP) {
+            if (sequence2[i /*+ gapCounter*/] == IAligner.GAP) {
                s2.append(' ');
-               gapCounter++;
+               //gapCounter++;
             } else {
-               s2.append((char) sequence2[i + gapCounter]);
-               i++;
+               s2.append((char) sequence2[i /*+ gapCounter*/]);
+               //i++;
             }
          }
 
@@ -347,12 +390,19 @@ public class Aligner {
       // now track back
       byte[] alignment1 = new byte[m + n + 4]; // TODO
       byte[] alignment2 = new byte[m + n + 4]; // TODO
+      
 
       int p1 = 0;
       int p2 = 0;
 
+      j = s2.length;
+      while(j > best_j) {
+         alignment1[p1++] = IAligner.GAP;
+         alignment2[p2++] = s2[--j];
+      }
+      
       i = m;
-      j = best_j;
+      assert j == best_j;
 
       d = i - j + e;
 
@@ -385,6 +435,9 @@ public class Aligner {
       // reverse result
       ArrayUtils.reverseArray(alignment1, p1);
       ArrayUtils.reverseArray(alignment2, p2);
+      
+      alignment1 = Arrays.copyOf(alignment1, p1);
+      alignment2 = Arrays.copyOf(alignment2, p2);
 
       // return (r1, r2, begin, length, errors)
       // PyObject* o = Py_BuildValue("ssii", alignment1, alignment2, errors, best_j);

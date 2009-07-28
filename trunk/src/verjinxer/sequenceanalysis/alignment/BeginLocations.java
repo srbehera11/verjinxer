@@ -9,7 +9,7 @@ public abstract class BeginLocations {
     * 
     * @param table
     */
-   void initMatrix(IAligner.Entry[][] table) {
+   void initMatrix(IAligner.Entry[][] table, Scores scores) {
 
       // init left edge
       for (int row = 0; row < table.length; ++row) {
