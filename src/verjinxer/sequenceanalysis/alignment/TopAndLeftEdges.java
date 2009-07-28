@@ -5,8 +5,8 @@ import verjinxer.sequenceanalysis.alignment.IAligner.Entry;
 public class TopAndLeftEdges extends BeginLocations {
 
    @Override
-   public void initMatrix(Entry[][] table) {
-      super.initMatrix(table);
+   public void initMatrix(Entry[][] table, Scores scores) {
+      super.initMatrix(table, scores);
 
       // init left edge
       for (int row = 0; row < table.length; ++row) {
