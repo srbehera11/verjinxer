@@ -38,3 +38,18 @@ Test file for color-space conversion. See above.
 
 sequence.fastq:
 An example file for the FASTQ file format.
+
+cgis.fa
+reads.fa
+reads-cgis-1x14.matches
+reads-cgis-1x14.mapped
+
+A small reference sequence (some CpG islands) and some read sequences (454,
+bisulfite-treated, but we ignore that here).
+Running the following commands will produce a .matches and a .mapped file that
+should be equal to the ones in this directory. 
+vji tr --dna cgis.fa
+vji tr --dna reads.fa
+vji qg -q 10 cgis
+vji qm -l 14 reads cgis
+vji align reads cgis reads-cgis-1x14.matches
