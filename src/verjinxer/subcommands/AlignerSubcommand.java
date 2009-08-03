@@ -11,11 +11,15 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.junit.Test;
+
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.Aligner.ForwardAlignmentResult;
+import verjinxer.util.ArrayUtils;
 import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
@@ -32,6 +36,7 @@ import com.spinn3r.log5j.Logger;
  *
  */
 public class AlignerSubcommand implements Subcommand {
+   
    private static final Logger log = Globals.getLogger();
    private Globals g;
 
@@ -163,7 +168,7 @@ public class AlignerSubcommand implements Subcommand {
             byte[] reference = Arrays.copyOfRange(references.array(), rn == 0 ? 0
                   : (int) referencesSeparatorPositions[rn - 1] + 1,
                   (int) referencesSeparatorPositions[rn]);
-            Aligner.AlignedQuery aligned = Aligner.alignMatchToReference(query, reference,
+            AlignerSubcommand.AlignedQuery aligned = AlignerSubcommand.alignMatchToReference(query, reference,
                   match.getQueryPosition(), match.getReferencePosition(), match.getLength(),
                   maximumErrorRate);
             if (aligned != null) {
@@ -191,5 +196,102 @@ public class AlignerSubcommand implements Subcommand {
       g.stopplog();
 
       return 0;
+   }
+   
+   /** A query that has been aligned to a reference. */
+   public static class AlignedQuery {
+      private final int start, stop, errors;
+   
+      public AlignedQuery(int start, int stop, int errors) {
+         this.start = start;
+         this.stop = stop;
+         this.errors = errors;
+      }
+   
+      /** Start position of the query relative to the beginning of the reference */
+      public int getStart() {
+         return start;
+      }
+   
+      /** Stop position of the query relative to the beginning of the reference */
+      public int getStop() {
+         return stop;
+      }
+   
+      /** Number of errors of the alignment */
+      public int getErrors() {
+         return errors;
+      }
+   }
+
+   /**
+    * Aligns a query to a reference sequence, given an interval on query and reference that matches
+    * exactly (seed). Starting from the exact match, the match is first extended to the right and
+    * then to the left.
+    * 
+    * @param query
+    *           The entire query sequence.
+    * @param reference
+    *           The entire reference sequence.
+    * @param queryPosition
+    *           Position of the exact match on the query sequence.
+    * @param referencePosition
+    *           Position of the exact match on the reference sequence.
+    * @param length
+    *           Length of the exact match.
+    * @param maximumErrorRate
+    *           Allow at most query.length * maximumErrorRate errors during the alignment.
+    * @return If there were too many errors, null is returned. Otherwise, an AlignedQuery is
+    *         returned.
+    */
+   public static AlignedQuery alignMatchToReference(final byte[] query, final byte[] reference,
+         final int queryPosition, final int referencePosition, final int length,
+         final double maximumErrorRate) {
+
+      int refseqpos = referencePosition;
+
+      int maximumNumberOfErrors = (int) (query.length * maximumErrorRate);
+
+      byte[] endQuery = Arrays.copyOfRange(query, queryPosition + length, query.length);
+      byte[] endReference = Arrays.copyOfRange(reference, refseqpos + length, reference.length);
+
+      // if you want to convert a byte[] to a String for debugging, use alphabet.preimage(array)
+
+      Aligner.ForwardAlignmentResult alignedEnd = Aligner.forwardAlign(endQuery, endReference,
+            maximumNumberOfErrors);
+
+      if (alignedEnd == null) {
+         return null;
+      } else {
+         // System.out.println("alignedEnd: errors " + alignedEnd.getErrors() + ". LengthonRef " +
+         // alignedEnd.getLengthOnReference());
+         // try {
+         // System.out.println("")
+         // } catch (InvalidSymbolException e) {
+         // e.printStackTrace();
+         // }
+      }
+
+      byte[] reversedFrontQuery = Arrays.copyOf(query, queryPosition);
+      ArrayUtils.reverseArray(reversedFrontQuery, -1);
+      byte[] reversedFrontReference = Arrays.copyOf(reference, referencePosition);
+      ArrayUtils.reverseArray(reversedFrontReference, -1);
+
+      Aligner.ForwardAlignmentResult alignedFront = Aligner.forwardAlign(reversedFrontQuery,
+            reversedFrontReference, maximumNumberOfErrors - alignedEnd.getErrors());
+
+      if (alignedFront == null) {
+         return null;
+      }
+      assert alignedFront.getErrors() + alignedEnd.getErrors() <= maximumNumberOfErrors;
+
+      int start = referencePosition - alignedFront.getLengthOnReference();
+      int stop = referencePosition + length + alignedEnd.getLengthOnReference();
+      int errors = alignedFront.getErrors() + alignedEnd.getErrors();
+
+      return new AlignedQuery(start, stop, errors);
+
+      // TODO some string twiddling would be necessary here to compute the actual alignment
+      // TODO if an actual alignment is not needed, we could use a faster version of forwardAlign
    }
 }
