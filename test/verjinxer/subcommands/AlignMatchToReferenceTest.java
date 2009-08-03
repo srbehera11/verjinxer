@@ -27,7 +27,8 @@ public class AlignMatchToReferenceTest {
       final double maximumErrorRate = 0.15;
 
       AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference,
-            queryPosition, referencePosition, length, maximumErrorRate);
+            queryPosition, referencePosition, length, maximumErrorRate, 
+            new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "4" }));
 
       assertTrue(result == null);
    }
@@ -44,7 +45,8 @@ public class AlignMatchToReferenceTest {
       final double maximumErrorRate = 0.08;
 
       AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference,
-            queryPosition, referencePosition, length, maximumErrorRate);
+            queryPosition, referencePosition, length, maximumErrorRate, 
+            new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "4" }));
 
       assertEquals(result.getStart(), 4);
       assertEquals(result.getStop(), 31);
@@ -60,7 +62,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 40;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(40, result.getStart());
    assertEquals(148, result.getStop());
    assertEquals(10, result.getErrors());
@@ -75,7 +77,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 8;
    final int length = 23;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -90,7 +92,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 28;
    final int length = 23;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(28, result.getStart());
    assertEquals(136, result.getStop());
    assertEquals(10, result.getErrors());
@@ -105,7 +107,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 9;
    final int length = 23;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(9, result.getStart());
    assertEquals(117, result.getStop());
    assertEquals(10, result.getErrors());
@@ -120,7 +122,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 7;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(0, result.getStart());
    assertEquals(108, result.getStop());
    assertEquals(10, result.getErrors());
@@ -135,7 +137,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 63;
    final int length = 19;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(28, result.getStart());
    assertEquals(136, result.getStop());
    assertEquals(10, result.getErrors());
@@ -150,7 +152,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 79;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(40, result.getStart());
    assertEquals(148, result.getStop());
    assertEquals(10, result.getErrors());
@@ -165,7 +167,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 50;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -180,7 +182,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 69;
    final int length = 14;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -195,7 +197,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 116;
    final int length = 32;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(40, result.getStart());
    assertEquals(148, result.getStop());
    assertEquals(10, result.getErrors());
@@ -210,7 +212,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 85;
    final int length = 25;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(9, result.getStart());
    assertEquals(117, result.getStop());
    assertEquals(10, result.getErrors());
@@ -225,7 +227,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 77;
    final int length = 31;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(0, result.getStart());
    assertEquals(108, result.getStop());
    assertEquals(10, result.getErrors());
@@ -240,7 +242,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 94;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -255,7 +257,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 115;
    final int length = 21;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(28, result.getStart());
    assertEquals(136, result.getStop());
    assertEquals(10, result.getErrors());
@@ -270,7 +272,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 980;
    final int length = 17;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(980, result.getStart());
    assertEquals(1043, result.getStop());
    assertEquals(6, result.getErrors());
@@ -285,7 +287,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 686;
    final int length = 41;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(686, result.getStart());
    assertEquals(747, result.getStop());
    assertEquals(6, result.getErrors());
@@ -300,7 +302,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1193;
    final int length = 30;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1193, result.getStart());
    assertEquals(1254, result.getStop());
    assertEquals(3, result.getErrors());
@@ -315,7 +317,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 838;
    final int length = 30;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(838, result.getStart());
    assertEquals(901, result.getStop());
    assertEquals(6, result.getErrors());
@@ -330,7 +332,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 659;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(659, result.getStart());
    assertEquals(722, result.getStop());
    assertEquals(5, result.getErrors());
@@ -345,7 +347,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 535;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(535, result.getStart());
    assertEquals(596, result.getStop());
    assertEquals(6, result.getErrors());
@@ -360,7 +362,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 535;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(535, result.getStart());
    assertEquals(596, result.getStop());
    assertEquals(6, result.getErrors());
@@ -375,7 +377,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1256;
    final int length = 38;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1256, result.getStart());
    assertEquals(1317, result.getStop());
    assertEquals(6, result.getErrors());
@@ -390,7 +392,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 2039;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(2039, result.getStart());
    assertEquals(2100, result.getStop());
    assertEquals(3, result.getErrors());
@@ -405,7 +407,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 638;
    final int length = 21;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(638, result.getStart());
    assertEquals(698, result.getStop());
    assertEquals(4, result.getErrors());
@@ -420,7 +422,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 2018;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(2018, result.getStart());
    assertEquals(2079, result.getStop());
    assertEquals(4, result.getErrors());
@@ -435,7 +437,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 702;
    final int length = 38;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(702, result.getStart());
    assertEquals(763, result.getStop());
    assertEquals(4, result.getErrors());
@@ -450,7 +452,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 977;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(977, result.getStart());
    assertEquals(1040, result.getStop());
    assertEquals(6, result.getErrors());
@@ -465,7 +467,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 949;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(949, result.getStart());
    assertEquals(1012, result.getStop());
    assertEquals(5, result.getErrors());
@@ -480,7 +482,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1240;
    final int length = 30;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1240, result.getStart());
    assertEquals(1303, result.getStop());
    assertEquals(5, result.getErrors());
@@ -495,7 +497,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1137;
    final int length = 30;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1137, result.getStart());
    assertEquals(1200, result.getStop());
    assertEquals(6, result.getErrors());
@@ -510,7 +512,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 611;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(611, result.getStart());
    assertEquals(672, result.getStop());
    assertEquals(6, result.getErrors());
@@ -525,7 +527,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 514;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(514, result.getStart());
    assertEquals(575, result.getStop());
    assertEquals(5, result.getErrors());
@@ -540,7 +542,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 762;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(762, result.getStart());
    assertEquals(825, result.getStop());
    assertEquals(5, result.getErrors());
@@ -555,7 +557,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1856;
    final int length = 30;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1856, result.getStart());
    assertEquals(1919, result.getStop());
    assertEquals(5, result.getErrors());
@@ -570,7 +572,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1345;
    final int length = 38;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1345, result.getStart());
    assertEquals(1406, result.getStop());
    assertEquals(4, result.getErrors());
@@ -585,7 +587,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 812;
    final int length = 29;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(812, result.getStart());
    assertEquals(873, result.getStop());
    assertEquals(4, result.getErrors());
@@ -600,7 +602,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 927;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(927, result.getStart());
    assertEquals(990, result.getStop());
    assertEquals(6, result.getErrors());
@@ -615,7 +617,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 563;
    final int length = 27;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(563, result.getStart());
    assertEquals(626, result.getStop());
    assertEquals(6, result.getErrors());
@@ -630,7 +632,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1135;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1135, result.getStart());
    assertEquals(1196, result.getStop());
    assertEquals(6, result.getErrors());
@@ -645,7 +647,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1100;
    final int length = 30;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1100, result.getStart());
    assertEquals(1163, result.getStop());
    assertEquals(5, result.getErrors());
@@ -660,7 +662,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 689;
    final int length = 17;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(689, result.getStart());
    assertEquals(750, result.getStop());
    assertEquals(5, result.getErrors());
@@ -675,7 +677,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1352;
    final int length = 38;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1352, result.getStart());
    assertEquals(1413, result.getStop());
    assertEquals(5, result.getErrors());
@@ -690,7 +692,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 529;
    final int length = 14;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(529, result.getStart());
    assertEquals(592, result.getStop());
    assertEquals(5, result.getErrors());
@@ -705,7 +707,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1031;
    final int length = 26;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1027, result.getStart());
    assertEquals(1088, result.getStop());
    assertEquals(6, result.getErrors());
@@ -720,7 +722,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1463;
    final int length = 26;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1459, result.getStart());
    assertEquals(1522, result.getStop());
    assertEquals(6, result.getErrors());
@@ -735,7 +737,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 781;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(767, result.getStart());
    assertEquals(830, result.getStop());
    assertEquals(6, result.getErrors());
@@ -750,7 +752,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 2899;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(2885, result.getStart());
    assertEquals(2948, result.getStop());
    assertEquals(6, result.getErrors());
@@ -765,7 +767,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 652;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(638, result.getStart());
    assertEquals(701, result.getStop());
    assertEquals(6, result.getErrors());
@@ -780,7 +782,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 723;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(709, result.getStart());
    assertEquals(770, result.getStop());
    assertEquals(6, result.getErrors());
@@ -795,7 +797,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 544;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(529, result.getStart());
    assertEquals(592, result.getStop());
    assertEquals(5, result.getErrors());
@@ -810,7 +812,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1123;
    final int length = 21;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1106, result.getStart());
    assertEquals(1167, result.getStop());
    assertEquals(5, result.getErrors());
@@ -825,7 +827,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1154;
    final int length = 19;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1135, result.getStart());
    assertEquals(1196, result.getStop());
    assertEquals(6, result.getErrors());
@@ -840,7 +842,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 558;
    final int length = 14;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(535, result.getStart());
    assertEquals(596, result.getStop());
    assertEquals(6, result.getErrors());
@@ -855,7 +857,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 558;
    final int length = 14;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(535, result.getStart());
    assertEquals(596, result.getStop());
    assertEquals(6, result.getErrors());
@@ -870,7 +872,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 2062;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(2039, result.getStart());
    assertEquals(2100, result.getStop());
    assertEquals(3, result.getErrors());
@@ -885,7 +887,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 660;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(638, result.getStart());
    assertEquals(698, result.getStop());
    assertEquals(4, result.getErrors());
@@ -900,7 +902,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 2041;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(2018, result.getStart());
    assertEquals(2079, result.getStop());
    assertEquals(4, result.getErrors());
@@ -915,7 +917,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 537;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(514, result.getStart());
    assertEquals(575, result.getStop());
    assertEquals(5, result.getErrors());
@@ -930,7 +932,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 665;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(642, result.getStart());
    assertEquals(703, result.getStop());
    assertEquals(6, result.getErrors());
@@ -945,7 +947,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 712;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(689, result.getStart());
    assertEquals(750, result.getStop());
    assertEquals(5, result.getErrors());
@@ -960,7 +962,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1232;
    final int length = 14;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1208, result.getStart());
    assertEquals(1269, result.getStop());
    assertEquals(6, result.getErrors());
@@ -975,7 +977,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1009;
    final int length = 14;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(977, result.getStart());
    assertEquals(1040, result.getStop());
    assertEquals(6, result.getErrors());
@@ -990,7 +992,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 981;
    final int length = 19;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(949, result.getStart());
    assertEquals(1012, result.getStop());
    assertEquals(5, result.getErrors());
@@ -1005,7 +1007,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1232;
    final int length = 17;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1193, result.getStart());
    assertEquals(1254, result.getStop());
    assertEquals(3, result.getErrors());
@@ -1020,7 +1022,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 2926;
    final int length = 17;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(2885, result.getStart());
    assertEquals(2948, result.getStop());
    assertEquals(6, result.getErrors());
@@ -1035,7 +1037,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 676;
    final int length = 17;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(638, result.getStart());
    assertEquals(698, result.getStop());
    assertEquals(4, result.getErrors());
@@ -1050,7 +1052,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 803;
    final int length = 17;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(762, result.getStart());
    assertEquals(825, result.getStop());
    assertEquals(5, result.getErrors());
@@ -1065,7 +1067,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 570;
    final int length = 17;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(529, result.getStart());
    assertEquals(592, result.getStop());
    assertEquals(5, result.getErrors());
@@ -1080,7 +1082,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 730;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(689, result.getStart());
    assertEquals(750, result.getStop());
    assertEquals(5, result.getErrors());
@@ -1095,7 +1097,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1027;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(980, result.getStart());
    assertEquals(1043, result.getStop());
    assertEquals(6, result.getErrors());
@@ -1110,7 +1112,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 885;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(838, result.getStart());
    assertEquals(901, result.getStop());
    assertEquals(6, result.getErrors());
@@ -1125,7 +1127,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 706;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(659, result.getStart());
    assertEquals(722, result.getStop());
    assertEquals(5, result.getErrors());
@@ -1140,7 +1142,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 814;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(767, result.getStart());
    assertEquals(830, result.getStop());
    assertEquals(6, result.getErrors());
@@ -1155,7 +1157,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 2084;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(2039, result.getStart());
    assertEquals(2100, result.getStop());
    assertEquals(3, result.getErrors());
@@ -1170,7 +1172,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 685;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(638, result.getStart());
    assertEquals(701, result.getStop());
    assertEquals(6, result.getErrors());
@@ -1185,7 +1187,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 610;
    final int length = 16;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(563, result.getStart());
    assertEquals(626, result.getStop());
    assertEquals(6, result.getErrors());
@@ -1200,7 +1202,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 40;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(40, result.getStart());
    assertEquals(148, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1215,7 +1217,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 8;
    final int length = 23;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1230,7 +1232,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 28;
    final int length = 23;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(28, result.getStart());
    assertEquals(136, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1245,7 +1247,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 9;
    final int length = 23;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(9, result.getStart());
    assertEquals(117, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1260,7 +1262,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 7;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(0, result.getStart());
    assertEquals(108, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1275,7 +1277,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 63;
    final int length = 19;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(28, result.getStart());
    assertEquals(136, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1290,7 +1292,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 79;
    final int length = 15;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(40, result.getStart());
    assertEquals(148, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1305,7 +1307,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 50;
    final int length = 18;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1320,7 +1322,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 69;
    final int length = 14;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1335,7 +1337,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 116;
    final int length = 32;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(40, result.getStart());
    assertEquals(148, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1350,7 +1352,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 85;
    final int length = 25;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(9, result.getStart());
    assertEquals(117, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1365,7 +1367,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 77;
    final int length = 31;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(0, result.getStart());
    assertEquals(108, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1380,7 +1382,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 94;
    final int length = 22;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(8, result.getStart());
    assertEquals(116, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1395,7 +1397,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 115;
    final int length = 21;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(28, result.getStart());
    assertEquals(136, result.getStop());
    assertEquals(10, result.getErrors());
@@ -1410,7 +1412,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1244;
    final int length = 30;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1244, result.getStart());
    assertEquals(1327, result.getStop());
    assertEquals(5, result.getErrors());
@@ -1425,7 +1427,7 @@ public class AlignMatchToReferenceTest {
    final int referencePosition = 1287;
    final int length = 20;
    final double maximumErrorRate = 0.100000;
-   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate);
+   AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference, queryPosition, referencePosition, length, maximumErrorRate, Alphabet.DNA());
    assertEquals(1244, result.getStart());
    assertEquals(1327, result.getStop());
    assertEquals(5, result.getErrors());

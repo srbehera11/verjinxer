@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import com.spinn3r.log5j.Logger;
 
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.IAligner;
@@ -61,6 +62,7 @@ public class AdapterRemover {
    public void cutAndWriteSequences(Project sequenceProject, Sequences adapters, SequenceWriter sequenceWriter) {
       // get sequences and quality values to cut
       Sequences sequences = sequenceProject.readSequences();
+      Alphabet alphabet = sequenceProject.readAlphabet();
       ArrayList<String> descriptions = sequences.getDescriptions();
       byte[] sequence = sequences.array();
       byte[] qualityValues = null;
@@ -96,7 +98,7 @@ public class AdapterRemover {
             // Build alignment for each adapter
             SemiglobalAligner.SemiglobalAlignmentResult bestResult = new SemiglobalAligner.SemiglobalAlignmentResult();
             int bestAdapter = findBestAlignment(bestResult, adapters, sequence, beginSequence,
-                  endSequence);
+                  endSequence, alphabet);
             assert bestResult != null;
             
             // if the best founded alignment is sufficient, than cut sequence
@@ -281,11 +283,13 @@ public class AdapterRemover {
     *           The index where the relevant sequence starts in sequences.
     * @param endSequence
     *           The first index behind the relevant sequence in sequences.
+    * @param alphabet
+    *           The alphabet used for the sequence and the adapters.
     * @return The index of the adapter with that the longest alignment was build.
     */
    private int findBestAlignment(SemiglobalAligner.SemiglobalAlignmentResult bestResult,
          final Sequences adapters, final byte[] sequence, final int beginSequence,
-         final int endSequence) {
+         final int endSequence, Alphabet alphabet) {
 
       bestResult.setAllAttributes(null, null, new MatrixPosition(0, 0), new MatrixPosition(0, 0),
             Integer.MIN_VALUE, 0);
@@ -295,7 +299,8 @@ public class AdapterRemover {
       for (int j = 0; j < adapters.getNumberSequences(); j++) {
          final int[] boundaries = adapters.getSequenceBoundaries(j);
          SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(
-               adapterArrays, boundaries[0], boundaries[1], sequence, beginSequence, endSequence);
+               adapterArrays, boundaries[0], boundaries[1], sequence, beginSequence, endSequence,
+               alphabet);
 
          if (result.getLength() - result.getErrors() > bestResult.getLength()
                - bestResult.getErrors()) {

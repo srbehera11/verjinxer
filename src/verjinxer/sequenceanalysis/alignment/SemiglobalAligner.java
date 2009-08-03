@@ -2,6 +2,7 @@ package verjinxer.sequenceanalysis.alignment;
 
 import java.util.Arrays;
 
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.alignment.IAligner.Direction;
 import verjinxer.sequenceanalysis.alignment.IAligner.MatrixPosition;
 
@@ -215,9 +216,11 @@ public class SemiglobalAligner {
     * @param end2
     *           final index in s2 to compute the alignment from, exclusive. (This index may lie
     *           outside the array.)
+    * @param alphabet
+    *           The alphabet used for the two sequences.
     * @return
     */
-   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2) {
+   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2, Alphabet alphabet) {
       /*            s2 (column:1..n)
             --------------->
            |
@@ -243,9 +246,10 @@ public class SemiglobalAligner {
          for (column = 1; column < table[0].length; ++column) {
             // look diagonal
             bt = Direction.DIAG;
+            // only symbols can match, two matching wildcards are treated as mismatch.
             score = table[row - 1][column - 1].score
-                  + ((s1[start1 + row - 1] == s2[start2 + column - 1]) ? scores.getMatchScore()
-                        : scores.getMismatchScore());
+                  + ((s1[start1 + row - 1] == s2[start2 + column - 1] && alphabet.isSymbol(s1[start1
+                        + row - 1])) ? scores.getMatchScore() : scores.getMismatchScore());
             // look up
             int tmp = table[row - 1][column].score + scores.getDeletionScore();
             if (tmp > score) {
@@ -309,8 +313,11 @@ public class SemiglobalAligner {
       while (!beginLocation.isValid(row, column)) { // while not a valid starting position
          direction = table[row][column].backtrack;
          if (direction == Direction.DIAG) {
-            if (s1[start1 + --row] != s2[start2 + --column])
+            --row;
+            --column;
+            if (s1[start1 + row] != s2[start2 + column] || !alphabet.isSymbol(s1[start1 + row])) {
                errors++;
+            }
             alignment1[p1--] = s1[start1 + row];
             alignment2[p2--] = s2[start2 + column];
          } else if (direction == Direction.LEFT) {
@@ -358,8 +365,9 @@ public class SemiglobalAligner {
     * @param s2
     * @author Markus Kemmerling
     */
-   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final byte[] s2) {
-      return semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length);
+   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1,
+         final byte[] s2, Alphabet alphabet) {
+      return semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length, alphabet);
    }
    
    private static void printDebug(IAligner.Entry[][] table, SemiglobalAligner.SemiglobalAlignmentResult result) {
