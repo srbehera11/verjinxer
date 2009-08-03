@@ -45,9 +45,9 @@ public class AlignerSubcommandTest {
       AlignedQuery result = AlignerSubcommand.alignMatchToReference(query, reference,
             queryPosition, referencePosition, length, maximumErrorRate);
 
-      System.out.printf("assertEquals(result.getStart(), %d);%n", result.getStart());
-      System.out.printf("assertEquals(result.getStop(), %d);%n", result.getStop());
-      System.out.printf("assertEquals(result.getErrors(), %d);%n", result.getErrors());
+      assertEquals(result.getStart(), 4);
+      assertEquals(result.getStop(), 31);
+      assertEquals(result.getErrors(), 2);
    }
 
 

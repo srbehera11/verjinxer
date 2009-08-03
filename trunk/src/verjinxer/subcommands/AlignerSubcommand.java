@@ -18,7 +18,10 @@ import verjinxer.Project;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.AlignerFactory;
+import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
 import verjinxer.sequenceanalysis.alignment.Aligner.ForwardAlignmentResult;
+import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmentResult;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
@@ -248,28 +251,16 @@ public class AlignerSubcommand implements Subcommand {
          final int queryPosition, final int referencePosition, final int length,
          final double maximumErrorRate) {
 
-      int refseqpos = referencePosition;
-
-      int maximumNumberOfErrors = (int) (query.length * maximumErrorRate);
-
-      byte[] endQuery = Arrays.copyOfRange(query, queryPosition + length, query.length);
-      byte[] endReference = Arrays.copyOfRange(reference, refseqpos + length, reference.length);
+      final int maximumNumberOfErrors = (int) (query.length * maximumErrorRate);
 
       // if you want to convert a byte[] to a String for debugging, use alphabet.preimage(array)
 
-      Aligner.ForwardAlignmentResult alignedEnd = Aligner.forwardAlign(endQuery, endReference,
-            maximumNumberOfErrors);
+      SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
+      SemiglobalAlignmentResult alignedEnd = aligner.semiglobalAlign(query, queryPosition + length,
+            query.length, reference, referencePosition + length, reference.length);
 
-      if (alignedEnd == null) {
+      if (alignedEnd.getErrors() > maximumNumberOfErrors) {
          return null;
-      } else {
-         // System.out.println("alignedEnd: errors " + alignedEnd.getErrors() + ". LengthonRef " +
-         // alignedEnd.getLengthOnReference());
-         // try {
-         // System.out.println("")
-         // } catch (InvalidSymbolException e) {
-         // e.printStackTrace();
-         // }
       }
 
       byte[] reversedFrontQuery = Arrays.copyOf(query, queryPosition);
@@ -277,16 +268,18 @@ public class AlignerSubcommand implements Subcommand {
       byte[] reversedFrontReference = Arrays.copyOf(reference, referencePosition);
       ArrayUtils.reverseArray(reversedFrontReference, -1);
 
-      Aligner.ForwardAlignmentResult alignedFront = Aligner.forwardAlign(reversedFrontQuery,
-            reversedFrontReference, maximumNumberOfErrors - alignedEnd.getErrors());
+      SemiglobalAlignmentResult alignedFront = aligner.semiglobalAlign(reversedFrontQuery,
+            reversedFrontReference);
 
-      if (alignedFront == null) {
+      if (alignedFront.getErrors() > maximumNumberOfErrors - alignedEnd.getErrors()) {
          return null;
       }
       assert alignedFront.getErrors() + alignedEnd.getErrors() <= maximumNumberOfErrors;
 
-      int start = referencePosition - alignedFront.getLengthOnReference();
-      int stop = referencePosition + length + alignedEnd.getLengthOnReference();
+      int start = referencePosition
+            - (alignedFront.getEndPosition().column - alignedFront.getBeginPosition().column);
+      int stop = referencePosition + length
+            + (alignedEnd.getEndPosition().column - alignedEnd.getBeginPosition().column);
       int errors = alignedFront.getErrors() + alignedEnd.getErrors();
 
       return new AlignedQuery(start, stop, errors);
