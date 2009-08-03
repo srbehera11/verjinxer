@@ -169,7 +169,7 @@ public class AlignerSubcommand implements Subcommand {
                   (int) referencesSeparatorPositions[rn]);
             AlignerSubcommand.AlignedQuery aligned = AlignerSubcommand.alignMatchToReference(query, reference,
                   match.getQueryPosition(), match.getReferencePosition(), match.getLength(),
-                  maximumErrorRate);
+                  maximumErrorRate, alphabet);
             if (aligned != null) {
                out.format("%d %d %d %d %d%n", match.getQueryNumber(),
                      match.getReferenceNumber(), aligned.getStart(), aligned.getStop(),
@@ -240,12 +240,14 @@ public class AlignerSubcommand implements Subcommand {
     *           Length of the exact match.
     * @param maximumErrorRate
     *           Allow at most query.length * maximumErrorRate errors during the alignment.
+    * @param alphabet
+    *           The alphabet used for the query and the reference.
     * @return If there were too many errors, null is returned. Otherwise, an AlignedQuery is
     *         returned.
     */
    public static AlignedQuery alignMatchToReference(final byte[] query, final byte[] reference,
          final int queryPosition, final int referencePosition, final int length,
-         final double maximumErrorRate) {
+         final double maximumErrorRate, Alphabet alphabet) {
 
       final int maximumNumberOfErrors = (int) (query.length * maximumErrorRate);
 
@@ -253,7 +255,7 @@ public class AlignerSubcommand implements Subcommand {
 
       SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
       SemiglobalAlignmentResult alignedEnd = aligner.semiglobalAlign(query, queryPosition + length,
-            query.length, reference, referencePosition + length, reference.length);
+            query.length, reference, referencePosition + length, reference.length, alphabet);
 
       if (alignedEnd.getErrors() > maximumNumberOfErrors) {
          return null;
@@ -265,7 +267,7 @@ public class AlignerSubcommand implements Subcommand {
       ArrayUtils.reverseArray(reversedFrontReference, -1);
 
       SemiglobalAlignmentResult alignedFront = aligner.semiglobalAlign(reversedFrontQuery,
-            reversedFrontReference);
+            reversedFrontReference, alphabet);
 
       if (alignedFront.getErrors() > maximumNumberOfErrors - alignedEnd.getErrors()) {
          return null;

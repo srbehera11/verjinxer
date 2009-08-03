@@ -22,6 +22,10 @@ import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmen
  * @author kemmer
  */
 public class AlignerTest {
+   
+   // a dummy alphabet so that the values 0 to 4 in the test arrays are treated as symbols
+   private static final Alphabet alphabet = new Alphabet(new String[] { "##symbols:0", "0", "1",
+         "2", "3", "4" });
 
    @Test
    public void testAlign1() {
@@ -47,7 +51,7 @@ public class AlignerTest {
       aligner.setScores(new Scores(-1, -1, 0, -1));
 
       SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, start, len, index, bstart,
-            bend);
+            bend, alphabet);
 
       assertEquals(pos, bstart + result.getEndPosition().column - 1);
       assertEquals(delta, result.getErrors());
@@ -94,7 +98,7 @@ public class AlignerTest {
          final int delta = refResult.getEnddelta(); // errors
 
          SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, start, start + len, index,
-               bstart, bend);
+               bstart, bend, alphabet);
 
          if (pos != -1) {
 //            System.out.println("txt: " + Arrays.toString(txt));

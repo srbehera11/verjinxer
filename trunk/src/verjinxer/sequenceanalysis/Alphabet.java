@@ -59,7 +59,7 @@ public class Alphabet {
     *           the text lines from which to create the alphabet map
     * @return the created alphabet map
     */
-   Alphabet(final String[] lines) {
+   public Alphabet(final String[] lines) {
       this();
       initstrings = lines;
 
