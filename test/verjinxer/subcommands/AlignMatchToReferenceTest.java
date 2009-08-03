@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.subcommands.AlignerSubcommand.AlignedQuery;
 
 /**
@@ -12,7 +13,7 @@ import verjinxer.subcommands.AlignerSubcommand.AlignedQuery;
  * 
  * @author Markus Kemmerling
  */
-public class AlignerSubcommandTest {
+public class AlignMatchToReferenceTest {
 
    @Test
    public void testAlignMatchToReference() {
