@@ -11,16 +11,12 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.junit.Test;
-
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
-import verjinxer.sequenceanalysis.alignment.Aligner;
 import verjinxer.sequenceanalysis.alignment.AlignerFactory;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
-import verjinxer.sequenceanalysis.alignment.Aligner.ForwardAlignmentResult;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmentResult;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.FileTypes;
