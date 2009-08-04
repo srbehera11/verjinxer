@@ -16,8 +16,8 @@ import verjinxer.Project;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.AlignerFactory;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmentResult;
+import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.AlignmentResult;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
@@ -253,8 +253,8 @@ public class AlignerSubcommand implements Subcommand {
 
       // if you want to convert a byte[] to a String for debugging, use alphabet.preimage(array)
 
-      SemiglobalAligner aligner = AlignerFactory.createForwardAligner();
-      SemiglobalAlignmentResult alignedEnd = aligner.semiglobalAlign(query, queryPosition + length,
+      Aligner aligner = AlignerFactory.createForwardAligner();
+      AlignmentResult alignedEnd = aligner.align(query, queryPosition + length,
             query.length, reference, referencePosition + length, reference.length, alphabet);
 
       if (alignedEnd.getErrors() > maximumNumberOfErrors) {
@@ -266,7 +266,7 @@ public class AlignerSubcommand implements Subcommand {
       byte[] reversedFrontReference = Arrays.copyOf(reference, referencePosition);
       ArrayUtils.reverseArray(reversedFrontReference, -1);
 
-      SemiglobalAlignmentResult alignedFront = aligner.semiglobalAlign(reversedFrontQuery,
+      AlignmentResult alignedFront = aligner.align(reversedFrontQuery,
             reversedFrontReference, alphabet);
 
       if (alignedFront.getErrors() > maximumNumberOfErrors - alignedEnd.getErrors()) {

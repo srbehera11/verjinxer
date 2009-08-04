@@ -9,11 +9,11 @@ import java.util.Arrays;
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.sequenceanalysis.alignment.BottomEdgeLeftmost;
 import verjinxer.sequenceanalysis.alignment.Scores;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
-import verjinxer.sequenceanalysis.alignment.TopEdge;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmentResult;
+import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.AlignmentResult;
+import verjinxer.sequenceanalysis.alignment.beginlocations.TopEdge;
+import verjinxer.sequenceanalysis.alignment.endlocations.BottomEdgeLeftmost;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
 import verjinxer.util.FileTypes;
@@ -145,12 +145,12 @@ public class MapperByAlignment {
       final int tol = (int) Math.ceil(jlength * errorlevel);
       log.debug(" tol=%d", tol);
       
-      SemiglobalAligner aligner = new SemiglobalAligner();
+      Aligner aligner = new Aligner();
       aligner.setBeginLocations(new TopEdge());
       aligner.setEndLocations(new BottomEdgeLeftmost());
       aligner.setScores(new Scores(-1, -1, 0, -1));
 
-      SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, jstart + trim, jstart + trim
+      AlignmentResult result = aligner.align(txt, jstart + trim, jstart + trim
             + len, itext, 0, itext.length, alphabet);
 
       int endpos, enddelta;

@@ -5,15 +5,15 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import verjinxer.sequenceanalysis.alignment.AlignerFactory;
-import verjinxer.sequenceanalysis.alignment.IAligner;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
+import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.AlignmentResult;
 
 /**
  * @author Markus Kemmerling
  */
 public class SemiglobalAlignerTest {
    
-   public static final byte GAP = IAligner.GAP;
+   public static final byte GAP = Aligner.GAP;
    // a dummy alphabet so that all elements in the test arrays are treated as symbols
    private static final Alphabet alphabet = new Alphabet(new String[] { "##symbols:0", "#", "#",
          "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#",
@@ -35,8 +35,8 @@ public class SemiglobalAlignerTest {
       int length = 5;
       int error = 0;
       
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, Alphabet.DNA());
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, Alphabet.DNA());
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -57,8 +57,8 @@ public class SemiglobalAlignerTest {
       int error =  0 ;
       int length =  5 ;
       
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -80,8 +80,8 @@ public class SemiglobalAlignerTest {
       int error =  1 ;
       int length =  6 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -103,8 +103,8 @@ public class SemiglobalAlignerTest {
       int error =  1 ;
       int length =  32 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -126,8 +126,8 @@ public class SemiglobalAlignerTest {
       int error =  2 ;
       int length =  5 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -149,8 +149,8 @@ public class SemiglobalAlignerTest {
       int error =  4 ;
       int length =  9 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -172,8 +172,8 @@ public class SemiglobalAlignerTest {
       int error =  0 ;
       int length =  1 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -195,8 +195,8 @@ public class SemiglobalAlignerTest {
       int error =  2 ;
       int length =  7 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -218,8 +218,8 @@ public class SemiglobalAlignerTest {
       int error =  3 ;
       int length =  6 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -241,8 +241,8 @@ public class SemiglobalAlignerTest {
       int error =  2 ;
       int length =  7 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -264,8 +264,8 @@ public class SemiglobalAlignerTest {
       int error =  0 ;
       int length =  7 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -287,8 +287,8 @@ public class SemiglobalAlignerTest {
       int error =  0 ;
       int length =  1 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -310,8 +310,8 @@ public class SemiglobalAlignerTest {
       int error =  0 ;
       int length =  0 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -333,8 +333,8 @@ public class SemiglobalAlignerTest {
       int error =  15 ;
       int length =  61 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -356,8 +356,8 @@ public class SemiglobalAlignerTest {
       int error =  0 ;
       int length =  26 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -379,8 +379,8 @@ public class SemiglobalAlignerTest {
       int error =  15 ;
       int length =  66 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -402,8 +402,8 @@ public class SemiglobalAlignerTest {
       int error =  0 ;
       int length =  3 ;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);
@@ -425,8 +425,8 @@ public class SemiglobalAlignerTest {
       int error = 0;
       int length = 0;
 
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
-      SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(s1, s2, alphabet);
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
+      AlignmentResult result = aligner.align(s1, s2, alphabet);
       
       assertArrayEquals(result.getSequence1(), r1);
       assertArrayEquals(result.getSequence2(), r2);

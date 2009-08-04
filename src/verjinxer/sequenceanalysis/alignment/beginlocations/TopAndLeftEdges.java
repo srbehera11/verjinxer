@@ -1,18 +1,17 @@
-package verjinxer.sequenceanalysis.alignment;
+package verjinxer.sequenceanalysis.alignment.beginlocations;
 
-import verjinxer.sequenceanalysis.alignment.IAligner.Entry;
+import verjinxer.sequenceanalysis.alignment.Scores;
+import verjinxer.sequenceanalysis.alignment.Aligner.Entry;
 
-public class TopEdge extends BeginLocations {
+public class TopAndLeftEdges extends BeginLocations {
 
    @Override
    public void initMatrix(Entry[][] table, Scores scores) {
       super.initMatrix(table, scores);
 
-      int score = 0;
       // init left edge
       for (int row = 0; row < table.length; ++row) {
-         table[row][0].score = score;
-         score += scores.getDeletionScore();
+         table[row][0].score = 0;
       }
       // init top edge
       for (int column = 0; column < table[0].length; ++column) {
@@ -20,9 +19,8 @@ public class TopEdge extends BeginLocations {
       }
 
    }
-   
-   public boolean isValid(int row, int column) {
-      return row == 0; // complete top edge
-   }
 
+   public boolean isValid(int row, int column) {
+      return column == 0 || row == 0; // complete left and top edges
+   }
 }
