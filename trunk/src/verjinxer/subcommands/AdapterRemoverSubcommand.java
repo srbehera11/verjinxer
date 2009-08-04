@@ -12,7 +12,7 @@ import verjinxer.Translater;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.AlignerFactory;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
+import verjinxer.sequenceanalysis.alignment.Aligner;
 import verjinxer.util.FileTypes;
 import verjinxer.util.FileUtils;
 import verjinxer.util.IllegalOptionException;
@@ -123,7 +123,7 @@ public class AdapterRemoverSubcommand implements Subcommand {
       final boolean colorspace = sequenceProject.getBooleanProperty("ColorSpaceAlphabet");
       
       // create the aligner to use
-      SemiglobalAligner aligner = AlignerFactory.createSemiglobalAligner();
+      Aligner aligner = AlignerFactory.createSemiglobalAligner();
       
       SequenceWriter sequenceWriter = null;
       try {

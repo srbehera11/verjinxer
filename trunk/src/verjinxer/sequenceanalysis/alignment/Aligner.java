@@ -3,8 +3,8 @@ package verjinxer.sequenceanalysis.alignment;
 import java.util.Arrays;
 
 import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.sequenceanalysis.alignment.IAligner.Direction;
-import verjinxer.sequenceanalysis.alignment.IAligner.MatrixPosition;
+import verjinxer.sequenceanalysis.alignment.beginlocations.BeginLocations;
+import verjinxer.sequenceanalysis.alignment.endlocations.EndLocations;
 
 /**
  * This is a flexible Aligner. Depending on the begin and end locations ( {@link #beginLocation},
@@ -12,156 +12,13 @@ import verjinxer.sequenceanalysis.alignment.IAligner.MatrixPosition;
  * 
  * @author Markus Kemmerling
  */
-public class SemiglobalAligner {
-
-   
-   public static class SemiglobalAlignmentResult {
-      private byte[] sequence1, sequence2;
-
-      private int length, errors;
-      private IAligner.MatrixPosition begin, end;
-
-      public SemiglobalAlignmentResult() {
-         // all attributes are initialized by default
-      }
-
-      public SemiglobalAlignmentResult(byte[] sequence1, byte[] sequence2, MatrixPosition begin,
-            MatrixPosition end, int length, int errors) {
-         setAllAttributes(sequence1, sequence2, begin, end, length, errors);
-      }
-
-      public void setAllAttributes(byte[] sequence1, byte[] sequence2, MatrixPosition begin,
-            MatrixPosition end, int length, int errors) {
-         this.sequence1 = sequence1;
-         this.sequence2 = sequence2;
-         this.begin = begin;
-         this.length = length;
-         this.errors = errors;
-         this.end = end;
-      }
-
-      public byte[] getSequence1() {
-         return sequence1;
-      }
-
-      public byte[] getSequence2() {
-         return sequence2;
-      }
-
-      public MatrixPosition getBeginPosition() {
-         return begin;
-      }
-
-      public MatrixPosition getEndPosition() {
-         return end;
-      }
-
-      public int getLength() {
-         return length;
-      }
-
-      public int getErrors() {
-         return errors;
-      }
-
-      @Override
-      public String toString() {
-         return printAsBytes();
-      }
-
-      /**
-       * Prints the contrast of the two sequences considered as bytes.
-       * 
-       * @return A visualization of the alignment
-       */
-      public String printAsBytes() {
-         StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
-         for (byte b : sequence1) {
-            if (b == IAligner.GAP) {
-               sb.append(' ');
-            } else {
-               sb.append(b);
-            }
-         }
-
-         sb.append('\n');
-         
-         int beginIndex = Math.max(begin.row, begin.column);
-
-         for (int i = 0; i < sequence1.length; i++) {
-            if (i >= beginIndex && i < beginIndex + length) {
-               if (sequence1[i] == sequence2[i]) {
-                  sb.append('|');
-               } else {
-                  sb.append('x');
-               }
-            } else {
-               sb.append(' ');
-            }
-         }
-
-         sb.append('\n');
-
-         for (byte b : sequence2) {
-            if (b == IAligner.GAP) {
-               sb.append(' ');
-            } else {
-               sb.append(b);
-            }
-         }
-
-         return sb.toString();
-      }
-
-      /**
-       * Prints the contrast of the two sequences considered as characters.
-       * 
-       * @return A visualization of the alignment
-       */
-      public String printAsChars() {
-         StringBuilder sb = new StringBuilder(sequence1.length * 3 + 4);
-         for (byte b : sequence1) {
-            if (b == IAligner.GAP) {
-               sb.append(' ');
-            } else {
-               sb.append((char) b);
-            }
-         }
-
-         sb.append('\n');
-         
-         int beginIndex = Math.max(begin.row, begin.column);
-
-         for (int i = 0; i < sequence1.length; i++) {
-            if (i >= beginIndex && i < beginIndex + length) {
-               if (sequence1[i] == sequence2[i]) {
-                  sb.append('|');
-               } else {
-                  sb.append('x');
-               }
-            } else {
-               sb.append(' ');
-            }
-         }
-
-         sb.append('\n');
-
-         for (byte b : sequence2) {
-            if (b == IAligner.GAP) {
-               sb.append(' ');
-            } else {
-               sb.append((char) b);
-            }
-         }
-
-         return sb.toString();
-      }
-   }
+public class Aligner {
 
    private BeginLocations beginLocation;
    private EndLocations endLocation;
    private Scores scores = new Scores(); // initialization with default scores;
-   private boolean debug = false; 
+   private boolean debug = false;
+   public static final byte GAP = -1; // TODO 
    
    /**
     * @param beginLocation
@@ -183,7 +40,7 @@ public class SemiglobalAligner {
     * Sets the scores to use for insertion, deletion, mismatch and match.
     * 
     * @param scores
-    *           Scores to use to build the alignment.
+    *           Scores used to build the alignment.
     */
    public void setScores(Scores scores) {
       this.scores = scores;
@@ -220,7 +77,7 @@ public class SemiglobalAligner {
     *           The alphabet used for the two sequences.
     * @return
     */
-   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2, Alphabet alphabet) {
+   public AlignmentResult align(final byte[] s1, final int start1, final int end1, final byte[] s2, final int start2, final int end2, Alphabet alphabet) {
       /*            s2 (column:1..n)
             --------------->
            |
@@ -233,7 +90,7 @@ public class SemiglobalAligner {
       final int n = end2 - start2;
    
       // the DP table row x column
-      IAligner.Entry[][] table = new IAligner.Entry[m + 1][n + 1];
+      Entry[][] table = new Entry[m + 1][n + 1];
    
       beginLocation.initMatrix(table, scores);
       
@@ -268,7 +125,7 @@ public class SemiglobalAligner {
       }
    
       // find position where to start trace back
-      final IAligner.MatrixPosition endPosition = endLocation.getEndPosition(table);
+      final Aligner.MatrixPosition endPosition = endLocation.getEndPosition(table);
 
       final int bestRow = endPosition.row;
       final int bestColumn = endPosition.column;
@@ -293,13 +150,13 @@ public class SemiglobalAligner {
       // position where we found the maximum score
       if (table.length - 1 == bestRow) { // we are in the last row
          while (column > bestColumn) {
-            alignment1[p1--] = IAligner.GAP;
+            alignment1[p1--] = Aligner.GAP;
             alignment2[p2--] = s2[start2 + --column];
          }
       } else { // we are in the last column
          while (row > bestRow) {
             alignment1[p1--] = s1[start1 + --row];
-            alignment2[p2--] = IAligner.GAP;
+            alignment2[p2--] = Aligner.GAP;
          }
       }
       int rlen = p1;
@@ -322,11 +179,11 @@ public class SemiglobalAligner {
             alignment2[p2--] = s2[start2 + column];
          } else if (direction == Direction.LEFT) {
             errors++;
-            alignment1[p1--] = IAligner.GAP;
+            alignment1[p1--] = Aligner.GAP;
             alignment2[p2--] = s2[start2 + --column];
          } else if (direction == Direction.UP) {
             alignment1[p1--] = s1[start1 + --row];
-            alignment2[p2--] = IAligner.GAP;
+            alignment2[p2--] = Aligner.GAP;
             errors++;
          }
       }
@@ -334,15 +191,15 @@ public class SemiglobalAligner {
       // compute the length of the actual alignment (ignoring ends)
       int length = rlen - p1;
    
-      IAligner.MatrixPosition beginPosition = new IAligner.MatrixPosition(row, column);
+      MatrixPosition beginPosition = new MatrixPosition(row, column);
    
       while (column > 0) {
-         alignment1[p1--] = IAligner.GAP;
+         alignment1[p1--] = Aligner.GAP;
          alignment2[p2--] = s2[start2 + --column];
       }
       while (row > 0) {
          alignment1[p1--] = s1[start1 + --row];
-         alignment2[p2--] = IAligner.GAP;
+         alignment2[p2--] = Aligner.GAP;
       }
       assert row == 0 && column == 0;
       
@@ -351,10 +208,10 @@ public class SemiglobalAligner {
       alignment2 = Arrays.copyOfRange(alignment2, p2+1, alignment2.length);
       
       if (debug) {
-         printDebug(table, null);
+         printTableForDebug(table, null);
       }
    
-      return new SemiglobalAligner.SemiglobalAlignmentResult(alignment1, alignment2, beginPosition,
+      return new AlignmentResult(alignment1, alignment2, beginPosition,
             endPosition, length, errors);
    }
 
@@ -365,14 +222,13 @@ public class SemiglobalAligner {
     * @param s2
     * @author Markus Kemmerling
     */
-   public SemiglobalAligner.SemiglobalAlignmentResult semiglobalAlign(final byte[] s1,
-         final byte[] s2, Alphabet alphabet) {
-      return semiglobalAlign(s1, 0, s1.length, s2, 0, s2.length, alphabet);
+   public AlignmentResult align(final byte[] s1, final byte[] s2, Alphabet alphabet) {
+      return align(s1, 0, s1.length, s2, 0, s2.length, alphabet);
    }
    
-   private static void printDebug(IAligner.Entry[][] table, SemiglobalAligner.SemiglobalAlignmentResult result) {
+   private static void printTableForDebug(Entry[][] table, AlignmentResult result) {
       for (int i = 0; i < table.length; i++) {
-         for(IAligner.Entry entry: table[i]) {
+         for(Entry entry: table[i]) {
             System.out.print(entry.score + ":");
             if (entry.backtrack != null) {
                switch (entry.backtrack) {
@@ -385,5 +241,25 @@ public class SemiglobalAligner {
          }
          System.out.println();
       }
+   }
+   
+   public static class MatrixPosition {
+      public final int row, column;
+   
+      public MatrixPosition(int row, int column) {
+         this.row = row;
+         this.column = column;
+      }
+   }
+
+   /** direction constants for traceback table */
+   public static enum Direction {
+      LEFT, UP, DIAG
+   }
+
+   /** DP table entry */
+   public static class Entry {
+      public int score;
+      public Direction backtrack;
    }
 }

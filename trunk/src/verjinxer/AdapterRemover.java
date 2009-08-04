@@ -9,9 +9,9 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
-import verjinxer.sequenceanalysis.alignment.IAligner;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
-import verjinxer.sequenceanalysis.alignment.IAligner.MatrixPosition;
+import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.AlignmentResult;
+import verjinxer.sequenceanalysis.alignment.Aligner.MatrixPosition;
 
 /**
  * @author Markus Kemmerling
@@ -24,7 +24,7 @@ public class AdapterRemover {
    private final int times;
    private final double max_error_rate;
    private final int min_print_align_length;
-   private final SemiglobalAligner aligner;
+   private final Aligner aligner;
 
    /**
     * 
@@ -40,7 +40,7 @@ public class AdapterRemover {
     *           The aligner to use.
     */
    public AdapterRemover(boolean colorspace, int times, double max_error_rate,
-         int min_print_align_length, SemiglobalAligner aligner) {
+         int min_print_align_length, Aligner aligner) {
       this.colorspace = colorspace;
       this.times = times;
       this.max_error_rate = max_error_rate;
@@ -96,7 +96,7 @@ public class AdapterRemover {
          for (int k = 0; k < times; k++) { // maybe try several times to remove an adapter
             
             // Build alignment for each adapter
-            SemiglobalAligner.SemiglobalAlignmentResult bestResult = new SemiglobalAligner.SemiglobalAlignmentResult();
+            AlignmentResult bestResult = new AlignmentResult();
             int bestAdapter = findBestAlignment(bestResult, adapters, sequence, beginSequence,
                   endSequence, alphabet);
             assert bestResult != null;
@@ -115,8 +115,8 @@ public class AdapterRemover {
                }
                
                final byte[] adapterAlignment = bestResult.getSequence1();
-               if (adapterAlignment[0] != IAligner.GAP
-                     && adapterAlignment[adapterAlignment.length - 1] != IAligner.GAP) {
+               if (adapterAlignment[0] != Aligner.GAP
+                     && adapterAlignment[adapterAlignment.length - 1] != Aligner.GAP) {
                   
                   // The adapter or parts of it covers the entire read
                   log.info("read %s is covered entirely by the adapter %s:",
@@ -127,9 +127,9 @@ public class AdapterRemover {
                   endSequence = beginSequence; // set read to length 0
                   break; // read can not be cut again
                   
-               } else if (adapterAlignment[0] == IAligner.GAP) {
+               } else if (adapterAlignment[0] == Aligner.GAP) {
                   // The adapter is at the end of the read
-                  if (adapterAlignment[adapterAlignment.length - 1] == IAligner.GAP) {
+                  if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
                      // The adapter is in the middle of the read
                      middle++;
                   }
@@ -143,7 +143,7 @@ public class AdapterRemover {
                   // Statistics
                   lengths_back[bestAdapter][bestResult.getLength()]++;
 
-               } else if (adapterAlignment[adapterAlignment.length - 1] == IAligner.GAP) {
+               } else if (adapterAlignment[adapterAlignment.length - 1] == Aligner.GAP) {
                   // The adapter is in the beginning of the read
                   beginSequence += bestResult.getLength();
 
@@ -287,7 +287,7 @@ public class AdapterRemover {
     *           The alphabet used for the sequence and the adapters.
     * @return The index of the adapter with that the longest alignment was build.
     */
-   private int findBestAlignment(SemiglobalAligner.SemiglobalAlignmentResult bestResult,
+   private int findBestAlignment(AlignmentResult bestResult,
          final Sequences adapters, final byte[] sequence, final int beginSequence,
          final int endSequence, Alphabet alphabet) {
 
@@ -298,7 +298,7 @@ public class AdapterRemover {
       final byte[] adapterArrays = adapters.array();
       for (int j = 0; j < adapters.getNumberSequences(); j++) {
          final int[] boundaries = adapters.getSequenceBoundaries(j);
-         SemiglobalAligner.SemiglobalAlignmentResult result = aligner.semiglobalAlign(
+         AlignmentResult result = aligner.align(
                adapterArrays, boundaries[0], boundaries[1], sequence, beginSequence, endSequence,
                alphabet);
 

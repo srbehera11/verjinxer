@@ -1,6 +1,7 @@
-package verjinxer.sequenceanalysis.alignment;
+package verjinxer.sequenceanalysis.alignment.endlocations;
 
-import verjinxer.sequenceanalysis.alignment.IAligner.Entry;
+import verjinxer.sequenceanalysis.alignment.Aligner.Entry;
+import verjinxer.sequenceanalysis.alignment.Aligner.MatrixPosition;
 
 public class BottomAndRightEdges extends EndLocations {
 
@@ -25,12 +26,12 @@ public class BottomAndRightEdges extends EndLocations {
     * If it ends et the right edge, the bottommost entry is taken cause of symmetry.
     */
    @Override
-   IAligner.MatrixPosition getEndPosition(Entry[][] table) {
+   public MatrixPosition getEndPosition(Entry[][] table) {
       
       final int m = table.length-1;
       final int n = table[0].length-1;
       
-      IAligner.Entry bestEntry = table[m][0];
+      Entry bestEntry = table[m][0];
       int bestColumn = 0, bestRow = m;
       for (int column = 1; column < table[m].length; ++column) { // start by 1 cause bestEntry is
                                                              // already set to table[m][0]
@@ -48,7 +49,7 @@ public class BottomAndRightEdges extends EndLocations {
          }
       }
       
-      return new IAligner.MatrixPosition(bestRow, bestColumn);
+      return new MatrixPosition(bestRow, bestColumn);
    }
 
 }

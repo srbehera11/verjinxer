@@ -6,17 +6,17 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import verjinxer.sequenceanalysis.alignment.BottomEdgeLeftmost;
 import verjinxer.sequenceanalysis.alignment.Scores;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
-import verjinxer.sequenceanalysis.alignment.TopEdge;
-import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmentResult;
+import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.AlignmentResult;
+import verjinxer.sequenceanalysis.alignment.beginlocations.TopEdge;
+import verjinxer.sequenceanalysis.alignment.endlocations.BottomEdgeLeftmost;
 
 /**
  * This test cases are to verify that the old align() method of Aligner may be replaced by the
  * variable aligner.
  * 
- * @author kemmer
+ * @author Markus Kemmerling
  */
 public class AlignerTest {
    
@@ -36,18 +36,18 @@ public class AlignerTest {
       int[] storage = new int[txt.length];
       int asize = 4;
 
-      AlignmentResult refResult = align(txt, start, len, index, bstart, bend, giventol, storage,
+      ReferenceAlignmentResult refResult = align(txt, start, len, index, bstart, bend, giventol, storage,
             asize);
 
       final int pos = refResult.getBestpos(); // pos in index
       final int delta = refResult.getEnddelta(); // errors
 
-      SemiglobalAligner aligner = new SemiglobalAligner();
+      Aligner aligner = new Aligner();
       aligner.setBeginLocations(new TopEdge());
       aligner.setEndLocations(new BottomEdgeLeftmost());
       aligner.setScores(new Scores(-1, -1, 0, -1));
 
-      SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, start, len, index, bstart,
+      AlignmentResult result = aligner.align(txt, start, len, index, bstart,
             bend, alphabet);
 
       assertEquals(pos, bstart + result.getEndPosition().column - 1);
@@ -69,7 +69,7 @@ public class AlignerTest {
       final int seed = 0;
       Random rand = new Random(seed);
 
-      SemiglobalAligner aligner = new SemiglobalAligner();
+      Aligner aligner = new Aligner();
       aligner.setBeginLocations(new TopEdge());
       aligner.setEndLocations(new BottomEdgeLeftmost());
       aligner.setScores(new Scores(-1, -1, 0, -1));
@@ -87,13 +87,13 @@ public class AlignerTest {
          bend = Math.min(index.length / 2 + rand.nextInt(index.length / 2), index.length);
          giventol = 2 + rand.nextInt(txt.length / 2);
 
-         AlignmentResult refResult = align(txt, start, len, index, bstart, bend, giventol, storage,
+         ReferenceAlignmentResult refResult = align(txt, start, len, index, bstart, bend, giventol, storage,
                asize);
 
          final int pos = refResult.getBestpos(); // pos in index
          final int delta = refResult.getEnddelta(); // errors
 
-         SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, start, start + len, index,
+         AlignmentResult result = aligner.align(txt, start, start + len, index,
                bstart, bend, alphabet);
 
          if (pos != -1) {
@@ -125,7 +125,7 @@ public class AlignerTest {
       final int seed = 0;
       Random rand = new Random(seed);
 
-      SemiglobalAligner aligner = new SemiglobalAligner();
+      Aligner aligner = new Aligner();
       aligner.setBeginLocations(new TopEdge());
       aligner.setEndLocations(new BottomEdgeLeftmost());
       aligner.setScores(new Scores(-1, -1, 0, -1));
@@ -143,13 +143,13 @@ public class AlignerTest {
          bend = Math.min(index.length / 2 + rand.nextInt(index.length / 2), index.length);
          giventol = 2 + rand.nextInt(txt.length / 2);
 
-         AlignmentResult refResult = fullalign(txt, index, start, len, bstart, bend, giventol,
+         ReferenceAlignmentResult refResult = fullalign(txt, index, start, len, bstart, bend, giventol,
                storage, asize);
 
          final int pos = refResult.getBestpos(); // pos in index
          final int delta = refResult.getEnddelta(); // errors
 
-         SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, start, start + len, index,
+         AlignmentResult result = aligner.align(txt, start, start + len, index,
                bstart, bend, alphabet);
 
          if (result.getEndPosition().column > 0) {
@@ -164,10 +164,10 @@ public class AlignerTest {
    /**************************** Reference Method *******************************/
    /**************************** cp from Aligner  *******************************/
 
-   public static class AlignmentResult {
+   private static class ReferenceAlignmentResult {
       private final int enddelta, bestpos;
 
-      AlignmentResult(int enddelta, int bestpos) {
+      ReferenceAlignmentResult(int enddelta, int bestpos) {
          this.enddelta = enddelta;
          this.bestpos = bestpos;
       }
@@ -200,7 +200,7 @@ public class AlignerTest {
     *           work storage area, must have length >=len
     * @return position where leftmost best match ends in index, -1 if none.
     */
-   public final static AlignmentResult align(final byte[] txt, final int start, final int len,
+   private final static ReferenceAlignmentResult align(final byte[] txt, final int start, final int len,
          final byte[] index, final int bstart, final int bend, final int giventol,
          final int[] storage, int asize) {
       // tries to find an appearance of txt in index.
@@ -267,7 +267,7 @@ public class AlignerTest {
             bestpos = c;
          }
       }
-      return new AlignmentResult(bestd, bestpos);
+      return new ReferenceAlignmentResult(bestd, bestpos);
    }
 
    
@@ -290,7 +290,7 @@ public class AlignerTest {
     *           work storage area, must have length >=len
     * @return position where leftmost best match ends in index, -1 if none.
     */
-   final static AlignmentResult fullalign(final byte[] txt, final byte[] itext, final int start,
+   private final static ReferenceAlignmentResult fullalign(final byte[] txt, final byte[] itext, final int start,
          final int len, final int bstart, final int bend, final int giventol, final int[] storage,
          final int asize) {
       // final int tol = giventol<len? giventol : len;
@@ -320,6 +320,6 @@ public class AlignerTest {
             bestpos = c;
          }
       }
-      return new AlignmentResult(bestd, bestpos);
+      return new ReferenceAlignmentResult(bestd, bestpos);
    }
 }

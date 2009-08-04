@@ -1,6 +1,7 @@
-package verjinxer.sequenceanalysis.alignment;
+package verjinxer.sequenceanalysis.alignment.endlocations;
 
-import verjinxer.sequenceanalysis.alignment.IAligner.Entry;
+import verjinxer.sequenceanalysis.alignment.Aligner.Entry;
+import verjinxer.sequenceanalysis.alignment.Aligner.MatrixPosition;
 
 public class BottomEdge extends EndLocations {
 
@@ -22,11 +23,11 @@ public class BottomEdge extends EndLocations {
     * Hell-
     */
    @Override
-   IAligner.MatrixPosition getEndPosition(Entry[][] table) {
+   public MatrixPosition getEndPosition(Entry[][] table) {
 
       final int m = table.length-1;
       
-      IAligner.Entry bestEntry = table[m][0];
+      Entry bestEntry = table[m][0];
       int bestColumn = 0;
       for (int column = 1; column < table[m].length; ++column) { // start by 0 cause bestEntry is
                                                              // already set to table[m][0]
@@ -36,7 +37,7 @@ public class BottomEdge extends EndLocations {
          }
       }
       
-      return new IAligner.MatrixPosition(m, bestColumn);
+      return new MatrixPosition(m, bestColumn);
    }
 
 }
