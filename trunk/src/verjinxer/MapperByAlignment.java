@@ -9,7 +9,11 @@ import java.util.Arrays;
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.sequenceanalysis.alignment.Aligner;
+import verjinxer.sequenceanalysis.alignment.BottomEdgeLeftmost;
+import verjinxer.sequenceanalysis.alignment.Scores;
+import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
+import verjinxer.sequenceanalysis.alignment.TopEdge;
+import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmentResult;
 import verjinxer.util.ArrayUtils;
 import verjinxer.util.BitArray;
 import verjinxer.util.FileTypes;
@@ -29,8 +33,6 @@ public class MapperByAlignment {
    private int[] seqallhits;
    
    private final byte[] rcj;
-   
-   private final int[] Dcol;
    
    /** number of sequences */
    private final int tm;
@@ -53,25 +55,24 @@ public class MapperByAlignment {
    
    final Project tProject;
    
-   private int asize;
+   private Alphabet alphabet;
    
    /** sequence separator positions in text t */
    private final long[] tssp;
 
    private Globals g;
 
-   public MapperByAlignment(Globals g, long longestsequence, int tm, int asize, PrintWriter allout, BitArray tselect,
+   public MapperByAlignment(Globals g, long longestsequence, int tm, Alphabet alphabet, PrintWriter allout, BitArray tselect,
          BitArray trepeat, BitArray tmapped, byte[] tall, long[] tssp, Project tProject, ArrayList<String> indices) {
 
       this.g = g;
       this.longestsequence = longestsequence;
       rcj = new byte[(int) longestsequence + 1]; // +1 for separator
-      Dcol = new int[(int) longestsequence + 1]; // +1 for separator
       this.tm = tm;
       seqbesterror = new int[tm]; // keep track of best hits' error
       seqbesthits = new int[tm]; // number of hits with best error
       seqallhits = new int[tm]; // number of all hits
-      this.asize = asize;
+      this.alphabet = alphabet;
       this.allout = allout;
       this.tselect = tselect;
       this.trepeat = trepeat;
@@ -107,7 +108,7 @@ public class MapperByAlignment {
          }
          log.info("map: processing index '%s', reading .seq", iname[idx]);
          int as = iprj[idx].getIntProperty("LargestSymbol") + 1;
-         assert asize == as;
+         assert alphabet.largestSymbol() == as;
          itext[idx] = g.slurpByteArray(new File(iname[idx].getAbsolutePath() + FileTypes.SEQ), 0, -1, null); // overwrite
          ilength[idx] = iprj[idx].getIntProperty("Length");
          assert itext[idx].length == ilength[idx];
@@ -143,11 +144,24 @@ public class MapperByAlignment {
       final int len = jlength - 2 * trim;
       final int tol = (int) Math.ceil(jlength * errorlevel);
       log.debug(" tol=%d", tol);
-      Aligner.AlignmentResult ar = Aligner.align(txt, jstart + trim, len, itext, 0, itext.length,
-            tol, Dcol, asize);
+      
+      SemiglobalAligner aligner = new SemiglobalAligner();
+      aligner.setBeginLocations(new TopEdge());
+      aligner.setEndLocations(new BottomEdgeLeftmost());
+      aligner.setScores(new Scores(-1, -1, 0, -1));
+
+      SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, jstart + trim, jstart + trim
+            + len, itext, 0, itext.length, alphabet);
+
       int endpos, enddelta;
-      endpos = ar.getBestpos();
-      enddelta = ar.getEnddelta();
+      // if (result.getErrors() <= tol) { //TODO use tol and handle else case
+      if (result.getEndPosition().column > 0) {
+         endpos = result.getEndPosition().column - 1;
+      } else {
+         endpos = result.getEndPosition().column;
+      }
+      enddelta = result.getErrors();
+      // }
 
       if (endpos >= 0) {
          endpos += trim;

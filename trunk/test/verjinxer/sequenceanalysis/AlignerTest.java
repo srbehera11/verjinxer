@@ -2,17 +2,14 @@ package verjinxer.sequenceanalysis;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import org.junit.Test;
 
-import verjinxer.sequenceanalysis.alignment.Aligner;
 import verjinxer.sequenceanalysis.alignment.BottomEdgeLeftmost;
 import verjinxer.sequenceanalysis.alignment.Scores;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner;
 import verjinxer.sequenceanalysis.alignment.TopEdge;
-import verjinxer.sequenceanalysis.alignment.Aligner.AlignmentResult;
 import verjinxer.sequenceanalysis.alignment.SemiglobalAligner.SemiglobalAlignmentResult;
 
 /**
@@ -25,7 +22,7 @@ public class AlignerTest {
    
    // a dummy alphabet so that the values 0 to 4 in the test arrays are treated as symbols
    private static final Alphabet alphabet = new Alphabet(new String[] { "##symbols:0", "0", "1",
-         "2", "3", "4" });
+         "2", "3" });
 
    @Test
    public void testAlign1() {
@@ -78,17 +75,16 @@ public class AlignerTest {
       aligner.setScores(new Scores(-1, -1, 0, -1));
 
       for (int i = 0; i < 100; i++) {
-//         System.out.println("i: " + i);
          for (int j = 0; j < txt.length; j++) {
-            txt[j] = (byte) rand.nextInt(asize);
+            txt[j] = (byte) rand.nextInt(asize+2);
          }
          for (int j = 0; j < index.length; j++) {
-            index[j] = (byte) rand.nextInt(asize);
+            index[j] = (byte) rand.nextInt(asize+2);
          }
          start = rand.nextInt(txt.length / 2);
          len = rand.nextInt(txt.length - start);
          bstart = rand.nextInt(index.length / 2);
-         bend = Math.min(index.length / 2 + 1 + rand.nextInt(index.length / 2), index.length);
+         bend = Math.min(index.length / 2 + rand.nextInt(index.length / 2), index.length);
          giventol = 2 + rand.nextInt(txt.length / 2);
 
          AlignmentResult refResult = align(txt, start, len, index, bstart, bend, giventol, storage,
@@ -101,12 +97,6 @@ public class AlignerTest {
                bstart, bend, alphabet);
 
          if (pos != -1) {
-//            System.out.println("txt: " + Arrays.toString(txt));
-//            System.out.println("start: " + start);
-//            System.out.println("len: " + len);
-//            System.out.println("index: " + Arrays.toString(index));
-//            System.out.println("bstart: " + bstart);
-//            System.out.println("bend: " + bend);
             if (result.getEndPosition().column > 0) {
                assertEquals(pos, bstart + result.getEndPosition().column - 1);
             } else {
@@ -117,6 +107,57 @@ public class AlignerTest {
          } else {
             assertTrue(result.getErrors() > giventol);
          }
+      }
+   }
+   
+   @Test
+   public void testFullyAlign() {
+      byte[] txt = new byte[12];
+      int start = 0;
+      int len = txt.length;
+      byte[] index = new byte[34];
+      int bstart = 0;
+      int bend = index.length;
+      int giventol = 2;
+      int[] storage = new int[txt.length];
+      int asize = 4;
+
+      final int seed = 0;
+      Random rand = new Random(seed);
+
+      SemiglobalAligner aligner = new SemiglobalAligner();
+      aligner.setBeginLocations(new TopEdge());
+      aligner.setEndLocations(new BottomEdgeLeftmost());
+      aligner.setScores(new Scores(-1, -1, 0, -1));
+
+      for (int i = 0; i < 100; i++) {
+         for (int j = 0; j < txt.length; j++) {
+            txt[j] = (byte) rand.nextInt(asize + 2);
+         }
+         for (int j = 0; j < index.length; j++) {
+            index[j] = (byte) rand.nextInt(asize + 2);
+         }
+         start = rand.nextInt(txt.length / 2);
+         len = rand.nextInt(txt.length - start);
+         bstart = rand.nextInt(index.length / 2);
+         bend = Math.min(index.length / 2 + rand.nextInt(index.length / 2), index.length);
+         giventol = 2 + rand.nextInt(txt.length / 2);
+
+         AlignmentResult refResult = fullalign(txt, index, start, len, bstart, bend, giventol,
+               storage, asize);
+
+         final int pos = refResult.getBestpos(); // pos in index
+         final int delta = refResult.getEnddelta(); // errors
+
+         SemiglobalAlignmentResult result = aligner.semiglobalAlign(txt, start, start + len, index,
+               bstart, bend, alphabet);
+
+         if (result.getEndPosition().column > 0) {
+            assertEquals(pos, bstart + result.getEndPosition().column - 1);
+         } else {
+            assertEquals(pos, bstart + result.getEndPosition().column);
+         }
+         assertEquals(delta, result.getErrors());
       }
    }
 
@@ -229,4 +270,56 @@ public class AlignerTest {
       return new AlignmentResult(bestd, bestpos);
    }
 
+   
+   /**
+    * FULLY align text with parallelogram block #b. Requires blocksize, blow, itext[], asize
+    * 
+    * @param txt
+    *           the text array
+    * @param start
+    *           start position in the text
+    * @param len
+    *           length of the text (part) to align with a block
+    * @param bstart
+    *           where to start alignming in the index
+    * @param bend
+    *           where to end aligning in the index (exclusive)
+    * @param giventol
+    *           absolute error tolerance
+    * @param storage
+    *           work storage area, must have length >=len
+    * @return position where leftmost best match ends in index, -1 if none.
+    */
+   final static AlignmentResult fullalign(final byte[] txt, final byte[] itext, final int start,
+         final int len, final int bstart, final int bend, final int giventol, final int[] storage,
+         final int asize) {
+      // final int tol = giventol<len? giventol : len;
+      int bestpos = -1;
+      int bestd = 2 * (len + 1); // as good as infinity
+      final byte[] index = itext;
+      final int as = asize;
+
+      for (int k = 0; k < len; k++)
+         storage[k] = k + 1;
+      int dup, dul, diag, dmin;
+      byte tk;
+      for (int c = bstart; c < bend; c++) {
+         dup = dul = dmin = 0;
+         for (int k = 0; k < len; k++) {
+            tk = txt[start + k];
+            dmin = 1 + ((dup < storage[k]) ? dup : storage[k]); // left or up
+            diag = dul + ((index[c] != tk || tk < 0 || tk >= as) ? 1 : 0);
+            if (diag < dmin)
+               dmin = diag;
+            dul = storage[k];
+            storage[k] = dup = dmin;
+         }
+         // dmin now contains storage[len-1]
+         if (dmin < bestd) {
+            bestd = dmin;
+            bestpos = c;
+         }
+      }
+      return new AlignmentResult(bestd, bestpos);
+   }
 }
