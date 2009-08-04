@@ -7,17 +7,28 @@ import verjinxer.sequenceanalysis.alignment.beginlocations.BeginLocations;
 import verjinxer.sequenceanalysis.alignment.endlocations.EndLocations;
 
 /**
- * This is a flexible Aligner. Depending on the begin and end locations ( {@link #beginLocation},
- * {@link #endLocation}), different kinds of alignment are calculated.
+ * This is a flexible Aligner. Depending on the begin and end locations ({@link #setBeginLocations(BeginLocations)},
+ * {@link #setEndLocations(EndLocations)}), different kinds of alignment are calculated. This must be done
+ * bevore calculating an alignment. Further the scores to use can be
+ * specified ({@link #setScores(Scores)}). If no scores are specified default scores are used ({@link #Scores()}).
  * 
  * @author Markus Kemmerling
  */
 public class Aligner {
 
+   /** Where to start in the table with the alignment. */
    private BeginLocations beginLocation;
+   
+   /** Where to end in the table with the alignment. */
    private EndLocations endLocation;
+   
+   /** Scores used to build the alignment. */
    private Scores scores = new Scores(); // initialization with default scores;
+   
+   /** Whether to print the table after calculating the alignment */
    private boolean debug = false;
+   
+   /** Represent a gap */
    public static final byte GAP = -1; // TODO 
    
    /**
@@ -54,24 +65,26 @@ public class Aligner {
    }
 
    /**
-    * Computes an end-gap free alignment. Also called free-shift alignment or semiglobal alignment.
-    * The alignment is only computed for specified ranges within the given sequences. Particular,
-    * the alignment is computed of s1[start1:end1] and s2[start2:end2] (a[x:y] denotes the subarray
-    * of an array a with initial index x (inclusive) and final index y (exclusive)).
+    * Computes an alignment. The computed alignment depends on the begin and end location that must
+    * be set before ({@link #setBeginLocations(BeginLocations)},
+    * {@link #setEndLocations(EndLocations)}). The alignment is only computed for specified ranges
+    * within the given sequences. Particular, the alignment is computed of s1[start1:end1] and
+    * s2[start2:end2] (a[x:y] denotes the subarray of an array a with initial index x (inclusive)
+    * and final index y (exclusive)).
     * 
     * @param s1
-    *           first sequence.
+    *           First sequence.
     * @param start1
-    *           first index in s1 to compute the alignment from.
+    *           First index in s1 to compute the alignment from.
     * @param end1
-    *           final index in s1 to compute the alignment from, exclusive. (This index may lie
+    *           Final index in s1 to compute the alignment from, exclusive. (This index may lie
     *           outside the array.)
     * @param s2
-    *           second sequence.
+    *           Second sequence.
     * @param start2
-    *           first index in s2 to compute the alignment from.
+    *           First index in s2 to compute the alignment from.
     * @param end2
-    *           final index in s2 to compute the alignment from, exclusive. (This index may lie
+    *           Final index in s2 to compute the alignment from, exclusive. (This index may lie
     *           outside the array.)
     * @param alphabet
     *           The alphabet used for the two sequences.
@@ -208,7 +221,7 @@ public class Aligner {
       alignment2 = Arrays.copyOfRange(alignment2, p2+1, alignment2.length);
       
       if (debug) {
-         printTableForDebug(table, null);
+         printTableForDebug(table);
       }
    
       return new AlignmentResult(alignment1, alignment2, beginPosition,
@@ -216,17 +229,28 @@ public class Aligner {
    }
 
    /**
-    * Computes an end-gap free alignment. Also called free-shift alignment or semiglobal alignment.
+    * Computes an alignment. The computed alignment depends on the begin and end location that must
+    * be set before ({@link #setBeginLocations(BeginLocations)},
+    * {@link #setEndLocations(EndLocations)}). The alignment is computed for whole sequences given.
     * 
     * @param s1
+    *           First sequence.
     * @param s2
-    * @author Markus Kemmerling
+    *           Second sequence.
     */
    public AlignmentResult align(final byte[] s1, final byte[] s2, Alphabet alphabet) {
       return align(s1, 0, s1.length, s2, 0, s2.length, alphabet);
    }
    
-   private static void printTableForDebug(Entry[][] table, AlignmentResult result) {
+   /**
+    * Prints the alignment table. Row and column names are not printed. Only the inner table is
+    * printed as tuples (score:backtrack direction). To indicate the direction "D" stands for DIAG,
+    * "L" stands for LEFT and "U" stands for UP.
+    * 
+    * @param table
+    *           The table to print.
+    */
+   private static void printTableForDebug(Entry[][] table) {
       for (int i = 0; i < table.length; i++) {
          for(Entry entry: table[i]) {
             System.out.print(entry.score + ":");
@@ -243,6 +267,9 @@ public class Aligner {
       }
    }
    
+   /**
+    * Represents a position in a matrix composed of row and column values.
+    */
    public static class MatrixPosition {
       public final int row, column;
    
@@ -252,7 +279,7 @@ public class Aligner {
       }
    }
 
-   /** direction constants for traceback table */
+   /** Direction constants for traceback table */
    public static enum Direction {
       LEFT, UP, DIAG
    }

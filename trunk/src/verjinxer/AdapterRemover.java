@@ -20,10 +20,19 @@ public class AdapterRemover {
    
    private static final Logger log = Globals.getLogger();
 
+   /** Whether to use color space mode. */
    private final boolean colorspace;
+   
+   /** How often it is tried to remove an adapter. */
    private final int times;
+   
+   /** Maximum error rate (errors divided by length of matching region). */
    private final double max_error_rate;
+   
+   /** How long an alignment must be to be printed. */
    private final int min_print_align_length;
+   
+   /** The aligner to use. */
    private final Aligner aligner;
 
    /**

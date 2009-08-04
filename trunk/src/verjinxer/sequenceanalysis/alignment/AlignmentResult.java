@@ -3,24 +3,68 @@ package verjinxer.sequenceanalysis.alignment;
 import verjinxer.sequenceanalysis.alignment.Aligner.MatrixPosition;
 
 /**
- * 
  * @author Markus Kemmerling
  */
 public class AlignmentResult {
+   /** The sequences that where aligned enlarged with gaps if necessary */
    private byte[] sequence1, sequence2;
 
-   private int length, errors;
-   private MatrixPosition begin, end;
+   /** Length of the alignment */
+   private int length;
+   
+   /** Errors within the alignment */
+   private int errors;
+   
+   /** Position in the alignment table where the alignment starts */
+   private MatrixPosition begin;
+   
+   /** Position in the alignment table where the alignment ends */
+   private MatrixPosition end;
 
+   /**
+    * Creates a new instance of AlignmentResult and initializes all attributes with default values.
+    */
    public AlignmentResult() {
-      // all attributes are initialized by default
    }
 
+   /**
+    * Creates a new instance of AlignmentResult and initializes all attributes with the given
+    * values.
+    * 
+    * @param sequence1
+    *           First sequence enlarged with gaps if necessary.
+    * @param sequence2
+    *           Second sequence enlarged with gaps if necessary.
+    * @param begin
+    *           Position in the alignment table where the alignment starts.
+    * @param end
+    *           Position in the alignment table where the alignment ends.
+    * @param length
+    *           Length of the alignment.
+    * @param errors
+    *           Errors within the alignment.
+    */
    public AlignmentResult(byte[] sequence1, byte[] sequence2, MatrixPosition begin,
          MatrixPosition end, int length, int errors) {
       setAllAttributes(sequence1, sequence2, begin, end, length, errors);
    }
 
+   /**
+    * Sets all attributes to the given values.
+    * 
+    * @param sequence1
+    *           First sequence enlarged with gaps if necessary.
+    * @param sequence2
+    *           Second sequence enlarged with gaps if necessary.
+    * @param begin
+    *           Position in the alignment table where the alignment starts.
+    * @param end
+    *           Position in the alignment table where the alignment ends.
+    * @param length
+    *           Length of the alignment.
+    * @param errors
+    *           Errors within the alignment.
+    */
    public void setAllAttributes(byte[] sequence1, byte[] sequence2, MatrixPosition begin,
          MatrixPosition end, int length, int errors) {
       this.sequence1 = sequence1;
@@ -31,26 +75,44 @@ public class AlignmentResult {
       this.end = end;
    }
 
+   /**
+    * @return First sequence enlarged with gaps if necessary.
+    */
    public byte[] getSequence1() {
       return sequence1;
    }
 
+   /**
+    * @return Second sequence enlarged with gaps if necessary.
+    */
    public byte[] getSequence2() {
       return sequence2;
    }
 
+   /**
+    * @return Position in the alignment table where the alignment starts.
+    */
    public MatrixPosition getBeginPosition() {
       return begin;
    }
 
+   /**
+    * @return Position in the alignment table where the alignment ends.
+    */
    public MatrixPosition getEndPosition() {
       return end;
    }
 
+   /**
+    * @return Length of the alignment.
+    */
    public int getLength() {
       return length;
    }
 
+   /**
+    * @return Errors within the alignment.
+    */
    public int getErrors() {
       return errors;
    }
