@@ -337,8 +337,8 @@ public class MapperSubcommand implements Subcommand {
          MapperByQGrams m = new MapperByQGrams(g, longestsequence, alphabet, tdesc, tssp, tm, indices, longestpos, longestindexlen);
          m.mapByQGram(blocksize);
       } else if (method == Method.FULL && atonce) {
-         MapperByAlignment m = new MapperByAlignment(g, longestsequence, tm,
-               asize, allout, tselect, trepeat, tmapped, tall, tssp, tproject, indices);
+         MapperByAlignment m = new MapperByAlignment(g, longestsequence, tm, alphabet, allout,
+               tselect, trepeat, tmapped, tall, tssp, tproject, indices);
          m.mapByAlignmentAtOnce(clip, errorlevel, revcomp);
 
       } else
