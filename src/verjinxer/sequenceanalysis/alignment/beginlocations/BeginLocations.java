@@ -4,12 +4,20 @@ import verjinxer.sequenceanalysis.alignment.Scores;
 import verjinxer.sequenceanalysis.alignment.Aligner.Direction;
 import verjinxer.sequenceanalysis.alignment.Aligner.Entry;
 
+/**
+ * Subclasses of this class are used by the Aligner class to determine where within an alignment
+ * table the alignment may start.
+ * 
+ * @see Aligner
+ * @author Markus Kemmerling
+ */
 public abstract class BeginLocations {
    
    /**
-    * Initiates the given alignment table. Especially the left and top edge.
+    * Initializes the given alignment table. Especially the left and top edge.
     * 
     * @param table
+    *           The alignment table to initialize.
     */
    public void initMatrix(Entry[][] table, Scores scores) {
 
@@ -36,7 +44,7 @@ public abstract class BeginLocations {
    /**
     * @param row
     * @param column
-    * @return Whether the position is a valid starting position
+    * @return Whether the position is a valid starting position.
     */
    public abstract boolean isValid(int row, int column);
 }

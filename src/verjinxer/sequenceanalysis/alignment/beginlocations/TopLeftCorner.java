@@ -3,6 +3,13 @@ package verjinxer.sequenceanalysis.alignment.beginlocations;
 import verjinxer.sequenceanalysis.alignment.Scores;
 import verjinxer.sequenceanalysis.alignment.Aligner.Entry;
 
+/**
+ * This class is used to build an alignment where the alignment may start at the top left corner of the
+ * alignment table.
+ * 
+ * @see Aligner
+ * @author Markus Kemmerling
+ */
 public class TopLeftCorner extends BeginLocations {
 
    @Override

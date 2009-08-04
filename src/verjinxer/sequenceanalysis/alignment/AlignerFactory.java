@@ -7,15 +7,14 @@ import verjinxer.sequenceanalysis.alignment.endlocations.BottomEdge;
 import verjinxer.sequenceanalysis.alignment.endlocations.BottomRightCorner;
 
 /**
+ * Factory class for creating special aligner conveniently.
  * 
  * @author Markus Kemmerling
- * 
  */
 public class AlignerFactory {
 
    /**
-    * 
-    * @return
+    * Creates an end-gap free aligner. Also called free-shift aligner or semiglobal aligner.
     */
    public static Aligner createSemiglobalAligner() {
       Aligner a = new Aligner();
@@ -26,8 +25,7 @@ public class AlignerFactory {
    }
 
    /**
-    * 
-    * @return
+    * Creates a forward aligner.
     */
    public static Aligner createForwardAligner() {
       Aligner a = new Aligner();
@@ -38,8 +36,7 @@ public class AlignerFactory {
    }
 
    /**
-    * 
-    * @return
+    * Creates a global aligner.
     */
    public static Aligner createGlobalAligner() {
       Aligner a = new Aligner();
