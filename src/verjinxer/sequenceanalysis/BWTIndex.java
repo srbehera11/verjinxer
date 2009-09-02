@@ -22,12 +22,6 @@ public class BWTIndex {
    private int[] el;
 
    /**
-    * For a character c that exists at position i in e, positionInText[i] is the position of c in
-    * the origin text.
-    */
-   private int[] positionInText;
-
-   /**
     * @param character
     * @return First occurence of the character in this index
     */
@@ -46,15 +40,6 @@ public class BWTIndex {
       return el[index];
    }
 
-   /**
-    * 
-    * @param index
-    * @return Where the character at given position in this index exists in the origin text.
-    */
-   public int getPositionInText(int index) {
-      return positionInText[index];
-   }
-
    public void setC(int[] c) {
       this.c = c;
    }
@@ -65,9 +50,5 @@ public class BWTIndex {
 
    public void setEl(int[] el) {
       this.el = el;
-   }
-
-   public void setPositionInText(int[] positionInText) {
-      this.positionInText = positionInText;
    }
 }

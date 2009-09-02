@@ -23,6 +23,7 @@ import verjinxer.subcommands.QGramIndexerSubcommand;
 import verjinxer.subcommands.QGramMatcherSubcommand;
 import verjinxer.subcommands.Sequence2FastqSubcommand;
 import verjinxer.subcommands.Subcommand;
+import verjinxer.subcommands.SuffixTrayBuilderSubcommand;
 import verjinxer.subcommands.TranslaterSubcommand;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
@@ -57,7 +58,6 @@ public class Main {
       log.info("  qfreq        ...          report most frequent q-grams in an index");
       log.info("  qmatch       ...          report maximal matches of sequences vs index");
       log.info("  suffix       ...          build suffixtray of translated file(s)");
-      log.info("  bigsuffix    ...          build suffixtray of HUGE translated file(s)");
       log.info("  map          ...          map sequences to an index");
       log.info("  align        ...          aligns sequences using results from qmatch");
       log.info("  nonunique    ...          find non-unique specific probes in an index");
@@ -149,9 +149,7 @@ public class Main {
       } else if (command.startsWith("qm")) {
          subcommand = new QGramMatcherSubcommand(g);
       } else if (command.startsWith("su")) {
-         new SuffixTrayBuilder(g).run(rest);
-      } else if (command.startsWith("bigsu")) {
-         new BigSuffixTrayBuilder(g).run(rest);
+         subcommand = new SuffixTrayBuilderSubcommand(g);
       } else if (command.startsWith("ma")) {
          subcommand = new MapperSubcommand(g);
       } else if (command.startsWith("nu") || command.startsWith("nonunique")) {
@@ -203,9 +201,7 @@ public class Main {
       } else if (command.startsWith("qm")) {
          subcommand = new QGramMatcherSubcommand(g);
       } else if (command.startsWith("su")) {
-         new SuffixTrayBuilder(g).help();
-      } else if (command.startsWith("bigsu")) {
-         new BigSuffixTrayBuilder(g).help();
+         subcommand = new SuffixTrayBuilderSubcommand(g);
       } else if (command.startsWith("ma")) {
          subcommand = new MapperSubcommand(g);
       } else if (command.startsWith("nu") || command.startsWith("nonunique")) {
