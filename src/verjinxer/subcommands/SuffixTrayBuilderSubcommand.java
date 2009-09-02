@@ -40,7 +40,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       log.info("writes %s, %s (incl. variants 1,1x,2,2x).", FileTypes.POS, FileTypes.LCP);
       log.info("Options:");
       log.info("  -m, --method  <id>    select construction method, where <id> is one of:");
-      log.info(/*"      L\n" + "      R\n" + "      minLR\n" + */"      bothLR\n"/* + "      bothLR2"*/); //TODO
+      log.info(/*"      L\n" + "      R\n" + */"      minLR\n" + "      bothLR\n"/* + "      bothLR2"*/); //TODO
       log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte (not yet supported)"); //TODO
       log.info("  -c, --check           additionally check index integrity");
       log.info("  -C, --onlycheck       ONLY check index integrity");

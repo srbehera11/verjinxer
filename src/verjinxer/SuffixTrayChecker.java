@@ -9,6 +9,7 @@ import com.spinn3r.log5j.Logger;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.ISuffixDLL;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.sequenceanalysis.SuffixDLL;
 import verjinxer.sequenceanalysis.SuffixXorDLL;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.FileTypes;
@@ -36,14 +37,26 @@ public class SuffixTrayChecker {
       SuffixTrayChecker.alphabet = alphabet;
 
       if (method.equals("L")) {
-         // buildpos_L();
-         throw new UnsupportedOperationException("Method " + method + "is temporary not supported.");
+         if (suffixDLL instanceof SuffixDLL) {
+            return checkpos_R((SuffixDLL) suffixDLL);
+         } else {
+            // TODO ???
+            return 1;
+         }
       } else if (method.equals("R")) {
-         // buildpos_R();
-         throw new UnsupportedOperationException("Method " + method + "is temporary not supported.");
+         if (suffixDLL instanceof SuffixDLL) {
+            return checkpos_R((SuffixDLL) suffixDLL);
+         } else {
+            // TODO ???
+            return 1;
+         }
       } else if (method.equals("minLR")) {
-         // buildpos_minLR(false);
-         throw new UnsupportedOperationException("Method " + method + "is temporary not supported.");
+         if (suffixDLL instanceof SuffixDLL) {
+            return checkpos_R((SuffixDLL) suffixDLL);
+         } else {
+            // TODO ???
+            return 1;
+         }
       } else if (method.equals("bothLR")) {
          if (suffixDLL instanceof SuffixXorDLL) {
             return checkpos_bothLR((SuffixXorDLL) suffixDLL);
@@ -52,20 +65,80 @@ public class SuffixTrayChecker {
             return 1;
          }
       } else if (method.equals("bothLR2")) {
-         // buildpos_bothLR2();
-         throw new UnsupportedOperationException("Method " + method + "is temporary not supported.");
+         if (suffixDLL instanceof SuffixDLL) {
+            return checkpos_R((SuffixDLL) suffixDLL);
+         } else {
+            // TODO ???
+            return 1;
+         }
       } else {
          throw new IllegalArgumentException("The Method " + method + " does not exist.");
       }
    }
 
-   private static int checkpos_bothLR(SuffixXorDLL suffixDLL) {
+   private static int checkpos_R(SuffixDLL suffixDLL) {
+      // this method is a copy of checkpos_bothLR(SuffixXorDLL).
+      // the parameter is the only difference. the body is exactly the same
+      // we don't use a single method with ISuffixDLL as parameter to get
+      // a static linking with inlining instead of a polymorphy and dynamic linking.
+      // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       int chi, nn, comp;
       int returnvalue = 0;
       chi = suffixDLL.getLowestCharacter();
       if (chi >= 256) {
-         if (sequence.length == 0)
+         if (sequence.length == 0) {
             return 0;
+         }
+         if (log != null) {
+            log.warn("suffixcheck: no first character found, but |s|!=0.");
+         }
+         return 2;
+      }
+      suffixDLL.resetToBegin();
+      assert (suffixDLL.getCurrentPosition() != -1);
+      nn = 1;
+      while (suffixDLL.hasNextUp()) {
+         // if (log != null) {
+         // log.info("  pos %d vs %d; text %d vs %d", suffixDLL.getCurrentPosition(),
+         // suffixDLL.getSuccessor(), sequence[suffixDLL.getCurrentPosition()],
+         // sequence[suffixDLL.getSuccessor()]);
+         // }
+         if (!((comp = suffixcmp(suffixDLL.getCurrentPosition(), suffixDLL.getSuccessor())) < 0)) {
+            if (log != null) {
+               log.warn(
+                     "suffixcheck: sorting error at ranks %d, %d; pos %d, %d; text %d, %d; cmp %d",
+                     nn - 1, nn, suffixDLL.getCurrentPosition(), suffixDLL.getSuccessor(),
+                     sequence[suffixDLL.getCurrentPosition()], sequence[suffixDLL.getSuccessor()],
+                     comp);
+            }
+            returnvalue = 1;
+         }
+         suffixDLL.nextUp();
+         nn++;
+      }
+      if (nn != sequence.length) {
+         if (log != null) {
+            log.warn("suffixcheck: missing some suffixes; have %d / %d.", nn, sequence.length);
+         }
+         returnvalue += 2;
+      }
+      return returnvalue;
+
+   }
+
+   private static int checkpos_bothLR(SuffixXorDLL suffixDLL) {
+      // this method is a copy of checkpos_R(SuffixDLL).
+      // the parameter is the only difference. the body is exactly the same
+      // we don't use a single method with ISuffixDLL as parameter to get
+      // a static linking with inlining instead of a polymorphy and dynamic linking.
+      // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      int chi, nn, comp;
+      int returnvalue = 0;
+      chi = suffixDLL.getLowestCharacter();
+      if (chi >= 256) {
+         if (sequence.length == 0) {
+            return 0;
+         }
          return 2;
       }
       nn = 1;
