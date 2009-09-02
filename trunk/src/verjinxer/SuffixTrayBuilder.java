@@ -3,6 +3,7 @@ package verjinxer;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.ISuffixDLL;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.sequenceanalysis.SuffixDLL;
 import verjinxer.sequenceanalysis.SuffixXorDLL;
 
 /**
@@ -11,6 +12,8 @@ import verjinxer.sequenceanalysis.SuffixXorDLL;
 public class SuffixTrayBuilder {
 
    private SuffixXorDLL xordll;
+   private SuffixDLL normaldll;
+   private boolean getNormalDLL = false;
    private long steps;
    private final byte[] sequence;
    private final int n;
@@ -27,7 +30,7 @@ public class SuffixTrayBuilder {
    }
 
    public ISuffixDLL getSuffixDLL() {
-      return xordll;
+      return getNormalDLL ? normaldll : xordll;
    }
 
    /**
@@ -43,8 +46,7 @@ public class SuffixTrayBuilder {
          //buildpos_R();
          throw new UnsupportedOperationException("Method " + method + "is temporary not supported.");
       } else if (method.equals("minLR")) {
-         //buildpos_minLR(false);
-         throw new UnsupportedOperationException("Method " + method + "is temporary not supported.");
+         buildpos_minLR();
       } else if (method.equals("bothLR")) {
          buildpos_bothLR();
       } else if (method.equals("bothLR2")) {
@@ -55,8 +57,86 @@ public class SuffixTrayBuilder {
       }
    }
 
+   private void buildpos_minLR() {
+      normaldll = new SuffixDLL(n);
+      getNormalDLL = true;
+      byte ch;
+      int chi;
+      int pup, pdown;
+      int lsp, lpp;
+      int found = 0;
+
+      for (int p = n - 1; p >= 0; p--) {
+         // insert suffix starting at position p
+         ch = sequence[p];
+         chi = ch + 128;
+         if (normaldll.getFirstPos(chi) == -1) { // seeing character ch for the first time
+            normaldll.insertnew(chi, p);
+            steps++;
+         } else { // seeing character ch again
+            assert (normaldll.getFirstPos(chi) > p);
+            assert (normaldll.getLastPos(chi) > p);
+            if (alphabet.isSpecial(ch)) { // special character: always inserted first
+               normaldll.insertasfirst(chi, p);
+               steps++;
+            } else { // symbol character: proceed normally
+               pup = pdown = p + 1;
+               for (found = 0; found == 0;) {
+                  steps++;
+                  lpp = normaldll.getLexPreviousPos(pup);
+                  if (lpp == -1) {
+                     found = 1;
+                     break;
+                  } // new first
+                  if (sequence[(pup = lpp) - 1] == ch) {
+                     found = 2;
+                     break;
+                  } // insert after pup
+                  steps++;
+                  lsp = normaldll.getLexNextPos(pdown);
+                  if (lsp == -1) {
+                     found = 3;
+                     break;
+                  } // new last
+                  if (sequence[(pdown = lsp) - 1] == ch) {
+                     found = 4;
+                     break;
+                  } // insert before pdown
+               }
+               pup--;
+               pdown--;
+               switch (found) {
+               case 1:
+                  normaldll.insertasfirst(chi, p);
+                  break;
+               case 2:
+                  if (normaldll.getLastPos(chi) == pup) {
+                     normaldll.insertaslast(chi, p);
+                  } else {
+                     normaldll.insertbetween(pup, normaldll.getLexNextPos(pup), p);
+                  }
+                  break;
+               case 3:
+                  normaldll.insertaslast(chi, p);
+                  break;
+               case 4:
+                  if (normaldll.getFirstPos(chi) == pdown) {
+                     normaldll.insertasfirst(chi, p);
+                  } else {
+                     normaldll.insertbetween(normaldll.getLexPreviousPos(pdown), pdown, p);
+                  }
+                  break;
+               default:
+                  //TODO g.terminate("suffixtray: internal error");
+               } // end switch
+            } // end symbol character
+         } // end seeing character ch again
+      }
+   }
+
    private void buildpos_bothLR() {
       xordll = new SuffixXorDLL(n);
+      getNormalDLL =false;
       
       byte ch;
       int chi;

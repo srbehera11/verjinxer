@@ -31,10 +31,12 @@ public class SuffixTrayBuilderTest extends TestCase {
   protected void tearDown() throws Exception {
   }
 
+  
 
   /**
    * Test of main method, of class verjinxer.SuffixTrayBuilder.
    */
+  /* TODO start
   public void testAll() {
     doOneString("10100000100010000000001");
     //doAllBinaryStrings();
@@ -191,6 +193,7 @@ public void doAAA() {
         
   }
   
-  
+  TODO end
+  */
 
 }
