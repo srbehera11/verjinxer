@@ -56,7 +56,8 @@ public interface ISequenceCreation {
    /**
     * @return Accumulated length of all sequences.
     */
-   public abstract long length();
+   public abstract long length(); // must be long because SequenceWriter.length() delegates to
+                                  // ArrayFile.length() which returns long
 
    /**
     * @return Number of concatenated sequences.

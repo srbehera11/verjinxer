@@ -10,6 +10,10 @@ public class SuffixXorDLL implements ISuffixDLL {
    private int[] lexfirstpos = new int[256];
    private int[] lexlastpos = new int[256];
    private int[] lexps = null;
+   
+   private final int length;
+   private final Sequences sequence;
+   private final Alphabet alphabet;
 
    // internal state
    private int currentPosition = -1;
@@ -22,9 +26,12 @@ public class SuffixXorDLL implements ISuffixDLL {
     * @param nn
     *           capacity
     */
-   public SuffixXorDLL(int nn) {
-      lexps = new int[nn];
-
+   public SuffixXorDLL(Sequences sequence, Alphabet alphabet) {
+      this.sequence = sequence;
+      this.alphabet = alphabet;
+      assert sequence.length() < Integer.MAX_VALUE;
+      length = (int)sequence.length(); //normal sequences warp an array, so its length is int and not long
+      lexps = new int[length];
       Arrays.fill(lexfirstpos, -1);
       Arrays.fill(lexlastpos, -1);
    }
@@ -131,6 +138,14 @@ public class SuffixXorDLL implements ISuffixDLL {
    public int getLexPS(int p) {
       return lexps[p];
    }
+   
+   /*
+    * (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISuffixDLL#length()
+    */
+   public int length() {
+      return length;
+   }
 
    // ////////////////////////////////////////////////////////////////////
    // ////////////////////////internal state//////////////////////////////
@@ -210,6 +225,25 @@ public class SuffixXorDLL implements ISuffixDLL {
       successor = currentPosition;
       currentPosition = predecessor;
       predecessor = lexps[currentPosition] ^ successor;
+   }
+   
+   // ////////////////////////////////////////////////////////////////////
+   // /////////////////////associated sequence////////////////////////////
+   // ////////////////////////////////////////////////////////////////////
+   /*
+    * (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISuffixDLL#getSequence()
+    */
+   public Sequences getSequence() {
+      return sequence;
+   }
+   
+   /*
+    * (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISuffixDLL#getAlphabet()
+    */
+   public Alphabet getAlphabet() {
+      return alphabet;
    }
    // ////////////////////////////////////////////////////////////////////
 }

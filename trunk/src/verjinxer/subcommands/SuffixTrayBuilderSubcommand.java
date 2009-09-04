@@ -8,6 +8,7 @@ import java.io.IOException;
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.Globals;
+import verjinxer.LCP;
 import verjinxer.Project;
 import verjinxer.SuffixTrayBuilder;
 import verjinxer.SuffixTrayChecker;
@@ -15,6 +16,7 @@ import verjinxer.SuffixTrayWriter;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.ISuffixDLL;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.sequenceanalysis.SuffixDLL;
 import verjinxer.util.FileTypes;
 import verjinxer.util.HugeByteArray;
 import verjinxer.util.IllegalOptionException;
@@ -41,7 +43,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       log.info("Options:");
       log.info("  -m, --method  <id>    select construction method, where <id> is one of:");
       log.info("      L\n" + "      R\n" + "      minLR\n" + "      bothLR\n" + "      bothLR2");
-      log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte (not yet supported)"); //TODO
+      log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte");
       log.info("  -c, --check           additionally check index integrity");
       log.info("  -C, --onlycheck       ONLY check index integrity");
       log.info("  -b, --bigsuffix       build a 64-bit suffix tray (not yet supported)"); //TODO
@@ -175,7 +177,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                // TODO
                // returnvalue = BigSuffixTrayChecker.checkpos(method);
             } else {
-               returnvalue = SuffixTrayChecker.checkpos(suffixDLL, method, sequence, alphabet);
+               returnvalue = SuffixTrayChecker.checkpos(suffixDLL, method);
             }
          } catch (IllegalArgumentException iae) {
             log.error("suffixcheck: Unsupported construction method '" + method + "'!");
@@ -208,32 +210,42 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
          log.info("suffixtray: writing took %.1f secs; done.", timer.tocs());
       }
 
-      // TODO
       // do lcp if desired
-      // if (dolcp > 0 && returnvalue == 0) {
-      // timer.tic();
-      // File flcp = project.makeFile(FileTypes.LCP);
-      // log.info("suffixtray: computing lcp array...");
-      // if (method.equals("L"))
-      // lcp_L(flcp, dolcp);
-      // else if (method.equals("R"))
-      // lcp_L(flcp, dolcp);
-      // else if (method.equals("minLR"))
-      // lcp_L(flcp, dolcp);
-      // else if (method.equals("bothLR"))
-      // lcp_bothLR(flcp, dolcp);
-      // else if (method.equals("bothLR2"))
-      // lcp_L(flcp, dolcp);
-      // else
-      // g.terminate("suffixtray: Unsupported construction method '" + method + "'!");
-      // log.info("suffixtray: lcp computation and writing took %.1f secs; done.", timer.tocs());
-      // project.setProperty("lcp1Exceptions", lcp1x);
-      // project.setProperty("lcp2Exceptions", lcp2x);
-      // project.setProperty("lcp1Size", n + 8 * lcp1x);
-      // project.setProperty("lcp2Size", 2 * n + 8 * lcp2x);
-      // project.setProperty("lcp4Size", 4 * n);
-      // project.setProperty("lcpMax", maxlcp);
-      // }
+      if (dolcp > 0 && returnvalue == 0) {
+         timer.tic();
+         File flcp = project.makeFile(FileTypes.LCP);
+         log.info("suffixtray: computing lcp array...");
+         try {
+            if (bigsuffix) {
+               // TODO
+            } else {
+               LCP.setLogger(log);
+               int[] buffer;
+               if (suffixDLL instanceof SuffixDLL) {
+                  // lexprevpos in suffixDLL is no longer used
+                  // so overwrite it in LCP.buildLcpAndWriteToFile()
+                  buffer = ((SuffixDLL)suffixDLL).getLexPreviousPosArray();
+               } else {
+                  //if lexprevpos does not exists, we need a new array as buffer
+                  buffer = new int[0];
+               }
+               LCP.buildLcpAndWriteToFile(suffixDLL, method, dolcp, flcp, buffer);
+            }
+         } catch (IllegalArgumentException iae) {
+            log.error("suffixtray: Unsupported construction method '" + method + "'!");
+            return 1;
+         } catch (IOException ex) {
+            log.warn("suffixtray: error writing lcp file(s): %s", ex);
+            return 1;
+         }
+         log.info("suffixtray: lcp computation and writing took %.1f secs; done.", timer.tocs());
+         project.setProperty("lcp1Exceptions", LCP.getLcp1Exceptions());
+         project.setProperty("lcp2Exceptions", LCP.getLcp2Exceptions());
+         project.setProperty("lcp1Size", n + 8 * LCP.getLcp1Exceptions());
+         project.setProperty("lcp2Size", 2 * n + 8 * LCP.getLcp2Exceptions());
+         project.setProperty("lcp4Size", 4 * n);
+         project.setProperty("lcpMax", LCP.getMaxLCP());
+      }
 
       // write project data
       try {

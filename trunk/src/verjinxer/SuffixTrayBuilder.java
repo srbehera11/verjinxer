@@ -15,12 +15,12 @@ public class SuffixTrayBuilder {
    private SuffixDLL normaldll;
    private boolean getNormalDLL = false;
    private long steps;
-   private final byte[] sequence;
+   private final Sequences sequence;
    private final int n;
    private final Alphabet alphabet;
 
    public SuffixTrayBuilder(Sequences sequence, Alphabet alphabet) {
-      this.sequence = sequence.array();
+      this.sequence = sequence;
       this.alphabet = alphabet;
       this.n = (int) sequence.length();
    }
@@ -59,14 +59,14 @@ public class SuffixTrayBuilder {
     * list. Needs text 's' and its length 'n' correctly set.
     */
    private void buildpos_L() {
-      normaldll = new SuffixDLL(n);
+      normaldll = new SuffixDLL(sequence, alphabet);
       getNormalDLL = true;
       byte ch;
       int chi;
 
       for (int p = n - 1; p >= 0; p--) {
          // insert suffix starting at position p
-         ch = sequence[p];
+         ch = sequence.array()[p];
          chi = ch + 128;
          if (normaldll.getFirstPos(chi) == -1) { // seeing character ch for the first time
             normaldll.insertnew(chi, p);
@@ -81,11 +81,11 @@ public class SuffixTrayBuilder {
                int i = p + 1;
                steps++;
                while (normaldll.getLexPreviousPos(i) != -1
-                     && sequence[(i = normaldll.getLexPreviousPos(i)) - 1] != ch) {
+                     && sequence.array()[(i = normaldll.getLexPreviousPos(i)) - 1] != ch) {
                   steps++;
                }
                i--;
-               if (sequence[i] == ch && i != p) { // insert p after i, might be new last
+               if (sequence.array()[i] == ch && i != p) { // insert p after i, might be new last
                   if (normaldll.getLastPos(chi) == i) {
                      normaldll.insertaslast(chi, p);
                   } else {
@@ -105,14 +105,14 @@ public class SuffixTrayBuilder {
     * list. Needs text 's' and its length 'n' correctly set.
     */
    private void buildpos_R() {
-      normaldll = new SuffixDLL(n);
+      normaldll = new SuffixDLL(sequence, alphabet);
       getNormalDLL = true;
       byte ch;
       int chi;
 
       for (int p = n - 1; p >= 0; p--) {
          // insert suffix starting at position p
-         ch = sequence[p];
+         ch = sequence.array()[p];
          chi = ch + 128;
          if (normaldll.getFirstPos(chi) == -1) { // seeing character ch for the first time
             normaldll.insertnew(chi, p);
@@ -127,11 +127,11 @@ public class SuffixTrayBuilder {
                int i = p + 1;
                steps++;
                while (normaldll.getLexNextPos(i) != -1
-                     && sequence[(i = normaldll.getLexNextPos(i)) - 1] != ch) {
+                     && sequence.array()[(i = normaldll.getLexNextPos(i)) - 1] != ch) {
                   steps++;
                }
                i--;
-               if (sequence[i] == ch && i != p) { // insert p BEFORE i, might be new first
+               if (sequence.array()[i] == ch && i != p) { // insert p BEFORE i, might be new first
                   if (normaldll.getFirstPos(chi) == i) {
                      normaldll.insertasfirst(chi, p);
                   } else {
@@ -152,7 +152,7 @@ public class SuffixTrayBuilder {
     * 's' and its length 'n' correctly set.
     */
    private void buildpos_minLR() {
-      normaldll = new SuffixDLL(n);
+      normaldll = new SuffixDLL(sequence, alphabet);
       getNormalDLL = true;
       byte ch;
       int chi;
@@ -162,7 +162,7 @@ public class SuffixTrayBuilder {
 
       for (int p = n - 1; p >= 0; p--) {
          // insert suffix starting at position p
-         ch = sequence[p];
+         ch = sequence.array()[p];
          chi = ch + 128;
          if (normaldll.getFirstPos(chi) == -1) { // seeing character ch for the first time
             normaldll.insertnew(chi, p);
@@ -182,7 +182,7 @@ public class SuffixTrayBuilder {
                      found = 1;
                      break;
                   } // new first
-                  if (sequence[(pup = lpp) - 1] == ch) {
+                  if (sequence.array()[(pup = lpp) - 1] == ch) {
                      found = 2;
                      break;
                   } // insert after pup
@@ -192,7 +192,7 @@ public class SuffixTrayBuilder {
                      found = 3;
                      break;
                   } // new last
-                  if (sequence[(pdown = lsp) - 1] == ch) {
+                  if (sequence.array()[(pdown = lsp) - 1] == ch) {
                      found = 4;
                      break;
                   } // insert before pdown
@@ -236,7 +236,7 @@ public class SuffixTrayBuilder {
     * correctly set.
     */
    private void buildpos_bothLR2() {
-      normaldll = new SuffixDLL(n);
+      normaldll = new SuffixDLL(sequence, alphabet);
       getNormalDLL = true;
       byte ch;
       int chi;
@@ -247,7 +247,7 @@ public class SuffixTrayBuilder {
 
       for (int p = n - 1; p >= 0; p--) {
          // insert suffix starting at position p
-         ch = sequence[p];
+         ch = sequence.array()[p];
          chi = ch + 128;
          if (normaldll.getFirstPos(chi) == -1) { // seeing character ch for the first time
             normaldll.insertnew(chi, p);
@@ -269,7 +269,7 @@ public class SuffixTrayBuilder {
                         foundup = 2;
                         break;
                      } // new last
-                     if (sequence[(pdown = lsp) - 1] == ch) {
+                     if (sequence.array()[(pdown = lsp) - 1] == ch) {
                         founddown = 2;
                      } // insert before pdown
                   }
@@ -281,7 +281,7 @@ public class SuffixTrayBuilder {
                         founddown = 2;
                         break;
                      } // new first
-                     if (sequence[(pup = lpp) - 1] == ch) {
+                     if (sequence.array()[(pup = lpp) - 1] == ch) {
                         foundup = 2;
                      } // insert after pup
                   }
@@ -307,7 +307,7 @@ public class SuffixTrayBuilder {
     * SAVING xor trick. Needs text 's' and its length 'n' correctly set.
     */
    private void buildpos_bothLR() {
-      xordll = new SuffixXorDLL(n);
+      xordll = new SuffixXorDLL(sequence, alphabet);
       getNormalDLL = false;
 
       byte ch;
@@ -315,7 +315,7 @@ public class SuffixTrayBuilder {
 
       for (int p = n - 1; p >= 0; p--) {
          // insert suffix starting at position p
-         ch = sequence[p];
+         ch = sequence.array()[p];
          chi = ch + 128;
          if (xordll.getFirstPos(chi) == -1) { // seeing character ch for the first time
             xordll.insertnew(chi, p);
@@ -350,7 +350,7 @@ public class SuffixTrayBuilder {
                xordll.insertaslast(chi, p);
                break;
             } // i is new last
-            if (sequence[qdn - 1] == ch) {
+            if (sequence.array()[qdn - 1] == ch) {
                founddown = 2;
             } // insert before pdn
             ppred = pdn;
@@ -363,7 +363,7 @@ public class SuffixTrayBuilder {
                xordll.insertasfirst(chi, p);
                break;
             } // i is new first
-            if (sequence[qup - 1] == ch) {
+            if (sequence.array()[qup - 1] == ch) {
                foundup = 2;
             } // insert after pup
             psucc = pup;

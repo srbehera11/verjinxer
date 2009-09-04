@@ -180,6 +180,8 @@ public class Sequences implements ISequenceCreation {
     */
    public long length() {
       return sequence.length;
+      // return type must be long because SequenceWriter.length() delegates to
+      // ArrayFile.length() which returns long
    }
 
    /**
