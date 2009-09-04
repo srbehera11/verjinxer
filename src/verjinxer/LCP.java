@@ -23,52 +23,34 @@ public class LCP {
    // and used in suffixlcp(int, int, int) and scmp(int, int)
    private static byte[] sequence;
    private static Alphabet alphabet;
-
-   // informations about the lcp building process
-   private static int maxlcp = -1;
-   private static int lcp1x = 0; // lcp1 exceptions
-   private static int lcp2x = 0; // lcp2 exceptions
+   
 
    public static void setLogger(Logger logger) {
       LCP.logger = logger;
    }
 
-   // TODO record type for maxlcp, lcp1x and lxp2x and return them buildLcp... and lcp_L
-   public static int getMaxLCP() {
-      return maxlcp;
-   }
-
-   public static int getLcp1Exceptions() {
-      return lcp1x;
-   }
-
-   public static int getLcp2Exceptions() {
-      return lcp2x;
-   }
-
-   public static void buildLcpAndWriteToFile(ISuffixDLL suffixDLL, String method, int dolcp,
+   public static LcpInfo buildLcpAndWriteToFile(ISuffixDLL suffixDLL, String method, int dolcp,
          File file, int[] buffer) throws IOException, IllegalArgumentException {
       sequence = suffixDLL.getSequence().array();
       alphabet = suffixDLL.getAlphabet();
-      maxlcp = -1;
-      lcp1x = 0;
-      lcp2x = 0;
+
+      LcpInfo returnvalue = null;
 
       if (method.equals("L")) {
          if (suffixDLL instanceof SuffixDLL) {
-            lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
+            returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
             // TODO ???
          }
       } else if (method.equals("R")) {
          if (suffixDLL instanceof SuffixDLL) {
-            lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
+            returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
             // TODO ???
          }
       } else if (method.equals("minLR")) {
          if (suffixDLL instanceof SuffixDLL) {
-            lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
+            returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
             // TODO ???
          }
@@ -81,7 +63,7 @@ public class LCP {
          }
       } else if (method.equals("bothLR2")) {
          if (suffixDLL instanceof SuffixDLL) {
-            lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
+            returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
             // TODO ???
          }
@@ -95,6 +77,8 @@ public class LCP {
       // no more use for it
       sequence = null;
       alphabet = null;
+
+      return returnvalue;
    }
 
    /**
@@ -105,13 +89,16 @@ public class LCP {
     *@param dolcp
     *           which lcp arrays to compute (0..7, any combination of 1+2+4)
     */
-   private static void lcp_L(File file, int dolcp, SuffixDLL suffixdll, int[] buffer)
+   private static LcpInfo lcp_L(File file, int dolcp, SuffixDLL suffixdll, int[] buffer)
          throws IOException {
       // buffer must be long enough
       if (buffer.length < suffixdll.length()) {
          buffer = new int[suffixdll.length()];
       }
-      // TODO do I really need a buffer? Can I write the lcp value direct into the files
+
+      int maxlcp = -1;
+      int lcp1x = 0; // lcp1 exceptions
+      int lcp2x = 0; // lcp2 exceptions
 
       TicToc timer = null;
       if (logger != null) {
@@ -145,59 +132,54 @@ public class LCP {
       int r;
       int chi = suffixdll.getLowestCharacter();
       ArrayFile f4 = null, f2 = null, f1 = null, f2x = null, f1x = null;
-      try {
-         if ((dolcp & 4) != 0)
-            f4 = new ArrayFile(file).openW();
-         if ((dolcp & 2) != 0) {
-            f2 = new ArrayFile(file + "2").openW();
-            f2x = new ArrayFile(file + "2x").openW(); // TODO original call was with 0 as second
-                                                      // parameter
-         }
-         if ((dolcp & 1) != 0) {
-            f1 = new ArrayFile(file + "1").openW();
-            f1x = new ArrayFile(file + "1x").openW(); // TODO original call was with 0 as second
-                                                      // parameter
-         }
-         for (r = 0, p = suffixdll.getFirstPos(chi); p != -1; p = suffixdll.getLexNextPos(p), r++) {
-            h = buffer[p];
-            assert (h >= 0);
-            if ((dolcp & 4) != 0) {
-               f4.writeInt(h);
-            }
-            if ((dolcp & 2) != 0) {
-               if (h >= 65535) {
-                  f2.writeShort((short) -1);
-                  f2x.writeInt(r);
-                  f2x.writeInt(h);
-               } else
-                  f2.writeShort((short) h);
-            }
-            if ((dolcp & 1) != 0) {
-               if (h >= 255) {
-                  f1.writeByte((byte) -1);
-                  f1x.writeInt(r);
-                  f1x.writeInt(h);
-               } else
-                  f1.writeByte((byte) h);
-            }
-         }
-         assert (r == suffixdll.length());
-         if ((dolcp & 4) != 0)
-            f4.close();
-         if ((dolcp & 2) != 0) {
-            f2.close();
-            f2x.close();
-         }
-         if ((dolcp & 1) != 0) {
-            f1.close();
-            f1x.close();
-         }
-      } catch (IOException ex) {
-         if (logger != null) {
-            logger.warn("suffixtray: error writing lcp file(s): %s", ex);
-         }
-         Globals.terminate(1);
+      if ((dolcp & 4) != 0)
+         f4 = new ArrayFile(file).openW();
+      if ((dolcp & 2) != 0) {
+         f2 = new ArrayFile(file + "2").openW();
+         f2x = new ArrayFile(file + "2x").openW(); // TODO original call was with 0 as second
+                                                   // parameter
       }
+      if ((dolcp & 1) != 0) {
+         f1 = new ArrayFile(file + "1").openW();
+         f1x = new ArrayFile(file + "1x").openW(); // TODO original call was with 0 as second
+                                                   // parameter
+      }
+      for (r = 0, p = suffixdll.getFirstPos(chi); p != -1; p = suffixdll.getLexNextPos(p), r++) {
+         h = buffer[p];
+         assert (h >= 0);
+         if ((dolcp & 4) != 0) {
+            f4.writeInt(h);
+         }
+         if ((dolcp & 2) != 0) {
+            if (h >= 65535) {
+               f2.writeShort((short) -1);
+               f2x.writeInt(r);
+               f2x.writeInt(h);
+            } else
+               f2.writeShort((short) h);
+         }
+         if ((dolcp & 1) != 0) {
+            if (h >= 255) {
+               f1.writeByte((byte) -1);
+               f1x.writeInt(r);
+               f1x.writeInt(h);
+            } else
+               f1.writeByte((byte) h);
+         }
+      }
+      assert (r == suffixdll.length());
+      if ((dolcp & 4) != 0)
+         f4.close();
+      if ((dolcp & 2) != 0) {
+         f2.close();
+         f2x.close();
+      }
+      if ((dolcp & 1) != 0) {
+         f1.close();
+         f1x.close();
+      }
+      
+      return new LcpInfo(maxlcp, lcp1x, lcp2x);
    }
 
    /**
@@ -239,5 +221,18 @@ public class LCP {
       if (d != 0 || alphabet.isSymbol(sequence[i]))
          return d;
       return i - j;
+   }
+   
+   
+   public static class LcpInfo {
+      public final int maxlcp; // max lcp value
+      public final int lcp1x; // lcp1 exceptions
+      public final int lcp2x; // lcp2 exceptions
+
+      private LcpInfo(int maxlpc, int lcp1x, int lcp2x) {
+         this.maxlcp = maxlpc;
+         this.lcp1x = lcp1x;
+         this.lcp2x = lcp2x;
+      }
    }
 }
