@@ -13,6 +13,7 @@ import verjinxer.Project;
 import verjinxer.SuffixTrayBuilder;
 import verjinxer.SuffixTrayChecker;
 import verjinxer.SuffixTrayWriter;
+import verjinxer.LCP.LcpInfo;
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.ISuffixDLL;
 import verjinxer.sequenceanalysis.Sequences;
@@ -215,9 +216,11 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
          timer.tic();
          File flcp = project.makeFile(FileTypes.LCP);
          log.info("suffixtray: computing lcp array...");
+         LcpInfo lcpinfo;
          try {
             if (bigsuffix) {
                // TODO
+               lcpinfo = null;
             } else {
                LCP.setLogger(log);
                int[] buffer;
@@ -229,7 +232,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                   //if lexprevpos does not exists, we need a new array as buffer
                   buffer = new int[0];
                }
-               LCP.buildLcpAndWriteToFile(suffixDLL, method, dolcp, flcp, buffer);
+               lcpinfo = LCP.buildLcpAndWriteToFile(suffixDLL, method, dolcp, flcp, buffer);
             }
          } catch (IllegalArgumentException iae) {
             log.error("suffixtray: Unsupported construction method '" + method + "'!");
@@ -239,12 +242,12 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
             return 1;
          }
          log.info("suffixtray: lcp computation and writing took %.1f secs; done.", timer.tocs());
-         project.setProperty("lcp1Exceptions", LCP.getLcp1Exceptions());
-         project.setProperty("lcp2Exceptions", LCP.getLcp2Exceptions());
-         project.setProperty("lcp1Size", n + 8 * LCP.getLcp1Exceptions());
-         project.setProperty("lcp2Size", 2 * n + 8 * LCP.getLcp2Exceptions());
+         project.setProperty("lcp1Exceptions", lcpinfo.lcp1x);
+         project.setProperty("lcp2Exceptions", lcpinfo.lcp2x);
+         project.setProperty("lcp1Size", n + 8 * lcpinfo.lcp1x);
+         project.setProperty("lcp2Size", 2 * n + 8 * lcpinfo.lcp2x);
          project.setProperty("lcp4Size", 4 * n);
-         project.setProperty("lcpMax", LCP.getMaxLCP());
+         project.setProperty("lcpMax", lcpinfo.maxlcp);
       }
 
       // write project data
