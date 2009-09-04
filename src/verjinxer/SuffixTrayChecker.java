@@ -8,7 +8,6 @@ import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.ISuffixDLL;
-import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.SuffixDLL;
 import verjinxer.sequenceanalysis.SuffixXorDLL;
 import verjinxer.util.ArrayFile;
@@ -20,8 +19,7 @@ import verjinxer.util.FileTypes;
 public class SuffixTrayChecker {
 
    // attributes are there to reduce number of parameters for private methods
-   // they are set in checkpos(ISuffixDLL, String, Sequences, Alphabet) or in checkpos(Project,
-   // Logger)
+   // they are set in checkpos(ISuffixDLL, String, Sequences, Alphabet) or in checkpos(Project)
    private static byte[] sequence = null;
    private static Alphabet alphabet = null;
 
@@ -31,49 +29,59 @@ public class SuffixTrayChecker {
       SuffixTrayChecker.log = log;
    }
 
-   public static int checkpos(ISuffixDLL suffixDLL, String method, Sequences sequence,
-         Alphabet alphabet) {
-      SuffixTrayChecker.sequence = sequence.array();
-      SuffixTrayChecker.alphabet = alphabet;
+   public static int checkpos(ISuffixDLL suffixDLL, String method) throws IllegalArgumentException {
+      SuffixTrayChecker.sequence = suffixDLL.getSequence().array();
+      SuffixTrayChecker.alphabet = suffixDLL.getAlphabet();
+
+      int returnvalue = 0;
 
       if (method.equals("L")) {
          if (suffixDLL instanceof SuffixDLL) {
-            return checkpos_R((SuffixDLL) suffixDLL);
+            returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
             // TODO ???
-            return 1;
+            returnvalue = 1;
          }
       } else if (method.equals("R")) {
          if (suffixDLL instanceof SuffixDLL) {
-            return checkpos_R((SuffixDLL) suffixDLL);
+            returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
             // TODO ???
-            return 1;
+            returnvalue = 1;
          }
       } else if (method.equals("minLR")) {
          if (suffixDLL instanceof SuffixDLL) {
-            return checkpos_R((SuffixDLL) suffixDLL);
+            returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
             // TODO ???
-            return 1;
+            returnvalue = 1;
          }
       } else if (method.equals("bothLR")) {
          if (suffixDLL instanceof SuffixXorDLL) {
-            return checkpos_bothLR((SuffixXorDLL) suffixDLL);
+            returnvalue = checkpos_bothLR((SuffixXorDLL) suffixDLL);
          } else {
             // TODO ???
-            return 1;
+            returnvalue = 1;
          }
       } else if (method.equals("bothLR2")) {
          if (suffixDLL instanceof SuffixDLL) {
-            return checkpos_R((SuffixDLL) suffixDLL);
+            returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
             // TODO ???
-            return 1;
+            returnvalue = 1;
          }
       } else {
+         // no more use for it
+         SuffixTrayChecker.sequence = null;
+         SuffixTrayChecker.alphabet = null;
          throw new IllegalArgumentException("The Method " + method + " does not exist.");
       }
+
+      // no more use for it
+      SuffixTrayChecker.sequence = null;
+      SuffixTrayChecker.alphabet = null;
+
+      return returnvalue;
    }
 
    private static int checkpos_R(SuffixDLL suffixDLL) {
@@ -235,6 +243,7 @@ public class SuffixTrayChecker {
     *@return any value &lt; 0 iff s[i]&lt;s[j], as specified by alphabet map, zero(0) iff
     *         s[i]==s[j], any value &gt; 0 iff s[i]&gt;s[j], as specified by alphabet map.
     */
+   //!!! the same method exist in LCP - duplication is needed to get proper decoupling !!!//
    private static final int scmp(final int i, final int j) {
       final int d = sequence[i] - sequence[j];
       if (d != 0 || alphabet.isSymbol(sequence[i]))

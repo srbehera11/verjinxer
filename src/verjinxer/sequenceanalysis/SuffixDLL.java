@@ -14,10 +14,18 @@ public class SuffixDLL implements ISuffixDLL {
    private int[] lexlastpos = new int[256];
    private int[] lexprevpos = null;
    private int[] lexnextpos = null;
+   
+   private final int length;
+   private final Sequences sequence;
+   private final Alphabet alphabet;
 
-   public SuffixDLL(int n) {
-      lexprevpos = new int[n];
-      lexnextpos = new int[n];
+   public SuffixDLL(Sequences sequence, Alphabet alphabet) {
+      this.sequence = sequence;
+      this.alphabet = alphabet;
+      assert sequence.length() < Integer.MAX_VALUE;
+      length = (int)sequence.length(); //normal sequences warp an array, so its length is int and not long
+      lexprevpos = new int[length];
+      lexnextpos = new int[length];
       Arrays.fill(lexfirstpos, -1);
       Arrays.fill(lexlastpos, -1);
    }
@@ -132,6 +140,23 @@ public class SuffixDLL implements ISuffixDLL {
    public int getLexPreviousPos(int i) {
       return lexprevpos[i];
    }
+   
+   public int[] getLexPreviousPosArray() {
+      // needed for lcp calculating.
+      // lexprevpos set in SuffixTrayBuilderSubcommand as buffer
+      // and LCP writes the lpc values in this buffer (overwrite lexprevpos - is no more needed in
+      // SuffixTrayBuilderSubcommand and so memory is reused) before writing them in correct order
+      // to disc
+      return lexprevpos;
+   }
+
+   /*
+    * (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISuffixDLL#length()
+    */
+   public int length() {
+      return length;
+   }
 
    // ////////////////////////////////////////////////////////////////////
    // ////////////////////////internal state//////////////////////////////
@@ -211,6 +236,25 @@ public class SuffixDLL implements ISuffixDLL {
    @Override
    public void nextDown() {
       currentPosition = getPredecessor();
+   }
+   
+   // ////////////////////////////////////////////////////////////////////
+   // /////////////////////associated sequence////////////////////////////
+   // ////////////////////////////////////////////////////////////////////
+   /*
+    * (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISuffixDLL#getSequence()
+    */
+   public Sequences getSequence() {
+      return sequence;
+   }
+   
+   /*
+    * (non-Javadoc)
+    * @see verjinxer.sequenceanalysis.ISuffixDLL#getAlphabet()
+    */
+   public Alphabet getAlphabet() {
+      return alphabet;
    }
 
 }

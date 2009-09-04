@@ -39,6 +39,8 @@ public interface ISuffixDLL {
    public abstract int getLastPos(int chi);
 
    public abstract int getLowestCharacter();
+   
+   public abstract int length();
 
    // ////////////////////////////////////////////////////////////////////
    // ////////////////////////internal state//////////////////////////////
@@ -58,6 +60,13 @@ public interface ISuffixDLL {
    public abstract boolean hasNextDown();
 
    public abstract void nextDown();
+   
    // ////////////////////////////////////////////////////////////////////
+   // /////////////////////associated sequence////////////////////////////
+   // ////////////////////////////////////////////////////////////////////
+   
+   public abstract Sequences getSequence();
+   
+   public abstract Alphabet getAlphabet();
 
 }
