@@ -7,36 +7,66 @@ import verjinxer.sequenceanalysis.SuffixDLL;
 import verjinxer.sequenceanalysis.SuffixXorDLL;
 
 /**
+ * Class responsible for building a suffix array of a text/sequence.
+ * 
  * @author Markus Kemmerling
  */
 public class SuffixTrayBuilder {
 
    private SuffixXorDLL xordll;
    private SuffixDLL normaldll;
+   
+   /** Whether a normal suffix list was created.*/
    private boolean getNormalDLL = false;
+   
+   /** Number of steps needed to build the suffix tray. */
    private long steps;
+   
+   /** Text/Sequence for that a suffiy tray shall be build. */
    private final Sequences sequence;
+   
+   /** Length of the Text/Sequence */
    private final int n;
+   
+   /** Alphabet of the Text/Sequence */
    private final Alphabet alphabet;
 
+   /**
+    * Creates a new building instance for the given sequence.
+    * 
+    * @param sequence
+    *           Text/Sequence for that a suffiy tray shall be build.
+    * @param alphabet
+    *           Alphabet of sequence.
+    */
    public SuffixTrayBuilder(Sequences sequence, Alphabet alphabet) {
       this.sequence = sequence;
       this.alphabet = alphabet;
       this.n = (int) sequence.length();
    }
 
+   /**
+    * @return  Number of steps needed to build the suffix tray.
+    */
    public long getSteps() {
       return steps;
    }
 
+   /**
+    * @return The builded suffix list or null, if the build method was not invoked before.
+    */
    public ISuffixDLL getSuffixDLL() {
       return getNormalDLL ? normaldll : xordll;
    }
 
    /**
+    * Builds the suffix list.
     * 
     * @param method
+    *           How the suffix list shall be build. Valid methods are 'L', 'R', 'minLR', 'bothLR'
+    *           and 'bothLR2'.
     * @throws IllegalArgumentException
+    *            when the given method is not valid.
     */
    public void build(String method) throws IllegalArgumentException {
       if (method.equals("L")) {
@@ -50,13 +80,13 @@ public class SuffixTrayBuilder {
       } else if (method.equals("bothLR2")) {
          buildpos_bothLR2();
       } else {
-         throw new IllegalArgumentException("The Method " + method + " does not exist.");
+         throw new IllegalArgumentException("Unsupported construction method '" + method + "'!");
       }
    }
 
    /**
-    * builds suffix array 'pos' by walking LEFT along a partially constructed doubly linked suffix
-    * list. Needs text 's' and its length 'n' correctly set.
+    * Builds a suffix array by walking LEFT along a partially constructed doubly linked suffix
+    * list.
     */
    private void buildpos_L() {
       normaldll = new SuffixDLL(sequence, alphabet);
@@ -101,8 +131,8 @@ public class SuffixTrayBuilder {
    }
 
    /**
-    * builds suffix array 'pos' by walking RIGHT in a partially constructed doubly linked suffix
-    * list. Needs text 's' and its length 'n' correctly set.
+    * Builds a suffix array by walking RIGHT in a partially constructed doubly linked suffix
+    * list.
     */
    private void buildpos_R() {
       normaldll = new SuffixDLL(sequence, alphabet);
@@ -147,9 +177,8 @@ public class SuffixTrayBuilder {
    }
 
    /**
-    * builds suffix array 'pos' by walking BIDIRECTIONALLY along a partially constructed doubly
-    * linked suffix list until the first matching character is found in EITHER direction. Needs text
-    * 's' and its length 'n' correctly set.
+    * Builds a suffix array by walking BIDIRECTIONALLY along a partially constructed doubly
+    * linked suffix list until the first matching character is found in EITHER direction.
     */
    private void buildpos_minLR() {
       normaldll = new SuffixDLL(sequence, alphabet);
@@ -229,11 +258,10 @@ public class SuffixTrayBuilder {
    }
 
    /**
-    * builds suffix array 'pos' by walking BOTH WAYS along a partially constructed doubly linked
+    * Builds a suffix array by walking BOTH WAYS along a partially constructed doubly linked
     * suffix list, until the target character is found BOTH WAYS. This implementation uses 2 integer
     * arrays. The SPACE SAVING technique (xor encoding) is not used here. Use
-    * <code>buildpos_bothLR</code> for the space saving technique. Needs text 's' and its length 'n'
-    * correctly set.
+    * <code>buildpos_bothLR</code> for the space saving technique.
     */
    private void buildpos_bothLR2() {
       normaldll = new SuffixDLL(sequence, alphabet);
@@ -302,9 +330,9 @@ public class SuffixTrayBuilder {
    }
 
    /**
-    * builds suffix array 'pos' by walking BOTH WAYS along a partially constructed doubly linked
+    * Builds suffix array by walking BOTH WAYS along a partially constructed doubly linked
     * suffix list, until the target character is found BOTH WAYS. This implementation uses the SPACE
-    * SAVING xor trick. Needs text 's' and its length 'n' correctly set.
+    * SAVING xor trick.
     */
    private void buildpos_bothLR() {
       xordll = new SuffixXorDLL(sequence, alphabet);

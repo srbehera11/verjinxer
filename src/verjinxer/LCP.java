@@ -29,6 +29,29 @@ public class LCP {
       LCP.logger = logger;
    }
 
+   /**
+    * Calculates for a given suffix array/list the lcp array (longest common prefix) and writes it
+    * to disc.
+    * 
+    * @param suffixDLL
+    *           Suffix list for that the lcp is calculated.
+    * @param method
+    *           The method to use for calculation. Valid methods are 'L', 'R', 'minLR', 'bothLR' and
+    *           'bothLR2'. The method must suit to the type suffixDLL and its internal structure.
+    * @param dolcp
+    *           Which lcp arrays to compute (0..7, any combination of 1+2+4)
+    * @param file
+    *           Basic file name to store the lcp arrays.
+    * @param buffer
+    *           Buffer for interim results. If the buffer has less capacity as suffixDLL, a new
+    *           arrays is initialized and used as buffer.
+    * @return Informations about the building process.
+    * @throws IOException
+    *            when the lcp arrays can not be written to disc.
+    * @throws IllegalArgumentException
+    *            when the given method is not valid or when the given method does not suits to the
+    *            type of suffixDLL.
+    */
    public static LcpInfo buildLcpAndWriteToFile(ISuffixDLL suffixDLL, String method, int dolcp,
          File file, int[] buffer) throws IOException, IllegalArgumentException {
       sequence = suffixDLL.getSequence().array();
@@ -40,38 +63,38 @@ public class LCP {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
-            // TODO ???
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else if (method.equals("R")) {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
-            // TODO ???
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else if (method.equals("minLR")) {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
-            // TODO ???
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else if (method.equals("bothLR")) {
          if (suffixDLL instanceof SuffixXorDLL) {
             // lcp_bothLR(flcp, dolcp);
             throw new UnsupportedOperationException("Not yet implemented");
          } else {
-            // TODO ???
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixXorDLL'!");
          }
       } else if (method.equals("bothLR2")) {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = lcp_L(file, dolcp, (SuffixDLL) suffixDLL, buffer);
          } else {
-            // TODO ???
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else {
          // no more use for it
          sequence = null;
          alphabet = null;
-         throw new IllegalArgumentException("The Method " + method + " does not exist.");
+         throw new IllegalArgumentException("Unsupported construction method '" + method + "'!");
       }
 
       // no more use for it
@@ -85,15 +108,17 @@ public class LCP {
     * lcp computation according to Kasai et al.'s algorithm when lexprevpos[] is available.
     * 
     * @param file
-    *           file for lcp array
-    *@param dolcp
-    *           which lcp arrays to compute (0..7, any combination of 1+2+4)
+    *           Basic file name for lcp array.
+    * @param dolcp
+    *           Which lcp arrays to compute (0..7, any combination of 1+2+4).
+    * @throws IOException
+    *            when the lcp arrays can not be written to disc.
     */
    private static LcpInfo lcp_L(File file, int dolcp, SuffixDLL suffixdll, int[] buffer)
          throws IOException {
       // buffer must be long enough
-      if (buffer.length < suffixdll.length()) {
-         buffer = new int[suffixdll.length()];
+      if (buffer.length < suffixdll.capacity()) {
+         buffer = new int[suffixdll.capacity()];
       }
 
       int maxlcp = -1;
@@ -107,7 +132,7 @@ public class LCP {
       }
       int p, prev, h;
       h = 0;
-      for (p = 0; p < suffixdll.length(); p++) {
+      for (p = 0; p < suffixdll.capacity(); p++) {
          prev = suffixdll.getLexPreviousPos(p);
          if (prev != -1)
             h = suffixlcp(prev, p, h);
@@ -167,7 +192,7 @@ public class LCP {
                f1.writeByte((byte) h);
          }
       }
-      assert (r == suffixdll.length());
+      assert (r == suffixdll.capacity());
       if ((dolcp & 4) != 0)
          f4.close();
       if ((dolcp & 2) != 0) {
@@ -183,16 +208,16 @@ public class LCP {
    }
 
    /**
-    * find length of longest common prefix (lcp) of suffixes of text s, given prior knowledge that
-    * lcp &gt;= h.
+    * Finds length of longest common prefix (lcp) of suffixes of associated text/sequence, given
+    * prior knowledge that lcp &gt;= h.
     * 
     * @param i
-    *           first position
-    *@param j
-    *           second position
-    *@param h
-    *           minimum known lcp length
-    *@return lcp length
+    *           Position of first suffix.
+    * @param j
+    *           Position of second suffix.
+    * @param h
+    *           Minimum known lcp length.
+    * @return lcp length
     */
    private static final int suffixlcp(final int i, final int j, final int h) {
       if (i == j)
@@ -204,14 +229,14 @@ public class LCP {
    }
 
    /**
-    * compare two characters of text s. "Symbols" are compared according to their order in the
-    * alphabet map "special" characters (wildcards, separators) are compared by position
+    * Compares two characters of associated text/sequence. "Symbols" are compared according to their order in the
+    * alphabet map. "Special" characters (wildcards, separators) are compared by position.
     * 
     * @param i
-    *           first position
-    *@param j
-    *           second position
-    *@return any value &lt; 0 iff s[i]&lt;s[j], as specified by alphabet map, zero(0) iff
+    *           Position of first suffix.
+    * @param j
+    *           Position of second suffix.
+    * @return Any value &lt; 0 iff s[i]&lt;s[j], as specified by alphabet map, zero(0) iff
     *         s[i]==s[j], any value &gt; 0 iff s[i]&gt;s[j], as specified by alphabet map.
     */
    // !!!the same method exist in SuffixTrayChecker - duplication is needed to get proper
@@ -223,12 +248,30 @@ public class LCP {
       return i - j;
    }
    
-   
+   /**
+    * Record class to store informations about the lcp calculation process.
+    * 
+    * @author Markus Kemmerling
+    */
    public static class LcpInfo {
-      public final int maxlcp; // max lcp value
-      public final int lcp1x; // lcp1 exceptions
-      public final int lcp2x; // lcp2 exceptions
+      /** Max lcp value. */
+      public final int maxlcp;
+      
+      /** Number of lcp1 exceptions. */
+      public final int lcp1x;
 
+      /** Number of lcp2 exceptions. */
+      public final int lcp2x;
+
+      /**
+       * 
+       * @param maxlpc
+       *           Max lcp value.
+       * @param lcp1x
+       *           Number of lcp1 exceptions.
+       * @param lcp2x
+       *           Number of lcp2 exceptions.
+       */
       private LcpInfo(int maxlpc, int lcp1x, int lcp2x) {
          this.maxlcp = maxlpc;
          this.lcp1x = lcp1x;

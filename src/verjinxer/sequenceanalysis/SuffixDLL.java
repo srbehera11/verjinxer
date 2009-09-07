@@ -6,32 +6,64 @@ package verjinxer.sequenceanalysis;
 import java.util.Arrays;
 
 /**
+ * Basic implementation of a suffix double linked list.
+ * 
  * @author Markus Kemmerling
  */
 public class SuffixDLL implements ISuffixDLL {
    // encapsulated suffix array
+   /**
+    * Text/Sequence positions where the lexicographical first suffix that starts with a specific
+    * character can be found.
+    */
    private int[] lexfirstpos = new int[256];
+   
+   /**
+    * Text/Sequence positions where the lexicographical last suffix that starts with a specific
+    * character can be found.
+    */
    private int[] lexlastpos = new int[256];
+   
+   /**
+    * Text/Sequence positions where the lexicographical previous suffix can be found.
+    */
    private int[] lexprevpos = null;
+   
+   /**
+    * Text/Sequence positions where the lexicographical next suffix can be found.
+    */
    private int[] lexnextpos = null;
    
-   private final int length;
+   /** Capacity of this list */
+   private final int capacity;
+   
+   /** The text/sequence associated with this suffix list */
    private final Sequences sequence;
+   
+   /** Alphabet of the associated text/sequence. */
    private final Alphabet alphabet;
 
+   // internal state
+   private int currentPosition = -1;
+
+   /**
+    * Constructor, initializes suffix list of given sequence.
+    * 
+    * @param sequence
+    *           The associated sequence (text).
+    * @param alphabet
+    *           The alphabet of the sequence.
+    */
    public SuffixDLL(Sequences sequence, Alphabet alphabet) {
       this.sequence = sequence;
       this.alphabet = alphabet;
       assert sequence.length() < Integer.MAX_VALUE;
-      length = (int)sequence.length(); //normal sequences warp an array, so its length is int and not long
-      lexprevpos = new int[length];
-      lexnextpos = new int[length];
+      capacity = (int)sequence.length(); //normal sequences warp an array, so its length is int and not long
+      lexprevpos = new int[capacity];
+      lexnextpos = new int[capacity];
       Arrays.fill(lexfirstpos, -1);
       Arrays.fill(lexlastpos, -1);
    }
-
-   // internal state
-   private int currentPosition = -1;
 
    /*
     * (non-Javadoc)
@@ -133,14 +165,30 @@ public class SuffixDLL implements ISuffixDLL {
       return chi;
    }
 
+   /**
+    * @param i
+    *           Text/Sequence position of a suffix.
+    * @return Text/Sequence position where the lexicographical next suffix, according to the
+    *         suffix at position i, can be found.
+    */
    public int getLexNextPos(int i) {
       return lexnextpos[i];
    }
 
+   /**
+    * @param i
+    *           Text/Sequence position of a suffix.
+    * @return Text/Sequence position where the lexicographical previous suffix, according to the
+    *         suffix at position i, can be found.
+    */
    public int getLexPreviousPos(int i) {
       return lexprevpos[i];
    }
    
+   /**
+    * @return An array, where for text/sequence position, the position of lexicographical previous
+    *         suffix is stored.
+    */
    public int[] getLexPreviousPosArray() {
       // needed for lcp calculating.
       // lexprevpos set in SuffixTrayBuilderSubcommand as buffer
@@ -154,8 +202,8 @@ public class SuffixDLL implements ISuffixDLL {
     * (non-Javadoc)
     * @see verjinxer.sequenceanalysis.ISuffixDLL#length()
     */
-   public int length() {
-      return length;
+   public int capacity() {
+      return capacity;
    }
 
    // ////////////////////////////////////////////////////////////////////
