@@ -3,16 +3,38 @@ package verjinxer.sequenceanalysis;
 import java.util.Arrays;
 
 /**
+ * This is a lightweight suffix double linked list. It uses xor coding to store the predecessor and
+ * the successor of a list element in the same place and needs less memory then {@link SuffixDLL}.
+ * 
+ * @see SuffixDLL
  * @author Markus Kemmerling
  */
 public class SuffixXorDLL implements ISuffixDLL {
    // encapsulated suffix array
+   /**
+    * Text/Sequence positions where the lexicographical first suffix that starts with a specific
+    * character can be found.
+    */
    private int[] lexfirstpos = new int[256];
-   private int[] lexlastpos = new int[256];
-   private int[] lexps = null;
    
-   private final int length;
+   /**
+    * Text/Sequence positions where the lexicographical last suffix that starts with a specific
+    * character can be found.
+    */
+   private int[] lexlastpos = new int[256];
+
+   /** 
+    * Lexicographical predecessor and successor for a position (xor coding).
+    */
+   private int[] lexps = null; // lexps[pos] = (predecessor of pos) ^ (successor of pos)
+   
+   /** Capacity of this list */
+   private final int capacity;
+   
+   /** The text/sequence associated with this suffix list */
    private final Sequences sequence;
+   
+   /** Alphabet of the associated text/sequence. */
    private final Alphabet alphabet;
 
    // internal state
@@ -21,17 +43,19 @@ public class SuffixXorDLL implements ISuffixDLL {
    private int successor = -1;
 
    /**
-    * constructor, initializes list of given capacity.
+    * Constructor, initializes suffix list of given sequence.
     * 
-    * @param nn
-    *           capacity
+    * @param sequence
+    *           The associated sequence (text).
+    * @param alphabet
+    *           The alphabet of the sequence.
     */
    public SuffixXorDLL(Sequences sequence, Alphabet alphabet) {
       this.sequence = sequence;
       this.alphabet = alphabet;
       assert sequence.length() < Integer.MAX_VALUE;
-      length = (int)sequence.length(); //normal sequences warp an array, so its length is int and not long
-      lexps = new int[length];
+      capacity = (int)sequence.length(); //normal sequences warp an array, so its length is int and not long
+      lexps = new int[capacity];
       Arrays.fill(lexfirstpos, -1);
       Arrays.fill(lexlastpos, -1);
    }
@@ -135,6 +159,15 @@ public class SuffixXorDLL implements ISuffixDLL {
       return chi;
    }
 
+   /**
+    * This doulbe linked list uses xor coding to store the lexicographical predecessor and successor
+    * of a suffix in the same place. This method returns an array where for each position in the text/sequence
+    * the lexicographical previous/next suffix is stored.<br>
+    * getLexPS(pos) = (predecessor of pos) ^ (successor of pos).
+    * 
+    * @param p
+    * @return 
+    */
    public int getLexPS(int p) {
       return lexps[p];
    }
@@ -143,8 +176,8 @@ public class SuffixXorDLL implements ISuffixDLL {
     * (non-Javadoc)
     * @see verjinxer.sequenceanalysis.ISuffixDLL#length()
     */
-   public int length() {
-      return length;
+   public int capacity() {
+      return capacity;
    }
 
    // ////////////////////////////////////////////////////////////////////

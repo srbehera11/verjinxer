@@ -161,7 +161,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
             suffixDLL = builder.getSuffixDLL();
          }
       } catch (IllegalArgumentException iae) {
-         log.error("suffixtray: Unsupported construction method '" + method + "'!");
+         log.error("suffixtray: " + iae);
          return 1;
       }
       log.info("suffixtray: pos completed after %.1f secs using %d steps (%.2f/char)",
@@ -181,7 +181,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                returnvalue = SuffixTrayChecker.checkpos(suffixDLL, method);
             }
          } catch (IllegalArgumentException iae) {
-            log.error("suffixcheck: Unsupported construction method '" + method + "'!");
+            log.error("suffixcheck: " + iae);
             return 1;
          }
          if (returnvalue == 0) {
@@ -202,7 +202,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                SuffixTrayWriter.write(suffixDLL, fpos, method);
             }
          } catch (IllegalArgumentException iae) {
-            log.error("suffixtray: Unsupported construction method '" + method + "'!");
+            log.error("suffixtray: " + iae);
             return 1;
          } catch (IOException ex) {
             log.warn("suffixtray: error writing '%s': %s", fpos, ex);

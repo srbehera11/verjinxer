@@ -14,12 +14,15 @@ import verjinxer.util.ArrayFile;
 import verjinxer.util.FileTypes;
 
 /**
+ * Class responsible for checking the correctness of a suffix array of a text/sequence.
+ * 
  * @author Markus Kemmerling
  */
 public class SuffixTrayChecker {
 
    // attributes are there to reduce number of parameters for private methods
-   // they are set in checkpos(ISuffixDLL, String, Sequences, Alphabet) or in checkpos(Project)
+   // they are set in checkpos(ISuffixDLL, String) or in checkpos(Project)
+   // and are used in checkpos_X(SuffixDLL), scmp(int, int) and suffixcmp(int, int)
    private static byte[] sequence = null;
    private static Alphabet alphabet = null;
 
@@ -29,6 +32,22 @@ public class SuffixTrayChecker {
       SuffixTrayChecker.log = log;
    }
 
+   /**
+    * Checks the given suffix list with the given method.
+    * 
+    * @param suffixDLL
+    *           Suffix list to check.
+    * @param method
+    *           How the suffix list shall be checked. Valid methods are 'L', 'R', 'minLR', 'bothLR'
+    *           and 'bothLR2'.
+    * @return 0 iff everything was okay.<br>
+    *         The lowest bit is set to 1 when there are failures in the sorting of the suffixes.<br>
+    *         The second bit is set to 1 when no first character can be found or when not all
+    *         suffixes of the with the list associated text/sequences are included in the list.
+    * @throws IllegalArgumentException
+    *            when the given method is not valid or when the given method does not suits to the
+    *            type of suffixDLL.
+    */
    public static int checkpos(ISuffixDLL suffixDLL, String method) throws IllegalArgumentException {
       SuffixTrayChecker.sequence = suffixDLL.getSequence().array();
       SuffixTrayChecker.alphabet = suffixDLL.getAlphabet();
@@ -39,42 +58,37 @@ public class SuffixTrayChecker {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
-            // TODO ???
-            returnvalue = 1;
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else if (method.equals("R")) {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
-            // TODO ???
-            returnvalue = 1;
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else if (method.equals("minLR")) {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
-            // TODO ???
-            returnvalue = 1;
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else if (method.equals("bothLR")) {
          if (suffixDLL instanceof SuffixXorDLL) {
             returnvalue = checkpos_bothLR((SuffixXorDLL) suffixDLL);
          } else {
-            // TODO ???
-            returnvalue = 1;
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixXorDLL'!");
          }
       } else if (method.equals("bothLR2")) {
          if (suffixDLL instanceof SuffixDLL) {
             returnvalue = checkpos_R((SuffixDLL) suffixDLL);
          } else {
-            // TODO ???
-            returnvalue = 1;
+            throw new IllegalArgumentException("Method '" + method + "' only suits to type 'SuffixDLL'!");
          }
       } else {
          // no more use for it
          SuffixTrayChecker.sequence = null;
          SuffixTrayChecker.alphabet = null;
-         throw new IllegalArgumentException("The Method " + method + " does not exist.");
+         throw new IllegalArgumentException("Unsupported construction method '" + method + "'!");
       }
 
       // no more use for it
@@ -84,6 +98,16 @@ public class SuffixTrayChecker {
       return returnvalue;
    }
 
+   /**
+    * Checks correctness of the given suffix list.
+    * 
+    * @param suffixDLL
+    *           Suffix list to check.
+    * @return 0 iff everything was okay.<br>
+    *         The lowest bit is set to 1 when there are failures in the sorting of the suffixes.<br>
+    *         The second bit is set to 1 when no first character can be found or when not all
+    *         suffixes of the with the list associated text/sequences are included in the list.
+    */
    private static int checkpos_R(SuffixDLL suffixDLL) {
       // this method is a copy of checkpos_bothLR(SuffixXorDLL).
       // the parameter is the only difference. the body is exactly the same
@@ -134,6 +158,16 @@ public class SuffixTrayChecker {
 
    }
 
+   /**
+    * Checks correctness of the given suffix list.
+    * 
+    * @param suffixDLL
+    *           Suffix list to check.
+    * @return 0 iff everything was okay.<br>
+    *         The lowest bit is set to 1 when there are failures in the sorting of the suffixes.<br>
+    *         The second bit is set to 1 when no first character can be found or when not all
+    *         suffixes of the with the list associated text/sequences are included in the list.
+    */
    private static int checkpos_bothLR(SuffixXorDLL suffixDLL) {
       // this method is a copy of checkpos_R(SuffixDLL).
       // the parameter is the only difference. the body is exactly the same
@@ -181,15 +215,13 @@ public class SuffixTrayChecker {
    }
 
    /**
-    * check correctness of a suffix array on disk outputs warning messages if errors are found
+    * Checks correctness of a suffix array on disk outputs warning messages if errors are found
     * 
-    * @param log
-    * 
-    * @param di
-    *           path and name of the index to check
+    * @param project
+    *            Project for that the suffix array shall be checked.
     *@return 0 on success, 1 on sorting error, 2 on count error
     *@throws IOException
-    *            when the pos file can not be read.
+    *            When the pos file can not be read.
     */
    public static int checkpos(Project project) throws IOException {
       int returnvalue = 0;
@@ -233,14 +265,14 @@ public class SuffixTrayChecker {
    // ==================== checking routines ====================================
 
    /**
-    * compare two characters of text s. "Symbols" are compared according to their order in the
-    * alphabet map "special" characters (wildcards, separators) are compared by position
+    * Compares two characters of the associated text/sequence. "Symbols" are compared according to their order in the
+    * alphabet map. "Special" characters (wildcards, separators) are compared by position.
     * 
     * @param i
-    *           first position
-    *@param j
-    *           second position
-    *@return any value &lt; 0 iff s[i]&lt;s[j], as specified by alphabet map, zero(0) iff
+    *           Position of first suffix.
+    * @param j
+    *           Position of second suffix.
+    * @return Any value &lt; 0 iff s[i]&lt;s[j], as specified by alphabet map, zero(0) iff
     *         s[i]==s[j], any value &gt; 0 iff s[i]&gt;s[j], as specified by alphabet map.
     */
    //!!! the same method exist in LCP - duplication is needed to get proper decoupling !!!//
@@ -252,14 +284,14 @@ public class SuffixTrayChecker {
    }
 
    /**
-    * compare two suffixes of text s. "Symbols" are compared according to their order in the
-    * alphabet map "special" characters (wildcards, separators) are compared by position
+    * Compares two suffixes of the associated text/sequence. "Symbols" are compared according to their order in the
+    * alphabet map. "special" characters (wildcards, separators) are compared by position.
     * 
     * @param i
-    *           first position
-    *@param j
-    *           second position
-    *@return any value &lt; 0 iff suffix(i)&lt;suffix(j) lexicographically, zero (0) iff i==j any
+    *           Position of first suffix.
+    * @param j
+    *           Position of second suffix.
+    * @return Any value &lt; 0 iff suffix(i)&lt;suffix(j) lexicographically, zero (0) iff i==j any
     *         value &gt; 0 iff suffix(i)&gt;suffix(j) lexicographically.
     */
    private static final int suffixcmp(final int i, final int j) {
