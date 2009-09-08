@@ -7,19 +7,25 @@ import java.io.IOException;
 
 import com.spinn3r.log5j.Logger;
 
+import verjinxer.BigLCP;
+import verjinxer.BigSuffixTrayBuilder;
+import verjinxer.BigSuffixTrayChecker;
+import verjinxer.BigSuffixTrayWriter;
 import verjinxer.Globals;
 import verjinxer.LCP;
 import verjinxer.Project;
 import verjinxer.SuffixTrayBuilder;
 import verjinxer.SuffixTrayChecker;
 import verjinxer.SuffixTrayWriter;
-import verjinxer.LCP.LcpInfo;
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.sequenceanalysis.BigSuffixDLL;
+import verjinxer.sequenceanalysis.IBigSuffixDLL;
 import verjinxer.sequenceanalysis.ISuffixDLL;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.SuffixDLL;
 import verjinxer.util.FileTypes;
 import verjinxer.util.HugeByteArray;
+import verjinxer.util.HugeLongArray;
 import verjinxer.util.IllegalOptionException;
 import verjinxer.util.Options;
 import verjinxer.util.StringUtils;
@@ -103,8 +109,8 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
          log.info("suffixcheck: checking pos...");
          try {
             if (bigsuffix) {
-               // TODO
-               // returnvalue = BigSuffixTrayChecker.checkpos(project);
+               BigSuffixTrayChecker.setLogger(log);
+               returnvalue = BigSuffixTrayChecker.checkpos(project);
             } else {
                SuffixTrayChecker.setLogger(log);
                returnvalue = SuffixTrayChecker.checkpos(project);
@@ -129,7 +135,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       Sequences sequence = null;
       long n;
       if (bigsuffix) {
-         bigSequence = g.slurpHugeByteArray(project.makeFile(FileTypes.SEQ));
+         bigSequence = Globals.slurpHugeByteArray(project.makeFile(FileTypes.SEQ));
          n = bigSequence.length;
       } else {
          sequence = project.readSequences();
@@ -145,14 +151,14 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       TicToc timer = new TicToc();
       long steps;
       ISuffixDLL suffixDLL = null;
+      IBigSuffixDLL bigSuffixDLL = null;
       try {
          if (bigsuffix) {
-            // TODO assert (alphabet.isSeparator(s[n - 1])) :
-            // "last character in text needs to be a separator";
-            // TODO
-            // BigSuffixTrayBuilder
-            // steps = BigSuffixTrayBuilder.build(project, method);
-            steps = 0;
+            assert(alphabet.isSeparator(bigSequence.get(n-1))) : "last character in text needs to be a separator";
+            BigSuffixTrayBuilder builder = new BigSuffixTrayBuilder(bigSequence, alphabet);
+            builder.build(method);
+            steps = builder.getSteps();
+            bigSuffixDLL = builder.getSuffixDLL();
          } else {
             assert (alphabet.isSeparator(sequence.array()[(int)n - 1])) : "last character in text needs to be a separator";
             SuffixTrayBuilder builder = new SuffixTrayBuilder(sequence, alphabet);
@@ -175,9 +181,10 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
          log.info("suffixcheck: checking pos...");
          try {
             if (bigsuffix) {
-               // TODO
-               // returnvalue = BigSuffixTrayChecker.checkpos(method);
+               BigSuffixTrayChecker.setLogger(log);
+               returnvalue = BigSuffixTrayChecker.checkpos(bigSuffixDLL, method);
             } else {
+               SuffixTrayChecker.setLogger(log);
                returnvalue = SuffixTrayChecker.checkpos(suffixDLL, method);
             }
          } catch (IllegalArgumentException iae) {
@@ -196,8 +203,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
          log.info("suffixtray: writing '%s'...", fpos);
          try {
             if (bigsuffix) {
-               // TODO
-               // returnvalue = BigSuffixTrayWriter.write(method);
+               BigSuffixTrayWriter.write(bigSuffixDLL, fpos, method);
             } else {
                SuffixTrayWriter.write(suffixDLL, fpos, method);
             }
@@ -216,11 +222,25 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
          timer.tic();
          File flcp = project.makeFile(FileTypes.LCP);
          log.info("suffixtray: computing lcp array...");
-         LcpInfo lcpinfo;
          try {
             if (bigsuffix) {
-               // TODO
-               lcpinfo = null;
+               BigLCP.setLogger(log);
+               HugeLongArray buffer;
+               if (suffixDLL instanceof BigSuffixDLL) {
+                  // lexprevpos in suffixDLL is no longer used
+                  // so overwrite it in LCP.buildLcpAndWriteToFile()
+                  buffer = ((BigSuffixDLL)bigSuffixDLL).getLexPreviousPosArray();
+               } else {
+                  // if lexprevpos does not exists, we need a new array as buffer
+                  buffer = new HugeLongArray(bigSuffixDLL.capacity());
+               }
+               BigLCP.LcpInfo lcpinfo = BigLCP.buildLcpAndWriteToFile(bigSuffixDLL, method, dolcp, flcp, buffer);
+               project.setProperty("lcp1Exceptions", lcpinfo.lcp1x);
+               project.setProperty("lcp2Exceptions", lcpinfo.lcp2x);
+               project.setProperty("lcp1Size", n + 8 * lcpinfo.lcp1x);
+               project.setProperty("lcp2Size", 2 * n + 8 * lcpinfo.lcp2x);
+               project.setProperty("lcp4Size", 4 * n);
+               project.setProperty("lcpMax", lcpinfo.maxlcp);
             } else {
                LCP.setLogger(log);
                int[] buffer;
@@ -232,7 +252,13 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                   //if lexprevpos does not exists, we need a new array as buffer
                   buffer = new int[0];
                }
-               lcpinfo = LCP.buildLcpAndWriteToFile(suffixDLL, method, dolcp, flcp, buffer);
+               LCP.LcpInfo lcpinfo = LCP.buildLcpAndWriteToFile(suffixDLL, method, dolcp, flcp, buffer);
+               project.setProperty("lcp1Exceptions", lcpinfo.lcp1x);
+               project.setProperty("lcp2Exceptions", lcpinfo.lcp2x);
+               project.setProperty("lcp1Size", n + 8 * lcpinfo.lcp1x);
+               project.setProperty("lcp2Size", 2 * n + 8 * lcpinfo.lcp2x);
+               project.setProperty("lcp4Size", 4 * n);
+               project.setProperty("lcpMax", lcpinfo.maxlcp);
             }
          } catch (IllegalArgumentException iae) {
             log.error("suffixtray: Unsupported construction method '" + method + "'!");
@@ -242,12 +268,6 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
             return 1;
          }
          log.info("suffixtray: lcp computation and writing took %.1f secs; done.", timer.tocs());
-         project.setProperty("lcp1Exceptions", lcpinfo.lcp1x);
-         project.setProperty("lcp2Exceptions", lcpinfo.lcp2x);
-         project.setProperty("lcp1Size", n + 8 * lcpinfo.lcp1x);
-         project.setProperty("lcp2Size", 2 * n + 8 * lcpinfo.lcp2x);
-         project.setProperty("lcp4Size", 4 * n);
-         project.setProperty("lcpMax", lcpinfo.maxlcp);
       }
 
       // write project data
