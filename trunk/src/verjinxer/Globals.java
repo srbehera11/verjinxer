@@ -183,7 +183,7 @@ public class Globals {
     *           the file to be read
     * @return the newly created HugeByteArray with the file's contents
     */
-   public HugeByteArray slurpHugeByteArray(final File file) {
+   public static HugeByteArray slurpHugeByteArray(final File file) {
       HugeByteArray a = null;
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {

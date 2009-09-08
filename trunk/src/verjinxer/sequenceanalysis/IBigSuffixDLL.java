@@ -1,42 +1,44 @@
 package verjinxer.sequenceanalysis;
 
+import verjinxer.util.HugeByteArray;
+
 /**
- * Interface for a double linked list that contains the start positions of suffixes in a
+ * Interface for a huge double linked list that contains the start positions of suffixes in a long
  * text/sequence. This suffixes are ordered lexicographically within this list.<br>
  * <br>
- * To build a suffix list use {@link SuffixTrayBuilder}.<br>
- * To check the correctness and the lexicographical order use {@link SuffixTrayChecker}.<br>
- * To Write a suffix list to disk use {@link SuffixTrayWriter}.
+ * To build a suffix list use {@link BigSuffixTrayBuilder}.<br>
+ * To check the correctness and the lexicographical order use {@link BigSuffixTrayChecker}.<br>
+ * To Write a suffix list to disk use {@link BigSuffixTrayWriter}.
  * 
- * @see SuffixTrayBuilder
- * @see SuffixTrayChecker
- * @see SuffixTrayWriter
+ * @see BigSuffixTrayBuilder
+ * @see BigSuffixTrayChecker
+ * @see BigSuffixTrayWriter
  * 
  * @author Markus Kemmerling
  */
-public interface ISuffixDLL {
+public interface IBigSuffixDLL {
 
    /**
     * Inserts i between p1 and p2 (they must be neighbors with p1<p2).
     * 
-    *@param p1
+    * @param p1
     *           Text/Sequence position after which to insert.
-    *@param p2
+    * @param p2
     *           Text/Sequence position before which to insert.
-    *@param i
+    * @param i
     *           What to insert (position in text/sequence).
     */
-   public abstract void insertbetween(final int p1, final int p2, final int i);
+   public abstract void insertbetween(final long p1, final long p2, final long i);
 
    /**
     * Inserts the first overall occurrence of a new character chi.
     * 
-    *@param chi
+    * @param chi
     *           Integer representation of character to insert.
-    *@param i
+    * @param i
     *           What to insert (position in text/sequence).
     */
-   public abstract void insertnew(final int chi, final int i);
+   public abstract void insertnew(final int chi, final long i);
 
    /**
     * Inserts character chi, in text/sequence at position i, and remember it as first occurrence
@@ -46,7 +48,7 @@ public interface ISuffixDLL {
     * @param i
     *           What to insert (position in text/sequence).
     */
-   public abstract void insertasfirst(int chi, int i);
+   public abstract void insertasfirst(int chi, long i);
 
    /**
     * Inserts character chi, in text/sequence at position i, and remember it as last occurrence
@@ -56,7 +58,7 @@ public interface ISuffixDLL {
     * @param i
     *           What to insert (position in text/sequence).
     */
-   public abstract void insertaslast(int chi, int i);
+   public abstract void insertaslast(int chi, long i);
 
    // ////////////////////////////////////////////////////////////////////
    // ////////////////////getter for suffix array/////////////////////////
@@ -66,14 +68,14 @@ public interface ISuffixDLL {
     *           Integer representation of character to insert.
     * @return The first position of character i in the text/sequence.
     */
-   public abstract int getFirstPos(int chi);
+   public abstract long getFirstPos(int chi);
 
    /**
     * @param chi
     *           Integer representation of character to insert.
     * @return The last position of character i in the text/sequence.
     */
-   public abstract int getLastPos(int chi);
+   public abstract long getLastPos(int chi);
 
    /**
     * @return Integer representation of the lexicographical lowest character in this list.
@@ -83,7 +85,7 @@ public interface ISuffixDLL {
    /**
     * @return Capacity of this list (that is the length of the associated text/sequence).
     */
-   public abstract int capacity();
+   public abstract long capacity();
 
    // ////////////////////////////////////////////////////////////////////
    // ////////////////////////internal state//////////////////////////////
@@ -94,7 +96,7 @@ public interface ISuffixDLL {
     * 
     * @return The current text/sequence position where the internal state points to.
     */
-   public abstract int getCurrentPosition();
+   public abstract long getCurrentPosition();
 
    /**
     * This list has an internal state and points to a position in the associated text/sequence (and
@@ -102,7 +104,7 @@ public interface ISuffixDLL {
     * 
     * @return Position in text/sequence where the lexicographical previous suffix exists.
     */
-   public abstract int getPredecessor();
+   public abstract long getPredecessor();
 
    /**
     * This list has an internal state and points to a position in the associated text/sequence (and
@@ -110,7 +112,7 @@ public interface ISuffixDLL {
     * 
     * @return Position in text/sequence where the lexicographical next suffix exists.
     */
-   public abstract int getSuccessor();
+   public abstract long getSuccessor();
 
    /**
     * This list has an internal state and points to a position in the associated text/sequence (and
@@ -159,7 +161,7 @@ public interface ISuffixDLL {
    /**
     * @return The text/sequence to that this suffix list is associated with.
     */
-   public abstract Sequences getSequence();
+   public abstract HugeByteArray getSequence();
 
    /**
     * @return The alphabet of the associated text/sequence.
