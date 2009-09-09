@@ -46,7 +46,9 @@ public enum FileTypes { //TODO replace FileNameExtension with this
    
    CSFASTQ("csfastq"), // Sequence2Fastq
    FASTQ("fastq"),  // Sequence2Fastq
-   DECSFASTQ("decsfastq"); // Sequence2Fastq
+   DECSFASTQ("decsfastq"), // Sequence2Fastq
+   
+   BWTINDEX("bwtindex");
    
    private final String extension;
 
