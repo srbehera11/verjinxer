@@ -120,7 +120,7 @@ public class QGramMatcherSubcommand implements Subcommand {
             log.warn("qmatch: using --self, but %s != %s", queryProjectName, indexProjectName);
       }
 
-      // Read project data and determine asize, q; read alphabet map
+      // Read project data
       Project indexProject, queryProject;
       try {
          indexProject = Project.createFromFile(indexProjectName);
@@ -133,7 +133,7 @@ public class QGramMatcherSubcommand implements Subcommand {
 
       final int asize, q;
 
-      // Read project data and determine asize, q; read alphabet map
+      // Determine alphabet size and q
       try {
          asize = indexProject.getIntProperty("qAlphabetSize");
          q = indexProject.getIntProperty("q");

@@ -16,23 +16,23 @@ public class BigSuffixDLL implements IBigSuffixDLL {
     * Text/Sequence positions where the lexicographical first suffix that starts with a specific
     * character can be found.
     */
-   long[] lexfirstpos= null;   // indexed by character
+   private long[] lexfirstpos = new long[256];   // indexed by character
    
    /**
     * Text/Sequence positions where the lexicographical last suffix that starts with a specific
     * character can be found.
     */
-   long[] lexlastpos = null;   // indexed by character
+   private long[] lexlastpos = new long[256];  // indexed by character
    
    /**
     * Text/Sequence positions where the lexicographical previous suffix can be found.
     */
-   HugeLongArray lexprevpos = null;
+   private HugeLongArray lexprevpos = null;
    
    /**
     * Text/Sequence positions where the lexicographical next suffix can be found.
     */
-   HugeLongArray lexnextpos = null;
+   private HugeLongArray lexnextpos = null;
 
    /** Capacity of this list */
    private final long capacity;

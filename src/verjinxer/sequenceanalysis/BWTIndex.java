@@ -8,24 +8,37 @@ public class BWTIndex {
    /**
     * For a character/byte b, c[b] is the position in e with the fist appearance of b.
     */
-   private int[] c = new int[256];
+   final private int[] c;
 
    /**
     * Contains all characters of a text in lexicographical order
     */
-   private byte[] e;
+   final private byte[] e;
 
    /**
     * For a character c that exists at position i in e, el[i] is the position in e where the
-    * succeding character of c (regarding of the origin text) can be found.
+    * succeeding character of c (regarding of the origin text) can be found.
     */
-   private int[] el;
+   final private int[] el;
+
+   /**
+    * 
+    * @param c
+    * @param e
+    * @param el
+    */
+   public BWTIndex(int[] c, byte[] e, int[] el) {
+      this.c = c;
+      this.e = e;
+      this.el = el;
+   }
 
    /**
     * @param character
-    * @return First occurence of the character in this index
+    *           Byte representation of a character
+    * @return First occurrence of the character in this index
     */
-   public int getFirstIndex(byte character) {
+   public int getFirstIndexPosition(byte character) {
       return c[character];
    }
 
@@ -33,22 +46,27 @@ public class BWTIndex {
     * For a character c that exists at the given position in this index. This method returns the
     * position in this index where to find the successor regarding to the origin text.
     * 
-    * @param index
-    * @return Position in this index where to find the preceding character
+    * @param pos
+    *           Position in this index.
+    * @return Position in this index where to find the preceding character.
     */
-   public int getSuccedingIndex(int index) {
-      return el[index];
+   public int getSuccedingIndexPosition(int pos) {
+      return el[pos];
+   }
+   
+   /**
+    * @param pos
+    *           Position in this index.
+    * @return Byte representation of the character at this position.
+    */
+   public byte getCharacterAtIndexPosition(int pos) {
+      return e[pos];
    }
 
-   public void setC(int[] c) {
-      this.c = c;
-   }
-
-   public void setE(byte[] e) {
-      this.e = e;
-   }
-
-   public void setEl(int[] el) {
-      this.el = el;
+   /**
+    * @return Size of this index (length of associated sequence).
+    */
+   public int size() {
+      return e.length;
    }
 }
