@@ -75,6 +75,10 @@ public class BWTSearch {
       public void print(PrintWriter out) {
          out.printf("Querey was found %d times.", number);
       }
+      
+      public boolean equals(BWTSearchResult result) {
+         return number == result.number;
+      }
 
    }
 

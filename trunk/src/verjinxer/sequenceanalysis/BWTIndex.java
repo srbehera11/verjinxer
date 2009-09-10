@@ -1,5 +1,7 @@
 package verjinxer.sequenceanalysis;
 
+import java.util.Arrays;
+
 /**
  * @author Markus Kemmerling
  */
@@ -39,7 +41,10 @@ public class BWTIndex {
     * @return First occurrence of the character in this index
     */
    public int getFirstIndexPosition(byte character) {
-      return c[character];
+      int chi = character + 128;
+      assert chi > 0;
+      assert chi < c.length;
+      return c[chi];
    }
 
    /**
@@ -68,5 +73,15 @@ public class BWTIndex {
     */
    public int size() {
       return e.length;
+   }
+   
+   /**
+    * @param index
+    *           BWTIndex to compare with.
+    * @return Whether this and the given indexes are equals (does not contain the explicit equality
+    *         of the assosiated text/sequence and the alphabet).
+    */
+   public boolean equals(BWTIndex index) {
+      return Arrays.equals(c, index.c) && Arrays.equals(e, index.e) && Arrays.equals(el, index.el);
    }
 }
