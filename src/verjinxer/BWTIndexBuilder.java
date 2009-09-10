@@ -19,10 +19,9 @@ public class BWTIndexBuilder {
     */
    public static BWTIndex build(SuffixXorDLL suffixDLL) {
       final Alphabet alphabet = suffixDLL.getAlphabet();
-      final int asize = alphabet.largestSymbol() + 1;
       final byte[] sequences = suffixDLL.getSequence().array();
       
-      int[]  c = new int[asize];
+      int[]  c = new int[256];
       byte[] e = new byte[suffixDLL.capacity()];
       byte[] l = new byte[suffixDLL.capacity()];
       int[] el = new int[suffixDLL.capacity()];
@@ -34,7 +33,8 @@ public class BWTIndexBuilder {
          if (suffixDLL.getCurrentPosition() != -1) {
             sequencePos = suffixDLL.getCurrentPosition();
             e[indexPos] = sequences[sequencePos];
-            c[sequences[sequencePos]]++; // count characters
+            int chi = sequences[sequencePos] +128;
+            c[chi]++; // count characters
             l[indexPos] = sequencePos > 0 ? sequences[sequencePos - 1]
                   : sequences[sequences.length - 1];
             indexPos++;
@@ -42,7 +42,8 @@ public class BWTIndexBuilder {
                suffixDLL.nextUp();
                sequencePos = suffixDLL.getCurrentPosition();
                e[indexPos] = sequences[sequencePos];
-               c[sequences[sequencePos]]++; // count characters
+               chi = sequences[sequencePos] +128;
+               c[chi]++; // count characters
                l[indexPos] = sequencePos > 0 ? sequences[sequencePos - 1]
                      : sequences[sequences.length - 1];
                indexPos++;
@@ -64,10 +65,11 @@ public class BWTIndexBuilder {
          int[] counter = new int[c.length];
          for (int i = 0; i < l.length; i++) {
             final byte character = l[i];
-            final int indexPos = c[character];
-            final int charCounter = counter[character];
+            final int chi = character+128;
+            final int indexPos = c[chi];
+            final int charCounter = counter[chi];
             el[indexPos + charCounter] = i;
-            counter[character]++;
+            counter[chi]++;
          }
       }// END build el
       
