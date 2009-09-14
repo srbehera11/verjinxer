@@ -32,7 +32,10 @@ public class SuffixTrayBuilder {
    private final Alphabet alphabet;
 
    /**
-    * Creates a new building instance for the given sequence.
+    * Creates a new building instance for the given sequence.<br>
+    * It is necessary that the sequence has a special character which is greater or lower than all
+    * normal characters as last element. If this is not the case, the resulting suffix list can be
+    * wrong or the building process itself can fail with an exception.
     * 
     * @param sequence
     *           Text/Sequence for that a suffix tray shall be build.
@@ -40,9 +43,10 @@ public class SuffixTrayBuilder {
     *           Alphabet of sequence.
     */
    public SuffixTrayBuilder(Sequences sequence, Alphabet alphabet) {
+      this.n = (int) sequence.length();
+      assert (alphabet.isSeparator(sequence.array()[n - 1]));
       this.sequence = sequence;
       this.alphabet = alphabet;
-      this.n = (int) sequence.length();
    }
 
    /**
