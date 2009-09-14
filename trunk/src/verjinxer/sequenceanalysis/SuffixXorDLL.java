@@ -279,4 +279,25 @@ public class SuffixXorDLL implements ISuffixDLL {
       return alphabet;
    }
    // ////////////////////////////////////////////////////////////////////
+   
+   /**
+    * @return A String containing the lexicographical ordered text positions separated with whitespaces. 
+    */
+   public String toString() {
+      StringBuilder sb = new StringBuilder(capacity());
+      int chi = getLowestCharacter();
+      int pos, pred, tmp;
+      if (chi >= 0 && chi < 256) {
+         pos  = lexfirstpos[chi];
+         pred = -1;
+         while (pos != -1) {
+            sb.append(pos);
+            sb.append(" ");
+            tmp = pos;
+            pos = lexps[pos] ^ pred;
+            pred = tmp;
+         }
+      }
+      return sb.toString();
+   }
 }
