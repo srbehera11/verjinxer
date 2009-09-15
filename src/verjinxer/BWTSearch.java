@@ -34,10 +34,10 @@ public class BWTSearch {
       for(end--; end >= begin; end--) {
          start2 = referenceIndex.getFirstIndexPosition(query[end]);
          end2 = referenceIndex.getFirstIndexPosition((byte)(query[end]+1))-1;
-         while(referenceIndex.getSuccedingIndexPosition(start2) < start1 && start2 <= end2) {
+         while(start2 <= end2 && referenceIndex.getSuccedingIndexPosition(start2) < start1) {
             start2++;
          }
-         while(referenceIndex.getSuccedingIndexPosition(end2) > end2 && end2 >= start2) {
+         while(end2 >= start2 && referenceIndex.getSuccedingIndexPosition(end2) > end1) {
             end2--;
          }
          if(start2 > end2) {
