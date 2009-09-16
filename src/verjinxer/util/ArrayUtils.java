@@ -202,5 +202,49 @@ public class ArrayUtils {
     return sb.toString();
   }
   
+  /**
+    * Compares two arrays. 
+    * It returns 0 iff both arrays are the same.<br>
+    * It returns a negative integer if the first array is less than the second.<br>
+    * It returns a positive integer if the first array is greater than the second. <br>
+    * The integer returned decodes the first position where the both arrays differ
+    * (i denotes that position abs(i)-1 is the first differing).<br>
+    * If the absolute value of the returned integer is greater than the length of 
+    * the shortest array, it denotes that the shorter array is a prefix of the longer.
+    * 
+    * @param a1
+    *           First byte array.
+    * @param a2
+    *           First byte array.
+    * @return Negative integer, zero, or a positive integer as a1 is less than, equal or greater
+    *         than a2.
+    * @author Markus Kemmerling
+    */
+   public static int compare(byte[] a1, byte[] a2) {
+      int i = 0;
+
+      // walk through the arrays till the first differing position.
+      while (i < a1.length && i < a2.length) {
+
+         if (a1[i] < a2[i]) {
+            return -i+1;
+         } else if (a1[i] > a2[i]) {
+            return i+1;
+         }
+
+         i++;
+      }
+
+      // if one array is a prefix of the other
+      if (i == a1.length) {
+         return -i+1;
+      } else if (i == a2.length) {
+         return i+1;
+      }
+
+      // both arrays are equal
+      return 0;
+   }
+  
 }
 
