@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -179,8 +180,7 @@ public class BWTSearchTest {
       assertEquals(number, result.number);
       
    }
-
-   //TODO this does not jet work
+   
    @Test
    public void testFind11b() {
       final byte[] s = {0,0,1,3,0,3,2,0,3,0,2,0,0,-1};
@@ -198,9 +198,9 @@ public class BWTSearchTest {
       final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
       BWTIndex index = BWTIndexBuilder.build(suffixDLL);
       
-      final byte[] query = {0,0,1,3,0,3,2,0,3,0,2,0,0,-1,0};
+      final byte[] query = {0,0,1,3,0,3,2,0,3,0,2,0,0,-1,0,0,1,3,0,3,2,0,3,0,2,0,0,-1}; // s concatenated with itself
       BWTSearch.BWTSearchResult result = BWTSearch.find(query, index);
-      final int number = 0;
+      final int number = 1;
       assertEquals(number, result.number);
    }
 
@@ -214,9 +214,212 @@ public class BWTSearchTest {
       
    }
    
+   @Test
+   public void testFind13() {
+      final byte[] s = {0,0,1,3,0,3,2,0,3,0,2,0,0,-1};
+      
+      Sequences sequence = Sequences.createEmptySequencesInMemory();
+      try {
+         sequence.addSequence(ByteBuffer.wrap(s));
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+      
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA());
+      stb.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
+      assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
+      final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
+      BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      
+      final byte[] query = {0,0,1,3,0,3,2,0,3,0,2,0,0,-1,1};
+      BWTSearch.BWTSearchResult result = BWTSearch.find(query, index);
+      final int number = 0;
+      assertEquals(number, result.number);
+   }
+   
+   @Test
+   public void testFind14() {
+      final byte[] s = {1,1,1,1,1,1,1,1,1,1,1,-1};
+      
+      Sequences sequence = Sequences.createEmptySequencesInMemory();
+      try {
+         sequence.addSequence(ByteBuffer.wrap(s));
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+      
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA());
+      stb.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
+      assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
+      final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
+      BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      
+      final byte[] query = {1,1};
+      BWTSearch.BWTSearchResult result = BWTSearch.find(query, index);
+      final int number = 10;
+      assertEquals(number, result.number);
+   }
+   
+   @Test
+   public void testFind15() {
+      final byte[] s = {3,1,0,1,1,1,3,0,3,3,0,0,1,1,0,1,3,1,0,1,2,2,2,0,2,1,3,1,3,1,1,0,3,2,1,0,3,3,3,2,2,3,0,3,3,3,3,1,2,3,1,3,2,2,2,2,2,2,3,2,3,2,1,0,1,-1};
+      
+      Sequences sequence = Sequences.createEmptySequencesInMemory();
+      try {
+         sequence.addSequence(ByteBuffer.wrap(s));
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+      
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA());
+      stb.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
+      assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
+      final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
+      BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      
+      final byte[] query = {1,2,2,4,2,0,2,1,3,1,-1};
+      BWTSearch.BWTSearchResult result = BWTSearch.find(query, index);
+      final int number = 0;
+      assertEquals(number, result.number);
+   }
+
+   @Test
+   public void testFind16() {
+      final byte[] query = {0,1,0,2,0,0,2,1,3,2,1,1,0,3,1,0,0,2,3,0,3,23,3,3,1,1,3,1,0,1,2,1,0,0,2,1,0,0,1,1,2,1,0,3,1,1,0,3,0,0,3,1,1,3,3,1};
+      BWTSearch.BWTSearchResult result = BWTSearch.find(query, indexM);
+      final int number = 0;
+      assertEquals(number, result.number);
+      
+   }
+
+   @Test
+   public void testFind17() {
+      final byte[] query = {0};
+      BWTSearch.BWTSearchResult result = BWTSearch.find(query, indexM);
+      final int number = findQuery(query);
+      assertEquals(number, result.number);
+      
+   }
+
+   @Test
+   public void testFindEmpty() {
+      final byte[] query = {};
+      BWTSearch.BWTSearchResult result = BWTSearch.find(query, indexM);
+      final int number = chrM.length+1;
+      assertEquals(number, result.number);
+      
+   }
+   
+   @Test
+   public void testFindtestFindEmpty2() {
+      final byte[] s = {-1}; //empty string with lineend
+      
+      Sequences sequence = Sequences.createEmptySequencesInMemory();
+      try {
+         sequence.addSequence(ByteBuffer.wrap(s));
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+      
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA());
+      stb.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
+      assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
+      final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
+      BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      
+      final byte[] query = {};
+      BWTSearch.BWTSearchResult result = BWTSearch.find(query, index);
+      final int number = 2;
+      assertEquals(number, result.number);
+   }
+
+   @Test
+   public void testFindRandom() {
+      Random rand = new Random(5);
+      
+      byte[] query;
+      
+      for(int i = 0; i < 50; i++) {
+         query = new byte[rand.nextInt(100)+1];
+         for(int j = 0; j < query.length; j++) {
+            query[j] = (byte)(rand.nextInt(4));
+         }
+         
+         BWTSearch.BWTSearchResult result = BWTSearch.find(query, indexM);
+         final int number = findQuery(query);
+         assertEquals(String.format("Failure in round %s", i), number, result.number);
+      }
+   }
+
+   @Test
+   public void testFindRandom2() {
+      Random rand = new Random(5);
+      
+      byte[] query;
+      
+      for(int i = 0; i < 50; i++) {
+         final int begin = rand.nextInt(chrM.length);
+         final int length = rand.nextInt(3500);
+         query = new byte[begin+length<=chrM.length?length:chrM.length-begin];
+         for(int j = 0; j < query.length; j++) {
+            query[j] = chrM[begin+j];
+         }
+         
+         BWTSearch.BWTSearchResult result = BWTSearch.find(query, indexM);
+         final int number = findQuery(query);
+         assertEquals(String.format("Failure in round %s", i), number, result.number);
+      }
+   }
+
+   @Test
+   public void testFindRandom3() {
+      Random rand = new Random(5);
+      
+      byte[] query;
+      
+      for(int i = 0; i < 50; i++) {
+         final int begin = rand.nextInt(chrM.length-3500);
+         final int length = rand.nextInt(3500);
+         query = new byte[length];
+         for(int j = 0; j < query.length; j++) {
+            query[j] = chrM[begin+j];
+         }
+         
+         BWTSearch.BWTSearchResult result = BWTSearch.find(query, indexM);
+         final int number = findQuery(query);
+         assertEquals(String.format("Failure in round %s", i), number, result.number);
+      }
+   }
+
+   @Test
+   public void testFindRandom4() {
+      Random rand = new Random(5);
+      
+      byte[] query;
+      
+      for(int i = 0; i < 50; i++) {
+         final int begin = rand.nextInt(chrM.length-30);
+         final int length = rand.nextInt(30)+1;
+         query = new byte[length];
+         for(int j = 0; j < query.length; j++) {
+            query[j] = chrM[begin+j];
+         }
+         
+         BWTSearch.BWTSearchResult result = BWTSearch.find(query, indexM);
+         final int number = findQuery(query);
+         assertEquals(String.format("Failure in round %s", i), number, result.number);
+      }
+   }
+   
+   /**
+    * Searches the query in chrM and returns the number of occurrence.
+    * @param query
+    *           String to search for.
+    * @return Number of occurrence of query within chrM.
+    */
    private static int findQuery(final byte[] query) {
       int number = 0;
-      for(int i = 0; i < chrM.length-query.length; i++) {
+      for(int i = 0; i < chrM.length-query.length+1; i++) {
          boolean find = true;
          for(int j = 0; j < query.length; j++) {
             if(chrM[i+j] != query[j]) {
@@ -229,7 +432,7 @@ public class BWTSearchTest {
             number++;
          }
       }
-      System.out.println(number);
+      //System.out.println(number);
       return number;
    }
 
