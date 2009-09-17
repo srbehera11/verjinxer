@@ -14,6 +14,9 @@ import verjinxer.sequenceanalysis.BWTIndex;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.SuffixXorDLL;
 
+/**
+ * @author Markus Kemmerling
+ */
 public class BWTSearchTest {
    
    // a prefix of chrM
