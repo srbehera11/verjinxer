@@ -15,7 +15,7 @@ public class BWTIndex {
    /**
     * Contains all characters of a text in lexicographical order
     */
-   final private byte[] e;
+   final private byte[] e;  //TODO do i really need it? (binary search in c)
 
    /**
     * For a character c that exists at position i in e, el[i] is the position in e where the

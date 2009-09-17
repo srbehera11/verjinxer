@@ -24,7 +24,7 @@ public class BWTIndexBuilder {
       final byte[] seq = suffixDLL.getSequence().array();
       
       int[]  c = new int[256];
-      byte[] e = new byte[suffixDLL.capacity()];
+      byte[] e = new byte[suffixDLL.capacity()]; //TODO do i really need it? (binary search in c)
       byte[] l = new byte[suffixDLL.capacity()];
       int[] el;
       
