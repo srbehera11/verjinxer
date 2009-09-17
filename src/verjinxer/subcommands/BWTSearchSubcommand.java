@@ -76,8 +76,9 @@ public class BWTSearchSubcommand implements Subcommand {
       }
       g.startProjectLogging(referenceProject);
       
+      // TODO own subcommand for index creation. see BWTBuilderSubcommand
+      // Read BWT from disc and create BWTIndex from it.
       
-      // TODO check, if a bwt index was already created for referenceProject
       // check, if a suffix array was already created for referenceProject
       BWTIndex referenceIndex;
       if (referenceProject.makeFile(FileTypes.POS).exists()) {
@@ -100,6 +101,7 @@ public class BWTSearchSubcommand implements Subcommand {
          assert (builder.getSuffixDLL() instanceof SuffixXorDLL);
          final SuffixXorDLL suffixDLL = (SuffixXorDLL)builder.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
          referenceIndex = BWTIndexBuilder.build(suffixDLL);
+         // suffixDLL is not stored on disc. If the user really need it, he can run SuffixTrayBuilderSubcommand explicitly.
       }
       
       // determine where to write result:
@@ -130,9 +132,6 @@ public class BWTSearchSubcommand implements Subcommand {
          out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );
       }
       
-      // store index on disc
-      //TODO
-      //referenceIndex.writeToFile(referenceProject.makeFile(FileTypes.BWTINDEX));
       return 0;
    }
 
