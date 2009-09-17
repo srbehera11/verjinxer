@@ -6,6 +6,7 @@ package verjinxer.sequenceanalysis;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -134,9 +135,13 @@ public class Alphabet {
     * @param file
     *           the text file
     * @return the created alphabet map
-    * @throws java.io.IOException
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws IOException
+    *            if an I/O error occurs.
     */
-   public static Alphabet fromFile(final File file) throws IOException {
+   public static Alphabet fromFile(final File file) throws FileNotFoundException, IOException {
       ArrayList<String> lines = new ArrayList<String>();
       BufferedReader inf = new BufferedReader(new FileReader(file));
       String s;

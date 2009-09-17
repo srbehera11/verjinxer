@@ -112,7 +112,10 @@ public class Globals {
 
    /**************************************************************************/
 
-   /** read alphabet map file */
+   /** 
+    * read alphabet map file
+    * @deprecated Use {@link Project#readAlphabet()} or directly {@link Alphabet#fromFile(File)}
+    */
    public static final Alphabet readAlphabet(File file) {
       Alphabet alphabet = null;
       try {
