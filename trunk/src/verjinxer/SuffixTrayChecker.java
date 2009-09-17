@@ -225,14 +225,10 @@ public class SuffixTrayChecker {
     */
    public static int checkpos(Project project) throws IOException {
       int returnvalue = 0;
-      ArrayFile fpos = null;
-      IntBuffer pos = null;
 
       sequence = project.readSequences().array();
       alphabet = project.readAlphabet();
-
-      fpos = new ArrayFile(project.makeFile(FileTypes.POS), 0);
-      pos = fpos.mapR().asIntBuffer();
+      IntBuffer pos = project.readSuffixArray();
       int p = pos.get();
       int nextp, comp;
       int nn = 1;

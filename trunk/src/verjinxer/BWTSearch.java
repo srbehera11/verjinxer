@@ -133,7 +133,7 @@ public class BWTSearch {
    public static class BWTSearchResult {
       
       /** How often the query was found. */
-      final int number;
+      public final int number;
       
       /**
        * @param number
