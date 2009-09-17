@@ -8,10 +8,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.IntBuffer;
 import java.util.Properties;
 
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.util.ArrayFile;
 import verjinxer.util.FileTypes;
 
 // TODO maybe get...FileName methods should be removed?
@@ -216,7 +218,7 @@ public class Project {
       try {
          return Sequences.readSequencesFromDisc(this, name);
       } catch (IOException e) {
-         System.err.printf("%s: could not read sequence. Stop.%n", Globals.cmdname);
+         System.err.printf("Could not read sequence. Stop.%n%s%n", e);
          System.exit(1);
          return null;
       }
@@ -228,7 +230,27 @@ public class Project {
     * @return The alphabet.
     */
    public Alphabet readAlphabet() {
-      return Globals.readAlphabet(makeFile(FileTypes.ALPHABET)); //TODO don't use Globals anywhere
+      try {
+         return Alphabet.fromFile(makeFile(FileTypes.ALPHABET));
+      } catch (IOException e) {
+         System.err.printf("Could not read alphabet. Stop.%n%s%n", e);
+         System.exit(1);
+         return null;
+      }
+   }
+
+   /**
+    * Reads the suffix array of this project from disc.<br>
+    * WARNING: The existence of a suffix array is not checked.
+    * 
+    * @return The suffix array.
+    * @throws FileNotFoundException
+    *            If the suffix array file does not exist, or for some cannot be opened for reading.
+    * @throws IOException
+    *            If some other I/O error occurs.
+    */
+   public IntBuffer readSuffixArray() throws FileNotFoundException, IOException {
+      return new ArrayFile(makeFile(FileTypes.POS), 0).mapR().asIntBuffer();
    }
 
    public String getName() {

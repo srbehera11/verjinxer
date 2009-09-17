@@ -188,9 +188,13 @@ public class ArrayFile {
 
    /** Opens this ArrayFile for writing 
     * @return this ArrayFile (for method chaining)
-    * @throws java.io.IOException 
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if some other I/O error occur
     */
-   public ArrayFile openW() throws IOException {
+   public ArrayFile openW() throws FileNotFoundException, IOException {
       if (channel!=null) // || datain!=null || dataout !=null)
          throw new IOException("ArrayFile already open");
       channel = new FileOutputStream(name).getChannel();
@@ -199,11 +203,17 @@ public class ArrayFile {
       return this;
    }
 
-   /** Opens this ArrayFile for reading
+   /**
+    * Opens this ArrayFile for reading
+    * 
     * @return this ArrayFile (for method chaining)
-    * @throws java.io.IOException 
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if some other I/O error occur
     */
-   public ArrayFile openR() throws IOException {
+   public ArrayFile openR() throws FileNotFoundException, IOException {
       if (channel!=null) // || datain!=null || dataout !=null)
          throw new IOException("ArrayFile already open");
       channel = new FileInputStream(name).getChannel();
@@ -211,11 +221,18 @@ public class ArrayFile {
       return this;
    }
    
-   /** Opens this ArrayFile for reading and writing
+   /**
+    * Opens this ArrayFile for reading and writing
+    * 
     * @return this ArrayFile (for method chaining)
-    * @throws java.io.IOException 
+    * @throws FileNotFoundException
+    *            if the file does not exists or is not a writable regular file and a new regular
+    *            file of that name cannot be created, or if some other error occurs while opening or
+    *            creating the file
+    * @throws java.io.IOException
+    *            if some other I/O error occur
     */
-   public ArrayFile openRW() throws IOException {
+   public ArrayFile openRW() throws FileNotFoundException, IOException {
       if (channel!=null) // || datain!=null || dataout !=null)
          throw new IOException("ArrayFile already open");
       channel = new RandomAccessFile(name,"rw").getChannel();
@@ -231,38 +248,60 @@ public class ArrayFile {
       return channel;
    }
 
-   /** Creates a MappedByteBuffer for a part of this ArrayFile.
-    * The file may already be open for reading and writing, 
-    * but this is not recommended (results unspecified).
-    * @param position the position in the file at which the mapping starts
-    * @param size  the size of the region to be mapped (in bytes)
+   /**
+    * Creates a MappedByteBuffer for a part of this ArrayFile. The file may already be open for
+    * reading and writing, but this is not recommended (results unspecified).
+    * 
+    * @param position
+    *           the position in the file at which the mapping starts
+    * @param size
+    *           the size of the region to be mapped (in bytes)
     * @return the MappedByteBuffer
-    * @throws java.io.IOException  if an error occurs during mapping
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if an error occurs during mapping
     */
-   public ByteBuffer mapR(final long position, final long size) throws IOException {
+   public ByteBuffer mapR(final long position, final long size) throws FileNotFoundException, IOException {
       final FileChannel fc = (channel!=null)? channel : new FileInputStream(name).getChannel();
       final ByteBuffer buf = fc.map(MapMode.READ_ONLY, position, size).order(ByteOrder.nativeOrder());
       fc.close();
       return buf;
    }
 
-   /** Creates a MappedByteBuffer for this whole ArrayFile;
-    * the file need not (and probably should not) be open.
+   /**
+    * Creates a MappedByteBuffer for this whole ArrayFile; the file need not (and probably should
+    * not) be open.
+    * 
     * @return the MappedByteBuffer
-    * @throws java.io.IOException  if an error occurs during mapping
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if an error occurs during mapping
     */
-   public ByteBuffer mapR() throws IOException {
+   public ByteBuffer mapR() throws FileNotFoundException, IOException {
       return mapR(0, length());
    }
 
-   /** Creates a MappedByteBuffer for reading/writing a part of this ArrayFile;
-    * the file may already be open, but this is not recommended (results unspecified).
-    * @param position the position in the file at which the mapping starts
-    * @param size  the size of the region to be mapped (in bytes)
+   /**
+    * Creates a MappedByteBuffer for reading/writing a part of this ArrayFile; the file may already
+    * be open, but this is not recommended (results unspecified).
+    * 
+    * @param position
+    *           the position in the file at which the mapping starts
+    * @param size
+    *           the size of the region to be mapped (in bytes)
     * @return the MappedByteBuffer
-    * @throws java.io.IOException  if an error occurs during mapping
+    * @throws FileNotFoundException
+    *            if the file does not exist and cannot be created, or it is not a writable regular
+    *            file and a new regular file of that name cannot be created, or if some other error
+    *            occurs while opening or creating the file.
+    * @throws java.io.IOException
+    *            if an error occurs during mapping
     */
-   public ByteBuffer mapRW(final long position, final long size) throws IOException {
+   public ByteBuffer mapRW(final long position, final long size) throws FileNotFoundException, IOException {
       flush();
       final FileChannel fc = (channel!=null)? channel : new RandomAccessFile(name, "rw").getChannel();
       final ByteBuffer buf = fc.map(MapMode.READ_WRITE, position, size).order(ByteOrder.nativeOrder());
@@ -270,12 +309,19 @@ public class ArrayFile {
       return buf;
    }
 
-   /** Creates a read/write MappedByteBuffer for this whole ArrayFile;
-    * the file need not (and probably should not) be open.
+   /**
+    * Creates a read/write MappedByteBuffer for this whole ArrayFile; the file need not (and
+    * probably should not) be open.
+    * 
     * @return the MappedByteBuffer
-    * @throws java.io.IOException  if an error occurs during mapping
+    * @throws FileNotFoundException
+    *            if the file does not exist and cannot be created, or it is not a writable regular
+    *            file and a new regular file of that name cannot be created, or if some other error
+    *            occurs while opening or creating the file.
+    * @throws java.io.IOException
+    *            if an error occurs during mapping
     */
-   public ByteBuffer mapRW() throws IOException {
+   public ByteBuffer mapRW() throws FileNotFoundException, IOException {
       return mapRW(0, length());
    }
    
@@ -452,22 +498,29 @@ public class ArrayFile {
 
    
    /**
-    * Reads a part of a file on disk via this ArrayFile into a part of an array,
-    * a[start .. start+len-1].
-    * If a is null, a sufficiently large new array is allocated.
-    * If the size of the given array is smaller than (start+len), a runtime exception occurs.
-    * If this ArrayFile is presently closed, it is opened, and closed when done.
-    * We read 'len' items from the given position if the given position is &ge;= 0. 
-    * If the given position is negative, read from the current position.
-    * If len is negative, we read till the end.
-    * @param a     the int[] to read
-    * @param start position in array 'a' at which to start reading
-    * @param nItems   number of entries to read. If negative, read the whole (remaining) file.
-    * @param fpos  file index at which to start reading
-    * @return      the int[]
-    * @throws java.io.IOException  if any I/O error occurs
+    * Reads a part of a file on disk via this ArrayFile into a part of an array, a[start ..
+    * start+len-1]. If a is null, a sufficiently large new array is allocated. If the size of the
+    * given array is smaller than (start+len), a runtime exception occurs. If this ArrayFile is
+    * presently closed, it is opened, and closed when done. We read 'len' items from the given
+    * position if the given position is &ge;= 0. If the given position is negative, read from the
+    * current position. If len is negative, we read till the end.
+    * 
+    * @param a
+    *           the int[] to read
+    * @param start
+    *           position in array 'a' at which to start reading
+    * @param nItems
+    *           number of entries to read. If negative, read the whole (remaining) file.
+    * @param fpos
+    *           file index at which to start reading
+    * @return the int[]
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if any I/O error occurs
     */
-   public final int[] readArray(int[] a, int start, int nItems, final long fpos) throws IOException {
+   public final int[] readArray(int[] a, int start, int nItems, final long fpos) throws FileNotFoundException, IOException {
       final int bytesperint = Integer.SIZE / 8; // depends on 'a'
       final boolean openclose = (channel==null);
       if (openclose) openR();
@@ -490,37 +543,49 @@ public class ArrayFile {
    }
 
    /**
-    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
-    * If a is null, a sufficiently large new array is allocated.
-    * If the size of the given array is too small, a runtime exception occurs.
-    * If this ArrayFile is presently closed, it is opened, and closed when done.
-    * We read from the current position (or the start) of the file to the end.
-    * @param a     the int[] to read
-    * @return      the int[]
-    * @throws java.io.IOException  if any I/O error occurs
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end]. If a is null, a
+    * sufficiently large new array is allocated. If the size of the given array is too small, a
+    * runtime exception occurs. If this ArrayFile is presently closed, it is opened, and closed when
+    * done. We read from the current position (or the start) of the file to the end.
+    * 
+    * @param a
+    *           the int[] to read
+    * @return the int[]
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if any I/O error occurs
     */
-   public final int[] readArray(int[] a) throws IOException {
+   public final int[] readArray(int[] a) throws FileNotFoundException, IOException {
       return readArray(a,0,-1,-1);
    }
    
    
    /**
-    * Reads a part of a file on disk via this ArrayFile into a part of an array,
-    * a[start .. start+len-1].
-    * If a is null, a sufficiently large new array is allocated.
-    * If the size of the given array is smaller than (start+len), a runtime exception occurs.
-    * If this ArrayFile is presently closed, it is opened, and closed when done.
-    * We read 'len' items from the given position if the given position is &ge;= 0. 
-    * If the given position is negative, read from the current position.
-    * If len is negative, we read till the end.
-    * @param a     the int[] to read
-    * @param start position in array 'a' at which to start reading
-    * @param nItems   number of entries to read. If negative, read the whole (remaining) file.
-    * @param fpos  file index at which to start reading
-    * @return      the int[]
-    * @throws java.io.IOException  if any I/O error occurs
+    * Reads a part of a file on disk via this ArrayFile into a part of an array, a[start ..
+    * start+len-1]. If a is null, a sufficiently large new array is allocated. If the size of the
+    * given array is smaller than (start+len), a runtime exception occurs. If this ArrayFile is
+    * presently closed, it is opened, and closed when done. We read 'len' items from the given
+    * position if the given position is &ge;= 0. If the given position is negative, read from the
+    * current position. If len is negative, we read till the end.
+    * 
+    * @param a
+    *           the int[] to read
+    * @param start
+    *           position in array 'a' at which to start reading
+    * @param nItems
+    *           number of entries to read. If negative, read the whole (remaining) file.
+    * @param fpos
+    *           file index at which to start reading
+    * @return the int[]
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if any I/O error occurs
     */
-   public final long[] readArray(long[] a, int start, int nItems, final long fpos) throws IOException {
+   public final long[] readArray(long[] a, int start, int nItems, final long fpos) throws FileNotFoundException, IOException {
       final int factor = Long.SIZE / 8; // depends on 'a'
       final boolean openclose = (channel==null);
       if (openclose) openR();
@@ -543,16 +608,21 @@ public class ArrayFile {
    }
 
    /**
-    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
-    * If a is null, a sufficiently large new array is allocated.
-    * If the size of the given array is too small, a runtime exception occurs.
-    * If this ArrayFile is presently closed, it is opened, and closed when done.
-    * We read from the current position (or the start) of the file to the end.
-    * @param a     the int[] to read
-    * @return      the int[]
-    * @throws java.io.IOException  if any I/O error occurs
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end]. If a is null, a
+    * sufficiently large new array is allocated. If the size of the given array is too small, a
+    * runtime exception occurs. If this ArrayFile is presently closed, it is opened, and closed when
+    * done. We read from the current position (or the start) of the file to the end.
+    * 
+    * @param a
+    *           the int[] to read
+    * @return the int[]
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if any I/O error occurs
     */
-   public final long[] readArray(long[] a) throws IOException {
+   public final long[] readArray(long[] a) throws FileNotFoundException, IOException {
       return readArray(a,0,-1,-1);
    }
    
@@ -560,22 +630,29 @@ public class ArrayFile {
   
    
    /**
-    * Reads a part of a file on disk via this ArrayFile into a part of an array,
-    * a[start .. start+len-1].
-    * If a is null, a sufficiently large new array is allocated.
-    * If the size of the given array is smaller than (start+len), a runtime exception occurs.
-    * If this ArrayFile is presently closed, it is opened, and closed when done.
-    * We read 'len' items from the given file position 'fpos' if it is &ge;= 0. 
-    * If the given file position is negative, we read from the current file position.
-    * We read 'len' bytes.  If 'len' is negative, we read till the end.
-    * @param a     the byte[] to read
-    * @param start position in array 'a' at which to start reading
-    * @param len   number of entries to read. If negative, read the whole (remaining) file.
-    * @param fpos  file index at which to start reading
-    * @return      the (given or newly allocated) byte[]
-    * @throws java.io.IOException  if any I/O error occurs
+    * Reads a part of a file on disk via this ArrayFile into a part of an array, a[start ..
+    * start+len-1]. If a is null, a sufficiently large new array is allocated. If the size of the
+    * given array is smaller than (start+len), a runtime exception occurs. If this ArrayFile is
+    * presently closed, it is opened, and closed when done. We read 'len' items from the given file
+    * position 'fpos' if it is &ge;= 0. If the given file position is negative, we read from the
+    * current file position. We read 'len' bytes. If 'len' is negative, we read till the end.
+    * 
+    * @param a
+    *           the byte[] to read
+    * @param start
+    *           position in array 'a' at which to start reading
+    * @param len
+    *           number of entries to read. If negative, read the whole (remaining) file.
+    * @param fpos
+    *           file index at which to start reading
+    * @return the (given or newly allocated) byte[]
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if any I/O error occurs
     */
-   public byte[] readArray(byte[] a, int start, int len, final long fpos) throws IOException {
+   public byte[] readArray(byte[] a, int start, int len, final long fpos) throws FileNotFoundException, IOException {
       final boolean openclose = (channel==null); // file is not open -> open & close file
       if (openclose) openR();
       if (fpos>=0) channel.position(fpos);
@@ -588,28 +665,37 @@ public class ArrayFile {
    }
 
    /**
-    * Reads a file on disk via this ArrayFile into an array a[0 .. end].
-    * If a is null, a sufficiently large new array is allocated.
-    * If the size of the given array is too small, a runtime exception occurs.
-    * If this ArrayFile is presently closed, it is opened, and closed when done.
-    * We read from the current position (or the start) of the file to the end.
-    * @param a     the byte[] to read
-    * @return      the byte[]
-    * @throws java.io.IOException  if any I/O error occurs
+    * Reads a file on disk via this ArrayFile into an array a[0 .. end]. If a is null, a
+    * sufficiently large new array is allocated. If the size of the given array is too small, a
+    * runtime exception occurs. If this ArrayFile is presently closed, it is opened, and closed when
+    * done. We read from the current position (or the start) of the file to the end.
+    * 
+    * @param a
+    *           the byte[] to read
+    * @return the byte[]
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
+    * @throws java.io.IOException
+    *            if any I/O error occurs
     */
-   public byte[] readArray(byte[] a) throws IOException {
+   public byte[] readArray(byte[] a) throws FileNotFoundException, IOException {
       return readArray(a,0,-1,-1);
    }
 
 
    /**
-    * Reads a file on disk via this ArrayFile into a newly allocated
-    * ByteBuffer that exactly fits the size of the file,
-    * or the remainder of the file, if the file is already open.
-    * @return  an array-backed ByteBuffer containing the file contents
+    * Reads a file on disk via this ArrayFile into a newly allocated ByteBuffer that exactly fits
+    * the size of the file, or the remainder of the file, if the file is already open.
+    * 
+    * @return an array-backed ByteBuffer containing the file contents
+    * @throws FileNotFoundException
+    *            if the file does not exist, is a directory rather than a regular file, or for some
+    *            other reason cannot be opened for reading.
     * @throws java.io.IOException
+    *            if any I/O error occurs
     */
-   public ByteBuffer readArrayIntoNewBuffer() throws IOException {
+   public ByteBuffer readArrayIntoNewBuffer() throws FileNotFoundException, IOException {
       final boolean openclose = (channel==null); // file is not open -> open & close file
       if (openclose) openR();
       final int len = (int)((channel.size()-channel.position()));

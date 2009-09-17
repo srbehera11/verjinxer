@@ -2,6 +2,7 @@ package verjinxer.sequenceanalysis;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -142,13 +143,14 @@ public class Sequences implements ISequenceCreation {
     * Reads the .seq and .ssp files into memory. sequence and ssp are null until this method is
     * invoked.
     */
-   private void load() throws IOException {
+   private void load() {
       // Code only copied from Globals.slurpByteArray(String file)
       // TODO with runs, seqFile is f.e. chr22.runseq.seq, what is wrong
       try {
          // TODO: uuuooh. think about static methods!
-         sequence = new ArrayFile().setFile(seqFile).readArray(sequence);
-         separatorPositions = new ArrayFile().setFile(sspFile).readArray(separatorPositions);
+         ArrayFile af = new ArrayFile();
+         sequence = af.setFile(seqFile).readArray(sequence);
+         separatorPositions = af.setFile(sspFile).readArray(separatorPositions);
          assert sequence != null : String.format("No sequence for %s", seqFile);
          assert separatorPositions != null : String.format("No ssp for %s", sspFile);
       } catch (IOException ex) {
