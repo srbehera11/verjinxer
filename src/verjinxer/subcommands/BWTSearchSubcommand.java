@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.IntBuffer;
 
 import verjinxer.BWTIndexBuilder;
 import verjinxer.BWTSearch;
@@ -74,13 +75,22 @@ public class BWTSearchSubcommand implements Subcommand {
          return 1;
       }
       g.startProjectLogging(referenceProject);
-
+      
+      
+      // TODO check, if a bwt index was already created for referenceProject
       // check, if a suffix array was already created for referenceProject
       BWTIndex referenceIndex;
       if (referenceProject.makeFile(FileTypes.POS).exists()) {
          //read suffix array and build BWT-Index from that
-         //TODO which data structure use for suffix array - array, buffer??
-         referenceIndex = null;
+         IntBuffer pos = null;
+         try {
+            pos = referenceProject.readSuffixArray();
+         } catch (IOException e) {
+            log.error("%s: could not read suffix array from disc: %s", commandname, e);
+            return 1;
+         }
+         final Sequences referenceSequence = referenceProject.readSequences();
+         referenceIndex = BWTIndexBuilder.build(pos, referenceSequence);
       } else {
          //create a suffix dll and build BWT-Index from that
          final Sequences referenceSequence = referenceProject.readSequences();
@@ -100,7 +110,7 @@ public class BWTSearchSubcommand implements Subcommand {
             out = new PrintWriter(
                   new BufferedOutputStream(new FileOutputStream(outfile), 32 * 1024), false);
          } catch (FileNotFoundException ex) {
-            log.error("qmatch: could not create output file.");
+            log.error("%s: could not create output file.", commandname);
             return 1;
          }
       } else {
@@ -117,7 +127,7 @@ public class BWTSearchSubcommand implements Subcommand {
          final BWTSearch.BWTSearchResult result = BWTSearch.find(querySequences.array(), beginQuery, endQuery, referenceIndex);
          
          // start output
-         result.print(out);
+         out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );
       }
       
       // store index on disc
