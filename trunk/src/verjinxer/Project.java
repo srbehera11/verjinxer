@@ -250,7 +250,7 @@ public class Project {
     *            If some other I/O error occurs.
     */
    public IntBuffer readSuffixArray() throws FileNotFoundException, IOException {
-      return new ArrayFile(makeFile(FileTypes.POS), 0).mapR().asIntBuffer();
+      return new ArrayFile(makeFile(FileTypes.POS), 0).mapR().asIntBuffer(); //TODO use slurp method from Globals (after refactoring to static)
    }
 
    public String getName() {

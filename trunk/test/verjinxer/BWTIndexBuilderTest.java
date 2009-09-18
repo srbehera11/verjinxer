@@ -36,6 +36,8 @@ public class BWTIndexBuilderTest {
       final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
       
       BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      index.setLowestCharacter((byte)0);
+      index.setHighestCharacter((byte)4);
       
     //test index
       final int[] c = new int[256];
@@ -98,6 +100,8 @@ public class BWTIndexBuilderTest {
       final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
       
       BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      index.setLowestCharacter((byte)0);
+      index.setHighestCharacter((byte)3);
       
       //test index
       final int[] c = new int[256];
@@ -159,6 +163,8 @@ public class BWTIndexBuilderTest {
       final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
       
       BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      index.setLowestCharacter((byte)0);
+      index.setHighestCharacter((byte)4);
       
       //test index
       bwt(s);
@@ -206,6 +212,8 @@ public class BWTIndexBuilderTest {
                                                                            // list
 
          BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+         index.setLowestCharacter((byte)0);
+         index.setHighestCharacter((byte)4);
 
          // test index
          bwt(s[si]);
@@ -264,6 +272,8 @@ public class BWTIndexBuilderTest {
                                                                            // list
 
          BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+         index.setLowestCharacter((byte)0);
+         index.setHighestCharacter((byte)9);
 
          // test index
          bwt(s);
@@ -290,6 +300,42 @@ public class BWTIndexBuilderTest {
          }
       }
    }
+   
+   @Test
+   public void testBuild07() {
+      byte[] s = {9,9,2,2,9,1,2,9,9,2,1,3,3,3,2,2,1,9,1,1,1,3,2,2,9,0};
+      
+      Sequences sequence = Sequences.createEmptySequencesInMemory();
+      try {
+         sequence.addSequence(ByteBuffer.wrap(s));
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+      
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, alphabet);
+      stb.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
+      assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
+      final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
+      
+      BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      index.setLowestCharacter((byte)0);
+      index.setHighestCharacter((byte)9);
+      
+      //test index
+      bwt(s);
+      
+      for(int i = -128; i < 128; i++) {
+         assertEquals(String.format("Array 'c' differs at position %s (expected: %s - actual: %s)", i, c[i+128], index.getFirstIndexPosition((byte)i)), c[i+128], index.getFirstIndexPosition((byte)i));
+      }
+
+      for(int i = 0; i < e.length; i++) {
+         assertEquals(String.format("Array 'e' differs at position %s (expected: %s - actual: %s)", i, e[i], index.getCharacterAtIndexPosition(i)), e[i], index.getCharacterAtIndexPosition(i));
+      }
+
+      for(int i = 0; i < el.length; i++) {
+         assertEquals(String.format("Array 'el' differs at position %s (expected: %s - actual: %s)", i, el[i], index.getSuccedingIndexPosition(i)), el[i], index.getSuccedingIndexPosition(i));
+      }
+   }
 
    @Test
    public void testBuildchrM() {
@@ -308,6 +354,8 @@ public class BWTIndexBuilderTest {
       final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
       
       BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      index.setLowestCharacter((byte)0);
+      index.setHighestCharacter((byte)4);
       
       //test index
       bwt(s);

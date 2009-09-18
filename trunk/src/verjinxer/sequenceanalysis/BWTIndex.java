@@ -11,11 +11,9 @@ public class BWTIndex {
     * For a character/byte b, c[b] is the position in e with the fist appearance of b.
     */
    final private int[] c;
-
-   /**
-    * Contains all characters of a text in lexicographical order
-    */
-   final private byte[] e;  //TODO do i really need it? (binary search in c)
+   
+   private int lowestCharacter; //TODO set in constructor and make it final
+   private int highestCharacter; //TODO set in constructor and make it final
 
    /**
     * For a character c that exists at position i in e, el[i] is the position in e where the
@@ -29,10 +27,17 @@ public class BWTIndex {
     * @param e
     * @param el
     */
-   public BWTIndex(int[] c, byte[] e, int[] el) {
+   public BWTIndex(int[] c, byte[]e ,int[] el) { //TODO e is not needed
       this.c = c;
-      this.e = e;
       this.el = el;
+   }
+   
+   public void setLowestCharacter(byte b) {
+      lowestCharacter = b + 128;
+   }
+   
+   public void setHighestCharacter(byte b) {
+      highestCharacter = b + 128;
    }
 
    /**
@@ -42,8 +47,8 @@ public class BWTIndex {
     */
    public int getFirstIndexPosition(byte character) {
       int chi = character + 128;
-      assert chi > 0;
-      assert chi < c.length;
+      assert chi >= 0: chi+"";
+      assert chi < c.length: chi+"";
       return c[chi];
    }
 
@@ -65,14 +70,23 @@ public class BWTIndex {
     * @return Byte representation of the character at this position.
     */
    public byte getCharacterAtIndexPosition(int pos) {
-      return e[pos];
+      int searchResult = Arrays.binarySearch(c, lowestCharacter, highestCharacter + 1, pos);
+      if (searchResult >= 0) {
+         // we need the last occurrence of pos in c!!!
+         while (c[searchResult+1] - c[searchResult] == 0) { //TODO linear search is maybe to slow
+            searchResult++;
+         }
+         return (byte) (searchResult - 128);
+      } else {
+         return (byte) (-searchResult - 130); //((searchResult + 2) * (-1)) - 128
+      }
    }
 
    /**
     * @return Size of this index (length of associated sequence).
     */
    public int size() {
-      return e.length;
+      return el.length;
    }
    
    /**
@@ -82,6 +96,6 @@ public class BWTIndex {
     *         of the assosiated text/sequence and the alphabet).
     */
    public boolean equals(BWTIndex index) {
-      return Arrays.equals(c, index.c) && Arrays.equals(e, index.e) && Arrays.equals(el, index.el);
+      return Arrays.equals(c, index.c) && Arrays.equals(el, index.el);
    }
 }

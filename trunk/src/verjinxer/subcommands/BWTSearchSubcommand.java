@@ -38,7 +38,7 @@ public class BWTSearchSubcommand implements Subcommand {
       log.info("Usage:");
       log.info("  %s %s  [options]  <query>  <reference>", programname, commandname);
       log.info("Reports for all sequences in query all occurances in reference");
-      log.info("in human-readable output format. Writes %s and %s.", FileTypes.BWTINDEX, FileTypes.MATCHES);
+      log.info("in human-readable output format. Writes %s.", FileTypes.MATCHES);
       log.info("Options:");
    }
    
@@ -76,33 +76,19 @@ public class BWTSearchSubcommand implements Subcommand {
       }
       g.startProjectLogging(referenceProject);
       
-      // TODO own subcommand for index creation. see BWTBuilderSubcommand
       // Read BWT from disc and create BWTIndex from it.
-      
-      // check, if a suffix array was already created for referenceProject
-      BWTIndex referenceIndex;
-      if (referenceProject.makeFile(FileTypes.POS).exists()) {
-         //read suffix array and build BWT-Index from that
-         IntBuffer pos = null;
-         try {
-            pos = referenceProject.readSuffixArray();
-         } catch (IOException e) {
-            log.error("%s: could not read suffix array from disc: %s", commandname, e);
-            return 1;
-         }
-         final Sequences referenceSequence = referenceProject.readSequences();
-         referenceIndex = BWTIndexBuilder.build(pos, referenceSequence);
+      File bwtFile = referenceProject.makeFile(FileTypes.BWT);
+      byte[] bwt; 
+      if (bwtFile.exists()) {
+         bwt = g.slurpByteArray(bwtFile);
       } else {
-         //create a suffix dll and build BWT-Index from that
-         final Sequences referenceSequence = referenceProject.readSequences();
-         final Alphabet alphabet = referenceProject.readAlphabet();
-         final SuffixTrayBuilder builder = new SuffixTrayBuilder(referenceSequence, alphabet);
-         builder.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
-         assert (builder.getSuffixDLL() instanceof SuffixXorDLL);
-         final SuffixXorDLL suffixDLL = (SuffixXorDLL)builder.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
-         referenceIndex = BWTIndexBuilder.build(suffixDLL);
-         // suffixDLL is not stored on disc. If the user really need it, he can run SuffixTrayBuilderSubcommand explicitly.
+         log.error("%s: pleace build a bwt of the reference project first.",commandname);
+         return 1;
       }
+      
+      BWTIndex referenceIndex = BWTIndexBuilder.build(bwt);
+      
+      
       
       // determine where to write result:
       final File outfile = referenceProject.makeFile(FileTypes.MATCHES);

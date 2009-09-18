@@ -53,7 +53,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte");
       log.info("  -c, --check           additionally check index integrity");
       log.info("  -C, --onlycheck       ONLY check index integrity");
-      log.info("  -b, --bigsuffix       build a 64-bit suffix tray (not yet supported)"); //TODO
+      log.info("  -b, --bigsuffix       build a 64-bit suffix tray (not yet supported)");
    }
 
    @Override

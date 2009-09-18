@@ -294,7 +294,7 @@ public class Globals {
     *           an existing array to be used if large enough.
     * @return the int[] with the file's contents
     */
-   long[] slurpIntArray(File file, long[] a) {
+   public long[] slurpIntArray(File file, long[] a) {
       log.info("%s: reading '%s' into memory...", cmdname, file);
       try {
          a = arf.setFile(file).readArray(a);
@@ -404,7 +404,7 @@ public class Globals {
     * @param len
     *           the number of elements to dump
     */
-   final void dumpLongArray(final File file, final long[] a, final int start, final int len) {
+   public final void dumpLongArray(final File file, final long[] a, final int start, final int len) {
       log.info("%s: writing '%s'...", cmdname, file);
       try {
          arf.setFile(file).writeArray(a, start, len);
@@ -423,7 +423,7 @@ public class Globals {
     * @param a
     *           the array to be dumped
     */
-   final void dumpLongArray(final File file, final long[] a) {
+   public final void dumpLongArray(final File file, final long[] a) {
       dumpLongArray(file, a, 0, a.length);
    }
 
@@ -440,7 +440,7 @@ public class Globals {
     * @param len
     *           the number of elements to dump
     */
-   void dumpByteArray(final File file, final byte[] a, final int start, final int len) {
+   public void dumpByteArray(final File file, final byte[] a, final int start, final int len) {
       log.info("%s: writing '%s'...", cmdname, file);
       try {
          arf.setFile(file).writeArray(a, start, len);
@@ -459,7 +459,7 @@ public class Globals {
     * @param a
     *           the array to be dumped
     */
-   void dumpByteArray(final File file, final byte[] a) {
+   public void dumpByteArray(final File file, final byte[] a) {
       dumpByteArray(file, a, 0, a.length);
    }
 
