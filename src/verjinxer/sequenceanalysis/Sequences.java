@@ -148,6 +148,7 @@ public class Sequences implements ISequenceCreation {
       // TODO with runs, seqFile is f.e. chr22.runseq.seq, what is wrong
       try {
          // TODO: uuuooh. think about static methods!
+         // method to slurp array into memory are available in Globals (but not static)
          ArrayFile af = new ArrayFile();
          sequence = af.setFile(seqFile).readArray(sequence);
          separatorPositions = af.setFile(sspFile).readArray(separatorPositions);
