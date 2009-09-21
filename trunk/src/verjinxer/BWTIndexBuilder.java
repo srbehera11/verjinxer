@@ -24,7 +24,6 @@ public class BWTIndexBuilder {
       final byte[] seq = suffixDLL.getSequence().array();
       
       int[]  c = new int[256];
-      byte[] e = new byte[suffixDLL.capacity()]; //TODO do i really need it? (binary search in c)
       byte[] l = new byte[suffixDLL.capacity()];
       int[] el;
       
@@ -34,7 +33,6 @@ public class BWTIndexBuilder {
          int sequencePos;
          if (suffixDLL.getCurrentPosition() != -1) {
             sequencePos = suffixDLL.getCurrentPosition();
-            e[indexPos] = seq[sequencePos];
             int chi = seq[sequencePos] +128;
             c[chi]++; // count characters
             l[indexPos] = sequencePos > 0 ? seq[sequencePos - 1]
@@ -43,7 +41,6 @@ public class BWTIndexBuilder {
             while (suffixDLL.hasNextUp()) {
                suffixDLL.nextUp();
                sequencePos = suffixDLL.getCurrentPosition();
-               e[indexPos] = seq[sequencePos];
                chi = seq[sequencePos] +128;
                c[chi]++; // count characters
                l[indexPos] = sequencePos > 0 ? seq[sequencePos - 1]
@@ -57,7 +54,7 @@ public class BWTIndexBuilder {
 
       el = buildEL(c, l);
       
-      return new BWTIndex(c,e,el);
+      return new BWTIndex(c, el);
    }
 
    /**
@@ -73,7 +70,6 @@ public class BWTIndexBuilder {
       final byte[] seq = sequences.array();
       
       int[]  c = new int[256];
-      byte[] e = new byte[pos.capacity()];
       byte[] l = new byte[pos.capacity()];
       int[] el;
       
@@ -87,7 +83,6 @@ public class BWTIndexBuilder {
                } catch (BufferUnderflowException ex) {
                   break;
                }
-               e[indexPos] = seq[sequencePos];
                final int chi = seq[sequencePos] + 128;
                c[chi]++; // count characters
                l[indexPos] = sequencePos > 0 ? seq[sequencePos - 1]
@@ -100,7 +95,7 @@ public class BWTIndexBuilder {
 
       el = buildEL(c, l);
       
-      return new BWTIndex(c,e,el);
+      return new BWTIndex(c,el);
    }
 
    /**
@@ -130,7 +125,7 @@ public class BWTIndexBuilder {
     * @param l
     *           BWT transformation of the associated text/sequence.
     */
-   private static int[] buildEL(int[] c, byte[] l) {
+   private static int[] buildEL(final int[] c, final byte[] l) {
       int[] el = new int[l.length];
 
 //      long starttime = System.currentTimeMillis();
@@ -185,7 +180,7 @@ public class BWTIndexBuilder {
       }
       
       el = buildEL(c, bwt);
-      return new BWTIndex(c, null, el); //TODO
+      return new BWTIndex(c, el);
    }
 
 }

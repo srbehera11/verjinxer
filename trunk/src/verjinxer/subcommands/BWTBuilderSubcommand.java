@@ -39,6 +39,7 @@ public class BWTBuilderSubcommand implements Subcommand {
    @Override
    public int run(String[] args) {
       int returnvalue = 0;
+      Globals.cmdname = commandname;
       String action = commandname + " \"" + StringUtils.join("\" \"", args) + "\"";
       
 //      Options opt = new Options("c=check,C=onlycheck,m=method:,l=lcp=lcp4,lcp1,lcp2,b=bigsuffix");

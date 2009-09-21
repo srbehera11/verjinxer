@@ -6,18 +6,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.IntBuffer;
 
 import verjinxer.BWTIndexBuilder;
 import verjinxer.BWTSearch;
 import verjinxer.Globals;
 import verjinxer.Project;
-import verjinxer.SuffixTrayBuilder;
-import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.BWTIndex;
 import verjinxer.sequenceanalysis.Sequences;
-import verjinxer.sequenceanalysis.SuffixXorDLL;
 import verjinxer.util.FileTypes;
+import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 import static verjinxer.Globals.programname;
 import com.spinn3r.log5j.Logger;
@@ -54,6 +51,7 @@ public class BWTSearchSubcommand implements Subcommand {
    public int run(String[] args) {
       TicToc totalTimer = new TicToc();
       Globals.cmdname = commandname;
+      String action = commandname + " \"" + StringUtils.join("\" \"", args) + "\"";
       
       File queryProjectName = null;
       File referenceProjectName = null;
@@ -80,13 +78,19 @@ public class BWTSearchSubcommand implements Subcommand {
       File bwtFile = referenceProject.makeFile(FileTypes.BWT);
       byte[] bwt; 
       if (bwtFile.exists()) {
+         log.info("%s: reading bwt from disc.", commandname);
+         totalTimer.tic();
          bwt = g.slurpByteArray(bwtFile);
+         log.info("%s:reading took %.1f secs %.1f secs.", commandname, totalTimer.tocs());
       } else {
          log.error("%s: pleace build a bwt of the reference project first.",commandname);
          return 1;
       }
       
+      log.info("%s: constructing bwt index.", commandname);
+      totalTimer.tic();
       BWTIndex referenceIndex = BWTIndexBuilder.build(bwt);
+      log.info("%s: bwt index completed after %.1f secs.", commandname, totalTimer.tocs());
       
       
       
@@ -104,9 +108,16 @@ public class BWTSearchSubcommand implements Subcommand {
       } else {
          out = new PrintWriter(System.out);
       }
-
-      //search each query sequence in reference (resp. in its index)
+      
+      log.info("%s: reading query sequence from disc.", commandname);
+      totalTimer.tic();
       Sequences querySequences = queryProject.readSequences();
+      log.info("%s:reading took %.1f secs %.1f secs.", commandname, totalTimer.tocs());
+      
+
+      log.info("%s: start searching.", commandname);
+      totalTimer.tic();
+      //search each query sequence in reference (resp. in its index)
       for (int i = 0; i < querySequences.getNumberSequences(); i++) { //for each query
          final int[] queryBoundaries = querySequences.getSequenceBoundaries(i);
          final int beginQuery = queryBoundaries[0];
@@ -117,7 +128,19 @@ public class BWTSearchSubcommand implements Subcommand {
          // start output
          out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );
       }
-      
+      log.info("%s: search finished after %.1f secs.", commandname, totalTimer.tocs());
+
+      // update project data
+      referenceProject.setProperty("BWTSearchAction", action);
+      referenceProject.setProperty("LastAction", commandname);
+      // write project data
+      try {
+         referenceProject.store();
+      } catch (IOException ex) {
+         log.warn("%s: could not write %s (%s)!", commandname,
+               referenceProject.getFile().getPath(), ex);
+         return 1;
+      }
       return 0;
    }
 
