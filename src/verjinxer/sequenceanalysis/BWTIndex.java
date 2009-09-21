@@ -12,8 +12,8 @@ public class BWTIndex {
     */
    final private int[] c;
    
-   private int lowestCharacter; //TODO set in constructor and make it final
-   private int highestCharacter; //TODO set in constructor and make it final
+   private int lowestCharacter;
+   private int highestCharacter;
 
    /**
     * For a character c that exists at position i in e, el[i] is the position in e where the
@@ -24,20 +24,26 @@ public class BWTIndex {
    /**
     * 
     * @param c
-    * @param e
     * @param el
     */
-   public BWTIndex(int[] c, byte[]e ,int[] el) { //TODO e is not needed
+   public BWTIndex(int[] c, int[] el) {
       this.c = c;
       this.el = el;
-   }
-   
-   public void setLowestCharacter(byte b) {
-      lowestCharacter = b + 128;
-   }
-   
-   public void setHighestCharacter(byte b) {
-      highestCharacter = b + 128;
+      
+      for (int i = 1; i < c.length; i++) {
+         if (c[i] != 0) {
+            lowestCharacter = i-1;
+            break;
+         }
+      }
+      
+      final int last = c[c.length-1];
+      for (int i = c.length-1; i >= 0; i--) {
+         if (c[i] != last) {
+            highestCharacter = i+1;
+            break;
+         }
+      }
    }
 
    /**
@@ -70,15 +76,34 @@ public class BWTIndex {
     * @return Byte representation of the character at this position.
     */
    public byte getCharacterAtIndexPosition(int pos) {
-      int searchResult = Arrays.binarySearch(c, lowestCharacter, highestCharacter + 1, pos);
-      if (searchResult >= 0) {
-         // we need the last occurrence of pos in c!!!
-         while (c[searchResult+1] - c[searchResult] == 0) { //TODO linear search is maybe to slow
-            searchResult++;
+      // linear search for a small range
+      if (highestCharacter - lowestCharacter < 6) {
+         for (int i = lowestCharacter; i <= highestCharacter; i++) {
+            if (c[i] == pos) {
+               return (byte) (i - 128);
+            } else if (c[i] > pos) {
+               return (byte) (i - 129);
+            }
          }
-         return (byte) (searchResult - 128);
+         if (pos < 0 || pos >= el.length) {
+            throw new IndexOutOfBoundsException(pos + "");
+         } else {
+            throw new RuntimeException(); // should not happen
+         }
+
+         // binary search for a greater range
       } else {
-         return (byte) (-searchResult - 130); //((searchResult + 2) * (-1)) - 128
+
+         int searchResult = Arrays.binarySearch(c, lowestCharacter, highestCharacter + 1, pos);
+         if (searchResult >= 0) {
+            // we need the last occurrence of pos in c!!!
+            while (c[searchResult + 1] - c[searchResult] == 0) {
+               searchResult++;
+            }
+            return (byte) (searchResult - 128);
+         } else {
+            return (byte) (-searchResult - 130); // ((searchResult + 2) * (-1)) - 128
+         }
       }
    }
 
