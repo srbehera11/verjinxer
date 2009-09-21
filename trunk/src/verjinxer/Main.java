@@ -7,7 +7,6 @@ package verjinxer;
 import static verjinxer.Globals.programname;
 import static verjinxer.Globals.version;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -17,6 +16,9 @@ import org.apache.log4j.PatternLayout;
 
 import verjinxer.subcommands.AdapterRemoverSubcommand;
 import verjinxer.subcommands.AlignerSubcommand;
+import verjinxer.subcommands.BWTBuilderSubcommand;
+import verjinxer.subcommands.BWTSearchSubcommand;
+import verjinxer.subcommands.LinearSearchSubcommand;
 import verjinxer.subcommands.MapperSubcommand;
 import verjinxer.subcommands.QGramIndexCompressionAnalyzerSubcommand;
 import verjinxer.subcommands.QGramIndexerSubcommand;
@@ -63,6 +65,9 @@ public class Main {
       log.info("  nonunique    ...          find non-unique specific probes in an index");
       log.info("  rmadapt      ...          remove adapters from sequences");
       log.info("  seq2fastq    ...          converts a sequence into a fastq file");
+      log.info("  bwtbuild    ...           create Burrows-Wheeler-Transformation from translated file(s)");
+      log.info("  bwtsearch    ...          searches queries in a reference sequence");
+      log.info("  linearsearch    ...       searches queries in a reference sequence");
       log.info("Global options:");
       log.info("  -Q, --quiet               quiet mode, don't print messages to stdout");
       log.info("  -L, --log    <logfile>    add'l file to print diagnostic messages to");
@@ -158,6 +163,12 @@ public class Main {
          subcommand = new AdapterRemoverSubcommand(g);
       } else if (command.startsWith("seq2fastq")) {
          subcommand = new Sequence2FastqSubcommand(g);
+      } else if (command.startsWith("bwtb")) {
+         subcommand = new BWTBuilderSubcommand(g);
+      } else if (command.startsWith("bwts")) {
+         subcommand = new BWTSearchSubcommand(g);
+      } else if (command.startsWith("linear")) {
+         subcommand = new LinearSearchSubcommand(g);
       } else {
          usage();
          log.error("Unrecognized command: '%s'", command);

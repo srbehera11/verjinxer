@@ -25,7 +25,7 @@ import com.spinn3r.log5j.Logger;
 public class BWTSearchSubcommand implements Subcommand {
    private static final Logger log = Globals.getLogger();
    private Globals g;
-   private static final String commandname = "bwt-search";
+   private static final String commandname = "bwtsearch";
 
    /**
     * prints help on usage
@@ -34,7 +34,7 @@ public class BWTSearchSubcommand implements Subcommand {
    public void help() {
       log.info("Usage:");
       log.info("  %s %s  [options]  <query>  <reference>", programname, commandname);
-      log.info("Reports for all sequences in query all occurances in reference");
+      log.info("Reports for each sequences in query all occurances in reference");
       log.info("in human-readable output format. Writes %s.", FileTypes.MATCHES);
       log.info("Options:");
    }
@@ -59,6 +59,7 @@ public class BWTSearchSubcommand implements Subcommand {
          queryProjectName = new File(args[0]);
          referenceProjectName = new File(args[1]);
       } else {
+         help();
          log.error("%s: two projects must be given.",commandname);
          return 1;
       }
@@ -81,7 +82,7 @@ public class BWTSearchSubcommand implements Subcommand {
          log.info("%s: reading bwt from disc.", commandname);
          totalTimer.tic();
          bwt = g.slurpByteArray(bwtFile);
-         log.info("%s:reading took %.1f secs %.1f secs.", commandname, totalTimer.tocs());
+         log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
       } else {
          log.error("%s: pleace build a bwt of the reference project first.",commandname);
          return 1;
@@ -112,7 +113,7 @@ public class BWTSearchSubcommand implements Subcommand {
       log.info("%s: reading query sequence from disc.", commandname);
       totalTimer.tic();
       Sequences querySequences = queryProject.readSequences();
-      log.info("%s:reading took %.1f secs %.1f secs.", commandname, totalTimer.tocs());
+      log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
       
 
       log.info("%s: start searching.", commandname);
@@ -126,8 +127,12 @@ public class BWTSearchSubcommand implements Subcommand {
          final BWTSearch.BWTSearchResult result = BWTSearch.find(querySequences.array(), beginQuery, endQuery, referenceIndex);
          
          // start output
+         // System.out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );
          out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );
+         
+         
       }
+      out.close();
       log.info("%s: search finished after %.1f secs.", commandname, totalTimer.tocs());
 
       // update project data
