@@ -26,8 +26,12 @@ public class BWTBuilderSubcommand implements Subcommand {
 
    private static final Logger log = Globals.getLogger();
    private Globals g;
-   private static final String commandname = "bwt-build";
+   private static final String commandname = "bwtbuild";
    
+   public BWTBuilderSubcommand(Globals gl) {
+      g = gl;
+   }
+
    @Override
    public void help() {
       log.info("Usage:%n  %s bwtbuild [options] Indexnames...", programname);
@@ -84,12 +88,12 @@ public class BWTBuilderSubcommand implements Subcommand {
                returnvalue = 1;
                continue;
             }
-            log.info("%s:reading took %.1f secs %.1f secs.", commandname, totalTimer.tocs());
+            log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
             
             log.info("%s: reading sequence from disc.", commandname);
             totalTimer.tic();
             final Sequences sequence = project.readSequences();
-            log.info("%s:reading took %.1f secs %.1f secs.", commandname, totalTimer.tocs());
+            log.info("%s: reading took %.1f secs.", commandname, totalTimer.tocs());
             
             
             log.info("%s: constructing bwt using suffix array.", commandname);
@@ -101,7 +105,7 @@ public class BWTBuilderSubcommand implements Subcommand {
             totalTimer.tic();
             final Sequences sequence = project.readSequences();
             final Alphabet alphabet = project.readAlphabet();
-            log.info("%s:reading took %.1f secs %.1f secs.", commandname, totalTimer.tocs());
+            log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
 
             final String method = "bothLR";
             log.info("%s: constructing suffix list using method '%s'...", commandname, method);
