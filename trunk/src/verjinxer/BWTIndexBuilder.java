@@ -14,91 +14,6 @@ import verjinxer.sequenceanalysis.SuffixXorDLL;
 public class BWTIndexBuilder {
 
    /**
-    * Builds a BWT-Index from a suffix list.
-    * 
-    * @param suffixDLL
-    *           Suffix list from that the index shall be build.
-    * @return The BWT-Index.
-    */
-   public static BWTIndex build(SuffixXorDLL suffixDLL) {
-      final byte[] seq = suffixDLL.getSequence().array();
-      
-      int[]  c = new int[256];
-      byte[] l = new byte[suffixDLL.capacity()];
-      int[] el;
-      
-      {// build e and l, count characters in c
-         suffixDLL.resetToBegin();
-         int indexPos = 0;
-         int sequencePos;
-         if (suffixDLL.getCurrentPosition() != -1) {
-            sequencePos = suffixDLL.getCurrentPosition();
-            int chi = seq[sequencePos] +128;
-            c[chi]++; // count characters
-            l[indexPos] = sequencePos > 0 ? seq[sequencePos - 1]
-                  : seq[seq.length - 1];
-            indexPos++;
-            while (suffixDLL.hasNextUp()) {
-               suffixDLL.nextUp();
-               sequencePos = suffixDLL.getCurrentPosition();
-               chi = seq[sequencePos] +128;
-               c[chi]++; // count characters
-               l[indexPos] = sequencePos > 0 ? seq[sequencePos - 1]
-                     : seq[seq.length - 1];
-               indexPos++;
-            }
-         }
-      }// END build e and l, count characters in c
-
-      buildC(c);
-
-      el = buildEL(c, l);
-      
-      return new BWTIndex(c, el);
-   }
-
-   /**
-    * Builds a BWT-Index from a suffix array and the associated sequence/text.
-    * 
-    * @param pos
-    *           Suffix array from that the index shall be build.
-    * @param sequences
-    *           Sequence/Text from that the index shall be build.
-    * @return The BWT-Index.
-    */
-   public static BWTIndex build(IntBuffer pos, Sequences sequences) {
-      final byte[] seq = sequences.array();
-      
-      int[]  c = new int[256];
-      byte[] l = new byte[pos.capacity()];
-      int[] el;
-      
-      {// build e and l, count characters in c
-         pos.rewind();
-         int indexPos = 0;
-         int sequencePos;
-            while (true) {
-               try {
-                  sequencePos = pos.get();
-               } catch (BufferUnderflowException ex) {
-                  break;
-               }
-               final int chi = seq[sequencePos] + 128;
-               c[chi]++; // count characters
-               l[indexPos] = sequencePos > 0 ? seq[sequencePos - 1]
-                     : seq[seq.length - 1];
-               indexPos++;
-            }
-      }// END build e and l, count characters in c
-
-      buildC(c);
-
-      el = buildEL(c, l);
-      
-      return new BWTIndex(c,el);
-   }
-
-   /**
     * Creates the needed array c, where for each byte is first position in e is stored, from the
     * given array, where for each byte is number is stored. The given array will be overridden.
     * 
@@ -164,7 +79,7 @@ public class BWTIndexBuilder {
     *          Burrows-Wheeler-Transformation to build the index from.
     * @return The BWT-Index.
     */
-   public static BWTIndex build(final byte[] bwt) {
+   public static BWTIndex build(final byte[] bwt, final int[] bwt2text) {
       int[] c = new int[256];
       int[] histo = new int[256];
       int[] el;
@@ -180,7 +95,7 @@ public class BWTIndexBuilder {
       }
       
       el = buildEL(c, bwt);
-      return new BWTIndex(c, el);
+      return new BWTIndex(c, el, bwt2text);
    }
 
 }

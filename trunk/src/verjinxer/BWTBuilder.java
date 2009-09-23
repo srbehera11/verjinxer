@@ -5,6 +5,7 @@ import java.nio.IntBuffer;
 
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.SuffixXorDLL;
+import verjinxer.util.MathUtils;
 
 /**
  * Class responsible for building a Burrows-Wheeler-Transformation.
@@ -12,6 +13,11 @@ import verjinxer.sequenceanalysis.SuffixXorDLL;
  * @author Markus Kemmerling
  */
 public class BWTBuilder {
+   
+   public static int calculateBaseIndex( int length ) {
+      final int power = (int)Math.ceil(MathUtils.log2(MathUtils.log2(length)));
+      return 1<<power;
+   }
 
    /**
     * Creates a BWT of the given sequence with help of its suffix array.
@@ -21,12 +27,18 @@ public class BWTBuilder {
     *           Sequence to build the BWT for.
     * @return The BWT of the sequence.
     */
-   public static byte[] build(IntBuffer suffixArray, Sequences sequence) {
+   public static BWT build(IntBuffer suffixArray, Sequences sequence) {
       final byte[] seq = sequence.array();
       byte[] bwt = new byte[suffixArray.capacity()];
+      
+      final int value = calculateBaseIndex(seq.length);
+      final int bitmask = value -1;
+      final int numberIndex = (int)Math.ceil((double)seq.length/(double)value);
+      int[] sampledSuffixArray = new int[numberIndex];
 
       suffixArray.rewind();
-      int indexPos = 0;
+      int bwtPos = 0;
+      int samplePos = 0;
       int sequencePos;
       while (true) {
          try {
@@ -34,11 +46,18 @@ public class BWTBuilder {
          } catch (BufferUnderflowException ex) {
             break;
          }
-         bwt[indexPos] = sequencePos > 0 ? seq[sequencePos - 1] : seq[seq.length - 1];
-         indexPos++;
+         sequencePos = sequencePos > 0 ? sequencePos - 1 : seq.length - 1; // go one step left
+         bwt[bwtPos] = seq[sequencePos];
+         if( (bwtPos&bitmask) == 0 ) {
+            sampledSuffixArray[samplePos] = sequencePos;
+            assert samplePos * value == bwtPos;
+            samplePos++;
+         }
+         bwtPos++;
+         
       }
-
-      return bwt;
+      assert samplePos == sampledSuffixArray.length;
+      return new BWT(bwt,sampledSuffixArray);
 
    }
 
@@ -48,27 +67,55 @@ public class BWTBuilder {
     *           The suffix list to create the BWT from.
     * @return The BWT.
     */
-   public static byte[] build(SuffixXorDLL suffixDLL) {
+   public static BWT build(SuffixXorDLL suffixDLL) {
       final byte[] seq = suffixDLL.getSequence().array();
 
       byte[] bwt = new byte[suffixDLL.capacity()];
+      
+      final int value = calculateBaseIndex(seq.length);
+      final int bitmask = value -1;
+      final int numberIndex = (int)Math.ceil((double)seq.length/(double)value);
+      int[] sampledSuffixArray = new int[numberIndex];
 
       suffixDLL.resetToBegin();
-      int indexPos = 0;
+      int bwtPos = 0;
+      int samplePos = 0;
       int sequencePos;
       if (suffixDLL.getCurrentPosition() != -1) {
          sequencePos = suffixDLL.getCurrentPosition();
-         bwt[indexPos] = sequencePos > 0 ? seq[sequencePos - 1] : seq[seq.length - 1];
-         indexPos++;
+         sequencePos = sequencePos > 0 ? sequencePos - 1 : seq.length - 1; // go one step left
+         bwt[bwtPos] = seq[sequencePos];
+         if( (bwtPos&bitmask) == 0 ) {
+            sampledSuffixArray[samplePos] = sequencePos;
+            assert samplePos * value == bwtPos;
+            samplePos++;
+         }
+         bwtPos++;
          while (suffixDLL.hasNextUp()) {
             suffixDLL.nextUp();
             sequencePos = suffixDLL.getCurrentPosition();
-            bwt[indexPos] = sequencePos > 0 ? seq[sequencePos - 1] : seq[seq.length - 1];
-            indexPos++;
+            sequencePos = sequencePos > 0 ? sequencePos - 1 : seq.length - 1; // go one step left
+            bwt[bwtPos] = seq[sequencePos];
+            if( (bwtPos&bitmask) == 0 ) {
+               sampledSuffixArray[samplePos] = sequencePos;
+               assert samplePos * value == bwtPos;
+               samplePos++;
+            }
+            bwtPos++;
          }
       }
 
-      return bwt;
+      return new BWT(bwt,sampledSuffixArray);
+   }
+   
+   public static class BWT{
+      public final byte[] bwt;
+      public final int[] sampledSuffixArray;
+      
+      private BWT(final byte[] bwt, final int[] sampledSuffixArray) {
+         this.bwt = bwt;
+         this.sampledSuffixArray = sampledSuffixArray;
+      }
    }
 
 }

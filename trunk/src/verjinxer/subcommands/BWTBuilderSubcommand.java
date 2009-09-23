@@ -74,7 +74,7 @@ public class BWTBuilderSubcommand implements Subcommand {
             continue;
          }
          g.startProjectLogging(project);
-         byte[] bwt;
+         BWTBuilder.BWT bwt;
          if (project.makeFile(FileTypes.POS).exists()) {
             //read suffix array and build BWT from that
 
@@ -125,9 +125,11 @@ public class BWTBuilderSubcommand implements Subcommand {
          
          // write bwt to disc
          File bwtFile = project.makeFile(FileTypes.BWT);
-         log.info("%s: writing '%s'...", commandname, bwtFile);
+         File sampledSuffixArray = project.makeFile(FileTypes.SAMPLEDPOS);
+         log.info("%s: writing '%s' and '&s'...", commandname, bwtFile, sampledSuffixArray);
          totalTimer.tic();
-         g.dumpByteArray(bwtFile, bwt);
+         g.dumpByteArray(bwtFile, bwt.bwt);
+         g.dumpIntArray(sampledSuffixArray, bwt.sampledSuffixArray);
          log.info("%s: writing took %.1f secs; done.", commandname, totalTimer.tocs());
          
          project.setProperty("BWTAction", action);
