@@ -77,11 +77,14 @@ public class BWTSearchSubcommand implements Subcommand {
       
       // Read BWT from disc and create BWTIndex from it.
       File bwtFile = referenceProject.makeFile(FileTypes.BWT);
-      byte[] bwt; 
+      File bwt2textFile = referenceProject.makeFile(FileTypes.SAMPLEDPOS);
+      byte[] bwt;
+      int[] bwt2text;
       if (bwtFile.exists()) {
          log.info("%s: reading bwt from disc.", commandname);
          totalTimer.tic();
          bwt = g.slurpByteArray(bwtFile);
+         bwt2text = g.slurpIntArray(bwt2textFile);
          log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
       } else {
          log.error("%s: pleace build a bwt of the reference project first.",commandname);
@@ -90,7 +93,7 @@ public class BWTSearchSubcommand implements Subcommand {
       
       log.info("%s: constructing bwt index.", commandname);
       totalTimer.tic();
-      BWTIndex referenceIndex = BWTIndexBuilder.build(bwt);
+      BWTIndex referenceIndex = BWTIndexBuilder.build(bwt, bwt2text);
       log.info("%s: bwt index completed after %.1f secs.", commandname, totalTimer.tocs());
       
       
@@ -125,6 +128,7 @@ public class BWTSearchSubcommand implements Subcommand {
          final int endQuery = queryBoundaries[1];
          
          final BWTSearch.BWTSearchResult result = BWTSearch.find(querySequences.array(), beginQuery, endQuery, referenceIndex);
+         //TODO print position!
          
          // start output
          // System.out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );

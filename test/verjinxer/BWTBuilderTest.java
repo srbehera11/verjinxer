@@ -56,8 +56,10 @@ public class BWTBuilderTest {
                                                                            // list
          
          byte[] referenceBWT = bwt(s[i]);
+         BWTBuilder.BWT bwt = BWTBuilder.build(suffixDLL);
          
-         assertArrayEquals(String.format("Failure by sequence %d wile using SuffixXorDLL", i), referenceBWT , BWTBuilder.build(suffixDLL));
+         assertArrayEquals(String.format("Failure by sequence %d wile using SuffixXorDLL", i), referenceBWT , bwt.bwt);
+         checkSampledSuffixArray(bwt.bwt, bwt.sampledSuffixArray, sequence.array());
          
          suffixDLL.resetToBegin();
          int[] a = new int[suffixDLL.capacity()];
@@ -70,8 +72,9 @@ public class BWTBuilderTest {
             }
          }
          IntBuffer buf = IntBuffer.wrap(a);
-
-         assertArrayEquals(String.format("Failure by sequence %d wile using IntBuffer", i), referenceBWT , BWTBuilder.build(buf, sequence));
+         bwt = BWTBuilder.build(buf, sequence);
+         assertArrayEquals(String.format("Failure by sequence %d wile using IntBuffer", i), referenceBWT , bwt.bwt);
+         checkSampledSuffixArray(bwt.bwt, bwt.sampledSuffixArray, sequence.array());
          
       }
    }
@@ -107,8 +110,10 @@ public class BWTBuilderTest {
                                                                            // list
          
          byte[] referenceBWT = bwt(s);
+         BWTBuilder.BWT bwt = BWTBuilder.build(suffixDLL);
          
-         assertArrayEquals(String.format("Failure by sequence %d wile using SuffixXorDLL", i), referenceBWT , BWTBuilder.build(suffixDLL));
+         assertArrayEquals(String.format("Failure by sequence %d wile using SuffixXorDLL", i), referenceBWT , bwt.bwt);
+         checkSampledSuffixArray(bwt.bwt, bwt.sampledSuffixArray, sequence.array());
          
          suffixDLL.resetToBegin();
          int[] a = new int[suffixDLL.capacity()];
@@ -121,9 +126,9 @@ public class BWTBuilderTest {
             }
          }
          IntBuffer buf = IntBuffer.wrap(a);
-
-         assertArrayEquals(String.format("Failure by sequence %d wile using IntBuffer", i), referenceBWT , BWTBuilder.build(buf, sequence));
-         
+         bwt = BWTBuilder.build(buf, sequence);
+         assertArrayEquals(String.format("Failure by sequence %d wile using IntBuffer", i), referenceBWT , bwt.bwt);
+         checkSampledSuffixArray(bwt.bwt, bwt.sampledSuffixArray, sequence.array());
       }
    }
    
@@ -148,8 +153,10 @@ public class BWTBuilderTest {
       // list
 
       byte[] referenceBWT = bwt(s);
+      BWTBuilder.BWT bwt = BWTBuilder.build(suffixDLL);
 
-      assertArrayEquals(referenceBWT, BWTBuilder.build(suffixDLL));
+      assertArrayEquals(referenceBWT, bwt.bwt);
+      checkSampledSuffixArray(bwt.bwt, bwt.sampledSuffixArray, sequence.array());
 
       suffixDLL.resetToBegin();
       int[] a = new int[suffixDLL.capacity()];
@@ -162,8 +169,9 @@ public class BWTBuilderTest {
          }
       }
       IntBuffer buf = IntBuffer.wrap(a);
-
-      assertArrayEquals(referenceBWT, BWTBuilder.build(buf, sequence));
+      bwt = BWTBuilder.build(buf, sequence);
+      assertArrayEquals(referenceBWT, bwt.bwt);
+      checkSampledSuffixArray(bwt.bwt, bwt.sampledSuffixArray, sequence.array());
    }
    
 
@@ -187,5 +195,20 @@ public class BWTBuilderTest {
          l[i] = Byte.parseByte(bwt_matrix[i].charAt(bwt_matrix[i].length()-1)+"");
       }
       return l;
+   }
+   
+   private static void checkSampledSuffixArray(byte[] bwt, int[] spos, byte[]sequence) {
+      final int value = BWTBuilder.calculateBaseIndex(sequence.length);
+
+      System.out.println(value);
+      System.out.println(Arrays.toString(bwt));
+      System.out.println(Arrays.toString(spos));
+      System.out.println(Arrays.toString(sequence));
+      
+      for(int i = 0; i < spos.length; i++) {
+         assertTrue(value*(i) < bwt.length);
+         assertTrue(spos[i] < sequence.length);
+         assertEquals(String.format("Iteration %d", i), bwt[value*(i)], sequence[spos[i]]);
+      }
    }
 }

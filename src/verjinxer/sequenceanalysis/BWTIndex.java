@@ -2,6 +2,9 @@ package verjinxer.sequenceanalysis;
 
 import java.util.Arrays;
 
+import verjinxer.BWTBuilder;
+import verjinxer.util.MathUtils;
+
 /**
  * @author Markus Kemmerling
  */
@@ -19,16 +22,45 @@ public class BWTIndex {
     * For a character c that exists at position i in e, el[i] is the position in e where the
     * succeeding character of c (regarding of the origin text) can be found.
     */
-   final private int[] el;
+   private final int[] el;
+   
+   /**
+    * Maps particular position in the bwt to position in the original text/sequence;
+    */
+   private final int[] bwt2text;
+
+   /**
+    * For each multiple of this value, the position mapper bwt2text exists. In particular, for a
+    * position p within the bwt, if p 'modulo' baseIndex == 0, then bwt2text[p/baseIndex] is the
+    * corresponding position in the original text/sequence.
+    */
+   private final int baseIndex;
+   
+   /**
+    * Bitmask to find multiple of the baseIndex. More precisely, (x & bitmask) = (x 'modulo' baseIndex).
+    */
+   private final int bitmask;
+   
+   /**
+    * (x >> bitshift) = (x / baseIndex);
+    */
+   private final int bitshift;
 
    /**
     * 
     * @param c
     * @param el
+    * @param bwt2text
     */
-   public BWTIndex(int[] c, int[] el) {
+   public BWTIndex(final int[] c, final int[] el, final int[] bwt2text) {
       this.c = c;
       this.el = el;
+      this.bwt2text = bwt2text;
+      this.baseIndex = BWTBuilder.calculateBaseIndex(el.length);
+      this.bitmask = baseIndex-1;
+      this.bitshift = (int)MathUtils.log2(baseIndex);
+      assert(1<<bitshift == baseIndex);
+      assert(bitmask>>bitshift == 0);
       
       for (int i = 1; i < c.length; i++) {
          if (c[i] != 0) {
@@ -113,6 +145,35 @@ public class BWTIndex {
    public int size() {
       return el.length;
    }
+   
+   /**
+    * @param pos
+    *           Position within this index.
+    * @return For a given position within this index the corresponding position within the original text/sequence;
+    */
+   public int map2text(int pos) {
+      assert pos < el.length:String.format("el has length %d. Position %d is invalid", el.length, pos);
+      pos = el[pos]; // the character at indexPos within this index occurs at el[indexPos] within the bwt.
+      int r = 0;
+      //while ((pos&bitmask)!=0) {
+      while ((pos%baseIndex)!=0) {
+         // while no mapping to the text exists, go to the next index position of the succeeding character (regarding the origin text).
+         pos = el[pos];
+         r++;
+      }
+      
+      //final int mapPos = pos>>bitshift;
+      final int mapPos = pos/baseIndex;
+      final int textPos = bwt2text[mapPos]-r;
+      if (textPos >= 0){
+         assert textPos < el.length;
+         return textPos;
+      } else {
+         return el.length+textPos;
+      }
+   }
+   
+   
    
    /**
     * @param index

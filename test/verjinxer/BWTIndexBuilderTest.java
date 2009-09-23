@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -55,8 +54,8 @@ public class BWTIndexBuilderTest {
 
          // test index
          bwt(s[si]);
-         // from SuffixDLL
-         BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+         BWTBuilder.BWT bwt = BWTBuilder.build(suffixDLL);
+         BWTIndex index = BWTIndexBuilder.build(bwt.bwt, bwt.sampledSuffixArray);
          for (int i = -128; i < 128; i++) {
             assertEquals(String.format(
                   "[Test %d] Array 'c' differs at position %s (expected: %s - actual: %s)", si, i,
@@ -77,63 +76,13 @@ public class BWTIndexBuilderTest {
                   el[i], index.getSuccedingIndexPosition(i)), el[i],
                   index.getSuccedingIndexPosition(i));
          }
-
-         // from IntBuffer
-         suffixDLL.resetToBegin();
-         int[] a = new int[suffixDLL.capacity()];
-         int j = 0;
-         if (suffixDLL.getCurrentPosition() != -1) {
-            a[j++] = suffixDLL.getCurrentPosition();
-            while (suffixDLL.hasNextUp()) {
-               suffixDLL.nextUp();
-               a[j++] = suffixDLL.getCurrentPosition();
-            }
-         }
-         IntBuffer buf = IntBuffer.wrap(a);
-         index = BWTIndexBuilder.build(buf, sequence);
-         for (int i = -128; i < 128; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'c' differs at position %s (expected: %s - actual: %s)", si, i,
-                  c[i + 128], index.getFirstIndexPosition((byte) i)), c[i + 128],
-                  index.getFirstIndexPosition((byte) i));
-         }
-
-         for (int i = 0; i < e.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'e' differs at position %s (expected: %s - actual: %s)", si, i,
-                  e[i], index.getCharacterAtIndexPosition(i)), e[i],
-                  index.getCharacterAtIndexPosition(i));
-         }
-
-         for (int i = 0; i < el.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'el' differs at position %s (expected: %s - actual: %s)", si, i,
-                  el[i], index.getSuccedingIndexPosition(i)), el[i],
-                  index.getSuccedingIndexPosition(i));
-         }
-
-         // from l
-         byte[] l = BWTBuilder.build(suffixDLL);
-         index = BWTIndexBuilder.build(l);
-         for (int i = -128; i < 128; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'c' differs at position %s (expected: %s - actual: %s)", si, i,
-                  c[i + 128], index.getFirstIndexPosition((byte) i)), c[i + 128],
-                  index.getFirstIndexPosition((byte) i));
-         }
-
-         for (int i = 0; i < e.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'e' differs at position %s (expected: %s - actual: %s)", si, i,
-                  e[i], index.getCharacterAtIndexPosition(i)), e[i],
-                  index.getCharacterAtIndexPosition(i));
-         }
-
-         for (int i = 0; i < el.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'el' differs at position %s (expected: %s - actual: %s)", si, i,
-                  el[i], index.getSuccedingIndexPosition(i)), el[i],
-                  index.getSuccedingIndexPosition(i));
+         for (int i = 0; i < e.length; i++)  {
+            int sequencePos = index.map2text(i);
+            assertEquals(
+                  String.format(
+                        "[Test %d] Wrong mapping to text at index position %s (index.getSuccedingIndexPosition(i) = %d)",
+                        si, i, sequencePos), index.getCharacterAtIndexPosition(i),
+                  sequence.array()[sequencePos]);
          }
       }
    }
@@ -171,8 +120,8 @@ public class BWTIndexBuilderTest {
          // test index
          bwt(s);
 
-         // from SuffixDLL
-         BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+         BWTBuilder.BWT bwt = BWTBuilder.build(suffixDLL);
+         BWTIndex index = BWTIndexBuilder.build(bwt.bwt, bwt.sampledSuffixArray);
          for (int i = -128; i < 128; i++) {
             assertEquals(String.format(
                   "[Test %d] Array 'c' differs at position %s (expected: %s - actual: %s)", si, i,
@@ -193,63 +142,13 @@ public class BWTIndexBuilderTest {
                   el[i], index.getSuccedingIndexPosition(i)), el[i],
                   index.getSuccedingIndexPosition(i));
          }
-
-         // from IntBuffer
-         suffixDLL.resetToBegin();
-         int[] a = new int[suffixDLL.capacity()];
-         int j = 0;
-         if (suffixDLL.getCurrentPosition() != -1) {
-            a[j++] = suffixDLL.getCurrentPosition();
-            while (suffixDLL.hasNextUp()) {
-               suffixDLL.nextUp();
-               a[j++] = suffixDLL.getCurrentPosition();
-            }
-         }
-         IntBuffer buf = IntBuffer.wrap(a);
-         index = BWTIndexBuilder.build(buf, sequence);
-         for (int i = -128; i < 128; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'c' differs at position %s (expected: %s - actual: %s)", si, i,
-                  c[i + 128], index.getFirstIndexPosition((byte) i)), c[i + 128],
-                  index.getFirstIndexPosition((byte) i));
-         }
-
-         for (int i = 0; i < e.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'e' differs at position %s (expected: %s - actual: %s)", si, i,
-                  e[i], index.getCharacterAtIndexPosition(i)), e[i],
-                  index.getCharacterAtIndexPosition(i));
-         }
-
-         for (int i = 0; i < el.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'el' differs at position %s (expected: %s - actual: %s)", si, i,
-                  el[i], index.getSuccedingIndexPosition(i)), el[i],
-                  index.getSuccedingIndexPosition(i));
-         }
-
-         // from l
-         byte[] l = BWTBuilder.build(suffixDLL);
-         index = BWTIndexBuilder.build(l);
-         for (int i = -128; i < 128; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'c' differs at position %s (expected: %s - actual: %s)", si, i,
-                  c[i + 128], index.getFirstIndexPosition((byte) i)), c[i + 128],
-                  index.getFirstIndexPosition((byte) i));
-         }
-
-         for (int i = 0; i < e.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'e' differs at position %s (expected: %s - actual: %s)", si, i,
-                  e[i], index.getCharacterAtIndexPosition(i)), e[i],
-                  index.getCharacterAtIndexPosition(i));
-         }
-
-         for (int i = 0; i < el.length; i++) {
-            assertEquals(String.format(
-                  "[Test %d] Array 'el' differs at position %s (expected: %s - actual: %s)", si, i,
-                  el[i], index.getSuccedingIndexPosition(i)), el[i],
-                  index.getSuccedingIndexPosition(i));
+         for (int i = 0; i < e.length; i++)  {
+            int sequencePos = index.map2text(i);
+            assertEquals(
+                  String.format(
+                        "[Test %d] Wrong mapping to text at index position %s (index.getSuccedingIndexPosition(i) = %d)",
+                        si, i, sequencePos), index.getCharacterAtIndexPosition(i),
+                  sequence.array()[sequencePos]);
          }
       }
    }
@@ -275,9 +174,8 @@ public class BWTIndexBuilderTest {
 
       // test index
       bwt(s);
-
-      // from SuffixDLL
-      BWTIndex index = BWTIndexBuilder.build(suffixDLL);
+      BWTBuilder.BWT bwt = BWTBuilder.build(suffixDLL);
+      BWTIndex index = BWTIndexBuilder.build(bwt.bwt, bwt.sampledSuffixArray);
       for (int i = -128; i < 128; i++) {
          assertEquals(String.format("Array 'c' differs at position %s (expected: %s - actual: %s)",
                i, c[i + 128], index.getFirstIndexPosition((byte) i)), c[i + 128],
@@ -295,57 +193,13 @@ public class BWTIndexBuilderTest {
                "Array 'el' differs at position %s (expected: %s - actual: %s)", i, el[i],
                index.getSuccedingIndexPosition(i)), el[i], index.getSuccedingIndexPosition(i));
       }
-
-      // from IntBuffer
-      suffixDLL.resetToBegin();
-      int[] a = new int[suffixDLL.capacity()];
-      int j = 0;
-      if (suffixDLL.getCurrentPosition() != -1) {
-         a[j++] = suffixDLL.getCurrentPosition();
-         while (suffixDLL.hasNextUp()) {
-            suffixDLL.nextUp();
-            a[j++] = suffixDLL.getCurrentPosition();
-         }
-      }
-      IntBuffer buf = IntBuffer.wrap(a);
-      index = BWTIndexBuilder.build(buf, sequence);
-      for (int i = -128; i < 128; i++) {
-         assertEquals(String.format("Array 'c' differs at position %s (expected: %s - actual: %s)",
-               i, c[i + 128], index.getFirstIndexPosition((byte) i)), c[i + 128],
-               index.getFirstIndexPosition((byte) i));
-      }
-
       for (int i = 0; i < e.length; i++) {
-         assertEquals(String.format("Array 'e' differs at position %s (expected: %s - actual: %s)",
-               i, e[i], index.getCharacterAtIndexPosition(i)), e[i],
-               index.getCharacterAtIndexPosition(i));
-      }
-
-      for (int i = 0; i < el.length; i++) {
-         assertEquals(String.format(
-               "Array 'el' differs at position %s (expected: %s - actual: %s)", i, el[i],
-               index.getSuccedingIndexPosition(i)), el[i], index.getSuccedingIndexPosition(i));
-      }
-
-      // from l
-      byte[] l = BWTBuilder.build(suffixDLL);
-      index = BWTIndexBuilder.build(l);
-      for (int i = -128; i < 128; i++) {
-         assertEquals(String.format("Array 'c' differs at position %s (expected: %s - actual: %s)",
-               i, c[i + 128], index.getFirstIndexPosition((byte) i)), c[i + 128],
-               index.getFirstIndexPosition((byte) i));
-      }
-
-      for (int i = 0; i < e.length; i++) {
-         assertEquals(String.format("Array 'e' differs at position %s (expected: %s - actual: %s)",
-               i, e[i], index.getCharacterAtIndexPosition(i)), e[i],
-               index.getCharacterAtIndexPosition(i));
-      }
-
-      for (int i = 0; i < el.length; i++) {
-         assertEquals(String.format(
-               "Array 'el' differs at position %s (expected: %s - actual: %s)", i, el[i],
-               index.getSuccedingIndexPosition(i)), el[i], index.getSuccedingIndexPosition(i));
+         int sequencePos = index.map2text(i);
+         assertEquals(
+               String.format(
+                     "Wrong mapping to text at index position %s (index.getSuccedingIndexPosition(i) = %d)",
+                     i, sequencePos), index.getCharacterAtIndexPosition(i),
+               sequence.array()[sequencePos]);
       }
    }
    
