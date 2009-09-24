@@ -1,11 +1,18 @@
 package verjinxer.subcommands;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Vector;
 
+import verjinxer.GlobalMatchReporter;
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.sequenceanalysis.Sequences;
+import verjinxer.util.FileTypes;
 import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
@@ -72,9 +79,20 @@ public class LinearSearchSubcommand implements Subcommand {
 
       Sequences querySequences = queryProject.readSequences();
       Sequences referenceSequences = referenceProject.readSequences();
-
-      // TODO now it only counts the occurrences.
-      // TODO make a real search and show the positions.
+      
+      // determine where to write result:
+      final File outfile = referenceProject.makeFile(FileTypes.MATCHES);
+      PrintWriter out;
+      try {
+         out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outfile), 32 * 1024),
+               false);
+      } catch (FileNotFoundException ex) {
+         log.error("%s: could not create output file.", commandname);
+         return 1;
+      }
+      
+      final long[] ssp  = referenceSequences.getSeparatorPositions();
+      GlobalMatchReporter matchReporter = new GlobalMatchReporter(ssp, 0, referenceSequences.array().length, false, out);
 
       log.info("%s: start searching.", commandname);
       totalTimer.tic();
@@ -82,18 +100,29 @@ public class LinearSearchSubcommand implements Subcommand {
          final int[] queryBoundaries = querySequences.getSequenceBoundaries(i);
          final int beginQuery = queryBoundaries[0];
          final int endQuery = queryBoundaries[1];
+         matchReporter.setSequenceStart(beginQuery);
 
-         int occ = search(querySequences.array(), beginQuery, endQuery, referenceSequences.array());
-         System.out.printf("Query %d (%s) was found %s times in the reference.%n", i,
-               querySequences.getDescriptions().get(i), occ);
+         int[] pos = search(querySequences.array(), beginQuery, endQuery, referenceSequences.array());
+         
+         for(int j = 0; j < pos.length; j++) {
+            matchReporter.add(pos[j], 0, endQuery-beginQuery);
+         }
+         matchReporter.write(i);
+         matchReporter.clear();
 
       }
       log.info("%s: search finished after %.1f secs.", commandname, totalTimer.tocs());
       return 0;
    }
-
-   private int search(byte[] query, int beginQuery, int endQuery, byte[] reference) {
-      int number = 0;
+   
+   /**
+    * Searches the query in chrM and returns the number of occurrence.
+    * @param query
+    *           String to search for.
+    * @return Positions where query was found within chrM.
+    */
+   private int[] search(byte[] query, int beginQuery, int endQuery, byte[] reference) {
+      Vector<Integer> posVec = new Vector<Integer>();
       final int queryLength = endQuery - beginQuery;
       for (int i = 0; i < reference.length - queryLength + 1; i++) {
          boolean find = true;
@@ -105,10 +134,14 @@ public class LinearSearchSubcommand implements Subcommand {
          }
 
          if (find) {
-            number++;
+            posVec.add(i);
          }
       }
-      // System.out.println(number);
-      return number;
+      
+      int[] posArray = new int[posVec.size()];
+      for(int i = 0; i < posArray.length; i++) {
+         posArray[i] = posVec.get(i);
+      }
+      return posArray;
    }
 }

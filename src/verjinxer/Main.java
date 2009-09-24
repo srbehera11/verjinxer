@@ -65,9 +65,9 @@ public class Main {
       log.info("  nonunique    ...          find non-unique specific probes in an index");
       log.info("  rmadapt      ...          remove adapters from sequences");
       log.info("  seq2fastq    ...          converts a sequence into a fastq file");
-      log.info("  bwtbuild    ...           create Burrows-Wheeler-Transformation from translated file(s)");
+      log.info("  bwtbuild     ...          create Burrows-Wheeler-Transformation from translated file(s)");
       log.info("  bwtsearch    ...          searches queries in a reference sequence");
-      log.info("  linearsearch    ...       searches queries in a reference sequence");
+      log.info("  linearsearch ...          searches queries in a reference sequence");
       log.info("Global options:");
       log.info("  -Q, --quiet               quiet mode, don't print messages to stdout");
       log.info("  -L, --log    <logfile>    add'l file to print diagnostic messages to");
