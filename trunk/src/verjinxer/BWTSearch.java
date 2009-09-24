@@ -1,5 +1,7 @@
 package verjinxer;
 
+import java.util.Arrays;
+
 import verjinxer.sequenceanalysis.BWTIndex;
 
 /**
@@ -52,6 +54,7 @@ public class BWTSearch {
       for(int i = counter[0], j = 0; i < counter[1]; i++) {
          textPositions[j++] = referenceIndex.map2text(i);
       }
+      Arrays.sort(textPositions);
       return new BWTSearchResult(textPositions);
    }
    
