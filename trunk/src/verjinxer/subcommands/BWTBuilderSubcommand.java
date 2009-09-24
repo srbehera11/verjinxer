@@ -88,7 +88,7 @@ public class BWTBuilderSubcommand implements Subcommand {
                returnvalue = 1;
                continue;
             }
-            log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
+            log.info("%s: reading took %.1f secs.", commandname, totalTimer.tocs());
             
             log.info("%s: reading sequence from disc.", commandname);
             totalTimer.tic();

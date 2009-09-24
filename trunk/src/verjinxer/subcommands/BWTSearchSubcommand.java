@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 
 import verjinxer.BWTIndexBuilder;
 import verjinxer.BWTSearch;
+import verjinxer.GlobalMatchReporter;
 import verjinxer.Globals;
 import verjinxer.Project;
 import verjinxer.sequenceanalysis.BWTIndex;
@@ -85,7 +86,7 @@ public class BWTSearchSubcommand implements Subcommand {
          totalTimer.tic();
          bwt = g.slurpByteArray(bwtFile);
          bwt2text = g.slurpIntArray(bwt2textFile);
-         log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
+         log.info("%s: reading took %.1f secs.", commandname, totalTimer.tocs());
       } else {
          log.error("%s: pleace build a bwt of the reference project first.",commandname);
          return 1;
@@ -96,28 +97,26 @@ public class BWTSearchSubcommand implements Subcommand {
       BWTIndex referenceIndex = BWTIndexBuilder.build(bwt, bwt2text);
       log.info("%s: bwt index completed after %.1f secs.", commandname, totalTimer.tocs());
       
-      
-      
       // determine where to write result:
       final File outfile = referenceProject.makeFile(FileTypes.MATCHES);
       PrintWriter out;
-      if (outfile != null) {
-         try {
-            out = new PrintWriter(
-                  new BufferedOutputStream(new FileOutputStream(outfile), 32 * 1024), false);
-         } catch (FileNotFoundException ex) {
-            log.error("%s: could not create output file.", commandname);
-            return 1;
-         }
-      } else {
-         out = new PrintWriter(System.out);
+      try {
+         out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(outfile), 32 * 1024),
+               false);
+      } catch (FileNotFoundException ex) {
+         log.error("%s: could not create output file.", commandname);
+         return 1;
       }
       
       log.info("%s: reading query sequence from disc.", commandname);
       totalTimer.tic();
       Sequences querySequences = queryProject.readSequences();
-      log.info("%s:reading took %.1f secs.", commandname, totalTimer.tocs());
+      log.info("%s: reading took %.1f secs.", commandname, totalTimer.tocs());
+
       
+      final File sspfile = referenceProject.makeFile(FileTypes.SSP);
+      final long[] ssp  = g.slurpLongArray(sspfile); // no need for the sequence, so only read sspfile instead of referenceProject.readSequences()
+      GlobalMatchReporter matchReporter = new GlobalMatchReporter(ssp, 0, referenceIndex.size(), false, out);
 
       log.info("%s: start searching.", commandname);
       totalTimer.tic();
@@ -126,15 +125,20 @@ public class BWTSearchSubcommand implements Subcommand {
          final int[] queryBoundaries = querySequences.getSequenceBoundaries(i);
          final int beginQuery = queryBoundaries[0];
          final int endQuery = queryBoundaries[1];
+         matchReporter.setSequenceStart(beginQuery);
+         
+//         System.out.printf("%s: searching for query %d%n.", commandname, i);
          
          final BWTSearch.BWTSearchResult result = BWTSearch.find(querySequences.array(), beginQuery, endQuery, referenceIndex);
-         //TODO print position!
+
+//         System.out.printf("%s: reporing results for query %d%n.", commandname, i);
          
-         // start output
-         // System.out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );
-         out.printf("Query %d (%s) was found %s times in the reference.%n", i,querySequences.getDescriptions().get(i), result.number );
-         
-         
+         for(int j = 0; j < result.positions.length; j++) {
+            matchReporter.add(result.positions[j], 0, endQuery-beginQuery);
+         }
+//         System.out.printf("%s: write results for query %d%n.", commandname, i);
+         matchReporter.write(i);
+         matchReporter.clear();
       }
       out.close();
       log.info("%s: search finished after %.1f secs.", commandname, totalTimer.tocs());
