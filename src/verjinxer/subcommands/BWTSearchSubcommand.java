@@ -113,6 +113,8 @@ public class BWTSearchSubcommand implements Subcommand {
       Sequences querySequences = queryProject.readSequences();
       log.info("%s: reading took %.1f secs.", commandname, totalTimer.tocs());
 
+      //debug
+//      Sequences referenceSequences = referenceProject.readSequences();
       
       final File sspfile = referenceProject.makeFile(FileTypes.SSP);
       final long[] ssp  = g.slurpLongArray(sspfile); // no need for the sequence, so only read sspfile instead of referenceProject.readSequences()
@@ -127,16 +129,32 @@ public class BWTSearchSubcommand implements Subcommand {
          final int endQuery = queryBoundaries[1];
          matchReporter.setSequenceStart(beginQuery);
          
-//         System.out.printf("%s: searching for query %d%n.", commandname, i);
-         
          final BWTSearch.BWTSearchResult result = BWTSearch.find(querySequences.array(), beginQuery, endQuery, referenceIndex);
-
-//         System.out.printf("%s: reporing results for query %d%n.", commandname, i);
          
          for(int j = 0; j < result.positions.length; j++) {
+            //debug
+//            boolean error = false;
+//            for(int k = 0; k < endQuery-beginQuery; k++) {
+//               if(querySequences.array()[beginQuery+k] != referenceSequences.array()[result.positions[j]+k]) {
+//                  error = true;
+//                  break;
+//               }
+//            }
+//            if (error) {
+//               System.out.println("Error at position " + result.positions[j]);
+//               for(int k = 0; k < endQuery-beginQuery; k++) {
+//                  System.out.print(referenceSequences.array()[result.positions[j]+k]);
+//               }
+//               System.out.println();
+//               for(int k = 0; k < endQuery-beginQuery; k++) {
+//                  System.out.print(querySequences.array()[beginQuery+k]);
+//               }
+//               System.out.println();
+//            }
+            
             matchReporter.add(result.positions[j], 0, endQuery-beginQuery);
          }
-//         System.out.printf("%s: write results for query %d%n.", commandname, i);
+         
          matchReporter.write(i);
          matchReporter.clear();
       }
