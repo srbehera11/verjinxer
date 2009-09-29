@@ -111,6 +111,7 @@ public class LinearSearchSubcommand implements Subcommand {
          matchReporter.clear();
 
       }
+      out.close();
       log.info("%s: search finished after %.1f secs.", commandname, totalTimer.tocs());
       return 0;
    }
