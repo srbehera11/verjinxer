@@ -56,6 +56,14 @@ public class Alphabet {
     * creates an alphabet map from the given text lines. It is best to see the example alphabet maps
     * for how to do this, e.g., which strings create the DNA() map, etc.
     * 
+    * If a line starts with '##', it is a control command ('##symbols', '##wildcards',
+    * '##separators', '##whitespaces') and determines, what kind of characters are given followed.<br>
+    * If '##symbols' ends with an extra number (e.g. '##symbols:0'), than the characters in the next
+    * line are mapped to that number. For each new line, the number mapped to will be incremented.<br>
+    * If any other command ends with an extra number, the number will be the special code for the
+    * corresponding kind ('##separators:-1' determines '-1' as special separator that is returned by
+    * {@link #codeSeparator()}).
+    * 
     * @param lines
     *           the text lines from which to create the alphabet map
     * @return the created alphabet map
