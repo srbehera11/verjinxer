@@ -104,4 +104,22 @@ public class BitArray {
       return new BitArray(b);
    }
 
+   /**
+    * 
+    * @param from
+    * @param to
+    * @return
+    * @author Markus Kemmerling
+    */
+   public int getBits(final int from, final int to) {
+      //TODO use bit manipulation direct on underlying structure without #get() 
+      final int diff = to - from;
+      int i = 0;
+      for (int j = 0; j <= diff; j++) {
+         if (get(j+from) == 1) {
+            i |= 1 << j;
+         }
+      }
+      return i;
+   }
 }
