@@ -175,12 +175,16 @@ public class WaveletTree {
    }
    
    /**
-    * TODO
+    * Returns the number of times the given bit (0 or 1) appears in the prefix of the BitArray belonging to the specified node.
     * @param bit
+    *          The bit to count.
     * @param layer
+    *          The layer of the tree.
     * @param node
+    *          The node within the layer.
     * @param prefixLength
-    * @return
+    *          The length of the prefix within the occurrence are returned.
+    * @return The number of times the given bit (0 or 1) appears in the prefix of the BitArray belonging to the specified node.
     */
    private int getRank(int bit, int layer, int node, int prefixLength) {
       final int nodeBegin = delimiter[layer][node];
@@ -191,11 +195,14 @@ public class WaveletTree {
    }
    
    /**
-    * TODO
+    * Returns the bit at the defined position within the specified node within the given layer.
     * @param layer
+    *          The layer of the tree.
     * @param node
+    *          The node within the layer.
     * @param position
-    * @return
+    *          Position in the BitArray belonging to the specified node.
+    * @return One bit as integer.
     */
    private int getBit(int layer, int node, int position) {
       final int nodeBegin = delimiter[layer][node];
