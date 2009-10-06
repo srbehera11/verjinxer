@@ -69,11 +69,14 @@ public class WaveletTreeTest {
    }
 
    /**
-    * TODO
+    * Returns the number of times the given character appears in the prefix of the sequence 'sequence[0,...,prefix-1]';
     * @param character
+    *           The character to count.
     * @param prefix
+    *           Length of the prefix of the sequence within the character is counted. 
     * @param sequence
-    * @return
+    *           The sequence.
+    * @return Number of times the given character appears within the positions 0 (inclusive) to prefix (exclusive) of this BitArray.
     */
    private static int rank(byte character, int prefix, byte[] sequence) {
       int counter = 0;
