@@ -9,9 +9,10 @@ public class WaveletTree {
    private int[][] delimiter; // One bit vector (one layer) is divided in several nodes.
                               // Each node contains a subsequence of the bitVector.
                               // The i-th node in the layer (from left to right) contains 
-                              // the subsequence starting at delimiter[i](inclusive) and ending at delimiter[i+1](exclusive) within the bit vector of the layer.
+                              // the subsequence starting at delimiter[layer][i](inclusive) and ending at delimiter[layer][i+1](exclusive) within the bit vector of the layer.
                               // The last entry in delimiter points to the first invalid position of the corresponding bit vector.
-   private byte[] leaves;
+   private byte[] leaves; // stores the character at a leave
+   private int[][] nodeRank1Table; // stores for each bitVector the rank1 value from the beginning of the vector to the beginning of a node (nodeRank1Table[layer][node] = bitVector[layer].rank(1, delimiter[layer][node]);
    
    /** Lowest character within the sequence.  */
    private final byte minCharacter;
@@ -30,13 +31,16 @@ public class WaveletTree {
     */
    public WaveletTree(byte[] sequence, final byte minCharacter, final byte maxCharacter) {
       this.minCharacter = minCharacter;
-      this.maxCharacter = maxCharacter;
-      final int depth = (int) Math.ceil(MathUtils.log2(maxCharacter - minCharacter + 1));
+      this.maxCharacter = maxCharacter > minCharacter ? maxCharacter : (byte) (maxCharacter + 1);
+      // to prevent a tree with depth 0
+      assert this.maxCharacter > this.minCharacter : String.format(
+            "maxCharacter:%d, minCharacter:%d", this.maxCharacter, this.minCharacter);
+      final int depth = (int) Math.ceil(MathUtils.log2(this.maxCharacter - this.minCharacter + 1));
       bitVector = new RankedBitArray[depth];
       delimiter = new int[depth][];
       
       byte[][] subAlphabet = new byte[depth][];
-      subAlphabet[0] = new byte[]{minCharacter, (byte)(maxCharacter+1)};
+      subAlphabet[0] = new byte[]{this.minCharacter, (byte)(this.maxCharacter+1)};
       delimiter[0] = new int[]{0, sequence.length};
       byte[] buffer = new byte[sequence.length];
       
@@ -71,6 +75,7 @@ public class WaveletTree {
                }
             }
             //delimiter[i+1][2*n] is set in previous pass
+            assert delimiter[i+1][2*n] == delimiter[i][n];
             delimiter[i+1][2*n + 1] = delimiter[i][n] + countZeros;
             delimiter[i+1][2*n + 2] = delimiter[i][n+1];
          }
@@ -86,24 +91,43 @@ public class WaveletTree {
          
          for(int n = 0; n < delimiter[i].length-1; n++) {
             final int delimiterValue = getDelimiterValue(subAlphabet[i][n] , subAlphabet[i][n+1]);
-            assert subAlphabet[i][n+1] - subAlphabet[i][n] == 1 || subAlphabet[i][n+1] - subAlphabet[i][n] == 2;
+            assert subAlphabet[i][n + 1] - subAlphabet[i][n] == 1
+                  || subAlphabet[i][n + 1] - subAlphabet[i][n] == 2 : String.format(
+                  "Range:[%d,%d]", subAlphabet[i][n], subAlphabet[i][n + 1]);
             
-            for(int j = delimiter[i][n]; j < delimiter[i][n+1]; j++) {
+            for (int j = delimiter[i][n]; j < delimiter[i][n + 1]; j++) {
                if (sequence[j] <= delimiterValue) {
                   bitVector[i].set(j, 0);
-                  assert sequence[j] == delimiterValue;
-                  leaves[2*n] = sequence[j];
+                  assert sequence[j] == delimiterValue : String.format(
+                        "Range:[%d,%d] Delimiter:%d Sequence[j]:%d", subAlphabet[i][n],
+                        subAlphabet[i][n + 1], delimiterValue, sequence[j]);
+                  leaves[2 * n] = sequence[j];
                } else {
                   bitVector[i].set(j, 1);
-                  assert sequence[j] == delimiterValue+1;
-                  leaves[2*n+1] = sequence[j];
+                  assert sequence[j] == delimiterValue + 1 : String.format(
+                        "Range:[%d,%d] Delimiter:%d Sequence[j]:%d", subAlphabet[i][n],
+                        subAlphabet[i][n + 1], delimiterValue, sequence[j]);
+                  leaves[2 * n + 1] = sequence[j];
                }
             }
          }
       }
       
+      buildNodeRank1Table();
+      
    }
    
+   private void buildNodeRank1Table() {
+      nodeRank1Table = new int[bitVector.length][];
+      for(int layer = 0; layer < bitVector.length; layer ++) {
+         nodeRank1Table[layer] = new int[delimiter[layer].length-1];
+         for(int node = 0; node < nodeRank1Table[layer].length; node++) {
+            nodeRank1Table[layer][node] = bitVector[layer].rank(1, delimiter[layer][node]);
+         }
+      }
+      
+   }
+
    /**
     * Returns the character that exists at the given position within the origin text/sequence.
     * @param position
@@ -191,7 +215,11 @@ public class WaveletTree {
       final int tmp = bitVector[layer].rank(bit, nodeBegin + prefixLength);
       // tmp contains not only the number of occurrences within the actual node but within all node in the layer up to the actual node (from left to right).
       // to get only the occurrences within the actual node, the occurrences in all nodes on the left side must be subtracted.
-      return tmp - bitVector[layer].rank(bit, nodeBegin);
+      if (bit == 1) {
+         return tmp - nodeRank1Table[layer][node];
+      } else {
+         return tmp - (nodeBegin - nodeRank1Table[layer][node]);
+      }
    }
    
    /**
@@ -218,9 +246,22 @@ public class WaveletTree {
     *          Highest character (exclusive) of the alphabet subset.
     * @return Delimiter for the left and right have of of the ordered alphabet subset.
     */
-   private int getDelimiterValue(int lowerBound, int upperBound) {
+   private int getDelimiterValue(final int lowerBound, final int upperBound) {
       // parameters and return value are int and not byte to avoid type castings
-      return (lowerBound + upperBound - 1) / 2;
+      assert upperBound >= lowerBound;
+      if (lowerBound >= 0) {
+         return (lowerBound + upperBound - 1) / 2;
+      } else {
+         final int shift = lowerBound * -1;
+         final int delimiter = (lowerBound + shift + upperBound + shift - 1) / 2;
+         return delimiter - shift;
+//         final int delimiter = (lowerBound + upperBound - 1) / 2;
+//         if ( (upperBound - lowerBound)%2 != 0) {
+//            return delimiter;
+//         } else {
+//            return delimiter -1;
+//         }
+      }
    }
    
    /**
