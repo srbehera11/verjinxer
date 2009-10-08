@@ -6,9 +6,71 @@ package verjinxer.util;
  * @author Markus Kemmerling
  */
 public class RankedBitArray extends BitArray {
+   
+   /**
+    * Stores answers to rank1 queries for each log2-th position.
+    */
+   private int[] superblockrank;
+   
+   /**
+    * Stores answers to rank1 queries within a superblock for each log-th position.
+    */
+   private short[] blockrank;
+   
+   /**
+    * Length of a superblock.
+    */
+   private final int log;
+   
+   /**
+    * Length of a block.
+    */
+   private final int log2;
+   
+   /**
+    * Whether this bit array was changed after the last invocation of {@link #preRankCalculation()}.
+    */
+   boolean changed = true;
 
    public RankedBitArray(int size) {
       super(size);
+      log = (int)MathUtils.log2(this.size);
+      log2 = log*log;
+   }
+   
+   /**
+    * Invoked before a rank query after this bit array has changed.
+    * Calculates the the lookup table {@link #superblockrank} and {@link #blockrank} needed to answer the rank query.  
+    */
+   private void preRankCalculation() {
+      if(size < 2) {
+         return;
+      }
+      
+      superblockrank = new int[this.size/log2 + 1];
+      blockrank = new short[this.size/log + 1];
+
+      if (superblockrank.length > 0) {
+         superblockrank[0] = 0;
+      }
+      if (blockrank.length > 0) {
+         blockrank[0] = 0;
+      }
+      
+      for(int j = 1; j < blockrank.length; j++) {
+         final int smallblock = getBits(log*(j-1), log*j);
+         final byte smallrank = RankCalculator.rank(1, smallblock, log);
+         
+         if(j % log  == 0) {
+            assert j/log < superblockrank.length : String.format("superblockrank.length: %d, j/log: %d, j: %d, log: %d, size: %d", superblockrank.length, j/log, j, log, size);
+            superblockrank[j/log] = superblockrank[(j/log)-1] + blockrank[j-1] + smallrank;
+            blockrank[j] = 0;
+         } else {
+            blockrank[j] = (short) (blockrank[j-1] + smallrank);
+         }
+      }
+      
+      changed = false;
    }
    
    /**
@@ -19,16 +81,26 @@ public class RankedBitArray extends BitArray {
     *           End of the prefix (exclusive) within the occurrence are returned.
     * @return Number of times the given bit appears within the positions 0 (inclusive) to pos (exclusive) of this BitArray.
     */
-   public int rank(int bit, int pos) {
-      //TODO use precomputed lookup tables
-      
-      //calculate rank1, rank0 can be obtained by rank0 = pos - rank1
-      int numberOnes = 0;
-      for(int i = 0; i < pos; i++) {
-         if (get(i) == 1) {
-            numberOnes++;
+   public int rank(int bit, int pos) {   
+      if(size < 2) {
+         if (size == 0 || pos == 0) {
+            return 0;
+         } else {
+            if (bit == 0) {
+               return 1 - this.bits[0];
+            } else {
+               return this.bits[0];
+            }
          }
       }
+      
+      if (changed) {
+         preRankCalculation();
+      }
+      
+      //calculate rank1, rank0 can be obtained by rank0 = pos - rank1
+      final int smallblock = getBits((pos/log)*log, pos);
+      final int numberOnes = superblockrank[pos/log2] + blockrank[pos/log] + RankCalculator.rank(1, smallblock, pos - (pos/log)*log);
       
       if (bit == 1) {
          return numberOnes;
@@ -62,5 +134,25 @@ public class RankedBitArray extends BitArray {
       }
       return i;
    }
+
+   @Override
+   public void clear() {
+      super.clear();
+      changed = true;
+   }
+
+   @Override
+   public void set(int i, boolean bval) {
+      super.set(i, bval);
+      changed = true;
+   }
+
+   @Override
+   public void set(int i, int val) {
+      super.set(i, val);
+      changed = true;
+   }
+   
+   
 
 }

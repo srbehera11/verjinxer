@@ -80,6 +80,8 @@ public class WaveletTree {
             delimiter[i+1][2*n + 2] = delimiter[i][n+1];
          }
          
+//         bitVector[i].preRankCalculation();
+         
          byte[] tmp = sequence;
          sequence = buffer;
          buffer = tmp;
@@ -111,6 +113,8 @@ public class WaveletTree {
                }
             }
          }
+         
+//         bitVector[i].preRankCalculation();
       }
       
       buildNodeRank1Table();

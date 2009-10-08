@@ -17,24 +17,23 @@ public class RankCalculator {
 //   static {
 //      smallrank =calculateSmallrank();
 //   }
-
-   /**
-    * Provides convenient access to the smallrank table.
-    * 
-    * @param smallblock
-    *           The bit string in which the ones are counted.
-    * @param prefix
-    *           The ones are counted in 'smallblock' from position 0 to 'prefix' (exclusive)
-    * @return Number of times the one bit exists in smallblock[0,...,prefix-1]
-    */
-   private static byte smallrank(int smallblock, int prefix) {
-      if (prefix < 1) {
-         return 0;
-      } else {
-         //return smallrank[smallblock][prefix - 1];
-         return simpleRank1(smallblock, prefix-1);
-      }
-   }
+//
+//   /**
+//    * Provides convenient access to the smallrank table.
+//    * 
+//    * @param smallblock
+//    *           The bit string in which the ones are counted.
+//    * @param prefix
+//    *           The ones are counted in 'smallblock' from position 0 to 'prefix' (exclusive)
+//    * @return Number of times the one bit exists in smallblock[0,...,prefix-1]
+//    */
+//   private static byte smallrank(int smallblock, int prefix) {
+//      if (prefix < 1) {
+//         return 0;
+//      } else {
+//         return smallrank[smallblock][prefix - 1];
+//      }
+//   }
 
    /**
     * Returns the number of times the given bit (0 or 1) appears in smallblock[0,...,prefix-1].
@@ -47,15 +46,17 @@ public class RankCalculator {
     *           The end of the substring of smallblock (exclusive) in which the bit is counted.
     * @return
     */
-   public static int rank(int bit, int smallblock, int prefix) {
-      final int half1 = smallblock & 65535;
-      final int half2 = smallblock >> 16;
-      final int t = prefix > 16 ? 16 : prefix;
-      final int u = prefix - t;
-
-      final int rank1 = smallrank(half1, t) + smallrank(half2, u);
+   public static byte rank(int bit, int smallblock, int prefix) {
+      assert prefix <= 32: String.format("Prefix: %d", prefix);
+//      final int half1 = smallblock & 65535;
+//      final int half2 = smallblock >> 16;
+//      final int t = prefix > 16 ? 16 : prefix;
+//      final int u = prefix - t;
+//
+//      final int rank1 = smallrank(half1, t) + smallrank(half2, u);
+      final byte rank1 = simpleRank1(smallblock, prefix);
       if (bit == 0) {
-         return prefix - rank1;
+         return (byte) (prefix - rank1);
       } else {
          return rank1;
       }
@@ -72,7 +73,7 @@ public class RankCalculator {
     */
    private static byte simpleRank1(int smallblock, int prefix) {
       byte counter = 0;
-      for (int i = 0; i <= prefix; i++) {
+      for (int i = 0; i < prefix; i++) {
          final int bit = smallblock & (1 << i);
          if (bit != 0) {
             counter++;
@@ -102,7 +103,10 @@ public class RankCalculator {
 
       for (int i = 0; i < smallrank.length; i++) {
          for (int j = 0; j < smallrank[i].length; j++) {
-            smallrank[i][j] = simpleRank1(i, j);
+            smallrank[i][j] = simpleRank1(i, j+1);
+            // note, in the table, the prefix end position is not exclusive but inclusive
+            // that means. smallrank[i][j] stores the number of times the one bit occurs in i[0,...,j]
+            // against whicht simpleRank1(i,j) computes the number of times the one bit occurs in i[0,...,j-1]
          }
       }
       return smallrank;
