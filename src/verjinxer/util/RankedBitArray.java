@@ -120,19 +120,39 @@ public class RankedBitArray extends BitArray {
     *          The ending index, exclusive. 
     * @return The specified subsequence.
     */
-   public int getBits(final int from, final int to) {
-      //TODO use bit manipulation direct on underlying structure without #get() 
-      int diff = to - from;
-      if (diff > 32) {
-         diff = 32;
+   public int getBits(int from, int to) {
+      if (to - from > 32) {
+         to = from + 32;
+      } else if (to <= from) {
+         return 0;
       }
-      int i = 0;
-      for (int j = 0; j < diff; j++) {
-         if (get(j+from) == 1) {
-            i |= 1 << j;
-         }
+
+      final int idFrom = from / 32; // integer to that the position belongs
+      final int idTo = to / 32;
+      final int modFrom = from % 32; // relative position within the integer 'id'
+      final int modTo = to % 32;
+
+      if (idFrom == idTo) { // queried bits lay in one integer
+         assert modFrom < modTo;
+         final int mask = ((1 << (modTo)) - 1) ^ ((1 << (modFrom)) - 1); // (bitmask from 0 to
+                                                                         // modTo-1) XOR (bitmask
+                                                                         // from 0 to modFrom)
+         return (bits[idFrom] & mask) >> (modFrom);
+      } else {
+         // queried bits begin in the end of one integer and end in the beginning of the next
+         // integer
+         assert idTo > idFrom;
+         final int maskFrom = -1 << modFrom; // bitmask from modFrom to 31
+         final int bitStringFrom = (bits[idFrom] & maskFrom) >>> (modFrom); // shift right, queried
+                                                                            // bits must stay in the
+                                                                            // lowest bits.
+
+         final int maskTo = (1 << (modTo)) - 1; // bitmask from 0 do modTo-1
+         final int bitStringTo = (bits[idTo] & maskTo) << (32 - modFrom); // shift left, queried
+                                                                          // bits must stay direct
+                                                                          // left of bitStringFrom
+         return bitStringTo | bitStringFrom; // combine both bitStrings
       }
-      return i;
    }
 
    @Override
