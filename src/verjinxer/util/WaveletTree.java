@@ -4,7 +4,7 @@ package verjinxer.util;
 /**
  * @author Markus Kemmerling
  */
-public class WaveletTree {
+public class WaveletTree implements IWaveletTree {
    private RankedBitArray[] bitVector; // one bit vector for each layer
    private int[][] delimiter; // One bit vector (one layer) is divided in several nodes.
                               // Each node contains a subsequence of the bitVector.
@@ -132,11 +132,7 @@ public class WaveletTree {
       
    }
 
-   /**
-    * Returns the character that exists at the given position within the origin text/sequence.
-    * @param position
-    * @return
-    */
+   @Override
    public byte getCharacter(int position) {
       int node = 0;
       int layer;
@@ -166,17 +162,7 @@ public class WaveletTree {
       throw new IllegalStateException(); // should not happen
    }
    
-   /**
-    * Returns the number of times the given character appears in determined prefix of the origin text/sequence
-    * More specific, it counts the occurrence of the given character in S[0,...,prefixLength-1], where S is the origin text/sequence and
-    * S[0,...,i] describes the subsequence of S from position 0 (inclusive) to i (inclusive).
-    * 
-    * @param character
-    *           Character for the the number of occurrence is calculated.
-    * @param prefixLength
-    *           Length of the prefix of the origin text within the character is counted. 
-    * @return Number of times the given character appears in the given text prefix.
-    */
+   @Override
    public int rank(byte character, int prefixLength) {
       int lowerBound = minCharacter;
       int upperBound = (byte)(maxCharacter+1);

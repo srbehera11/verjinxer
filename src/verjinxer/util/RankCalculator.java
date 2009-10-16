@@ -49,7 +49,7 @@ public class RankCalculator {
    public static byte rank(int bit, int smallblock, int prefix) {
       assert prefix <= 32: String.format("Prefix: %d", prefix);
 //      final int half1 = smallblock & 65535;
-//      final int half2 = smallblock >> 16;
+//      final int half2 = smallblock >>> 16;
 //      final int t = prefix > 16 ? 16 : prefix;
 //      final int u = prefix - t;
 //
@@ -58,7 +58,7 @@ public class RankCalculator {
       if (bit == 0) {
          return (byte) (prefix - rank1);
       } else {
-         return rank1;
+         return (byte) rank1;
       }
    }
 
