@@ -60,9 +60,8 @@ public class WaveletTreeTest {
       {0,2}, // 19
       {-1,3} // chrM
    };
-   
+
    private static WaveletTree[] trees;
-   
 
    @BeforeClass
    public static void setUpBeforeClass() throws Exception {
@@ -80,55 +79,60 @@ public class WaveletTreeTest {
 
    @Test
    public void testGetCharacter() {
-      for(int i = 0; i < sequences.length; i++) {
-         for(int j = 0; j < sequences[i].length; j++) {
-            assertEquals(String.format("Error for i=%d, j=%d", i,j), sequences[i][j], trees[i].getCharacter(j));
+      for (int i = 0; i < sequences.length; i++) {
+         for (int j = 0; j < sequences[i].length; j++) {
+            assertEquals(String.format("Error for i=%d, j=%d", i, j), sequences[i][j],
+                  trees[i].getCharacter(j));
          }
       }
    }
 
    @Test
    public void testRank() {
-      for(int i = 0; i < sequences.length; i++) {
-         for(int j = 1; j <= sequences[i].length; j++) {
-            for (byte b = alphabet[i][0]; b <= alphabet[i][1]; b++ ) {
+      for (int i = 0; i < sequences.length; i++) {
+         for (int j = 1; j <= sequences[i].length; j++) {
+            for (byte b = alphabet[i][0]; b <= alphabet[i][1]; b++) {
                int rank = rank(b, j, sequences[i]);
-               assertEquals(String.format("Error for i=%d, j=%d, b=%d", i,j,b), rank, trees[i].rank(b, j));
+               assertEquals(String.format("Error for i=%d, j=%d, b=%d", i, j, b), rank,
+                     trees[i].rank(b, j));
             }
          }
       }
    }
-   
+
    @Test
    public void testRankOutOfBound() {
-      assertEquals(0, trees[0].rank((byte)0, -1));
-      int rank = rank((byte)0, sequences[0].length, sequences[0]);
-      assertEquals(rank, trees[0].rank((byte)0, sequences[0].length+1));
+      assertEquals(0, trees[0].rank((byte) 0, -1));
+      int rank = rank((byte) 0, sequences[0].length, sequences[0]);
+      assertEquals(rank, trees[0].rank((byte) 0, sequences[0].length + 1));
    }
 
-   @Test(expected=IndexOutOfBoundsException.class)
+   @Test(expected = IndexOutOfBoundsException.class)
    public void testGetCharacterOutOfBound01() {
       trees[0].getCharacter(-1);
    }
 
-   @Test(expected=IndexOutOfBoundsException.class)
+   @Test(expected = IndexOutOfBoundsException.class)
    public void testGetCharacterOutOfBound02() {
       trees[0].getCharacter(sequences[0].length);
-   }        
-   
+   }
+
    /**
-    * Returns the number of times the given character appears in the prefix of the sequence 'sequence[0,...,prefix-1]';
+    * Returns the number of times the given character appears in the prefix of the sequence
+    * 'sequence[0,...,prefix-1]';
+    * 
     * @param character
     *           The character to count.
     * @param prefix
-    *           Length of the prefix of the sequence within the character is counted. 
+    *           Length of the prefix of the sequence within the character is counted.
     * @param sequence
     *           The sequence.
-    * @return Number of times the given character appears within the positions 0 (inclusive) to prefix (exclusive) of this BitArray.
+    * @return Number of times the given character appears within the positions 0 (inclusive) to
+    *         prefix (exclusive) of this BitArray.
     */
    private static int rank(byte character, int prefix, byte[] sequence) {
       int counter = 0;
-      for(int i = 0; i < prefix && i < sequence.length; i++) {
+      for (int i = 0; i < prefix && i < sequence.length; i++) {
          if (sequence[i] == character) {
             counter++;
          }

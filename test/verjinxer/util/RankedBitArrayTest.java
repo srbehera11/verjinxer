@@ -31,7 +31,7 @@ public class RankedBitArrayTest {
       assertEquals(28, rba.getBits(3, 9));
       assertEquals(0, rba.getBits(9, 9));
       assertEquals(0, rba.getBits(9, 5));
-      
+
       rba = new RankedBitArray(48);
       rba.set(30, 1);
       rba.set(31, 1);
@@ -44,18 +44,16 @@ public class RankedBitArrayTest {
       assertEquals(0, rba.getBits(31, 31));
       assertEquals(0, rba.getBits(32, 30));
       assertEquals(-536870912, rba.getBits(1, 38));
-      
-      for(int i = 0; i < 48; i++) {
-         rba.set(i,1);
+
+      for (int i = 0; i < 48; i++) {
+         rba.set(i, 1);
       }
-      
+
       assertEquals(-1, rba.getBits(0, 32));
       assertEquals(-1, rba.getBits(16, 48));
       assertEquals(-1, rba.getBits(16, 50));
       assertEquals(-1, rba.getBits(10, 50));
-      
-      
-      
+
    }
 
 }
