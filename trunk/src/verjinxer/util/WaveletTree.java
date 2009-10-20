@@ -164,6 +164,10 @@ public class WaveletTree implements IWaveletTree {
    
    @Override
    public int rank(byte character, int prefixLength) {
+      if(prefixLength < 0) {
+         return 0;
+      }
+      
       int lowerBound = minCharacter;
       int upperBound = (byte)(maxCharacter+1);
       int node = 0;

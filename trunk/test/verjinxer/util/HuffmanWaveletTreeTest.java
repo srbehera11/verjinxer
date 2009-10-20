@@ -111,6 +111,23 @@ public class HuffmanWaveletTreeTest {
       assertEquals(0, hwt.rank((byte)1, 1));
       hwt.getCharacter(1);
    }
+   
+   @Test
+   public void testRankOutOfBound() {
+      assertEquals(0, trees[0].rank((byte)0, -1));
+      int rank = rank((byte)0, sequences[0].length, sequences[0]);
+      assertEquals(rank, trees[0].rank((byte)0, sequences[0].length+1));
+   }
+
+   @Test(expected=IndexOutOfBoundsException.class)
+   public void testGetCharacterOutOfBound01() {
+      trees[0].getCharacter(-1);
+   }
+
+   @Test(expected=IndexOutOfBoundsException.class)
+   public void testGetCharacterOutOfBound02() {
+      trees[0].getCharacter(sequences[0].length);
+   } 
 
    /**
     * Returns the number of times the given character appears in the prefix of the sequence 'sequence[0,...,prefix-1]';
