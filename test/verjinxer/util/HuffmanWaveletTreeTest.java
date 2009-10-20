@@ -104,6 +104,13 @@ public class HuffmanWaveletTreeTest {
          }
       }
    }
+   
+   @Test(expected=IndexOutOfBoundsException.class)
+   public void testEmpty() {
+      HuffmanWaveletTree hwt = new HuffmanWaveletTree(new byte[]{}, new byte[]{}, new int[]{});
+      assertEquals(0, hwt.rank((byte)1, 1));
+      hwt.getCharacter(1);
+   }
 
    /**
     * Returns the number of times the given character appears in the prefix of the sequence 'sequence[0,...,prefix-1]';

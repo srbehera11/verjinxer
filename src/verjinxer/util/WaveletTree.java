@@ -31,7 +31,7 @@ public class WaveletTree implements IWaveletTree {
     */
    public WaveletTree(byte[] sequence, final byte minCharacter, final byte maxCharacter) {
       this.minCharacter = minCharacter;
-      this.maxCharacter = maxCharacter > minCharacter ? maxCharacter : (byte) (maxCharacter + 1);
+      this.maxCharacter = maxCharacter > minCharacter ? maxCharacter : (byte) (minCharacter + 1);
       // to prevent a tree with depth 0
       assert this.maxCharacter > this.minCharacter : String.format(
             "maxCharacter:%d, minCharacter:%d", this.maxCharacter, this.minCharacter);
