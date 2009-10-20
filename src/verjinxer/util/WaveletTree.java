@@ -139,7 +139,7 @@ public class WaveletTree implements IWaveletTree {
       for(layer = 0; layer < bitVector.length - 1; layer++) {
          final int bit = getBit(layer, node, position);
          // determine position of queried character in child
-         position = getRank(bit, layer, node, position + 1); // rank say, that the queried character is the i-th character in the child
+         position = getRank(bit, layer, node, position + 1); // rank says, that the queried character is the i-th character in the child
          position = position - 1; // the position of the i-th character is i-1 (counting begins at 0)
          
          //determine left or right child

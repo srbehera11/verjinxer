@@ -90,6 +90,29 @@ public class ArrayUtils {
     return false;
   }
   
+  /**
+   * Reverses a subsequence of the given Array in place.
+   * 
+   * @param array
+   *           the array
+   * @param from
+   *           start of the subsequence to reverse (inclusive).
+   * @param to
+   *           end of the subsequence to reverse (exclusive).
+   * @author Markus Kemmerling
+   */
+  public static void reverseArray(final byte[] array, final int from, final int to) {
+     final int half = (to-from)/2;
+     int j = to-1; // points to the element in the back to switch
+     int i = from; // points to the element in the front to switch
+     while(i < half) {
+        final byte tmp = array[i];
+        array[i] = array[j];
+        array[j] = tmp;
+        i++;
+        j--;
+     }
+  }
   
   /**
    * Reverses a prefix of an int array in place.

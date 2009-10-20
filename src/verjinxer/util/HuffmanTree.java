@@ -29,6 +29,10 @@ public class HuffmanTree {
       this.right = null;
    }
    
+   public boolean contains(byte character) {
+      return Arrays.binarySearch(characters, character) >= 0;
+   }
+   
    public byte[] getCharacters() {
       return characters;
    }
@@ -45,6 +49,10 @@ public class HuffmanTree {
       this.frequency = frequency;
    }
    
+   public boolean hasLeft() {
+      return left != null;
+   }
+   
    public HuffmanTree getLeft() {
       return left;
    }
@@ -53,12 +61,24 @@ public class HuffmanTree {
       this.left = left;
    }
    
+   public boolean hasRight() {
+      return right != null;
+   }
+   
    public HuffmanTree getRight() {
       return right;
    }
    
    public void setRight(HuffmanTree right) {
       this.right = right;
+   }
+   
+   public boolean isLeaf() {
+      return characters.length == 1;
+   }
+   
+   public boolean isInnenNode() {
+      return !isLeaf();
    }
    
    public static HuffmanTree buildHuffmanTree(byte[] characters, int[] frequencies) {
