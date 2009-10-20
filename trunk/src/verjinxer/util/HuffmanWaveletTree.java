@@ -4,15 +4,15 @@ package verjinxer.util;
  * @author Markus Kemmerling
  */
 public class HuffmanWaveletTree implements IWaveletTree {
-   
+
    private final HuffmanTree tree;
    private final RankedBitArray bitVector;
    private final HuffmanWaveletTree left, right;
-   
+
    public HuffmanWaveletTree(byte[] sequence, byte[] characters, int[] frequencies) {
-      this(sequence,HuffmanTree.buildHuffmanTree(characters, frequencies));
+      this(sequence, HuffmanTree.buildHuffmanTree(characters, frequencies));
    }
-   
+
    public HuffmanWaveletTree(byte[] sequence, final HuffmanTree tree) {
       this.tree = tree;
       if (tree.isLeaf() || tree.isEmpty()) {
@@ -25,17 +25,19 @@ public class HuffmanWaveletTree implements IWaveletTree {
          assert tree.hasLeft();
          left = new HuffmanWaveletTree(sequenceNew, sequence, 0, delimiter, tree.getLeft());
          assert tree.hasRight();
-         right = new HuffmanWaveletTree(sequenceNew, sequence, delimiter, sequence.length, tree.getRight());
+         right = new HuffmanWaveletTree(sequenceNew, sequence, delimiter, sequence.length,
+               tree.getRight());
       }
    }
 
-   private HuffmanWaveletTree(byte[] sequenceOld, byte[] sequenceNew, int from, int to, final HuffmanTree tree) {
+   private HuffmanWaveletTree(byte[] sequenceOld, byte[] sequenceNew, int from, int to,
+         final HuffmanTree tree) {
       this.tree = tree;
       if (tree.isLeaf() || tree.isEmpty()) {
          bitVector = null;
          left = right = null;
       } else {
-         bitVector = new RankedBitArray(to-from);
+         bitVector = new RankedBitArray(to - from);
          final int delimiter = fillBitVector(sequenceOld, sequenceNew, from, to);
          assert tree.hasLeft();
          left = new HuffmanWaveletTree(sequenceNew, sequenceOld, from, delimiter, tree.getLeft());
@@ -48,9 +50,11 @@ public class HuffmanWaveletTree implements IWaveletTree {
       // requires that the constructor for bitVector was invoked with the right parameter
       int posv = 0; // position in bitVector
       int posOld = from; // position in sequenceOld
-      int posNewLeft = from; // position in sequenceNew to stores characters belonging into the left subtree
-      int posNewRight = to-1; // position in sequenceNew to stores characters belonging into the right subtree
-      
+      int posNewLeft = from; // position in sequenceNew to stores characters belonging into the left
+                             // subtree
+      int posNewRight = to - 1; // position in sequenceNew to stores characters belonging into the
+                                // right subtree
+
       while (posOld < to) {
          if (tree.getLeft().contains(sequenceOld[posOld])) {
             // character contains in the left subtree
@@ -69,14 +73,14 @@ public class HuffmanWaveletTree implements IWaveletTree {
          posv++;
          posOld++;
       }
-      assert posNewLeft == posNewRight+1;
+      assert posNewLeft == posNewRight + 1;
       ArrayUtils.reverseArray(sequenceNew, posNewLeft, to);
       return posNewLeft;
    }
 
    @Override
    public byte getCharacter(int position) {
-      if(bitVector == null) {
+      if (bitVector == null) {
          // this is a leaf
          return tree.getCharacters()[0];
       } else {
@@ -85,7 +89,7 @@ public class HuffmanWaveletTree implements IWaveletTree {
          // determine position of queried character in child
          // rank says, that the queried character is the i-th character in the child
          // the position of the i-th character is i-1 (counting begins at 0)
-         position = bitVector.rank(bit, position+1) - 1;
+         position = bitVector.rank(bit, position + 1) - 1;
          if (bit == 0) {
             return left.getCharacter(position);
          } else {
@@ -96,7 +100,7 @@ public class HuffmanWaveletTree implements IWaveletTree {
 
    @Override
    public int rank(byte character, int prefixLength) {
-      if(tree.isEmpty()) {
+      if (tree.isEmpty()) {
          return 0;
       } else if (bitVector == null) {
          // this is a leaf
@@ -114,5 +118,5 @@ public class HuffmanWaveletTree implements IWaveletTree {
          }
       }
    }
-   
+
 }
