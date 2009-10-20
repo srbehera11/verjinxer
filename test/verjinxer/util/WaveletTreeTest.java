@@ -82,9 +82,6 @@ public class WaveletTreeTest {
    public void testGetCharacter() {
       for(int i = 0; i < sequences.length; i++) {
          for(int j = 0; j < sequences[i].length; j++) {
-//            if (i == 0 && j == 7 ) {
-//               System.out.println("");
-//            }
             assertEquals(String.format("Error for i=%d, j=%d", i,j), sequences[i][j], trees[i].getCharacter(j));
          }
       }
@@ -95,18 +92,30 @@ public class WaveletTreeTest {
       for(int i = 0; i < sequences.length; i++) {
          for(int j = 1; j <= sequences[i].length; j++) {
             for (byte b = alphabet[i][0]; b <= alphabet[i][1]; b++ ) {
-//               if (i ==14 && j == 1 && b == 0) {
-//                  System.out.println("");
-//               }
-               
-               
                int rank = rank(b, j, sequences[i]);
                assertEquals(String.format("Error for i=%d, j=%d, b=%d", i,j,b), rank, trees[i].rank(b, j));
             }
          }
       }
    }
+   
+   @Test
+   public void testRankOutOfBound() {
+      assertEquals(0, trees[0].rank((byte)0, -1));
+      int rank = rank((byte)0, sequences[0].length, sequences[0]);
+      assertEquals(rank, trees[0].rank((byte)0, sequences[0].length+1));
+   }
 
+   @Test(expected=IndexOutOfBoundsException.class)
+   public void testGetCharacterOutOfBound01() {
+      trees[0].getCharacter(-1);
+   }
+
+   @Test(expected=IndexOutOfBoundsException.class)
+   public void testGetCharacterOutOfBound02() {
+      trees[0].getCharacter(sequences[0].length);
+   }        
+   
    /**
     * Returns the number of times the given character appears in the prefix of the sequence 'sequence[0,...,prefix-1]';
     * @param character

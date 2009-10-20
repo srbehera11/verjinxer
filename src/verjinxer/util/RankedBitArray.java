@@ -81,7 +81,15 @@ public class RankedBitArray extends BitArray {
     *           End of the prefix (exclusive) within the occurrence are returned.
     * @return Number of times the given bit appears within the positions 0 (inclusive) to pos (exclusive) of this BitArray.
     */
-   public int rank(int bit, int pos) {   
+   public int rank(int bit, int pos) {
+      if(pos < 0) {
+         return 0;
+      }
+      
+      if(pos > size) {
+         pos = size;
+      }
+      
       if(size < 2) {
          if (size == 0 || pos == 0) {
             return 0;
