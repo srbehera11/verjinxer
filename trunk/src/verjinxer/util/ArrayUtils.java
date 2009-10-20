@@ -102,7 +102,7 @@ public class ArrayUtils {
    * @author Markus Kemmerling
    */
   public static void reverseArray(final byte[] array, final int from, final int to) {
-     final int half = (to-from)/2;
+     final int half = (to+from)/2;
      int j = to-1; // points to the element in the back to switch
      int i = from; // points to the element in the front to switch
      while(i < half) {

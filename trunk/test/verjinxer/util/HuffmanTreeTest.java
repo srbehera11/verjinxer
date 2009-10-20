@@ -68,4 +68,37 @@ public class HuffmanTreeTest {
       assertArrayEquals(new byte[]{3}, htr.getRight().getCharacters());
    }
 
+   @Test
+   public void testBuildHuffmanTree03() {
+      byte[] characters = {0,1,2};
+      int[] frequencies = {4,4,3};
+      
+      HuffmanTree ht = HuffmanTree.buildHuffmanTree(characters, frequencies);
+      
+      assertEquals(11, ht.getFrequency());
+      assertArrayEquals(new byte[]{0,1,2}, ht.getCharacters());
+      
+      HuffmanTree htl = ht.getLeft();
+      assertEquals(4, htl.getFrequency());
+      assertArrayEquals(new byte[]{1}, htl.getCharacters());
+      
+      HuffmanTree htr = ht.getRight();
+      assertEquals(7, htr.getFrequency());
+      assertArrayEquals(new byte[]{0,2}, htr.getCharacters());
+      assertEquals(3, htr.getLeft().getFrequency());
+      assertArrayEquals(new byte[]{2}, htr.getLeft().getCharacters());
+      assertEquals(4, htr.getRight().getFrequency());
+      assertArrayEquals(new byte[]{0}, htr.getRight().getCharacters());
+   }
+   
+   @Test
+   public void testBuildEmpty() {
+      byte[] characters = {};
+      int[] frequencies = {};
+      HuffmanTree ht = HuffmanTree.buildHuffmanTree(characters, frequencies);
+      assertArrayEquals(new byte[]{}, ht.getCharacters() );
+      assertTrue(ht.isEmpty());
+      assertFalse(ht.contains((byte)0));
+   }
+
 }

@@ -78,10 +78,18 @@ public class HuffmanTree {
    }
    
    public boolean isInnenNode() {
-      return !isLeaf();
+      return characters.length > 1;
+   }
+   
+   public boolean isEmpty() {
+      return characters.length == 0;
    }
    
    public static HuffmanTree buildHuffmanTree(byte[] characters, int[] frequencies) {
+      if(characters == null || characters.length == 0) {
+         return new HuffmanTree(new byte[]{}, 0);
+      }
+      
       PriorityQueue<HuffmanTree> queue = new PriorityQueue<HuffmanTree>(characters.length, new HuffmanTreeComparator());
       
       for(int i = 0; i < characters.length; i++) {

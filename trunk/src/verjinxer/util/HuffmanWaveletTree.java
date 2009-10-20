@@ -15,7 +15,7 @@ public class HuffmanWaveletTree implements IWaveletTree {
    
    public HuffmanWaveletTree(byte[] sequence, final HuffmanTree tree) {
       this.tree = tree;
-      if (tree.isLeaf()) {
+      if (tree.isLeaf() || tree.isEmpty()) {
          bitVector = null;
          left = right = null;
       } else {
@@ -31,7 +31,7 @@ public class HuffmanWaveletTree implements IWaveletTree {
 
    private HuffmanWaveletTree(byte[] sequenceOld, byte[] sequenceNew, int from, int to, final HuffmanTree tree) {
       this.tree = tree;
-      if (tree.isLeaf()) {
+      if (tree.isLeaf() || tree.isEmpty()) {
          bitVector = null;
          left = right = null;
       } else {
@@ -96,7 +96,9 @@ public class HuffmanWaveletTree implements IWaveletTree {
 
    @Override
    public int rank(byte character, int prefixLength) {
-      if (bitVector == null) {
+      if(tree.isEmpty()) {
+         return 0;
+      } else if (bitVector == null) {
          // this is a leaf
          return prefixLength;
       } else {
@@ -107,7 +109,7 @@ public class HuffmanWaveletTree implements IWaveletTree {
             return left.rank(character, prefixLength);
          } else {
             // character belongs to the right subtree
-            prefixLength = bitVector.rank(0, prefixLength);
+            prefixLength = bitVector.rank(1, prefixLength);
             return right.rank(character, prefixLength);
          }
       }
