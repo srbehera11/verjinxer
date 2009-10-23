@@ -86,8 +86,6 @@ public class WaveletTree implements IWaveletTree {
             delimiter[i + 1][2 * n + 2] = delimiter[i][n + 1];
          }
 
-         // bitVector[i].preRankCalculation();
-
          byte[] tmp = sequence;
          sequence = buffer;
          buffer = tmp;
@@ -119,8 +117,6 @@ public class WaveletTree implements IWaveletTree {
                }
             }
          }
-
-         // bitVector[i].preRankCalculation();
       }
 
       buildNodeRank1Table();
@@ -267,12 +263,6 @@ public class WaveletTree implements IWaveletTree {
          final int shift = lowerBound * -1;
          final int delimiter = (lowerBound + shift + upperBound + shift - 1) / 2;
          return delimiter - shift;
-         // final int delimiter = (lowerBound + upperBound - 1) / 2;
-         // if ( (upperBound - lowerBound)%2 != 0) {
-         // return delimiter;
-         // } else {
-         // return delimiter -1;
-         // }
       }
    }
 

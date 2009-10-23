@@ -1,18 +1,49 @@
 package verjinxer.util;
 
 /**
+ * Huffman shaped Wavelet Tree
+ * 
  * @author Markus Kemmerling
  */
 public class HuffmanWaveletTree implements IWaveletTree {
 
+   /**
+    * The underlying Huffman Tree determining where to find a character.
+    */
    private final HuffmanTree tree;
+
+   /**
+    * Bit Vector determining if a character at position 'i' is in the left (0) or right (1) subtree.
+    */
    private final RankedBitArray bitVector;
+
+   /**
+    * The left and right subtree.
+    */
    private final HuffmanWaveletTree left, right;
 
+   /**
+    * Creates a Huffman shaped Wavelet Tree for the given sequence.
+    * 
+    * @param sequence
+    *           Sequence for that the tree is created.
+    * @param characters
+    *           The characters of the sequence.
+    * @param frequencies
+    *           How often each character occurs in the sequence.
+    */
    public HuffmanWaveletTree(byte[] sequence, byte[] characters, int[] frequencies) {
       this(sequence, HuffmanTree.buildHuffmanTree(characters, frequencies));
    }
 
+   /**
+    * Creates a Huffman shaped Wavelet Tree for the given sequence.
+    * 
+    * @param sequence
+    *           Sequence for that the tree is created.
+    * @param tree
+    *           Huffman Tree for the sequence determining the mapping between nodes and characters.
+    */
    public HuffmanWaveletTree(byte[] sequence, final HuffmanTree tree) {
       this.tree = tree;
       if (tree.isLeaf() || tree.isEmpty()) {
@@ -30,6 +61,23 @@ public class HuffmanWaveletTree implements IWaveletTree {
       }
    }
 
+   /**
+    * Creates a Huffman shaped Wavelet Tree for a subsequence of sequenceOld. More precisely the
+    * tree is created for sequenceOld[from, ..., to-1].
+    * 
+    * @param sequenceOld
+    *           The Huffman shaped Wavelet Tree is created for a part of this sequence.
+    * @param sequenceNew
+    *           A buffer for calculations of the subtrees. It is only changed within the range
+    *           sequenceNew[from, ..., to-1]. The rest will remain untouched.
+    * @param from
+    *           The beginning index of the subsequence (inclusive).
+    * @param to
+    *           The ending index of the subsequence (exclusive),
+    * @param tree
+    *           Huffman Tree for the complete sequenceOld determining the mapping between nodes and
+    *           characters.
+    */
    private HuffmanWaveletTree(byte[] sequenceOld, byte[] sequenceNew, int from, int to,
          final HuffmanTree tree) {
       this.tree = tree;
@@ -46,14 +94,32 @@ public class HuffmanWaveletTree implements IWaveletTree {
       }
    }
 
+   /**
+    * Constructs {{@link #bitVector} for a subsequence of sequenceOld. More precisely the vector is
+    * constructed for sequenceOld[from, ..., to-1].
+    * 
+    * @param sequenceOld
+    *           The vector will be constructed for a part of this sequence.
+    * @param sequenceNew
+    *           A buffer for calculations of the subtrees. It is only changed within the range
+    *           sequenceNew[from, ..., to-1]. The rest will remain untouched.
+    * @param from
+    *           The beginning index of the subsequence (inclusive).
+    * @param to
+    *           The ending index of the subsequence (exclusive),
+    * @return The delimiting postion in sequenceNew where the left subtree ends and the right
+    *         subtree begins. More precisely, let 'i' be the returned value, the left subtree will
+    *         be build for sequenceNew[from, ..., i-1] and the right subtree forsequenceNew[i, ...,
+    *         to-1].
+    */
    private int fillBitVector(byte[] sequenceOld, byte[] sequenceNew, int from, int to) {
       // requires that the constructor for bitVector was invoked with the right parameter
       int posv = 0; // position in bitVector
       int posOld = from; // position in sequenceOld
       int posNewLeft = from; // position in sequenceNew to stores characters belonging into the left
-                             // subtree
+      // subtree
       int posNewRight = to - 1; // position in sequenceNew to stores characters belonging into the
-                                // right subtree
+      // right subtree
 
       while (posOld < to) {
          if (tree.getLeft().contains(sequenceOld[posOld])) {
