@@ -153,7 +153,11 @@ public class QGramMatcher {
       final File seqfile = runs ? project.makeFile(FileTypes.RUNSEQ) : project.makeFile(FileTypes.SEQ);
       final File sspfile = project.makeFile(FileTypes.SSP);
 
-      t = new HugeByteArray(tproject.getLongProperty("Length"));
+      if (runs) {
+         t = new HugeByteArray(tproject.getLongProperty("RunseqLength"));
+      } else {
+         t = new HugeByteArray(tproject.getLongProperty("Length"));
+      }
       t.read(tfile, 0, -1, 0);
       tssp = g.slurpLongArray(tsspfile);
       final ArrayList<String> tdesc = Globals.slurpTextFile(tproject.makeFile(FileTypes.DESC), tssp.length);
