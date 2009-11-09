@@ -528,6 +528,8 @@ public class Translater {
       assert (4 * run == r2p.length() - 4) : String.format(
             "n=%d, runs=%d, rseq=%d. 4*run=%d, run2pos=%d, pos2run=%d", n, run, rseq.length(),
             4 * run, r2p.length(), p2r.position());
+      
+      project.setProperty("RunseqLength", rseq.length());
       return run;
    }
 
@@ -578,6 +580,8 @@ public class Translater {
       assert 4 * run == r2p.length() - 4 : String.format(
             "n=%d, runs=%d, rseq=%d. 4*run=%d, run2pos=%d, pos2run=%d", n, run, rseq.length(),
             4 * run, r2p.length(), p2r.length());
+      
+      project.setProperty("RunseqLength", rseq.length());
       return run;
    }
 }
