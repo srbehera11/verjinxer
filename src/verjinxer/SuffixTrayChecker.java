@@ -265,7 +265,7 @@ public class SuffixTrayChecker {
 
    /**
     * Compares two characters of the associated text/sequence. "Symbols" are compared according to their order in the
-    * alphabet map. "Special" characters (wildcards, separators) are compared by position.
+    * alphabet map. "Special" characters (wildcards, separators, endofline) are compared by position.
     * 
     * @param i
     *           Position of first suffix.

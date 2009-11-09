@@ -176,7 +176,9 @@ public class NonUniqueProbeDesigner {
     }
     log.info("  reading finished after %.1f sec", timer.tocs());
     log.info("nonunique: starting probe selection...");
-    n = s.length;
+    assert alphabet.isEndOfLine(s[s.length - 1]);
+    n = s.length - 1; // last character in s special 'end of line' character that does not need to
+                      // be considered. So n points to the fist position not to consider.
     m = ssp.length;
         
     

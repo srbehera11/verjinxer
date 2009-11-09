@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.HugeByteArray;
 
-// TODO add method size()
-
 /**
  * 
  * @author Sven Rahmann
@@ -33,6 +31,7 @@ public class Alphabet {
    static final int WHITESPACE = 2;
    static final int WILDCARD = 4;
    static final int SEPARATOR = 8;
+   static final int ENDOFLINE = 16;
 
    private String[] initstrings;
    private final byte[] myimage;
@@ -44,6 +43,7 @@ public class Alphabet {
    private static int mywhitespace = 128 + WHITESPACE;
    private static int mywildcard = 128 + WILDCARD;
    private static int myseparator = 128 + SEPARATOR;
+   private static int myendofline = 128 + ENDOFLINE;
 
    private Alphabet() {
       myimage = new byte[256];
@@ -57,7 +57,8 @@ public class Alphabet {
     * for how to do this, e.g., which strings create the DNA() map, etc.
     * 
     * If a line starts with '##', it is a control command ('##symbols', '##wildcards',
-    * '##separators', '##whitespaces') and determines, what kind of characters are given followed.<br>
+    * '##separators', '##whitespaces', '##endofline') and determines, what kind of characters are
+    * given followed.<br>
     * If '##symbols' ends with an extra number (e.g. '##symbols:0'), than the characters in the next
     * line are mapped to that number. For each new line, the number mapped to will be incremented.<br>
     * If any other command ends with an extra number, the number will be the special code for the
@@ -103,6 +104,10 @@ public class Alphabet {
                mode = SEPARATOR;
                modeimage[ii] = mode;
                myseparator = i;
+            } else if (ll.startsWith("endofline")) {
+               mode = ENDOFLINE;
+               modeimage[ii] = mode;
+               myendofline = i;
             } else if (ll.startsWith("whitespace")) {
                mode = WHITESPACE;
                modeimage[ii] = mode;
@@ -119,7 +124,8 @@ public class Alphabet {
             int ii = (i < 0) ? i + 256 : i;
             byte[] characters = l.getBytes();
             if (characters.length == 0) {
-               modeimage[i++] = mode;
+               modeimage[ii] = mode;
+               i++;
                continue;
             }
             mypreimage[ii] = characters[0];
@@ -192,23 +198,67 @@ public class Alphabet {
       return m == SEPARATOR;
    }
 
+   public final boolean isEndOfLine(final int i) {
+      byte m = modeimage[(i < 0) ? (i + 256) : i];
+      return m == ENDOFLINE;
+   }
+
    public final boolean isSpecial(final int i) {
       byte m = modeimage[(i < 0) ? (i + 256) : i];
-      return m == WILDCARD || m == SEPARATOR;
+      return m == WILDCARD || m == SEPARATOR || m == ENDOFLINE;
    }
 
    public final int smallestSymbol() {
-      for (int i = 0; i < 256; i++)
+      for (int i = -128; i < 128; i++)
          if (isSymbol(i))
             return i;
       return -1;
    }
 
    public final int largestSymbol() {
-      for (int i = 255; i >= 0; i--)
+      for (int i = 127; i >= -128; i--)
          if (isSymbol(i))
             return i;
       return -1;
+   }
+
+   /**
+    * @return The smallest Character belonging to this alphabet or 'Integer.MIN_VALUE' if no valid
+    *         character exists.
+    * @author Markus Kemmerling
+    */
+   public final int smallestCharacter() {
+      for (int i = -128; i < 128; i++)
+         if (isValid(i))
+            return i;
+      return Integer.MIN_VALUE;
+   }
+
+   /**
+    * @return The largest Character belonging to this alphabet or 'Integer.MIN_VALUE' if no valid
+    *         character exists.
+    * @author Markus Kemmerling
+    */
+   public final int largestCharacter() {
+      for (int i = 127; i >= -128; i--)
+         if (isValid(i))
+            return i;
+      return Integer.MIN_VALUE;
+   }
+
+   /**
+    * @return Number of Symbols (that means no special characters) belonging to this alphabet.
+    * @author Markus Kemmerling
+    */
+   public final int size() {
+      final int smallest = smallestSymbol();
+      final int largest = largestSymbol();
+
+      if (smallest == Integer.MIN_VALUE || largest == Integer.MIN_VALUE) {
+         return 0;
+      } else {
+         return largest - smallest + 1;
+      }
    }
 
    /** ****************** "show" methods ********************************** */
@@ -303,6 +353,12 @@ public class Alphabet {
       return (byte) mywildcard;
    }
 
+   public final byte codeEndOfLine() throws InvalidSymbolException {
+      if (myendofline < -128 || myendofline > 127)
+         throw new InvalidSymbolException();
+      return (byte) myendofline;
+   }
+
    /**
     * Computes the pre-image of a given code.
     * 
@@ -339,10 +395,10 @@ public class Alphabet {
          s.append(preimage(a[offset + i]));
       return s.toString();
    }
-   
+
    /**
-    * Computes the pre-image of an array of given codes.
-    * Equivalent to preimage(a, 0, a.length)
+    * Computes the pre-image of an array of given codes. Equivalent to preimage(a, 0, a.length)
+    * 
     * @param a
     *           the array of code values
     * @param offset
@@ -356,7 +412,7 @@ public class Alphabet {
    public String preimage(byte[] a) throws InvalidSymbolException {
       return preimage(a, 0, a.length);
    }
-   
+
    /**
     * Compute the pre-image of an array of given codes
     * 
@@ -370,10 +426,11 @@ public class Alphabet {
     * @throws verjinxer.sequenceanalysis.InvalidSymbolException
     *            if there is a problem
     */
-   public final String preimage(HugeByteArray a, long offset, int len) throws InvalidSymbolException {
+   public final String preimage(HugeByteArray a, long offset, int len)
+         throws InvalidSymbolException {
       StringBuilder s = new StringBuilder(len);
       for (int i = 0; i < len; i++)
-         s.append(preimage( a.get(offset + i) ));
+         s.append(preimage(a.get(offset + i)));
       return s.toString();
    }
 
@@ -474,14 +531,14 @@ public class Alphabet {
    }
 
    /** ***************** special alphabet maps ***************** */
-   
+
    /**
     * @return the color space alphabet
     * @author Markus Kemmerling
     */
    public static final Alphabet CS() {
-      return new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "##wildcards", ".ACGT4NUacgtnu",
-            "##wildcards", "#", "##separators:-1" });
+      return new Alphabet(new String[] { "##symbols:0", "0", "1", "2", "3", "##wildcards",
+            ".ACGT4NUacgtnu", "##wildcards", "#", "##separators:-1", "##endofline:-2" });
    }
 
    /**
@@ -489,7 +546,7 @@ public class Alphabet {
     */
    public static final Alphabet DNA() {
       return new Alphabet(new String[] { "##symbols:0", "Aa", "Cc", "Gg", "TtUu", "##wildcards",
-            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1" });
+            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1", "##endofline:-2" });
    }
 
    /**
@@ -498,7 +555,8 @@ public class Alphabet {
     */
    public static final Alphabet maskedDNA() {
       return new Alphabet(new String[] { "##symbols:0", "A", "C", "G", "TU", "##wildcards",
-            "XxNnWwRrKkYySsMmBbHhDdVvacgtu", "##wildcards", "#", "##separators:-1" });
+            "XxNnWwRrKkYySsMmBbHhDdVvacgtu", "##wildcards", "#", "##separators:-1",
+            "##endofline:-2" });
    }
 
    /**
@@ -506,7 +564,7 @@ public class Alphabet {
     */
    public static final Alphabet cDNA() {
       return new Alphabet(new String[] { "##symbols:0", "TtUu", "Gg", "Cc", "Aa", "##wildcards",
-            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1" });
+            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1", "##endofline:-2" });
    }
 
    /**
@@ -514,7 +572,8 @@ public class Alphabet {
     */
    public static final Alphabet maskedcDNA() {
       return new Alphabet(new String[] { "##symbols:0", "TU", "G", "C", "A", "##wildcards",
-            "XxNnWwRrKkYySsMmBbHhDdVvtugca", "##wildcards", "#", "##separators:-1" });
+            "XxNnWwRrKkYySsMmBbHhDdVvtugca", "##wildcards", "#", "##separators:-1",
+            "##endofline:-2" });
    }
 
    /**
@@ -522,7 +581,7 @@ public class Alphabet {
     */
    public static final Alphabet biDNA() {
       return new Alphabet(new String[] { "##symbols:0", "Aa", "Zz", "Gg", "CcTtUu", "##wildcards",
-            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1" });
+            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1", "##endofline:-2" });
    }
 
    /**
@@ -530,7 +589,7 @@ public class Alphabet {
     */
    public static final Alphabet cbiDNA() {
       return new Alphabet(new String[] { "##symbols:0", "AaGg", "Cc", "Zz", "TtUu", "##wildcards",
-            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1" });
+            "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1", "##endofline:-2" });
    }
 
    /**
@@ -538,7 +597,7 @@ public class Alphabet {
     */
    public static final Alphabet NUMERIC() {
       return new Alphabet(new String[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-            "##separators:-1" });
+            "##separators:-1", "##endofline:-2" });
    }
 
    /**
@@ -547,7 +606,7 @@ public class Alphabet {
    public static final Alphabet Protein() {
       return new Alphabet(new String[] { "##symbols:0", "Aa", "Cc", "Dd", "Ee", "Ff", "Gg", "Hh",
             "Ii", "Kk", "Ll", "Mm", "Nn", "Pp", "Qq", "Rr", "Ss", "Tt", "Vv", "Ww", "Yy",
-            "##wildcards", "BbXxZz", "##wildcards", "#", "##separators:-1" });
+            "##wildcards", "BbXxZz", "##wildcards", "#", "##separators:-1", "##endofline:-2" });
    }
 
    /**

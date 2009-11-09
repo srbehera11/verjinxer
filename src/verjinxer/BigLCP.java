@@ -190,7 +190,7 @@ public class BigLCP {
       for (r = 0, p = suffixdll.getFirstPos(chi); p != -1; p = suffixdll.getLexNextPos(p), r++) {
          h = buffer.get(p);
          assert (h >= 0);
-         if ((dolcp & 8) != 0) {
+         if ((dolcp & 8) != 0) { // TODO this bit is never set in dolcp, so we never write to f8.
             f8.writeLong(h);
          }
          if ((dolcp & 4) != 0) {

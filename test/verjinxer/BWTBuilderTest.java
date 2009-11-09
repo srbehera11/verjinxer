@@ -20,7 +20,7 @@ import verjinxer.sequenceanalysis.SuffixXorDLL;
 public class BWTBuilderTest {
    
    final static Alphabet alphabet = new Alphabet(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9",
-   "##separators:0" });
+   "##endofline:0" });
 
    @Test
    public void testBuildDet() {

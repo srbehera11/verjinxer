@@ -134,15 +134,6 @@ public class Cutter {
     ArrayList<Integer> matchPositions = new ArrayList<Integer>(10*1024*1024); // 10M positions initially
     matchPositions.add(0); totalMatches++;
 
-    long[] ssp = null;
-    if (!opt.isGiven("nossp") || opt.isGiven("i")) {
-      ssp = g.slurpLongArray(project.makeFile(FileTypes.SSP));
-    }
-    if (!opt.isGiven("nossp")) {
-      for (long i: ssp) { matchPositions.add((int)i); matchPositions.add((int)(i+1)); }
-      log.info("cut: sequence separators cut 2*%d = %d times%n", ssp.length, 2*ssp.length);
-      totalMatches += 2*ssp.length;
-    }
 
     
     // Read sequence
@@ -155,6 +146,19 @@ public class Cutter {
     }
     final int fsize = in.capacity();
     log.info("cut: sequence file '%s' has length %d%n", project.makeFile(FileTypes.SEQ), fsize);
+   
+    long[] ssp = null;
+    if (!opt.isGiven("nossp") || opt.isGiven("i")) {
+      ssp = g.slurpLongArray(project.makeFile(FileTypes.SSP));
+    }
+    if (!opt.isGiven("nossp")) {
+      for (long i: ssp) { matchPositions.add((int)i); matchPositions.add((int)(i+1)); }
+      // handle 'end of line' value like separator:
+      assert alphabet.isEndOfLine(in.get(fsize-1));
+      matchPositions.add(fsize-1); matchPositions.add(fsize);
+      log.info("cut: sequence separators and end of line cut 2*%d = %d times%n", ssp.length+1, 2*ssp.length+2);
+      totalMatches += 2*ssp.length+2;
+    }
     
     for (int p=0; p<numpat; p++) {
       int numMatches = 0;

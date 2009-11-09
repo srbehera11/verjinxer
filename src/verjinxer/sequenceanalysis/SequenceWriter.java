@@ -137,6 +137,11 @@ public class SequenceWriter implements ISequenceCreation {
       this.separatorPositions.add(ssp);
    }
 
+   @Override
+   public long appendCharacter(byte character) throws IOException {
+      return sequenceArrayFile.writeArray(new byte[]{character});
+   }
+
    /**
     * @return Accumulated length of all sequences (length of .seq file).
     */

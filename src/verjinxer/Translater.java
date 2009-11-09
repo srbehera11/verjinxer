@@ -215,6 +215,14 @@ public class Translater {
             break;
          }
       }
+      try {
+         // write 'end of line'
+         sequence.appendCharacter(Alphabet.CS().codeEndOfLine());
+      } catch (InvalidSymbolException ex) {
+         log.error("translate: %s", ex);
+      } catch (IOException ex) {
+         log.error("translate: %s", ex);
+      }
       // close file
       try {
          f.close();
@@ -326,6 +334,14 @@ public class Translater {
             break;
          }
       }
+      try {
+         // write 'end of line'
+         sequence.appendCharacter(alphabet.codeEndOfLine());
+      } catch (InvalidSymbolException ex) {
+         log.error("translate: %s", ex);
+      } catch (IOException ex) {
+         log.error("translate: %s", ex);
+      }
       // close file
       try {
          f.close();
@@ -375,6 +391,14 @@ public class Translater {
             break;
          }
       }
+      try {
+         // write 'end of line'
+         sequence.appendCharacter(Alphabet.DNA().codeEndOfLine());
+      } catch (InvalidSymbolException ex) {
+         log.error("translate: %s", ex);
+      } catch (IOException ex) {
+         log.error("translate: %s", ex);
+      }
       // close file
       try {
          f.close();
@@ -416,8 +440,10 @@ public class Translater {
                throw new IOException(ex);
             }
          }
+         //TODO writes this really the whole text or only the last line???
          lastbyte = out.addSequence(tr);
          out.addInfo(file.getName(), len, (int) (lastbyte - 1));
+         //TODO 'EndOfLine' must be appended
       } catch (IOException ex) {
          log.error("translate: error translating '%s': %s", file, ex);
          System.exit(1);

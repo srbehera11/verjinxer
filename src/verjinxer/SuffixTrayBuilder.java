@@ -44,7 +44,7 @@ public class SuffixTrayBuilder {
     */
    public SuffixTrayBuilder(Sequences sequence, Alphabet alphabet) {
       this.n = (int) sequence.length();
-      assert (alphabet.isSeparator(sequence.array()[n - 1]));
+      assert (alphabet.isEndOfLine(sequence.array()[n - 1]));
       this.sequence = sequence;
       this.alphabet = alphabet;
    }

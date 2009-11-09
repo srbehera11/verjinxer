@@ -179,7 +179,8 @@ public class Sequences implements ISequenceCreation {
    }
 
    /**
-    * @return Accumulated length of all sequences.
+    * @return Accumulated length of all sequences.<br>
+    *         Note this include the separators and the 'end of line' value.
     */
    public long length() {
       return sequence.length;
@@ -188,7 +189,9 @@ public class Sequences implements ISequenceCreation {
    }
 
    /**
-    * @return The underlying array for the concatenated sequences.
+    * @return The underlying array for the concatenated sequences.<br>
+    *         Note that there is a separator after each sequence and the last value in the array is
+    *         a special 'end of line' value.
     */
    public byte[] array() {
       return sequence;
@@ -319,6 +322,14 @@ public class Sequences implements ISequenceCreation {
       final int end = sequence.length;
       sequence = Arrays.copyOf(sequence, sequence.length + buffer.remaining());
       buffer.get(sequence, end, buffer.remaining());
+      return sequence.length;
+   }
+
+   @Override
+   public long appendCharacter(byte character) throws IOException {
+      final int end = sequence.length;
+      sequence = Arrays.copyOf(sequence, sequence.length + 1);
+      sequence[end] = character;
       return sequence.length;
    }
 

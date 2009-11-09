@@ -53,7 +53,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte");
       log.info("  -c, --check           additionally check index integrity");
       log.info("  -C, --onlycheck       ONLY check index integrity");
-      log.info("  -b, --bigsuffix       build a 64-bit suffix tray (not yet supported)");
+      log.info("  -b, --bigsuffix       build a 64-bit suffix tray");
    }
 
    @Override
@@ -154,13 +154,13 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       IBigSuffixDLL bigSuffixDLL = null;
       try {
          if (bigsuffix) {
-            assert(alphabet.isSeparator(bigSequence.get(n-1))) : "last character in text needs to be a separator";
+            assert(alphabet.isEndOfLine(bigSequence.get(n-1))) : "last character in text needs to be a 'end of line' value";
             BigSuffixTrayBuilder builder = new BigSuffixTrayBuilder(bigSequence, alphabet);
             builder.build(method);
             steps = builder.getSteps();
             bigSuffixDLL = builder.getSuffixDLL();
          } else {
-            assert (alphabet.isSeparator(sequence.array()[(int)n - 1])) : "last character in text needs to be a separator";
+            assert (alphabet.isEndOfLine(sequence.array()[(int)n - 1])) : "last character in text needs to be a 'end of line' value";
             SuffixTrayBuilder builder = new SuffixTrayBuilder(sequence, alphabet);
             builder.build(method);
             steps = builder.getSteps();

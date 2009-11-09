@@ -276,6 +276,7 @@ public class QGramCoder {
     * @param t
     * @return the iterable object
     */
+   //TODO no longer a long-encoded pair; correct doc
    public Iterable<PositionQCodePair> sparseQGrams(final ByteBuffer t) {
       return new Iterable<PositionQCodePair>() {
          public Iterator<PositionQCodePair> iterator() {
@@ -321,11 +322,12 @@ public class QGramCoder {
     * @param separator
     *           the separator code
     * @return an iterable object that returns the q-grams in t, ordered by increasing position.
-    *         q-grams are returned as a long-encoded pair pc=(pos,code), where pos is the starting
+    *         q-grams are returned as a pair pc=(pos,code), where pos is the starting
     *         position of the q-gram in t. The pair is encoded in a <code>long</code> with pos in
     *         the high integer and code in the low integer, such that pos = (int)(pc &gt;&gt; 32),
     *         and code = (int)(pc).
     */
+   //TODO no longer a long-encoded pair; correct doc
    public Iterable<PositionQCodePair> sparseQGrams(final ByteBuffer t, final byte separator) {
       return new Iterable<PositionQCodePair>() {
          public Iterator<PositionQCodePair> iterator() {
@@ -388,14 +390,6 @@ public class QGramCoder {
          return sparseQGrams(t);
       }
    }
-
-   /**
-    * 
-    * @param t
-    *           the text
-    * @return an iterable object that returns the q-grams in t, ordered by increasing position, as
-    *         <code>long</code> integers, as described above.
-    */
 
    /**
     * Produces a q-gram iterator over a byte source.
