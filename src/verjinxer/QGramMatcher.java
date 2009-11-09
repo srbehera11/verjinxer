@@ -125,6 +125,10 @@ public class QGramMatcher {
       this.c_matches_c = c_matches_c;
       this.stride = project.getStride();
       this.runs = project.isRunIndex();
+      if (runs) {
+         //TODO try to access s behind its upper bound in updateActiveIntervals
+         throw new UnsupportedOperationException("Processing of runs is currently not supported.");
+      }
       
       if (c_matches_c && !bisulfiteIndex) throw new UnsupportedOperationException("c_matches_c for non-bisulfite index not supported");
       
@@ -792,9 +796,17 @@ public class QGramMatcher {
             if (!bisulfiteIndex) {
                sp = newpos[ni] + q;
                offset = q;
+               assert sp < s.length : String.format("sp:%d, s.length:%d", sp, s.length);
+               assert tp + offset < t.length : String.format(
+                     "tp:%d, offset:%d, tp+offset:%d t.length:%d", tp, offset, tp + offset,
+                     t.length);
                while (s[sp] == t.get(tp + offset) && alphabet.isSymbol(s[sp])) {
                   sp++;
                   offset++;
+                  assert sp < s.length : String.format("sp:%d, s.length:%d", sp, s.length);
+                  assert tp + offset < t.length : String.format(
+                        "tp:%d, offset:%d, tp+offset:%d t.length:%d", tp, offset, tp + offset,
+                        t.length);
                }
                sp -= offset; // go back to start of match
             } else {

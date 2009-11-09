@@ -58,7 +58,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
       log.info("  -C, --onlycheck         ONLY check index integrity");
       log.info("  -F, --filter <cplx:occ> PERMANENTLY apply low-complexity filter to %s", FileTypes.QBUCKETS);
       log.info("  -X, --notexternal       DON'T save memory at the cost of lower speed");
-      log.info("  -r, --runs              build the index of the run-compressed sequence (%s)", FileTypes.RUNSEQ);
+      log.info("  -r, --runs              build the index of the run-compressed sequence (%s) (unsupported)", FileTypes.RUNSEQ); // TODO
    }
 
    /** if run independently, call main
@@ -138,9 +138,12 @@ public final class QGramIndexerSubcommand implements Subcommand {
 
          File sequenceFile = project.makeFile(FileTypes.SEQ);
          if (runs) {
-            sequenceFile = project.makeFile(FileTypes.RUNSEQ);
-            project.setRunIndex(true);
-            log.info("generating index for run-compressed sequence");
+            throw new UnsupportedOperationException("Processing of runs is currently not supported.");
+            // TODO I thing, that the index creation for run compressed sequences works, but needs to be testet.
+            // TODO Further processing of runs contains errors 
+//            sequenceFile = project.makeFile(FileTypes.RUNSEQ);
+//            project.setRunIndex(true);
+//            log.info("generating index for run-compressed sequence");
          }
          try {
             final File freqfile = (freq ? project.makeFile(FileTypes.QFREQ) : null);
