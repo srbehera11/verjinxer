@@ -13,6 +13,7 @@ import com.spinn3r.log5j.Logger;
 
 import verjinxer.Globals;
 import verjinxer.Project;
+import verjinxer.QGramChecker;
 import verjinxer.QGramIndexer;
 import verjinxer.util.FileTypes;
 import verjinxer.util.IllegalOptionException;
@@ -119,15 +120,21 @@ public final class QGramIndexerSubcommand implements Subcommand {
             return 1;
          }
          g.startProjectLogging(project);
-         QGramIndexer qgramindexer = new QGramIndexer(g, project, q, external, bisulfite, stride, opt.get("F"));
+         
          if (checkonly) {
-            if (qgramindexer.docheck(project) >= 0) {
+            // must be done before a new QGRamIndexer is created, cause in the constructor the
+            // property 'q' of project is set
+            if (QGramChecker.docheck(project) >= 0) {
                returnvalue = 1;
             }
             continue;
          }
-         project.setProperty("QGramAction", action);
 
+         // note, this constructor sets the property 'q' of the project. Either with the given q or
+         // calculated by sequence length.
+         QGramIndexer qgramindexer = new QGramIndexer(g, project, q, external, bisulfite, stride,
+               opt.get("F"));
+         project.setProperty("QGramAction", action);
 
          File sequenceFile = project.makeFile(FileTypes.SEQ);
          if (runs) {
@@ -150,7 +157,7 @@ public final class QGramIndexerSubcommand implements Subcommand {
          final double[] times = qgramindexer.getLastTimes();
          log.info("qgram: time for %s: %.1f sec or %.2f min", project.getName(), times[0], times[0] / 60.0);
 
-         if (check && qgramindexer.docheck(project) >= 0) returnvalue = 1;
+         if (check && QGramChecker.docheck(project) >= 0) returnvalue = 1;
          g.stopplog();
       } // end for each file
       
