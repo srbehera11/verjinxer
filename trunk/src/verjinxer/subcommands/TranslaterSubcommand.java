@@ -55,7 +55,7 @@ public class TranslaterSubcommand implements Subcommand {
       log.info("  -c, --colorspace     translate DNA to color space sequence");
       log.info("  --masked             lowercase bases are translated to wildcards (only for DNA alphabets)");
       log.info("  --reverse            reverse sequence before applying alphabet (use with -a)");
-      log.info("  -r, --runs           additionally create run-related files");
+      log.info("  -r, --runs           additionally create run-related files (unsupported)"); // TODO translation works, but procession contains errors
       log.info("  -q, --quality <file> read quality file (only for CSFASTA)");
    }
 
@@ -235,14 +235,16 @@ public class TranslaterSubcommand implements Subcommand {
       // compute runs
       if (opt.isGiven("r")) {
          log.info("translate: computing runs...");
-         long runs = 0;
-         try {
-            runs = translater.computeRuns(project);
-         } catch (IOException ex) {
-            log.error("translate: could not create run-related files; " + ex);
-            return 1;
-         }
-         project.setProperty("Runs", runs);
+         throw new UnsupportedOperationException("Processing of runs is currently not supported.");
+         // TODO translation works but further processing contains errors
+//         long runs = 0;
+//         try {
+//            runs = translater.computeRuns(project);
+//         } catch (IOException ex) {
+//            log.error("translate: could not create run-related files; " + ex);
+//            return 1;
+//         }
+//         project.setProperty("Runs", runs);
       }
 
       // write project file

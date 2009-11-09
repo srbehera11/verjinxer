@@ -156,7 +156,7 @@ class RunGlobalMatchReporter extends GlobalMatchReporter {
       
       // TODO not 64-bit ready!
       int tStart = queryRunToPos[(int)tRunStart];
-      assert (int)(tRunStart + runMatchLength) == tRunStart;
+      assert (int)(tRunStart + runMatchLength) == tRunStart; // TODO no idea what this is about, maybe wrong assumption
       
       // compute actual matchLength
       // TODO what do we report when the matchLengths differ?
