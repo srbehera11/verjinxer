@@ -162,8 +162,7 @@ public class FastaSequence {
       final int req = last - first + 1 + (append != 0 ? 1 : 0);
       if (buf == null || buf.capacity() < req)
          buf = ByteBuffer.allocateDirect(req + 1024);
-      buf.position(0);
-      buf.limit(buf.capacity());
+      buf.clear();
       if (!reverse) {
          for (int i = first; i <= last; i++)
             buf.put(alphabet.code((byte) sequence.charAt(i)));
@@ -212,8 +211,7 @@ public class FastaSequence {
       final int req = last - first + 1 + (append != 0 ? 1 : 0);
       if (buf == null || buf.capacity() < req)
          buf = ByteBuffer.allocateDirect(req + 1024);
-      buf.position(0);
-      buf.limit(buf.capacity());
+      buf.clear();
       byte c = -1, prev;
       byte next = DNA.code((byte) sequence.charAt(0));
       for (int i = 0; i < ll; i++) {
@@ -262,8 +260,7 @@ public class FastaSequence {
       final int req = last - first + 1 + (append != 0 ? 1 : 0);
       if (buf == null || buf.capacity() < req)
          buf = ByteBuffer.allocateDirect(req + 1024);
-      buf.position(0);
-      buf.limit(buf.capacity());
+      buf.clear();
       buf.put(CS.code((byte) sequence.charAt(first)));
       byte prev = DNA.code((byte) sequence.charAt(first));
       byte next;

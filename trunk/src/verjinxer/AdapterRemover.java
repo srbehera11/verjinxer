@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import com.spinn3r.log5j.Logger;
 
 import verjinxer.sequenceanalysis.Alphabet;
+import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.SequenceWriter;
 import verjinxer.sequenceanalysis.Sequences;
 import verjinxer.sequenceanalysis.alignment.Aligner;
@@ -204,6 +205,14 @@ public class AdapterRemover {
             //return 1; TODO
          }
 
+      }
+      try {
+         // write 'end of line'
+         sequenceWriter.appendCharacter(alphabet.codeEndOfLine());
+      } catch (InvalidSymbolException ex) {
+         log.error("translate: %s", ex);
+      } catch (IOException ex) {
+         log.error("translate: %s", ex);
       }
       
       // print statistics

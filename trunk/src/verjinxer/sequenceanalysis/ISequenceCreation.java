@@ -82,5 +82,15 @@ public interface ISequenceCreation {
     * @return Minimum length of sequences.
     */
    public long getMinimumLength();
+   
+   /**
+    * Appends the given Character to the concatenated sequences. This Method may be used to write a
+    * single and special 'end of line' value to the end of the concatenated sequences.
+    * 
+    * @param character
+    * @return Accumulated length of all sequences.
+    * @throws IOException 
+    */
+   public long appendCharacter(byte character) throws IOException;
 
 }

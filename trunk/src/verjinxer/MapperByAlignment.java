@@ -150,8 +150,10 @@ public class MapperByAlignment {
       aligner.setEndLocations(new BottomEdgeLeftmost());
       aligner.setScores(new Scores(-1, -1, 0, -1));
 
+      assert alphabet.isEndOfLine(itext[itext.length-1]);
+      //because of 'end of line' value do not consider last value of itext for alignment
       AlignmentResult result = aligner.align(txt, jstart + trim, jstart + trim
-            + len, itext, 0, itext.length, alphabet);
+            + len, itext, 0, itext.length-1, alphabet);
 
       int endpos, enddelta;
       // if (result.getErrors() <= tol) { //TODO use tol and handle else case

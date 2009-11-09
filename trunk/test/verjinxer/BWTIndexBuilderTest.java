@@ -17,7 +17,7 @@ import verjinxer.sequenceanalysis.SuffixXorDLL;
 public class BWTIndexBuilderTest {
    
    final static Alphabet alphabet = new Alphabet(new String[] { "##symbols:1", "1", "2", "3", "4", "5", "6", "7", "8", "##wildcards", "9",
-         "##separators:0" });
+         "##endofline:0" });
    
    @Test
    public void testBuildDet() {
@@ -81,7 +81,20 @@ public class BWTIndexBuilderTest {
       buildBWTandTest(s,0);
    }
    
-
+   @Test
+   public void testBuildWithSeveralSeparator(){
+      byte[][] s = {
+            {2,2,0,2,3,0},
+            {1,1,2,4,3,2,0,2,1,2,3,1,3,2,0},
+            {1,1,2,4,3,2,0,2,1,2,3,1,3,2,0},
+            {2,0,2,0,2,0,3,0,4,0,2,0},
+      };
+      
+      for (int si = 0; si < s.length; si++) {
+         buildBWTandTest(s[si], si);
+      }
+   }
+   
    /**
     * Builds a BWT-Index of s and checks the correctness.
     * 
@@ -107,7 +120,7 @@ public class BWTIndexBuilderTest {
       // 'bothLR' to build the
       // list
       
-//         System.out.println(suffixDLL.toString());
+         System.out.println(suffixDLL.toString());
 
       // test index
       bwt(s);

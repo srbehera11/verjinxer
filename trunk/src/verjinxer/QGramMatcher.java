@@ -12,9 +12,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.spinn3r.log5j.Logger;
+import com.sun.media.sound.AlawCodec;
 
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
+import verjinxer.sequenceanalysis.InvalidSymbolException;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
@@ -228,7 +230,13 @@ public class QGramMatcher {
       // / currentpos = new int[maxactive];
 
       // (B) Walking ...
-      final long tn = t.length;
+      try {
+         assert alphabet.isEndOfLine(t.get(t.length-1)): String.format("Last character at pos %d is %d but expected is %d", t.length-1 ,t.get(t.length-1), alphabet.codeEndOfLine());
+      } catch (InvalidSymbolException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+      final long tn = t.length - 1; // last character is 'end of line' value that must not be considered.
       final int slicefreq = 5;
       final long slicesize = 1 + (slicefreq * tn / 100);
       int nextslice = 0;
@@ -353,7 +361,8 @@ public class QGramMatcher {
       newlen = new int[maxactive];
 
       // (B) Walking ...
-      final long tn = t.length;
+      assert alphabet.isEndOfLine(t.get(t.length-1));
+      final long tn = t.length - 1; // last character is 'end of line' value that must not be considered.
       final int slicefreq = 5;
       final long slicesize = 1 + (slicefreq * tn / 100);
       int nextslice = 0;
@@ -491,6 +500,8 @@ public class QGramMatcher {
    private int bisulfiteMatchLength(HugeByteArray s, long sp, byte[] t, int tp) {
       BisulfiteState state = BisulfiteState.UNKNOWN;
       int offset = 0;
+      assert alphabet.isEndOfLine(s.get(s.length - 1));
+      assert alphabet.isEndOfLine(t[t.length - 1]);
       while (true) {
          if (!alphabet.isSymbol( s.get(sp + offset) ))
             break;
@@ -518,7 +529,7 @@ public class QGramMatcher {
             if (state == BisulfiteState.GA)
                break;
             state = BisulfiteState.CT;
-         } else if (sp + offset + 1 < s.length && tp + offset + 1 < t.length
+         } else if (sp + offset + 1 < s.length - 1 && tp + offset + 1 < t.length - 1
                && s.get(sp + offset + 1) != NUCLEOTIDE_G &&
                /* t[tp+offset+1] != NUCLEOTIDE_G && */
                s.get(sp + offset) == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_C) {
