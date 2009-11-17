@@ -68,6 +68,13 @@ public final class BisulfiteQGramCoder extends QGramCoder {
     */   
    @Override
    public boolean areCompatible(final byte[] qgram, final int i, final byte[] s, final int p) {
+      // first check, whether the 'unmutated' qcode in s is the same as in qgram
+      if (super.areCompatible(qgram, i, s, p)) {
+         return true;
+      }
+
+      // if they are not the same, then 'mutate' the qcode in s (origCode)
+      // and check against qgram (biCode)
       int biCode = code(qgram, i);
       boolean CBefore = (p > 0 && s[p-1] == NUCLEOTIDE_C);
       boolean GFollows = (p+q < s.length && s[p+q] == NUCLEOTIDE_G);
