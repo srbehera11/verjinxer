@@ -44,7 +44,7 @@ public class QGramMatcher {
    /** sequence separator positions in text t TODO this does not contain the correct information when 'runs' is true */
    final private long[] tssp;
    
-   /** Positions of all q-grams */
+   /** Positions of all q-grams in s*/
    final QGramIndex qgramindex;
    
 
@@ -614,10 +614,14 @@ public class QGramMatcher {
       int ai; // index into the array of active matches
       for (ai = 0; ai < active; ai++) {
          activepos[ai]++;
-         if (activelen[ai] > q)
+         if (activelen[ai] > q) {
             activelen[ai]--;
-         else
+         } else {
             activelen[ai] = 0;
+         }
+         // now, activelen[ai] is greater or equal q or 0, but not within {1,...,q-1}
+         // if activelen[ai] is greater 0, then this match was found at (tp-1) and was longer than
+         // q, so the match must be continued at this position.
       }
 
       // collect all qgram positions of all unfiltered qcodes into newpos, reallocating
@@ -649,8 +653,16 @@ public class QGramMatcher {
       // iterate over all new matches
       ai = 0;
       for (int ni = 0; ni < newactive; ni++) {
-         while (ai < active && activelen[ai] < q)
+         while (ai < active && activelen[ai] < q) {
             ai++;
+            // match ai was found at 'tp-1'.
+            // if activelen[ai] is less then q, the match is to short to be continued at this
+            // position ('tp')
+            // so it must not be checked for activepos[ai] if it is an old match that was already
+            // found.
+            // go to the next old match, that may must be continued at this position ('tp') and check
+            // the new match ni for that case.
+         }
 
          if (c_matches_c) {
             // we must skip those matches that are only active because
@@ -660,6 +672,15 @@ public class QGramMatcher {
                ai++;
          }
          // make sure that newly found q-grams overlap the old ones (unless c_matches_c)
+         // if newpos[ni] < activepos[ai], it is a new match an everything is fine
+         // if newpos[ni] == activepos[ai], it is an old match that will not be mentioned (look at
+         // else case)
+         // if newpos[ni] > activepos[ai], then the continued old match at postion activepos[ai]
+         // must have been found before
+         // the new match ni is considered. But then, ai would have been incremented (see else
+         // case). Because the ni's
+         // are sorted by position, the old match at position activepos[ai] was not continued but
+         // should have been.
          assert ai == active || newpos[ni] <= activepos[ai] : String.format(
                "tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d", tp, ai,
                active, ni, newpos[ni], activepos[ai], activelen[ai]);
