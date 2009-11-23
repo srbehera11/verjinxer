@@ -547,6 +547,12 @@ public class Alphabet {
    public static final Alphabet DNA() {
       return new Alphabet(new String[] { "##symbols:0", "Aa", "Cc", "Gg", "TtUu", "##wildcards",
             "XxNnWwRrKkYySsMmBbHhDdVv", "##wildcards", "#", "##separators:-1", "##endofline:-2" });
+      // NOTE: If the DNA alphabet is changed, please check MatchAutomaton because there is the DNA mapping
+      // A = 0
+      // C = 1
+      // G = 2
+      // T = 3
+      // hardcoded
    }
 
    /**
