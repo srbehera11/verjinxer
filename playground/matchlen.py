@@ -66,8 +66,9 @@ testpairs = [
 	('CGC', 'TGC'),
 
 	# partial matches
-	('CGA', 'CGT')
+	('CGA', 'CGT'),
 	('CGCGCG', 'CGTGCA'),
+	('ATGCCA', 'ATGTCT'),
 	]
 
 for (s, t) in testpairs:
