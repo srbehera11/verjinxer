@@ -529,6 +529,12 @@ public class QGramMatcher {
       assert alphabet.isEndOfLine(s[s.length - 1]);
       while (true) {
          if (!alphabet.isSymbol( t.get(tp + offset) )) {
+            // Now we are certain that the match is over.
+            // if the last steps made were uncertain steps
+            // (we had not known if the match was already over)
+            // we must decrement the offset because the match over
+            // at the moment we began with uncertain steps.
+            offset -= uncertainSteps;
             break;
          }
 
@@ -712,7 +718,7 @@ public class QGramMatcher {
          // should have been.
          assert ai == active || newpos[ni] <= activepos[ai] : String.format(
                "tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d, t[tp]=%s, s[activepos]=%s", tp, ai,
-               active, ni, newpos[ni], activepos[ai], activelen[ai], StringUtils.join("", t, tp, q), StringUtils.join("", s, activepos[ai], q));
+               active, ni, newpos[ni], activepos[ai], activelen[ai], StringUtils.join("", t, tp, q+1), StringUtils.join("", s, activepos[ai], q+1));
          assert ai <= active;
          if (ai == active || newpos[ni] < activepos[ai]) {
             // this is a new match:
