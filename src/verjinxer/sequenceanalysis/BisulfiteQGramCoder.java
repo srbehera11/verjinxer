@@ -218,8 +218,8 @@ public final class BisulfiteQGramCoder extends QGramCoder {
     */
    public int[] bisulfiteQCodes(HugeByteArray t, long start, final boolean reverse) {
       int qcode = code(t, start);
-      boolean specialBorder = (reverse && start > 0 && t.get(start-1) == NUCLEOTIDE_G) ||
-            (!reverse && start+q < t.length && t.get(start+q) == NUCLEOTIDE_C);
+      boolean specialBorder = (reverse && start > 0 && t.get(start-1) == NUCLEOTIDE_C) ||
+            (!reverse && start+q < t.length && t.get(start+q) == NUCLEOTIDE_G);
       return bisulfiteQCodes(qcode, reverse, specialBorder);
    }
 
