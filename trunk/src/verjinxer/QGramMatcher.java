@@ -1,5 +1,5 @@
-package verjinxer;
 
+package verjinxer;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_A;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_C;
 import static verjinxer.sequenceanalysis.BisulfiteQGramCoder.NUCLEOTIDE_G;
@@ -12,17 +12,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.spinn3r.log5j.Logger;
-import com.sun.media.sound.AlawCodec;
 
 import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.BisulfiteQGramCoder;
 import verjinxer.sequenceanalysis.InvalidSymbolException;
+import verjinxer.sequenceanalysis.MatchAutomaton;
 import verjinxer.sequenceanalysis.QGramCoder;
 import verjinxer.sequenceanalysis.QGramFilter;
 import verjinxer.sequenceanalysis.QGramIndex;
 import verjinxer.util.BitArray;
 import verjinxer.util.FileTypes;
 import verjinxer.util.HugeByteArray;
+import verjinxer.util.StringUtils;
 import verjinxer.util.TicToc;
 
 public class QGramMatcher {
@@ -64,6 +65,12 @@ public class QGramMatcher {
    final QGramCoder qgramcoder;
    final BitArray toomanyhits;
    final QGramFilter qgramfilter;
+
+   /**
+    * Used in {@link #bisulfiteMatchLength(HugeByteArray, long, byte[], int)} to determine the
+    * length of an bisulfit match
+    **/
+   private final MatchAutomaton bisulfitMatchAutomaton = MatchAutomaton.bisulfitMatchAutomaton();
 
    /** whether the index contains simulated bisulfite-treated sequences */
    final boolean bisulfiteIndex;
@@ -424,13 +431,17 @@ public class QGramMatcher {
 
          // (2) initialize qcode and active q-grams
          active = 0; // number of active q-grams
+         // calculate the 'mutated' QCodes
          int[] qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
          int[] qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
+         // calculate the 'normal' QCode
+         int qcodeNormal = bicoder.code(t, tp);
 
          // TODO copying the arrays is totally unnecessary
-         int[] qcodes = new int[qcodesForward.length + qcodesReverse.length];
+         int[] qcodes = new int[qcodesForward.length + qcodesReverse.length + 1];
          System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
          System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
+         qcodes[qcodes.length - 1] = qcodeNormal;
 
          seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
 
@@ -461,14 +472,19 @@ public class QGramMatcher {
             tp++;
             symremaining--;
             if (symremaining >= minlen) {
+               // calculate the 'mutated' QCodes
                qcodesForward = bicoder.bisulfiteQCodes(t, tp, true);
                qcodesReverse = bicoder.bisulfiteQCodes(t, tp, false);
+               // calculate the 'normal' QCode
+               qcodeNormal = bicoder.code(t, tp);
 
                // TODO copying the arrays is totally unnecessary
-               qcodes = new int[qcodesForward.length + qcodesReverse.length];
+               qcodes = new int[qcodesForward.length + qcodesReverse.length + 1];
                System.arraycopy(qcodesForward, 0, qcodes, 0, qcodesForward.length);
-               System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length, qcodesReverse.length);
-             
+               System.arraycopy(qcodesReverse, 0, qcodes, qcodesForward.length,
+                     qcodesReverse.length);
+               qcodes[qcodes.length - 1] = qcodeNormal;
+
                seqmatches += updateActiveIntervalsBisulfite(tp, qcodes, maxseqmatches - seqmatches);
                // /////// qcode = bicoder.codeUpdate(qcode, t[tp + q - 1]);
                // ///////// assert qcode >= 0;
@@ -499,58 +515,71 @@ public class QGramMatcher {
    /**
     * Compares sequences s and t, allowing bisulfite replacements.
     * 
-    * @param sp
-    *           start index in s
     * @param tp
+    *           start index in s
+    * @param sp
     *           start index in t
     * @return length of match
     */
-   private int bisulfiteMatchLength(HugeByteArray s, long sp, byte[] t, int tp) {
-      BisulfiteState state = BisulfiteState.UNKNOWN;
+   private int bisulfiteMatchLength(HugeByteArray t, long tp, byte[] s, int sp) {
+      bisulfitMatchAutomaton.reset();
       int offset = 0;
-      assert alphabet.isEndOfLine(s.get(s.length - 1));
-      assert alphabet.isEndOfLine(t[t.length - 1]);
+      int uncertainSteps = 0;
+      assert alphabet.isEndOfLine(t.get(t.length - 1));
+      assert alphabet.isEndOfLine(s[s.length - 1]);
       while (true) {
-         if (!alphabet.isSymbol( s.get(sp + offset) ))
+         if (!alphabet.isSymbol( t.get(tp + offset) )) {
             break;
-
-         // What follows is some ugly logic to find out what type
-         // of match this is. That is, whether we should allow C -> T or
-         // G -> A replacements.
-         // For C->T, the rules are:
-         // If there's a C->T replacement, we must only allow those.
-         // If there's a C not preceding a G that has not been replaced
-         // by a T, then we must not allow C->T replacements.
-
-         if ( s.get(sp + offset) == NUCLEOTIDE_G && t[tp + offset] == NUCLEOTIDE_A) {
-            if (state == BisulfiteState.CT)
-               break;
-            state = BisulfiteState.GA;
-         } else if (offset > 0 && s.get(sp + offset - 1) != NUCLEOTIDE_C
-               && t[tp + offset - 1] != NUCLEOTIDE_C && s.get(sp + offset) == NUCLEOTIDE_G
-               && t[tp + offset] == NUCLEOTIDE_G) {
-            // G on both without preceding C
-            if (state == BisulfiteState.GA)
-               break;
-            state = BisulfiteState.CT;
-         } else if ( s.get(sp + offset) == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_T) {
-            if (state == BisulfiteState.GA)
-               break;
-            state = BisulfiteState.CT;
-         } else if (sp + offset + 1 < s.length - 1 && tp + offset + 1 < t.length - 1
-               && s.get(sp + offset + 1) != NUCLEOTIDE_G &&
-               /* t[tp+offset+1] != NUCLEOTIDE_G && */
-               s.get(sp + offset) == NUCLEOTIDE_C && t[tp + offset] == NUCLEOTIDE_C) {
-            if (state == BisulfiteState.CT)
-               break;
-            state = BisulfiteState.GA;
-         } else {
-            if ( s.get(sp + offset) != t[tp + offset])
-               break;
          }
-         offset++;
+
+         bisulfitMatchAutomaton.step(t.get(tp + offset), s[sp+offset]);
+         
+         if (bisulfitMatchAutomaton.isAccepting()) {
+            offset++;
+            // Now we are certain that the match goes so far.
+            uncertainSteps = 0;
+         } else if (bisulfitMatchAutomaton.isErrorState()) {
+            // Now we are certain that the match is over.
+            // if the last steps made were uncertain steps
+            // (we had not known if the match was already over)
+            // we must decrement the offset because the match over
+            // at the moment we began with uncertain steps.
+            offset -= uncertainSteps;
+            break;
+         } else {
+            // For the C->T replacement rules, we maybe read a CC,
+            // that is only allowed before A GG.
+            // The automaton there is not accepting. 
+            // But we do not know until we read the next character
+            // that is maybe a GG if the match is over or not.
+            uncertainSteps++;
+            offset++;
+         }
       }
-      assert offset >= q;
+      // We have one special case
+      // If the current position (t.get(tp) and s[sp]) starts with a GG that is,
+      // according to the G->A replacement rules a mismatch,
+      // the corresponding automaton may have get immediately in an error
+      // state. But when a C stands at the previous position ((t.get(tp-1) and s[sp-1])),
+      // a GG is according to the G->A replacement rules a match.
+      if (sp > 0 && tp > 0 && t.get(tp) == NUCLEOTIDE_G && s[sp] == NUCLEOTIDE_G && t.get(tp-1) == NUCLEOTIDE_C && s[sp-1] == NUCLEOTIDE_C) {
+         final int secondTrial = bisulfiteMatchLength(t, tp-1, s, sp-1);
+         offset = Math.max(offset, secondTrial-1);
+      }
+      
+      assert offset >= q // everything is okay
+            || (tp + offset + 1 < t.length && sp + offset + 1 < s.length && offset == q - 1
+                  && s[sp + offset] == NUCLEOTIDE_C && t.get(tp + offset) == NUCLEOTIDE_C
+                  && t.get(tp + offset + 1) == NUCLEOTIDE_G && s[sp + offset + 1] != NUCLEOTIDE_G)
+                  // t has special boarder CG at the end, but the searched q-code in s does
+                  // not ensure a G at the next place
+            || (sp > 1 && tp > 1 && s[sp - 1] != NUCLEOTIDE_C && t.get(tp - 1) == NUCLEOTIDE_C
+                  && t.get(tp) == NUCLEOTIDE_G && s[sp] == NUCLEOTIDE_G)
+                  // t has special boarder CG at the beginning, but the searched q-code in s
+                  // does not ensure a C before the first place
+      : String.format("Offset (%d) is less then q (%d) at position %d in s (%s) and %d in t (%s)",
+            offset, q, sp, StringUtils.join("", s, sp, q + 2), tp, StringUtils.join("", t, tp,
+                  q + 2));
       return offset;
    }
 
@@ -682,8 +711,8 @@ public class QGramMatcher {
          // are sorted by position, the old match at position activepos[ai] was not continued but
          // should have been.
          assert ai == active || newpos[ni] <= activepos[ai] : String.format(
-               "tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d", tp, ai,
-               active, ni, newpos[ni], activepos[ai], activelen[ai]);
+               "tp=%d, ai/active=%d/%d, ni=%d, newpos=%d, activepos=%d, activelen=%d, t[tp]=%s, s[activepos]=%s", tp, ai,
+               active, ni, newpos[ni], activepos[ai], activelen[ai], StringUtils.join("", t, tp, q), StringUtils.join("", s, activepos[ai], q));
          assert ai <= active;
          if (ai == active || newpos[ni] < activepos[ai]) {
             // this is a new match:
