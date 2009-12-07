@@ -133,7 +133,7 @@ public class TranslaterSubcommand implements Subcommand {
       if (opt.isGiven("colorspace"))
          givenmaps++;
       if (givenmaps > 1) {
-         log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --bisulfite, --colorspace}.");
+         log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein, --bisulfite, --colorspace}.");
          return 1;
       }
 
@@ -171,10 +171,6 @@ public class TranslaterSubcommand implements Subcommand {
             separateRCByWildcard = true;
       }
       boolean bisulfite = false;
-      if (opt.isGiven("dnabi")) {
-         bisulfite = true;
-         alphabet = Alphabet.DNA(); // do translation on-line
-      }
       if (opt.isGiven("protein"))
          alphabet = Alphabet.Protein();
       boolean colorspace = false;
@@ -207,7 +203,7 @@ public class TranslaterSubcommand implements Subcommand {
             if (FileUtils.determineFileType(files[i]) != FileTypes.CSFASTA) { // only for CSFASTA
                                                                               // omitting alphabet
                                                                               // map is allowed
-               log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --dnabi, --protein, --colorspace}.");
+               log.error("translate: no alphabet map given; use one of {-a, --dna, --rconly, --dnarc, --protein, --colorspace}.");
                return 1;
             }
          }
@@ -219,7 +215,7 @@ public class TranslaterSubcommand implements Subcommand {
          for (int i = 0; i < files.length; i++)
             if (FileUtils.determineFileType(files[i]) == FileTypes.CSFASTA) { // invalid option for
                                                                               // CSFASTA
-               log.error("translate: the options -a, --dna, --rconly, --dnarc, --dnabi, --protein and --colorspace are not valid for CSFASTA files.");
+               log.error("translate: the options -a, --dna, --rconly, --dnarc, --protein and --colorspace are not valid for CSFASTA files.");
                return 1;
             }
       }
