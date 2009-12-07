@@ -50,7 +50,6 @@ public class TranslaterSubcommand implements Subcommand {
       log.info("     generate new rc sequences and add <desc> to their headers.");
       // log.info("  -b, --bisulfite      translates DNA to a three-letter alphabet"); // FIXME only
       // for C->T currently
-      log.info("  --dnabi              translate to bisulfite-treated DNA");
       log.info("  --protein            use standard protein alphabet");
       log.info("  -c, --colorspace     translate DNA to color space sequence");
       log.info("  --masked             lowercase bases are translated to wildcards (only for DNA alphabets)");
@@ -125,6 +124,7 @@ public class TranslaterSubcommand implements Subcommand {
       if (opt.isGiven("dnarc"))
          givenmaps++;
       if (opt.isGiven("dnabi"))
+         throw new UnsupportedOperationException("The bisulfite-treated DNA alphabet is deprecated and no longer supported.");
          givenmaps++;
       if (opt.isGiven("protein"))
          givenmaps++;
