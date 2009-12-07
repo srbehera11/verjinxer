@@ -115,23 +115,32 @@ public class TranslaterSubcommand implements Subcommand {
       }
       // determine the alphabet map(s)
       int givenmaps = 0;
-      if (opt.isGiven("a"))
+      if (opt.isGiven("a")) {
          givenmaps++;
-      if (opt.isGiven("dna"))
+      }
+      if (opt.isGiven("dna")) {
          givenmaps++;
-      if (opt.isGiven("rconly"))
+      }
+      if (opt.isGiven("rconly")) {
          givenmaps++;
-      if (opt.isGiven("dnarc"))
+      }
+      if (opt.isGiven("dnarc")) {
          givenmaps++;
-      if (opt.isGiven("dnabi"))
-         throw new UnsupportedOperationException("The bisulfite-treated DNA alphabet is deprecated and no longer supported.");
+      }
+      if (opt.isGiven("dnabi")) {
          givenmaps++;
-      if (opt.isGiven("protein"))
+         throw new UnsupportedOperationException(
+               "The bisulfite-treated DNA alphabet is deprecated and no longer supported.");
+      }
+      if (opt.isGiven("protein")) {
          givenmaps++;
-      if (opt.isGiven("bisulfite"))
+      }
+      if (opt.isGiven("bisulfite")) {
          givenmaps++;
-      if (opt.isGiven("colorspace"))
+      }
+      if (opt.isGiven("colorspace")) {
          givenmaps++;
+      }
       if (givenmaps > 1) {
          log.error("translate: use only one of {-a, --dna, --rconly, --dnarc, --protein, --bisulfite, --colorspace}.");
          return 1;
