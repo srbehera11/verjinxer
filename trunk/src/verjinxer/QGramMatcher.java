@@ -574,13 +574,14 @@ public class QGramMatcher {
       }
       
       assert offset >= q // everything is okay
-            || (tp + offset + 1 < t.length && sp + offset + 1 < s.length && offset == q - 1
-                  && s[sp + offset] == NUCLEOTIDE_C && t.get(tp + offset) == NUCLEOTIDE_C
-                  && t.get(tp + offset + 1) == NUCLEOTIDE_G && s[sp + offset + 1] != NUCLEOTIDE_G)
+            || (tp + offset + 1 < t.length && offset == q - 1 && s[sp + offset] == NUCLEOTIDE_C
+                  && t.get(tp + offset) == NUCLEOTIDE_C && t.get(tp + offset + 1) == NUCLEOTIDE_G
+                  && ((sp + offset + 1 < s.length && s[sp + offset + 1] != NUCLEOTIDE_G)) || sp
+                  + offset + 1 == s.length)
                   // t has special boarder CG at the end, but the searched q-code in s does
                   // not ensure a G at the next place
-            || (sp > 0 && tp > 0 && s[sp - 1] != NUCLEOTIDE_C && t.get(tp - 1) == NUCLEOTIDE_C
-                  && t.get(tp) == NUCLEOTIDE_G && s[sp] == NUCLEOTIDE_G)
+            || (tp > 0 && ((sp > 0 && s[sp - 1] != NUCLEOTIDE_C) || sp == 0)
+                  && t.get(tp - 1) == NUCLEOTIDE_C && t.get(tp) == NUCLEOTIDE_G && s[sp] == NUCLEOTIDE_G)
                   // t has special boarder CG at the beginning, but the searched q-code in s
                   // does not ensure a C before the first place
       : String.format("Offset (%d) is less then q (%d) at position %d in s (%s) and %d in t (%s)",
@@ -651,18 +652,19 @@ public class QGramMatcher {
       }
       
       assert offset >= q // everything is okay
-      || (sp + offset + 1 < s.length && tp + offset + 1 < t.length && offset == q - 1
-            && t.get(tp + offset) == NUCLEOTIDE_C && s[sp + offset] == NUCLEOTIDE_C
-            && s[sp + offset + 1] == NUCLEOTIDE_G && t.get(tp + offset + 1) != NUCLEOTIDE_G)
-            // t has special boarder CG at the end, so the searched q-code of s was found.
-            // But it is not ensured that there is also a G next in s.
-      || (tp > 0 && sp > 0 && t.get(tp - 1) != NUCLEOTIDE_C && s[sp - 1] == NUCLEOTIDE_C
-            && s[sp] == NUCLEOTIDE_G && t.get(tp) == NUCLEOTIDE_G)
-            // t has special boarder CG at the beginning, so the searched q-code of s was found.
-            // But it is not ensured that there is a C before the first place in s
-: String.format("Offset (%d) is less then q (%d) at position %d in s (%s) and %d in t (%s)",
-      offset, q, sp, StringUtils.join("", s, sp, q + 1), tp, StringUtils.join("", t, tp,
-            q + 1));
+            || (sp + offset + 1 < s.length && offset == q - 1 && t.get(tp + offset) == NUCLEOTIDE_C
+                  && s[sp + offset] == NUCLEOTIDE_C && s[sp + offset + 1] == NUCLEOTIDE_G && ((tp
+                  + offset + 1 < t.length && t.get(tp + offset + 1) != NUCLEOTIDE_G) || tp + offset
+                  + 1 == t.length))
+                  // s has special boarder CG at the end, so the q-code of t was found in s.
+                  // But it is not ensured that there is also a G next in t.
+            || (((tp > 0 && t.get(tp - 1) != NUCLEOTIDE_C) || tp == 0) && sp > 0
+                  && s[sp - 1] == NUCLEOTIDE_C && s[sp] == NUCLEOTIDE_G && t.get(tp) == NUCLEOTIDE_G)
+                  // s has special boarder CG at the beginning, so the q-code of t was found in s.
+                  // But it is not ensured that there is a C before the first place in t
+      : String.format("Offset (%d) is less then q (%d) at position %d in s (%s) and %d in t (%s)",
+            offset, q, sp, StringUtils.join("", s, sp, q + 1), tp, StringUtils.join("", t, tp,
+                  q + 1));
       return offset;
    }
 
