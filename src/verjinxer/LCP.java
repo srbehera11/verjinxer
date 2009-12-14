@@ -124,8 +124,8 @@ public class LCP {
     * @throws IOException
     *            when the lcp arrays can not be written to disc.
     */
-   private static LcpInfo lcp_L(File file, int dolcp, SuffixDLL suffixdll, int[] buffer, String specialCharacterOrder)
-         throws IOException {
+   private static LcpInfo lcp_L(File file, int dolcp, SuffixDLL suffixdll, int[] buffer,
+         String specialCharacterOrder) throws IOException {
       // buffer must be long enough
       if (buffer.length < suffixdll.capacity()) {
          buffer = new int[suffixdll.capacity()];
