@@ -30,6 +30,9 @@ public class SuffixTrayBuilder {
    
    /** Alphabet of the Text/Sequence */
    private final Alphabet alphabet;
+   
+   /** How to compare/order special characters */
+   private String specialCharacterOrder;
 
    /**
     * Creates a new building instance for the given sequence.<br>
@@ -41,12 +44,19 @@ public class SuffixTrayBuilder {
     *           Text/Sequence for that a suffix tray shall be build.
     * @param alphabet
     *           Alphabet of sequence.
+    * @param specialCharacterOrder 
+    *           How to compare/order special characters. Valid methods are 'pos' and 'suffix'.
     */
-   public SuffixTrayBuilder(Sequences sequence, Alphabet alphabet) {
+   public SuffixTrayBuilder(Sequences sequence, Alphabet alphabet, String specialCharacterOrder) {
       this.n = (int) sequence.length();
       assert (alphabet.isEndOfLine(sequence.array()[n - 1]));
       this.sequence = sequence;
       this.alphabet = alphabet;
+      this.specialCharacterOrder = specialCharacterOrder;
+   }
+
+   public void setSpecialCharacterOrder(String specialCharacterOrder) {
+      this.specialCharacterOrder = specialCharacterOrder;
    }
 
    /**
@@ -93,6 +103,7 @@ public class SuffixTrayBuilder {
     * list.
     */
    private void buildpos_L() {
+      assert specialCharacterOrder.equals("pos");
       normaldll = new SuffixDLL(sequence, alphabet);
       getNormalDLL = true;
       byte ch;
@@ -139,6 +150,7 @@ public class SuffixTrayBuilder {
     * list.
     */
    private void buildpos_R() {
+      assert specialCharacterOrder.equals("pos");
       normaldll = new SuffixDLL(sequence, alphabet);
       getNormalDLL = true;
       byte ch;
@@ -203,10 +215,11 @@ public class SuffixTrayBuilder {
          } else { // seeing character ch again
             assert (normaldll.getFirstPos(chi) > p);
             assert (normaldll.getLastPos(chi) > p);
-            if (alphabet.isSpecial(ch)) { // special character: always inserted first
+            if (alphabet.isSpecial(ch) && specialCharacterOrder.equals("pos")) { // special character: always inserted first
                normaldll.insertasfirst(chi, p);
                steps++;
-            } else { // symbol character: proceed normally
+            } else { // symbol character or order special characters by suffix: proceed normally
+               assert alphabet.isSymbol(ch) || specialCharacterOrder.equals("suffix");
                pup = pdown = p + 1;
                for (found = 0; found == 0;) {
                   steps++;
@@ -268,6 +281,7 @@ public class SuffixTrayBuilder {
     * <code>buildpos_bothLR</code> for the space saving technique.
     */
    private void buildpos_bothLR2() {
+      assert specialCharacterOrder.equals("pos");
       normaldll = new SuffixDLL(sequence, alphabet);
       getNormalDLL = true;
       byte ch;
@@ -356,8 +370,13 @@ public class SuffixTrayBuilder {
             assert (xordll.getFirstPos(chi) > p);
             assert (xordll.getLastPos(chi) > p);
             if (alphabet.isSpecial(ch)) { // special character: always inserted first
-               xordll.insertasfirst(chi, p);
-               steps++;
+               if (specialCharacterOrder.endsWith("pos")) {
+                  xordll.insertasfirst(chi, p);
+                  steps++;
+               } else { //specialCharacterOrder.endsWith("suffix")
+                  assert specialCharacterOrder.equals("suffix");
+                  walkandinsert(chi, p);
+               }
             } else { // symbol character: proceed normally
                walkandinsert(chi, p);
             } // end symbol character

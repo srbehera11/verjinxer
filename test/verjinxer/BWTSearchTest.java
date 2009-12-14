@@ -30,7 +30,7 @@ public class BWTSearchTest {
       sequenceM = Sequences.createEmptySequencesInMemory();
       sequenceM.addSequence(ByteBuffer.wrap(chrM));
       
-      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequenceM, Alphabet.DNA());
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequenceM, Alphabet.DNA(), "suffix");
       stb.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
       assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
       final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
@@ -131,7 +131,7 @@ public class BWTSearchTest {
          e.printStackTrace();
       }
       
-      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA());
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA(), "suffix");
       stb.build("bothLR"); //WARNING: change the method and you must change the type cast in the next line!
       assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
       final SuffixXorDLL suffixDLL = (SuffixXorDLL)stb.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list
@@ -289,7 +289,7 @@ public class BWTSearchTest {
          e.printStackTrace();
       }
 
-      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA());
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.DNA(), "suffix");
       stb.build("bothLR"); // WARNING: change the method and you must change the type cast in the
                            // next line!
       assert (stb.getSuffixDLL() instanceof SuffixXorDLL);

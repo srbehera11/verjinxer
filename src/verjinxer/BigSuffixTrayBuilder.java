@@ -30,19 +30,25 @@ public class BigSuffixTrayBuilder {
    
    /** Alphabet of the Text/Sequence */
    private final Alphabet alphabet;
+   
+   /** How to compare/order special characters */
+   private String specialCharacterOrder;
 
    /**
     * Creates a new building instance for the given sequence.
     * 
     * @param sequence
-    *           Text/Sequence for that a suffiy tray shall be build.
+    *           Text/Sequence for that a suffix tray shall be build.
     * @param alphabet
     *           Alphabet of sequence.
+    * @param specialCharacterOrder
+    *           How to compare/order special characters. Valid methods are 'pos' and 'suffix'.
     */
-   public BigSuffixTrayBuilder(HugeByteArray bigSequence, Alphabet alphabet) {
+   public BigSuffixTrayBuilder(HugeByteArray bigSequence, Alphabet alphabet, String specialCharacterOrder) {
       this.sequence = bigSequence;
       this.alphabet = alphabet;
       this.n = sequence.length;
+      this.specialCharacterOrder = specialCharacterOrder;
    }
 
    /**

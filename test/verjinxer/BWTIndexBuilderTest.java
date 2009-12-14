@@ -111,7 +111,7 @@ public class BWTIndexBuilderTest {
          e.printStackTrace();
       }
 
-      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, alphabet);
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, alphabet, "suffix");
       stb.build("bothLR"); // WARNING: change the method and you must change the type cast in the
       // next line!
       assert (stb.getSuffixDLL() instanceof SuffixXorDLL);
