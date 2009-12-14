@@ -55,6 +55,12 @@ public class SuffixTrayBuilder {
       this.specialCharacterOrder = specialCharacterOrder;
    }
 
+   /**
+    * Sets the method used to compare/order special characters. Valid methods are 'pos' and
+    * 'suffix'.
+    * 
+    * @param specialCharacterOrder
+    */
    public void setSpecialCharacterOrder(String specialCharacterOrder) {
       this.specialCharacterOrder = specialCharacterOrder;
    }
@@ -84,15 +90,35 @@ public class SuffixTrayBuilder {
     */
    public void build(String method) throws IllegalArgumentException {
       if (method.equals("L")) {
-         buildpos_L();
+         if (specialCharacterOrder.equals("pos")) {
+            buildpos_L();
+         } else {
+            throw new IllegalArgumentException(String.format(
+                  "Method '%s' does not support '%s' as special character order.", method,
+                  specialCharacterOrder));
+         }
       } else if (method.equals("R")) {
-         buildpos_R();
+         if (specialCharacterOrder.equals("pos")) {
+            buildpos_R();
+         } else {
+            throw new IllegalArgumentException(String.format(
+                  "Method '%s' does not support '%s' as special character order.", method,
+                  specialCharacterOrder));
+         }
       } else if (method.equals("minLR")) {
+         // 'pos' and 'suffix' as special character order are supported
          buildpos_minLR();
       } else if (method.equals("bothLR")) {
+         // 'pos' and 'suffix' as special character order are supported
          buildpos_bothLR();
       } else if (method.equals("bothLR2")) {
-         buildpos_bothLR2();
+         if (specialCharacterOrder.equals("pos")) {
+            buildpos_bothLR2();
+         } else {
+            throw new IllegalArgumentException(String.format(
+                  "Method '%s' does not support '%s' as special character order.", method,
+                  specialCharacterOrder));
+         }
       } else {
          throw new IllegalArgumentException("Unsupported construction method '" + method + "'!");
       }
@@ -369,7 +395,7 @@ public class SuffixTrayBuilder {
          } else { // seeing character ch again
             assert (xordll.getFirstPos(chi) > p);
             assert (xordll.getLastPos(chi) > p);
-            if (alphabet.isSpecial(ch)) { // special character: always inserted first
+            if (alphabet.isSpecial(ch)) { // special character
                if (specialCharacterOrder.endsWith("pos")) {
                   xordll.insertasfirst(chi, p);
                   steps++;

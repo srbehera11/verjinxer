@@ -194,7 +194,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
          try {
             if (bigsuffix) {
                BigSuffixTrayChecker.setLogger(log);
-               returnvalue = BigSuffixTrayChecker.checkpos(bigSuffixDLL, method);
+               returnvalue = BigSuffixTrayChecker.checkpos(bigSuffixDLL, method, specialCharacterOrder);
             } else {
                SuffixTrayChecker.setLogger(log);
                returnvalue = SuffixTrayChecker.checkpos(suffixDLL, method, specialCharacterOrder);
@@ -246,7 +246,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                   // if lexprevpos does not exists, we need a new array as buffer
                   buffer = new HugeLongArray(bigSuffixDLL.capacity());
                }
-               BigLCP.LcpInfo lcpinfo = BigLCP.buildLcpAndWriteToFile(bigSuffixDLL, method, dolcp, flcp, buffer);
+               BigLCP.LcpInfo lcpinfo = BigLCP.buildLcpAndWriteToFile(bigSuffixDLL, method, specialCharacterOrder, dolcp, flcp, buffer);
                project.setProperty("lcp1Exceptions", lcpinfo.lcp1x);
                project.setProperty("lcp2Exceptions", lcpinfo.lcp2x);
                project.setProperty("lcp1Size", n + 8 * lcpinfo.lcp1x);
