@@ -1041,5 +1041,160 @@ public class HugeShortArrayTest {
          System.gc();
       }
    }
+   
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test
+   public void testHugeShortArrayWrapperConstructor1() {
+      Random r = new Random(SEED);
+      short[] reference = new short[500];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      for (int i = 0; i < reference.length; i++) {
+         assertEquals(reference[i], wrapper.get(i));
+      }
+   }
+
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test
+   @Ignore("needs 1 minute")
+   public void testHugeShortArrayWrapperConstructor2() {
+      Random r = new Random(SEED);
+      short[] reference = new short[Integer.MAX_VALUE/2];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      for (int i = 0; i < reference.length; i++) {
+         assertEquals(reference[i], wrapper.get(i));
+      }
+   }
+
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test
+   @Ignore("needs more than 7GB memory")
+   public void testHugeShortArrayWrapperConstructor3() {
+      Random r = new Random(SEED);
+      short[] reference = new short[Integer.MAX_VALUE];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      for (int i = 0; i < reference.length; i++) {
+         assertEquals(reference[i], wrapper.get(i));
+      }
+   }
+
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test
+   @Ignore("needs 1 minute")
+   public void testHugeShortArrayWrapperConstructor4() {
+      Random r = new Random(SEED);
+      short[] reference = new short[1<<30];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      for (int i = 0; i < reference.length; i++) {
+         assertEquals(reference[i], wrapper.get(i));
+      }
+   }
+
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test
+   @Ignore("needs 1 minute")
+   public void testHugeShortArrayWrapperConstructor5() {
+      Random r = new Random(SEED);
+      short[] reference = new short[(1<<30)-1];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      for (int i = 0; i < reference.length; i++) {
+         assertEquals(reference[i], wrapper.get(i));
+      }
+   }
+
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test
+   @Ignore("needs 1 minute")
+   public void testHugeShortArrayWrapperConstructor6() {
+      Random r = new Random(SEED);
+      short[] reference = new short[ (1<<30) + 1];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      for (int i = 0; i < reference.length; i++) {
+         assertEquals(reference[i], wrapper.get(i));
+      }
+   }
+   
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test(expected = ArrayIndexOutOfBoundsException.class)
+   public void testHugeShortArrayWrapperConstructor7() {
+      Random r = new Random(SEED);
+      short[] reference = new short[0];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      wrapper.get(0);
+   }
+   
+   /**
+    * Test method for {@link verjinxer.util.HugeShortArray#HugeShortArray(short[])}.
+    */
+   @Test
+   public void testHugeShortArrayWrapperConstructor8() {
+      Random r = new Random(SEED);
+      short[] reference = new short[1];
+      for (int i = 0; i < reference.length; i++) {
+         reference[i] = (short) r.nextInt();
+      }
+      
+      HugeShortArray wrapper = new HugeShortArray(reference);
+      
+      assertEquals(reference.length, wrapper.length);
+      for (int i = 0; i < reference.length; i++) {
+         assertEquals(reference[i], wrapper.get(i));
+      }
+   }
 
 }
