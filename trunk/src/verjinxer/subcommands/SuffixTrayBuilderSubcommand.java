@@ -50,6 +50,9 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       log.info("Options:");
       log.info("  -m, --method  <id>    select construction method, where <id> is one of:");
       log.info("      L\n" + "      R\n" + "      minLR\n" + "      bothLR\n" + "      bothLR2");
+      log.info("  -o  --order   <id>    select compare/order method for special characteres, where <id> is one of:");
+      log.info("      pos               compare by position (default)");
+      log.info("      suffix            compare by suffix (needed to build a BWT, only in conjunction with method 'minLR' or 'bothLR')");
       log.info("  -l, --lcp[2|1]        build lcp array using int|short|byte");
       log.info("  -c, --check           additionally check index integrity");
       log.info("  -C, --onlycheck       ONLY check index integrity");
@@ -62,7 +65,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       int returnvalue = 0;
       String action = "suffixtray \"" + StringUtils.join("\" \"", args) + "\"";
 
-      Options opt = new Options("c=check,C=onlycheck,m=method:,l=lcp=lcp4,lcp1,lcp2,b=bigsuffix");
+      Options opt = new Options("c=check,C=onlycheck,m=method:,o=order:,l=lcp=lcp4,lcp1,lcp2,b=bigsuffix");
       try {
          args = opt.parse(args);
       } catch (IllegalOptionException ex) {
@@ -148,6 +151,15 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
 
       final String method = (opt.isGiven("m") ? opt.get("m") : "L"); // default method
       log.info("suffixtray: constructing pos using method '%s'...", method);
+      final String specialCharacterOrder = (opt.isGiven("o") ? opt.get("o") : "pos");
+      log.info("suffixtray: compare/order special characters using method '%s'...",
+            specialCharacterOrder);
+      project.setProperty("specialCharacterOrder4Suffix", specialCharacterOrder);
+      if (specialCharacterOrder.equals("suffix") && !method.equals("minLR")
+            && !method.equals("bothLR")) {
+         log.error("suffixtray: ordering special characters by 'suffix' is only supported in conjunction with method 'minLR' or 'bothLR'");
+         return 1;
+      }
       TicToc timer = new TicToc();
       long steps;
       ISuffixDLL suffixDLL = null;
@@ -155,13 +167,13 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
       try {
          if (bigsuffix) {
             assert(alphabet.isEndOfLine(bigSequence.get(n-1))) : "last character in text needs to be a 'end of line' value";
-            BigSuffixTrayBuilder builder = new BigSuffixTrayBuilder(bigSequence, alphabet);
+            BigSuffixTrayBuilder builder = new BigSuffixTrayBuilder(bigSequence, alphabet, specialCharacterOrder);
             builder.build(method);
             steps = builder.getSteps();
             bigSuffixDLL = builder.getSuffixDLL();
          } else {
             assert (alphabet.isEndOfLine(sequence.array()[(int)n - 1])) : "last character in text needs to be a 'end of line' value";
-            SuffixTrayBuilder builder = new SuffixTrayBuilder(sequence, alphabet);
+            SuffixTrayBuilder builder = new SuffixTrayBuilder(sequence, alphabet, specialCharacterOrder);
             builder.build(method);
             steps = builder.getSteps();
             suffixDLL = builder.getSuffixDLL();
@@ -185,7 +197,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                returnvalue = BigSuffixTrayChecker.checkpos(bigSuffixDLL, method);
             } else {
                SuffixTrayChecker.setLogger(log);
-               returnvalue = SuffixTrayChecker.checkpos(suffixDLL, method);
+               returnvalue = SuffixTrayChecker.checkpos(suffixDLL, method, specialCharacterOrder);
             }
          } catch (IllegalArgumentException iae) {
             log.error("suffixcheck: " + iae);
@@ -252,7 +264,7 @@ public class SuffixTrayBuilderSubcommand implements Subcommand {
                   //if lexprevpos does not exists, we need a new array as buffer
                   buffer = new int[0];
                }
-               LCP.LcpInfo lcpinfo = LCP.buildLcpAndWriteToFile(suffixDLL, method, dolcp, flcp, buffer);
+               LCP.LcpInfo lcpinfo = LCP.buildLcpAndWriteToFile(suffixDLL, method, specialCharacterOrder, dolcp, flcp, buffer);
                project.setProperty("lcp1Exceptions", lcpinfo.lcp1x);
                project.setProperty("lcp2Exceptions", lcpinfo.lcp2x);
                project.setProperty("lcp1Size", n + 8 * lcpinfo.lcp1x);

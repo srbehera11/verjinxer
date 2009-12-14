@@ -109,7 +109,7 @@ public class BWTBuilderSubcommand implements Subcommand {
 
             final String method = "bothLR";
             log.info("%s: constructing suffix list using method '%s'...", commandname, method);
-            final SuffixTrayBuilder builder = new SuffixTrayBuilder(sequence, alphabet);
+            final SuffixTrayBuilder builder = new SuffixTrayBuilder(sequence, alphabet, "suffix");
             builder.build(method); //WARNING: change the method and you must change the type cast in the next line!
             assert (builder.getSuffixDLL() instanceof SuffixXorDLL);
             final SuffixXorDLL suffixDLL = (SuffixXorDLL)builder.getSuffixDLL(); // type cast is okay because I used method 'bothLR' to build the list

@@ -9,8 +9,6 @@ import verjinxer.sequenceanalysis.Alphabet;
 import verjinxer.sequenceanalysis.BigSuffixDLL;
 import verjinxer.sequenceanalysis.BigSuffixXorDLL;
 import verjinxer.sequenceanalysis.IBigSuffixDLL;
-import verjinxer.sequenceanalysis.SuffixDLL;
-import verjinxer.sequenceanalysis.SuffixXorDLL;
 import verjinxer.util.ArrayFile;
 import verjinxer.util.HugeByteArray;
 import verjinxer.util.HugeLongArray;

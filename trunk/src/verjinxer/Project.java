@@ -305,6 +305,10 @@ public class Project {
       return Boolean.parseBoolean(properties.getProperty(name));
    }
 
+   public String getStringProperty(final String name) {
+      return properties.getProperty(name);
+   }
+
    public void setProperty(final String name, String value) {
       properties.setProperty(name, value);
    }

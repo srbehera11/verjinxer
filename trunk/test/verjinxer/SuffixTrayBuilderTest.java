@@ -62,7 +62,7 @@ public class SuffixTrayBuilderTest extends TestCase {
          e.printStackTrace();
       }
 
-      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC());
+      final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC(), "pos");
       stb.build("minLR");
 
       long totalSteps = stb.getSteps() - 1; // -1 for $
@@ -110,7 +110,7 @@ public class SuffixTrayBuilderTest extends TestCase {
             e.printStackTrace();
          }
 
-         final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC());
+         final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC(), "pos");
          stb.build("minLR");
          stp = (int) stb.getSteps() - 1; // -1 for $
          // result = stb.checkpos_R();
@@ -141,7 +141,7 @@ public class SuffixTrayBuilderTest extends TestCase {
          } catch (IOException e) {
             e.printStackTrace();
          }
-         final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC());
+         final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC(), "pos");
          totalsteps[L] = 0;
          // t[0]=1; // save half the work for rah2min(), since everything starts with 1
 
@@ -198,7 +198,7 @@ public class SuffixTrayBuilderTest extends TestCase {
             e.printStackTrace();
          }
 
-         final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC());
+         final SuffixTrayBuilder stb = new SuffixTrayBuilder(sequence, Alphabet.NUMERIC(), "pos");
          stb.build("R");
          System.out.printf("  steps=%d; text=%s%n", stb.getSteps(), StringUtils.join("", t, 0, L));
       }
