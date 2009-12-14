@@ -60,7 +60,7 @@ public class HugeIntArray {
    }
 
    /**
-    * Creates a new HugeTypeArray as an exact copy of an existing one
+    * Creates a new HugeIntArray as an exact copy of an existing one
     * 
     * @param other
     *           the existing array
@@ -79,6 +79,37 @@ public class HugeIntArray {
     		  arrays[i] = other.arrays[i];
     	  }
       }
+   }
+   
+   /**
+    * Creates a new HugeIntArray and wraps a copy of the given primitive int array.
+    * 
+    * @param other
+    *           an existing primitive array
+    */
+   public HugeIntArray(final int[] other) {
+      length = other.length;
+      bins = (int) ((length - 1) >> BITS) + 1; // last bin is potentially empty (array of length 0)
+      
+      arrays = new int[bins][];
+      for (int i = 0; i < bins - 1; ++i) {
+         arrays[i] = new int[BINSIZE];
+      }
+      
+      if (bins > 0) {
+         if ( (length & BITMASK_LOW) > 0) arrays[bins - 1] = new int[ (int) (length & BITMASK_LOW) ];
+         else                             arrays[bins - 1] = new int[          BINSIZE             ];
+         
+          assert arrays[bins - 1].length > 0;
+       }
+      
+      int otherPos = 0;
+      for (int bin = 0; bin < bins; bin++) {
+         for(int binPos = 0; binPos < arrays[bin].length; binPos++) {
+            arrays[bin][binPos] = other[otherPos++];
+         }
+      }
+      assert otherPos == other.length;
    }
 
    /**
