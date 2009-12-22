@@ -110,11 +110,9 @@ public class BWTIndex {
    public byte getCharacterAtIndexPosition(int pos) {
       // linear search for a small range
       if (highestCharacter - lowestCharacter < 6) {
-         for (int i = lowestCharacter; i <= highestCharacter; i++) {
-            if (c[i] == pos) {
+         for (int i = highestCharacter; i >= lowestCharacter; i--) {
+            if (c[i] <= pos) {
                return (byte) (i - 128);
-            } else if (c[i] > pos) {
-               return (byte) (i - 129);
             }
          }
          if (pos < 0 || pos >= el.length) {
