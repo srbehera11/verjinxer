@@ -62,7 +62,7 @@ public class Suffix {
        * If 0 is returned, both suffixes are the same.<br>
        * If -i (a negative integer) is returned, the first suffix stands before the second in a
        * suffix array. The lcp value is '(i-1)'.<br>
-       * If i (a positive integer) is returnd, the first suffix stands behind the second in a suffix
+       * If i (a positive integer) is returned, the first suffix stands behind the second in a suffix
        * array. The lcp value is '(i-1')'.<br>
        * The lcp value can be received with ' i==0 ? o1.length : Math.abs(i)-1', where 'i' is the
        * return value.
@@ -105,7 +105,7 @@ public class Suffix {
        * If 0 is returned, both suffixes are the same.<br>
        * If -i (a negative integer) is returned, the first suffix stands before the second in a
        * suffix array. The lcp value is '(i-1)'.<br>
-       * If i (a positive integer) is returnd, the first suffix stands behind the second in a suffix
+       * If i (a positive integer) is returned, the first suffix stands behind the second in a suffix
        * array. The lcp value is '(i-1')'.<br>
        * Generally the lcp value can be received with ' i==0 ? o1.length : Math.abs(i)-1', where 'i'
        * is the return value.
