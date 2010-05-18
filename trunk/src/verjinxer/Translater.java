@@ -53,8 +53,6 @@ public class Translater {
          boolean separateRCByWildcard, boolean reverse, boolean addrc, boolean bisulfite,
          String dnarcstring, final boolean colorspace, final File csfastaQualityFile) {
 
-      // for now, only print the message itself (%m), nothing else
-
       this.g = g;
       this.trim = trim;
       this.alphabet = alphabet;
