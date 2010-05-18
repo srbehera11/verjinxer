@@ -1,17 +1,8 @@
 package verjinxer;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
 
 import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.sequenceanalysis.QGramCoder;
-import verjinxer.sequenceanalysis.QGramFilter;
-import verjinxer.util.BitArray;
-import verjinxer.util.TicToc;
 
 import com.spinn3r.log5j.Logger;
 
