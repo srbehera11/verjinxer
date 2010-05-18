@@ -45,6 +45,7 @@ Bugs
 Features
 --------
 
+- Use SAM/BAM output format (http://samtools.sf.net)
 - handle repeat-masked sequences correctly: don't put all-lowercase q-grams into the index,
   but leave them in the sequence that is used for extending the q-hits
   
@@ -68,6 +69,8 @@ Features
 - make "verjinxer <subcommand> --help" work
 
 - FASTQ support
+
+- "do it all" command
 
 Unit Tests
 ----------
