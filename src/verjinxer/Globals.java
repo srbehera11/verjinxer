@@ -1,506 +1,454 @@
+/*
+ * Globals.java
+ * Created on April 12, 2007, 9:17 AM
+ */
+
 package verjinxer;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.util.*;
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
-
-import verjinxer.sequenceanalysis.Alphabet;
-import verjinxer.util.ArrayFile;
-import verjinxer.util.BitArray;
-import verjinxer.util.FileTypes;
-import verjinxer.util.HugeByteArray;
-import verjinxer.util.HugeIntArray;
-import verjinxer.util.StringUtils;
-
-import com.spinn3r.log5j.Logger;
+import verjinxer.util.*;
+import verjinxer.sequenceanalysis.AlphabetMap;
 
 /**
- * 
+ *
  * @author Sven Rahmann
- * 
- * TODO 
  */
 public class Globals {
-   private static final Logger log = Logger.getLogger(Globals.class);
-
-   static {
-      log.setLevel(Level.INFO);
-      // only print the message itself (%m), nothing else
-      log.addAppender(new ConsoleAppender(new PatternLayout("%m%n"), ConsoleAppender.SYSTEM_ERR));
-   }
-
-   public final static String programname = "VerJInxer";
-   public final static String version = "0.5";
-
-   private final ArrayFile arf;
+  
+  public final static String programname = "VerJInxer";
+  public final static String version     = "0.4";
+  public final static String extseq      = ".seq";
+  public final static String extprj      = ".prj";
+  public final static String extlog      = ".log";
+  public final static String extdesc     = ".desc";
+  public final static String extselect   = ".select-filter";
+  public final static String extssp      = ".ssp";
+  public final static String extalph     = ".alphabet";
+  public final static String extqbck     = ".qbck";
+  public final static String extqpos     = ".qpos";
+  public final static String extqfreq    = ".qfreq";
+  public final static String extqseqfreq = ".qsfrq";
+  public final static String extrunseq   = ".runseq";
+  public final static String extrunlen   = ".runlen";
+  public final static String extrun2pos  = ".run2pos";
+  public final static String extpos2run  = ".pos2run";
+  public final static String extpos      = ".pos";        // suffix array
+  public final static String extlcp      = ".lcp";        // lcp values
    
-   /** prefix to diagnostic messages */
-   public static String cmdname = programname;
-   
-   /** all arguments to Main for logfile */
-   String[] action = null;
-   
-   /** write to project log? */
-   boolean logToFile = true;
+  private PrintStream  logger  = null;
+  private PrintStream  loggerP = null;
+  private final ArrayFile    arf;
+  
+  String       cmdname = programname; // prefix to diagnostic messages
+  String[]     action  = null;        // all arguments to Main for logfile
+  boolean      plog    = true;        // write to project log?
+  String       dir     = "";          // project (working) dir
+  String       outdir  = "";          // output dir -- do not use lightly!
+  boolean      quiet   = false;       // suppress diagnostics to stdout?
+  
+  public Globals() {
+     arf = new ArrayFile();        // array file to be used
+  }
+  
+  
+  public final void warnmsg(String format, Object ... args) {
+    System.err.printf(Locale.US, format, args);
+    if (logger!=null)  logger.printf(Locale.US, format, args);
+    if (plog && loggerP!=null) loggerP.printf(Locale.US, format, args);
+  }
+  
+  public final void logmsg(String format, Object ... args) {
+    if (!quiet)        System.out.printf(Locale.US, format, args);
+    if (logger!=null)  logger.printf(Locale.US, format, args);
+    if (plog && loggerP!=null) loggerP.printf(Locale.US, format, args);
+    
+  }
+  
+  public final void setlogger(PrintStream l) {
+    logger = l;
+  }
+  
+  private final void setloggerP(PrintStream l) {
+    loggerP = l;
+  }
+  
+  public final void startplog(String fname, boolean startnew) {
+    if(!plog) return;
+    try {
+      setloggerP(new PrintStream(new FileOutputStream(fname,!startnew), true));
+      loggerP.printf("%n# %s%n", new Date().toString());
+      loggerP.printf("# \"%s\"%n", StringUtils.join("\" \"",action));
+    } catch (FileNotFoundException ex) {
+      warnmsg("%s: could not open project log '%s'; continuing...", programname, fname);
+    }
+  }
+  
+  public final void startplog(String fname) {
+    startplog(fname, false);
+  }
+  
+  public final void stopplog() {
+    loggerP.close();
+  }
+  
+  
+  public final void terminate(int exitcode) {
+    System.exit(exitcode);
+  }
+  
+  public void terminate(String msg) {
+    warnmsg("%s%n",msg);
+    terminate(1);
+  }
+  
+  /**************************************************************************/
+  
+  /** read prjfile or terminate
+   * @param filename  the complete filename of the .prj file
+   * @return the project information in a Properties object
+   */
+  public final Properties readProject(String filename) {
+    Properties prj = new Properties();
+    BufferedReader prjfile = null;
+    try {
+      prjfile = new BufferedReader(new FileReader(filename));
+      prj.load(prjfile);
+      prjfile.close();
+    } catch (Exception ex) {
+      warnmsg("%s: could not read project file [%s]%n", cmdname, ex.toString());
+      terminate(1);
+    }
+    return prj;
+  }
+  
+  /* write prj file */
+  final void writeProject(Properties prj, String filename)
+  throws IOException {
+    PrintWriter prjfile = null;
+    try {
+      prjfile = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
+      prj.store(prjfile,null);
+      prjfile.close();
+    } catch (Exception ex) {
+      warnmsg("%s: %s%n", cmdname, ex.toString());
+      throw new IOException();
+    }
+  }
+  
+  /** read alphabet map file */
+  final AlphabetMap readAlphabetMap(String fname) {
+    AlphabetMap amap = null;
+    try {
+      amap = AlphabetMap.fromFile(fname);
+    } catch (IOException ex) {
+      warnmsg("%s: could not read alphabet map '%s'. Stop.%n", cmdname, fname);
+      terminate(1);
+    }
+    return amap;
+  }
+  
+// ======================= slurp methods with diagnostics ==================
+  
+  /** slurp the contents of a file into a byte[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the newly created byte[] with the file's contents
+   */
+  byte[] slurpByteArray(String file) {
+    byte[] a = null;
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = arf.setFilename(file).readArray(a);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
+  
+  /** slurp selected contents of a file into a byte[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @param startindex  where to start reading the file (inclusive)
+   * @param stopindex   where to stop reading the file (exclusive); -1 reads the whole file.
+   * @param a  an existing array or 'null'. If the existing array has length
+   * at least stopindex-startindex, its first elements are filled with the contents of 
+   * the file.  Otherwise, a new array of the correct size is created.
+   * @return the newly created byte[] or a with the file's contents.
+   */
+  byte[] slurpByteArray(String file, long startindex, long stopindex, byte[] a) {
+    //logmsg("%s: reading '%s' [%d..%d] into memory...%n", cmdname, file, startindex, stopindex);
+    try {
+      a = arf.setFilename(file).readArray(a, 0, (int)(stopindex-startindex),  startindex);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
 
-   FileAppender projectlog = null;
+  /** slurp the contents of a file into an array while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the newly created HugeByteArray with the file's contents
+   */
+  public HugeByteArray slurpHugeByteArray(final String file) {
+    HugeByteArray a = null;
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = HugeByteArray.fromFile(file);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
 
-   public Globals() {
-      arf = new ArrayFile(); // array file to be used
-   }
+  /** slurp the contents of a file into an array while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the newly created HugeByteArray with the file's contents
+   */
+  public HugeIntArray slurpHugeIntArray(final String file) {
+    HugeIntArray a = null;
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = HugeIntArray.fromFile(file);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
 
-   // TODO mark as deprecated
-   public static Logger getLogger() {
-      return log;
-   }
+  
+  /** slurp the contents of a file into an int[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the newly created int[] with the file's contents
+   */
+  public int[] slurpIntArray(String file) {
+    int[] a = null;
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = arf.setFilename(file).readArray(a);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
 
-   public void startProjectLogging(Project project, boolean startnew) {
-      if (!logToFile)
-         return;
-      try {
-         projectlog = new FileAppender(new PatternLayout("%m%n"), project.makeFile(FileTypes.LOG).getAbsolutePath(), !startnew);
-         log.addAppender(projectlog);
+  /** slurp the contents of a file into an int[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @param a  an existing array to be used if large enough.
+   * @return the int[] with the file's contents
+   */
+  int[] slurpIntArray(String file, int[] a) {
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = arf.setFilename(file).readArray(a);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
+  
+  /** slurp the contents of a file into a long[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the newly created array with the file's contents
+   */
+  long[] slurpLongArray(String file) {
+    long[] a = null;
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = arf.setFilename(file).readArray(a);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
 
-         // TODO previously, this was only logged to the project log file
-         log.info("%s", new Date());
-         log.info("command line: \"%s\"", StringUtils.join("\" \"", action));
-      } catch (IOException ex) {
-         log.warn("%s: could not open project log '%s'; continuing...", programname, project.getName());
-      }
-   }
+  /** slurp the contents of a file into an int[] while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @param a  an existing array to be used if large enough.
+   * @return the int[] with the file's contents
+   */
+  long[] slurpIntArray(String file, long[] a) {
+    logmsg("%s: reading '%s' into memory...%n", cmdname, file);
+    try {
+      a = arf.setFilename(file).readArray(a);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      warnmsg("%s: could not read '%s'. Stop.%n",cmdname, file);
+      terminate(1);
+    }
+    return a;
+  }
+  
+  
+  /** map the contents of a file into a ByteBuffer while printing diagnostics.
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be read
+   * @return the ByteBuffer with the mapped file's contents
+   */
+  public ByteBuffer mapR(final String file) {
+    ByteBuffer b = null;
+    logmsg("%s: memory-mapping '%s'...%n", cmdname, file);
+    try {
+      b = new ArrayFile(file,0).mapR();
+    } catch (IOException ex) {
+      warnmsg("%s: could not map '%s'; %s. Stop.%n", cmdname, file, ex.toString());
+      terminate(1);
+    }
+    return b;
+  }
+  
+  
+  //======================= text file readers =================================
+  
+  ArrayList<String> slurpTextFile(String file, int ll) {
+    if (ll<=0) ll=32;
+    logmsg("%s: reading '%s'; expecting %d lines...%n", cmdname, file, ll);
+    ArrayList<String> lines = new ArrayList<String>(ll);
+    String s;
+    BufferedReader br = null;
+    try {
+      br = new BufferedReader(new FileReader(file));
+      while((s = br.readLine())!=null) lines.add(s);
+      br.close();
+    } catch (IOException ex) {
+      try { if(br!=null) br.close();} catch(IOException exx) {}
+      warnmsg("%s: could not read '%s'; %s%n", cmdname, file, ex.toString());
+      terminate(1);
+    }
+    return lines;
+  }
+  
+  //======================= file writers ====================================
+  
+  /** Dump the first given number of ints of the given array to the given file,
+   * while printing diagnostics. Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   * @param start  index at which to start dumping a
+   * @param len  the number of elements to dump
+   */
+  final void dumpIntArray(final String file, final int[] a, final int start, final int len) {
+    logmsg("%s: writing '%s'...%n", cmdname, file);
+    try {
+      arf.setFilename(file).writeArray(a,start,len);
+    } catch (Exception ex) {
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
+      terminate(1);
+    }
+  }
 
-   public void startProjectLogging(Project project) {
-      startProjectLogging(project, false);
-   }
+  /** Dump the given array to the given file while printing diagnostics. 
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   */
+  final void dumpIntArray(final String file, final int[] a) {
+    dumpIntArray(file, a, 0, a.length);
+  }
+  
+  /** Dump the first given number of ints of the given array to the given file,
+   * while printing diagnostics. Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   * @param start  index at which to start dumping a
+   * @param len  the number of elements to dump
+   */
+  final void dumpLongArray(final String file, final long[] a, final int start, final int len) {
+    logmsg("%s: writing '%s'...%n", cmdname, file);
+    try {
+      arf.setFilename(file).writeArray(a,start,len);
+    } catch (Exception ex) {
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
+      terminate(1);
+    }
+  }
 
-   @Deprecated
-   public void setQuiet(boolean b) {
-      if (b) {
-         log.setLevel(Level.WARN);
-      } else {
-         log.setLevel(Level.INFO);
-      }
-   }
+  /** Dump the given array to the given file while printing diagnostics. 
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   */
+  final void dumpLongArray(final String file, final long[] a) {
+    dumpLongArray(file, a, 0, a.length);
+  }
+  
+  /** Dump the first given number of bytes of the given array to the given file,
+   * while printing diagnostics. Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   * @param start  index at which to start dumping a
+   * @param len  the number of elements to dump
+   */
+  void dumpByteArray(final String file, final byte[] a, final int start, final int len) {
+    logmsg("%s: writing '%s'...%n", cmdname, file);
+    try {
+      arf.setFilename(file).writeArray(a,start,len);
+    } catch (Exception ex) {
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, file, ex.toString());
+      terminate(1);
+    }
+  }
+  
+  /** Dump the given array to the given file while printing diagnostics. 
+   * Terminate the program when an error occurs.
+   * @param file  the name of the file to be written
+   * @param a  the array to be dumped
+   */
+  void dumpByteArray(final String file, final byte[] a) {
+    dumpByteArray(file, a, 0, a.length);
+  }
+    
+  /** Write the given BitArray to a file, while printing diagnostics.
+   *  Terminate the program when an error occurs.
+   * @param filename  the name of the file
+   * @param ba        the bit array
+   */
+  void dumpBitArray(final String filename, BitArray ba) {
+    logmsg("%s: writing '%s'...%n", cmdname, filename);
+    try {
+      ba.writeTo(arf.setFilename(filename));
+    } catch (IOException ex) {
+      warnmsg("%s: could not write '%s'; %s%n",cmdname, filename, ex.toString());
+      terminate(1);
+    }
+  }
 
-   public final void stopplog() {
-      // TODO is this necessary?
-      if (projectlog != null)
-         projectlog.close();
-   }
-
-   // TODO Please explain what to use / what to do instead of calling terminate().
-   // Thanks, -SR.
-   @Deprecated
-   public static void terminate(int exitcode) {
-      System.exit(exitcode);
-   }
-
-   @Deprecated
-   public static void terminate(String msg) {
-      log.error("%s", msg);
-      System.exit(1);
-   }
-
-   /**************************************************************************/
-
-   /** 
-    * read alphabet map file
-    * @deprecated Use {@link Project#readAlphabet()} or directly {@link Alphabet#fromFile(File)}
-    */
-   @Deprecated
-   public static final Alphabet readAlphabet(File file) {
-      Alphabet alphabet = null;
-      try {
-         alphabet = Alphabet.fromFile(file);
-      } catch (IOException ex) {
-         log.error("%s: could not read alphabet '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return alphabet;
-   }
-
-   // ======================= slurp methods with diagnostics ==================
-
-   /**
-    * slurp the contents of a file into a byte[] while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @return the newly created byte[] with the file's contents
-    */
-   public byte[] slurpByteArray(File file) {
-      byte[] a = null;
-      log.info("%s: reading '%s' into memory...", cmdname, file);
-      try {
-         a = arf.setFile(file).readArray(a);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * slurp selected contents of a file into a byte[] while printing diagnostics. Terminate the
-    * program when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @param startindex
-    *           where to start reading the file (inclusive)
-    * @param stopindex
-    *           where to stop reading the file (exclusive); -1 reads the whole file.
-    * @param a
-    *           an existing array or 'null'. If the existing array has length at least
-    *           stopindex-startindex, its first elements are filled with the contents of the file.
-    *           Otherwise, a new array of the correct size is created.
-    * @return the newly created byte[] or a with the file's contents.
-    */
-   public byte[] slurpByteArray(File file, long startindex, long stopindex, byte[] a) {
-      // log.info("%s: reading '%s' [%d..%d] into memory...", cmdname, file, startindex, stopindex);
-      try {
-         a = arf.setFile(file).readArray(a, 0, (int) (stopindex - startindex), startindex);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * slurp the contents of a file into an array while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @return the newly created HugeByteArray with the file's contents
-    */
-   public static HugeByteArray slurpHugeByteArray(final File file) {
-      HugeByteArray a = null;
-      log.info("%s: reading '%s' into memory...", cmdname, file);
-      try {
-         a = HugeByteArray.fromFile(file);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * slurp the contents of a file into an array while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @return the newly created HugeByteArray with the file's contents
-    */
-   public HugeIntArray slurpHugeIntArray(final File file) {
-      HugeIntArray a = null;
-      log.info("%s: reading '%s' into memory...", cmdname, file);
-      try {
-         a = HugeIntArray.fromFile(file);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * slurp the contents of a file into an int[] while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @return the newly created int[] with the file's contents
-    */
-   public int[] slurpIntArray(File file) {
-      int[] a = null;
-      log.info("%s: reading '%s' into memory...", cmdname, file);
-      try {
-         a = arf.setFile(file).readArray(a);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * slurp the contents of a file into an int[] while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @param a
-    *           an existing array to be used if large enough.
-    * @return the int[] with the file's contents
-    */
-   public int[] slurpIntArray(File file, int[] a) {
-      log.info("%s: reading '%s' into memory...", cmdname, file);
-      try {
-         a = arf.setFile(file).readArray(a);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * slurp the contents of a file into a long[] while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @return the newly created array with the file's contents
-    */
-   public long[] slurpLongArray(File file) {
-      long[] a = null;
-      log.info("%s: reading '%s' into memory...", cmdname, file);
-      try {
-         a = arf.setFile(file).readArray(a);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * slurp the contents of a file into an int[] while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @param a
-    *           an existing array to be used if large enough.
-    * @return the int[] with the file's contents
-    */
-   public long[] slurpIntArray(File file, long[] a) {
-      log.info("%s: reading '%s' into memory...", cmdname, file);
-      try {
-         a = arf.setFile(file).readArray(a);
-      } catch (IOException ex) {
-         ex.printStackTrace();
-         log.warn("%s: could not read '%s'. Stop.", cmdname, file);
-         terminate(1);
-      }
-      return a;
-   }
-
-   /**
-    * map the contents of a file into a ByteBuffer while printing diagnostics. Terminate the program
-    * when an error occurs.
-    * 
-    * @param file
-    *           the file to be read
-    * @return the ByteBuffer with the mapped file's contents
-    * TODO outsourcing in other class
-    */
-   public static ByteBuffer mapR(final File file) {
-      ByteBuffer b = null;
-      log.info("%s: memory-mapping '%s'...", cmdname, file);
-      try {
-         b = new ArrayFile(file, 0).mapR();
-      } catch (IOException ex) {
-         log.warn("%s: could not map '%s'; %s. Stop.", cmdname, file, ex);
-         terminate(1);
-      }
-      return b;
-   }
-
-   // ======================= text file readers =================================
-
-   public static ArrayList<String> slurpTextFile(File file, int ll) {
-      if (ll <= 0)
-         ll = 32;
-      log.info("%s: reading '%s'; expecting %d lines...", cmdname, file, ll);
-      ArrayList<String> lines = new ArrayList<String>(ll);
-      String s;
-      BufferedReader br = null;
-      try {
-         br = new BufferedReader(new FileReader(file));
-         while ((s = br.readLine()) != null)
-            lines.add(s);
-         br.close();
-      } catch (IOException ex) {
-         try {
-            if (br != null)
-               br.close();
-         } catch (IOException exx) {
-         }
-         log.warn("%s: could not read '%s'; %s", cmdname, file, ex);
-         terminate(1);
-      }
-      return lines;
-   }
-
-   // ======================= file writers ====================================
-
-   /**
-    * Dump the first given number of ints of the given array to the given file, while printing
-    * diagnostics. Terminate the program when an error occurs.
-    * 
-    * @param file
-    *           the file to be written
-    * @param a
-    *           the array to be dumped
-    * @param start
-    *           index at which to start dumping a
-    * @param len
-    *           the number of elements to dump
-    */
-   final void dumpIntArray(final File file, final int[] a, final int start, final int len) {
-      log.info("%s: writing '%s'...", cmdname, file);
-      try {
-         arf.setFile(file).writeArray(a, start, len);
-      } catch (IOException ex) {
-         log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
-         terminate(1);
-      }
-   }
-
-   /**
-    * Dump the given array to the given file while printing diagnostics. Terminate the program when
-    * an error occurs.
-    * 
-    * @param file
-    *           the file to be written
-    * @param a
-    *           the array to be dumped
-    */
-   public final void dumpIntArray(final File file, final int[] a) {
-      dumpIntArray(file, a, 0, a.length);
-   }
-
-   /**
-    * Dump the first given number of ints of the given array to the given file, while printing
-    * diagnostics. Terminate the program when an error occurs.
-    * 
-    * @param file
-    *           the file to be written
-    * @param a
-    *           the array to be dumped
-    * @param start
-    *           index at which to start dumping a
-    * @param len
-    *           the number of elements to dump
-    */
-   public final void dumpLongArray(final File file, final long[] a, final int start, final int len) {
-      log.info("%s: writing '%s'...", cmdname, file);
-      try {
-         arf.setFile(file).writeArray(a, start, len);
-      } catch (IOException ex) {
-         log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
-         terminate(1);
-      }
-   }
-
-   /**
-    * Dump the given array to the given file while printing diagnostics. Terminate the program when
-    * an error occurs.
-    * 
-    * @param file
-    *           the file to be written
-    * @param a
-    *           the array to be dumped
-    */
-   public final void dumpLongArray(final File file, final long[] a) {
-      dumpLongArray(file, a, 0, a.length);
-   }
-
-   /**
-    * Dump the first given number of bytes of the given array to the given file, while printing
-    * diagnostics. Terminate the program when an error occurs.
-    * 
-    * @param file
-    *           the file to be written
-    * @param a
-    *           the array to be dumped
-    * @param start
-    *           index at which to start dumping a
-    * @param len
-    *           the number of elements to dump
-    */
-   public void dumpByteArray(final File file, final byte[] a, final int start, final int len) {
-      log.info("%s: writing '%s'...", cmdname, file);
-      try {
-         arf.setFile(file).writeArray(a, start, len);
-      } catch (IOException ex) {
-         log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
-         terminate(1);
-      }
-   }
-
-   /**
-    * Dump the given array to the given file while printing diagnostics. Terminate the program when
-    * an error occurs.
-    * 
-    * @param file
-    *           the file to be written
-    * @param a
-    *           the array to be dumped
-    */
-   public void dumpByteArray(final File file, final byte[] a) {
-      dumpByteArray(file, a, 0, a.length);
-   }
-
-   /**
-    * Write the given BitArray to a file, while printing diagnostics. Terminate the program when an
-    * error occurs.
-    * 
-    * @param file
-    *           the file
-    * @param ba
-    *           the bit array
-    */
-   public void dumpBitArray(final File file, BitArray ba) {
-      log.info("%s: writing '%s'...", cmdname, file);
-      try {
-         ba.writeTo(arf.setFile(file));
-      } catch (IOException ex) {
-         log.warn("%s: could not write '%s'; %s", cmdname, file, ex);
-         terminate(1);
-      }
-   }
-
-   /**
-    * Read a BitArray from a file, while printing diagnostics. Terminate the program when an error
-    * occurs.
-    * 
-    * @param file
-    *           the file
-    * @return the bit array
-    */
-   public BitArray slurpBitArray(final File file) {
-      log.info("%s: reading '%s'...", cmdname, file);
-      BitArray ba = null;
-      try {
-         ba = BitArray.readFrom(arf.setFile(file));
-      } catch (IOException ex) {
-         log.warn("%s: could not read '%s'; %s", cmdname, file, ex);
-         terminate(1);
-      }
-      return ba;
-   }
-
+ /** Read a BitArray from a file, while printing diagnostics.
+  * Terminate the program when an error occurs.
+  * @param filename  the name of the file
+  * @return the bit array
+  */
+  BitArray slurpBitArray(final String filename) {
+     logmsg("%s: reading '%s'...%n", cmdname, filename);
+     BitArray ba = null;
+     try {
+        ba = BitArray.readFrom(arf.setFilename(filename));
+     } catch (IOException ex) {
+        warnmsg("%s: could not read '%s'; %s%n",cmdname, filename, ex.toString());
+        terminate(1);
+     }
+     return ba;
+  }
+  
 }

@@ -40,7 +40,7 @@ public class StringUtils {
 
    /**
     * create a string out of an integer array, joining the elements by a given string
-    * @param joinseq  the string to be placed between two array elements
+    * @param joinseq  the string to be placed betwee two array elements
     * @param a        the array
     * @param offset   position in the array where to start building the string
     * @param length   number of elements in the array to include in the resulting string
@@ -55,7 +55,7 @@ public class StringUtils {
  
    /**
     * create a string out of an byte array, joining the elements by a given string
-    * @param joinseq  the string to be placed between two array elements
+    * @param joinseq  the string to be placed betwee two array elements
     * @param a        the array
     * @param offset   position in the array where to start building the string
     * @param length   number of elements in the array to include in the resulting string
@@ -67,21 +67,6 @@ public class StringUtils {
     for(int i=1; i<length; i++)  sb.append(joinseq).append(a[offset+i]);
     return sb.toString();
   }
-
-  /**
-   * create a string out of an HugeByteArray, joining the elements by a given string
-   * @param joinseq  the string to be placed between two array elements
-   * @param a        the array
-   * @param offset   position in the array where to start building the string
-   * @param length   number of elements in the array to include in the resulting string
-   * @return the joined string
-   */
-   public static Object join(String joinseq, HugeByteArray a, long offset, int length) {
-      if(length==0) return("");
-      StringBuilder sb = new StringBuilder(Integer.toString(a.get(offset)));
-      for(int i=1; i<length; i++)  sb.append(joinseq).append(a.get(offset+i));
-      return sb.toString();
-   }
 
  
 }

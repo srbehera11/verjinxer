@@ -2,8 +2,6 @@
 package verjinxer.sequenceanalysis;
 
 import java.util.Arrays;
-
-import verjinxer.util.PositionQCodePair;
 import junit.framework.TestCase;
 
 /**
@@ -71,9 +69,9 @@ public class QGramCoderTest extends TestCase {
       
       final int[] qcodes  = new int[correct.length];
       Arrays.fill(qcodes, SKIP);
-      for (PositionQCodePair pc: coder.sparseQGrams(text)) {
-         final int p = pc.position;
-         qcodes[p] = pc.qcode;
+      for (long pc: coder.sparseQGrams(text)) {
+         final int p = (int)(pc>>32);
+         qcodes[p] = (int)pc;
       }
       for(int p=0; p<correct.length; p++)
          System.out.printf("pos=%d:  code=%d (correct: %d)%n", p, qcodes[p], correct[p]);
@@ -96,9 +94,9 @@ public class QGramCoderTest extends TestCase {
       
       final int[] qcodes  = new int[correct.length];
       Arrays.fill(qcodes, SKIP);
-      for (PositionQCodePair pc: coder.sparseQGrams(text, (byte)-1)) {
-         final int p = pc.position;
-         qcodes[p] = pc.qcode;
+      for (long pc: coder.sparseQGrams(text, -1)) {
+         final int p = (int)(pc>>32);
+         qcodes[p] = (int)pc;
       }
       for(int p=0; p<correct.length; p++)
          System.out.printf("pos=%d:  code=%d (correct: %d)%n", p, qcodes[p], correct[p]);
@@ -108,12 +106,12 @@ public class QGramCoderTest extends TestCase {
    }
    
    public void testMulti() {
-      final Alphabet DNA = Alphabet.DNA();
-      final BisulfiteQGramCoder coder = new BisulfiteQGramCoder(q);
-      for(PositionQCodePair pc: coder.sparseQGrams(text, (byte)-1)) {
-         final int p = pc.position;
-         final int c = pc.qcode;
-         System.out.printf("pos=%d:  code=%d  (%s)%n", p, c, coder.qGramString(c, DNA));
+      final AlphabetMap DNA = AlphabetMap.DNA();
+      final MultiQGramCoder coder = new MultiQGramCoder(q, 4, true);
+      for(long pc: coder.sparseQGrams(text, (byte)-1)) {
+         final int p = (int)(pc>>32);
+         final int c = (int)pc;
+         System.out.printf("pos=%d:  code=%d  (%s)%n", p, c, coder.qcoder.qGramString(c, DNA));
       }
       System.out.println();
    }

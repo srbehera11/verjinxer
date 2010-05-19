@@ -30,7 +30,7 @@ public class ArrayUtils {
          try {
             int[] slice = new int[attempt];  
             return slice; // in iteration t, it has 1/t times requested size
-         } catch (OutOfMemoryError ex) {
+         } catch (OutOfMemoryError e) {
            attempt = (int) Math.ceil((double)attempt * t/(t+1.0) * 1.01);
          }
       }
@@ -86,81 +86,46 @@ public class ArrayUtils {
       byte[] test = new byte[size];
       test = null;
       return true; 
-    } catch (OutOfMemoryError ex) {}
+    } catch (OutOfMemoryError e) {}
     return false;
   }
   
-  /**
-   * Reverses a subsequence of the given Array in place.
-   * 
-   * @param array
-   *           the array
-   * @param from
-   *           start of the subsequence to reverse (inclusive).
-   * @param to
-   *           end of the subsequence to reverse (exclusive).
-   * @author Markus Kemmerling
-   */
-  public static void reverseArray(final byte[] array, final int from, final int to) {
-     final int half = (to+from)/2;
-     int j = to-1; // points to the element in the back to switch
-     int i = from; // points to the element in the front to switch
-     while(i < half) {
-        final byte tmp = array[i];
-        array[i] = array[j];
-        array[j] = tmp;
-        i++;
-        j--;
-     }
-  }
   
-  /**
-   * Reverses a prefix of an int array in place.
-   * 
-   * @param array
-   *           the array
-   *@param length
-   *           the number of elements to reverse (a[0..len-1] is reversed); if len&lt;0 or
-   *           len&gt;a.length, then the whole array is reversed.
+  /** reverses an array or a prefix of an array in place
+   *@param a  the array
+   *@param len the number of elements to reverse (a[0..len-1] is reversed);
+   * if len&lt;0 or len&gt;a.length, then the whole array is reversed.
    * @return the same array a, (partially) reversed in-place.
    */
-  public static int[] reverseArray(final int[] array, int length) {
-     if (length < 0)
-        length = array.length;
-     int tmp;
-     final int half = length / 2;
-     for (int i = 0; i < half; i++) {
-        tmp = array[i];
-        array[i] = array[length - 1 - i];
-        array[length - 1 - i] = tmp;
-     }
-     return array;
+  public static int[] reverseArray(final int[] a, int len) {
+    if(len<0) len=a.length;
+    int tmp;
+    final int half=len/2;
+    for(int i=0; i<half; i++) {
+      tmp=a[i];
+      a[i]=a[len-1-i];
+      a[len-1-i]=tmp;
+    }
+    return a;
   }
   
-  
-  
-  /**
-    * Reverses a prefix of a byte array in place.
-    * 
-    * @param array
-    *           the array
-    * @param length
-    *           the number of elements to reverse (a[0..len-1] is reversed); if len&lt;0 or
-    *           len&gt;a.length, then the whole array is reversed.
-    * @return the same array a, (partially) reversed in-place.
-    */
-   public static byte[] reverseArray(final byte[] array, int length) {
-      if (length < 0)
-         length = array.length;
-      byte tmp;
-      final int half = length / 2;
-      for (int i = 0; i < half; i++) {
-         tmp = array[i];
-         array[i] = array[length - 1 - i];
-         array[length - 1 - i] = tmp;
-      }
-      return array;
-   }
+  /** reverses an array or a prefix of an array in place
+   *@param a  the array
+   *@param len the number of elements to reverse (a[0..len-1] is reversed);
+   * if len&lt;0 or len&gt;a.length, then the whole array is reversed.
+   * @return the same array a, (partially) reversed in-place.
+   */
+  public static byte[] reverseArray(final byte[] a, int len) {
+    if(len<0) len=a.length;
+    byte tmp;
+    final int half=len/2;
+    for(int i=0; i<half; i++) {
+      tmp=a[i];
+      a[i]=a[len-1-i];
+      a[len-1-i]=tmp;
+    }
+    return a;
+  }
   
   /** reverse-complements part of an array
    *@param a  the array
@@ -224,50 +189,6 @@ public class ArrayUtils {
       sb.append(a.get(i)<0?"$":a.get(i));
     return sb.toString();
   }
-  
-  /**
-    * Compares two arrays. 
-    * It returns 0 iff both arrays are the same.<br>
-    * It returns a negative integer if the first array is less than the second.<br>
-    * It returns a positive integer if the first array is greater than the second. <br>
-    * The integer returned decodes the first position where the both arrays differ
-    * (i denotes that position abs(i)-1 is the first differing).<br>
-    * If the absolute value of the returned integer is greater than the length of 
-    * the shortest array, it denotes that the shorter array is a prefix of the longer.
-    * 
-    * @param a1
-    *           First byte array.
-    * @param a2
-    *           First byte array.
-    * @return Negative integer, zero, or a positive integer as a1 is less than, equal or greater
-    *         than a2.
-    * @author Markus Kemmerling
-    */
-   public static int compare(byte[] a1, byte[] a2) {
-      int i = 0;
-
-      // walk through the arrays till the first differing position.
-      while (i < a1.length && i < a2.length) {
-
-         if (a1[i] < a2[i]) {
-            return -i+1;
-         } else if (a1[i] > a2[i]) {
-            return i+1;
-         }
-
-         i++;
-      }
-
-      // if one array is a prefix of the other
-      if (i == a1.length) {
-         return -i+1;
-      } else if (i == a2.length) {
-         return i+1;
-      }
-
-      // both arrays are equal
-      return 0;
-   }
   
 }
 
